@@ -1,0 +1,8 @@
+flask
+flask_cors
+yfinance
+pandas
+numpy
+requests
+urllib3
+gunicorn
