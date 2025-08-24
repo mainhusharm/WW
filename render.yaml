@@ -38,6 +38,30 @@ services:
         value: 3004
     healthCheckPath: /health
 
+  # Customer Service
+  - type: web
+    name: customer-service
+    env: node
+    buildCommand: cd customer-service && npm install
+    startCommand: cd customer-service && node server.js
+    plan: starter
+    envVars:
+      - key: PORT
+        value: 3005
+    healthCheckPath: /health
+
+  # Lot Size Calculator Service
+  - type: web
+    name: lot-size-calculator
+    env: node
+    buildCommand: cd lot_size_calculator && npm install
+    startCommand: cd lot_size_calculator && node server.js
+    plan: starter
+    envVars:
+      - key: PORT
+        value: 3006
+    healthCheckPath: /health
+
   # Main Backend Service
   - type: web
     name: trading-journal-backend

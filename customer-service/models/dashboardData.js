@@ -11,7 +11,7 @@ const dashboardDataSchema = new mongoose.Schema({
         required: true,
     },
     data_content: {
-        type: String, // Storing as a JSON string
+        type: mongoose.Schema.Types.Mixed, // Storing as a nested object
         required: true,
     },
     last_updated: {

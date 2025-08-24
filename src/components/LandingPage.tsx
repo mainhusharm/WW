@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { bindTilt } from '../utils/parallax';
+import { motion } from 'framer-motion';
 import { 
   TrendingUp, 
   Shield, 
@@ -17,6 +19,8 @@ import {
 import Header from './Header';
 import KickstarterPlan from './KickstarterPlan';
 import MembershipPlans from './MembershipPlans';
+import HeroBackground from './HeroBackground';
+import ExtractedCard from './ExtractedCard';
 
 const LandingPage = () => {
   const features = [
@@ -125,12 +129,31 @@ const LandingPage = () => {
     }
   ];
 
+  const heroRef = useRef<HTMLElement>(null);
+  const featuresRef = useRef<(HTMLDivElement | null)[]>([]);
+  const processRef = useRef<(HTMLDivElement | null)[]>([]);
+  const testimonialsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const ctaRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (heroRef.current) {
+      bindTilt(heroRef.current);
+    }
+    if (ctaRef.current) {
+      bindTilt(ctaRef.current);
+    }
+    featuresRef.current.forEach((el) => el && bindTilt(el));
+    processRef.current.forEach((el) => el && bindTilt(el));
+    testimonialsRef.current.forEach((el) => el && bindTilt(el));
+  }, []);
+
   return (
     <div className="min-h-screen">
       <Header />
       
       {/* Hero Section */}
-      <section className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section ref={heroRef} className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <HeroBackground />
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-transparent to-purple-600/10"></div>
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -142,7 +165,7 @@ const LandingPage = () => {
               </span>
             </div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight hero-text-3d">
               Master Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Funded Account</span> Journey
             </h1>
             <p className="text-lg md:text-xl text-gray-300 mb-6 max-w-3xl mx-auto leading-relaxed">
@@ -203,7 +226,7 @@ const LandingPage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
               {processSteps.map((step, index) => (
-                <div key={index} className="relative">
+                <div key={index} className="relative" ref={(el) => (processRef.current[index] = el)}>
                   <div className="bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group hover:transform hover:scale-105">
                     <div className="text-center">
                       <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
@@ -232,13 +255,19 @@ const LandingPage = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-gray-800/60 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group hover:transform hover:scale-105">
+              <motion.div
+                key={index}
+                ref={(el) => (featuresRef.current[index] = el)}
+                className="bg-gray-800/60 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group hover:transform hover:scale-105 card-3d lightning-border"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <div className={`${feature.color} mb-6 group-hover:scale-110 transition-transform duration-300`}>
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">{feature.title}</h3>
                 <p className="text-gray-400 leading-relaxed">{feature.description}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -275,7 +304,7 @@ const LandingPage = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-gray-800/60 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300">
+              <div key={index} ref={(el) => (testimonialsRef.current[index] = el)} className="bg-gray-800/60 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300">
                 <div className="flex mb-6">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
@@ -304,48 +333,7 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-900/20 via-gray-900/50 to-purple-900/20">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-gray-800/60 backdrop-blur-sm rounded-3xl p-12 border border-gray-700">
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-              Ready to Clear Your <span className="text-blue-400">Prop Firm Challenge</span>?
-            </h2>
-            <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
-              Join thousands of successful traders who achieved funded account status with our proven methodology.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-8">
-              <Link
-                to="/membership"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-blue-500/25"
-              >
-                Start Your Journey
-              </Link>
-              <Link
-                to="/membership"
-                className="border-2 border-gray-600 text-gray-300 hover:border-blue-500 hover:text-blue-400 px-10 py-4 rounded-xl font-bold text-lg transition-all duration-300"
-              >
-                View Pricing
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-              <div className="flex items-center justify-center gap-2 text-gray-400">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                <span>Custom Trading Plans</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-gray-400">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                <span>Expert Support</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-gray-400">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                <span>Professional Support</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ExtractedCard />
 
       {/* Membership Plans Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
@@ -360,88 +348,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-950 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-2 mb-4">
-                <TrendingUp className="w-8 h-8 text-blue-400" />
-                <h3 className="text-xl font-bold text-white">TraderEdge Pro</h3>
-              </div>
-              <p className="text-gray-400 mb-4 leading-relaxed">
-                Professional prop firm clearing service helping traders achieve funded account success through proven methodologies and expert guidance.
-              </p>
-              <div className="flex items-center space-x-4">
-                <Award className="w-5 h-5 text-yellow-400" />
-                <span className="text-gray-300">Trusted by 2,847+ traders worldwide</span>
-              </div>
-              <div className="mt-4">
-                <h4 className="font-semibold text-white mb-2">Subscribe to our newsletter</h4>
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const email = (e.target as any).email.value;
-                    await fetch('/api/subscribe', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({ email }),
-                    });
-                    alert('Successfully subscribed!');
-                  }}
-                >
-                  <div className="flex">
-                    <input
-                      type="email"
-                      name="email"
-                      placeholder="Enter your email"
-                      className="bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded-l-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                      type="submit"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg font-semibold"
-                    >
-                      Subscribe
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-4">Services</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li><Link to="/features" className="hover:text-blue-400 transition-colors">Features</Link></li>
-                <li><Link to="/about" className="hover:text-blue-400 transition-colors">About</Link></li>
-                <li><Link to="/membership" className="hover:text-blue-400 transition-colors">Trading Plans</Link></li>
-                <li><Link to="/dashboard" className="hover:text-blue-400 transition-colors">Progress Tracking</Link></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-4">Support</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li><Link to="/faq" className="hover:text-blue-400 transition-colors">FAQ</Link></li>
-                <li><Link to="/customer-service" className="hover:text-blue-400 transition-colors">Contact Support</Link></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Privacy Policy</a></li>
-                <li><Link to="/terms" className="hover:text-blue-400 transition-colors">Terms of Service</Link></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              <p>&copy; 2025 TraderEdge Pro. All rights reserved.</p>
-            </div>
-            <div className="flex items-center space-x-2 text-xs text-gray-500">
-              <Shield className="w-4 h-4" />
-              <span>Trading involves substantial risk. Past performance does not guarantee future results.</span>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

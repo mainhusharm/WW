@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const auth = require('../middleware/auth');
 const { io } = require('../server');
 
@@ -112,7 +113,21 @@ router.get('/customers/:id', auth, async (req, res) => {
             return res.status(404).json({ msg: 'Customer not found' });
         }
 
-        res.json({ customer });
+        // Parse dashboardData content before sending
+        const parsedCustomer = customer.toObject();
+        if (parsedCustomer.dashboardData) {
+            parsedCustomer.dashboardData.forEach(data => {
+                if (typeof data.data_content === 'string') {
+                    try {
+                        data.data_content = JSON.parse(data.data_content);
+                    } catch (e) {
+                        console.error('Error parsing data_content:', e);
+                    }
+                }
+            });
+        }
+
+        res.json({ customer: parsedCustomer });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -212,6 +227,34 @@ router.post('/signals', auth, (req, res) => {
         io.emit('newSignal', signal);
         
         res.status(201).json({ message: 'Signal broadcasted successfully' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   POST api/customers
+// @desc    Create a new customer
+router.post('/customers', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        let customer = await Customer.findOne({ email });
+        if (customer) {
+            return res.status(400).json({ msg: 'Customer already exists' });
+        }
+
+        customer = new Customer({
+            name,
+            email,
+        });
+
+        const salt = await bcrypt.genSalt(10);
+        customer.password = await bcrypt.hash(password, salt);
+
+        await customer.save();
+
+        res.json({ msg: 'Customer created successfully' });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

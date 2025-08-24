@@ -1,6 +1,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
+import Enhanced3DLandingPage from './components/Enhanced3DLandingPage';
 import SignUp from './components/SignUp';
 import SignIn from './components/SignIn';
 import MembershipPlans from './components/MembershipPlans';
@@ -35,13 +36,14 @@ import TermsOfService from './components/TermsOfService';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import FAQ from './components/FAQ';
 import { SignalDistributionProvider } from './components/SignalDistributionService';
-import FuturisticCursor from './components/FuturisticCursor';
 import FuturisticBackground from './components/FuturisticBackground';
 import CustomerServiceMpinLogin from './components/CustomerServiceMpinLogin';
 import CustomerServiceProtectedRoute from './components/CustomerServiceProtectedRoute';
 import EnhancedCustomerServiceDashboard from './components/EnhancedCustomerServiceDashboard';
 import CustomerDetail from './components/CustomerDetail';
 import AICoach from './components/AICoach';
+import Lightning from './components/Lightning';
+import Footer from './components/Footer';
 
 const AppContent = () => {
   const { logout: userLogout } = useUser();
@@ -67,13 +69,20 @@ const AppContent = () => {
     navigate('/admin');
   };
 
+  useEffect(() => {
+    document.body.classList.add('perspective-body');
+    return () => {
+      document.body.classList.remove('perspective-body');
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}>
       <FuturisticBackground />
-      <FuturisticCursor />
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<Enhanced3DLandingPage />} />
+          <Route path="/classic" element={<LandingPage />} />
           <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/membership" element={<MembershipPlans />} />
@@ -141,8 +150,10 @@ const AppContent = () => {
             }
           />
         <Route path="/ai-coach" element={<ProtectedRoute><AICoach /></ProtectedRoute>} />
+        <Route path="/lightning" element={<Lightning><LandingPage /></Lightning>} />
         </Routes>
       </Suspense>
+      <Footer />
     </div>
   );
 }

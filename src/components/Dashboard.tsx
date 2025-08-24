@@ -176,7 +176,7 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         }
         
         try {
-          const response = await api.get('/api/dashboard-data');
+          const response = await api.get('/dashboard-data');
           setDashboardData(response.data);
         } catch (error) {
           console.error('Failed to fetch dashboard data from API, using fallback.', error);

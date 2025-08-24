@@ -11,7 +11,7 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-md border-b border-gray-800">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-md border-b border-gray-800 navbar-glass">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -29,51 +29,31 @@ const Header = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
               to="/" 
-              className={`font-medium transition-colors ${
-                isActive('/') 
-                  ? 'text-blue-400' 
-                  : 'text-gray-300 hover:text-blue-400'
-              }`}
+              className={`nav-link ${isActive('/') ? 'nav-link-active' : ''}`}
             >
               Home
             </Link>
             <Link 
               to="/features" 
-              className={`font-medium transition-colors ${
-                isActive('/features') 
-                  ? 'text-blue-400' 
-                  : 'text-gray-300 hover:text-blue-400'
-              }`}
+              className={`nav-link ${isActive('/features') ? 'nav-link-active' : ''}`}
             >
               Features
             </Link>
             <Link 
               to="/about" 
-              className={`font-medium transition-colors ${
-                isActive('/about') 
-                  ? 'text-blue-400' 
-                  : 'text-gray-300 hover:text-blue-400'
-              }`}
+              className={`nav-link ${isActive('/about') ? 'nav-link-active' : ''}`}
             >
               About
             </Link>
             <Link 
               to="/faq" 
-              className={`font-medium transition-colors ${
-                isActive('/faq') 
-                  ? 'text-blue-400' 
-                  : 'text-gray-300 hover:text-blue-400'
-              }`}
+              className={`nav-link ${isActive('/faq') ? 'nav-link-active' : ''}`}
             >
               FAQ
             </Link>
             <Link 
               to="/membership" 
-              className={`font-medium transition-colors ${
-                isActive('/membership') 
-                  ? 'text-blue-400' 
-                  : 'text-gray-300 hover:text-blue-400'
-              }`}
+              className={`nav-link ${isActive('/membership') ? 'nav-link-active' : ''}`}
             >
               Pricing
             </Link>

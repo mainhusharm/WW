@@ -1,4 +1,4 @@
-require('dotenv').config({ path: './customer-service/.env' });
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -29,6 +29,11 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api', require('./routes/api'));
 app.use('/api/upload', require('./routes/upload'));
 
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
 
 // WebSocket Connection
 io.on('connection', (socket) => {
