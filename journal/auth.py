@@ -73,13 +73,14 @@ def register():
     trading_data = data.get('tradingData', {})
 
     # Enhanced email uniqueness validation
-    existing_user = User.query.filter_by(email=email.lower().strip()).first()
+    from sqlalchemy import func
+    existing_user = User.query.filter(func.lower(User.email) == func.lower(email.strip())).first()
     if existing_user:
         logging.warning(f"Registration attempt with existing email: {email}")
         return jsonify({
             "msg": "This email address is already registered. Please use a different email or try logging in.",
             "error_code": "EMAIL_ALREADY_EXISTS"
-        }), 400
+        }), 409
 
     username = f"{firstName} {lastName}"
     hashed_password = generate_password_hash(password, method='pbkdf2:sha256')

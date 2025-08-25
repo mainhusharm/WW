@@ -237,7 +237,7 @@ router.post('/signals', auth, (req, res) => {
 // @desc    Create a new customer
 router.post('/customers', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, phone, account_type } = req.body;
 
         let customer = await Customer.findOne({ email });
         if (customer) {
@@ -247,14 +247,57 @@ router.post('/customers', async (req, res) => {
         customer = new Customer({
             name,
             email,
+            phone,
+            account_type,
         });
-
-        const salt = await bcrypt.genSalt(10);
-        customer.password = await bcrypt.hash(password, salt);
 
         await customer.save();
 
         res.json({ msg: 'Customer created successfully' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   PUT api/customers/:id
+// @desc    Update a customer
+router.put('/customers/:id', auth, async (req, res) => {
+    try {
+        const { name, email, phone, account_type } = req.body;
+
+        let customer = await Customer.findById(req.params.id);
+        if (!customer) {
+            return res.status(404).json({ msg: 'Customer not found' });
+        }
+
+        customer.name = name;
+        customer.email = email;
+        customer.phone = phone;
+        customer.account_type = account_type;
+
+        await customer.save();
+
+        res.json({ msg: 'Customer updated successfully' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   GET api/customers/stats
+// @desc    Get customer stats
+router.get('/customers/stats', auth, async (req, res) => {
+    try {
+        const totalCustomers = await Customer.countDocuments();
+        const newCustomers = await Customer.countDocuments({ joinDate: { $gte: new Date(new Date() - 30 * 24 * 60 * 60 * 1000) } });
+        const activeCustomers = await Customer.countDocuments({ lastActive: { $gte: new Date(new Date() - 30 * 24 * 60 * 60 * 1000) } });
+
+        res.json({
+            totalCustomers,
+            newCustomers,
+            activeCustomers,
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

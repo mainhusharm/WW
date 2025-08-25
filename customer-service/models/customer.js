@@ -20,6 +20,9 @@ const customerSchema = new mongoose.Schema({
     phone: {
         type: String,
     },
+    account_type: {
+        type: String,
+    },
     membershipTier: {
         type: String,
         default: 'Standard',
