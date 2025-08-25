@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import api from '../api';
 import { useUser } from './UserContext';
 
@@ -103,6 +103,7 @@ interface TradingPlanContextType {
   riskConfig: RiskConfig | null;
   tradingPlan: TradingPlan | null;
   accounts: PropFirmAccount[];
+  loading: boolean;
   updatePropFirm: (firm: PropFirm) => void;
   updateAccountConfig: (config: AccountConfig) => void;
   updateRiskConfig: (config: RiskConfig) => void;
@@ -122,9 +123,11 @@ export const TradingPlanProvider = ({ children }: { children: ReactNode }) => {
   const [riskConfig, setRiskConfig] = useState<RiskConfig | null>(null);
   const [tradingPlan, setTradingPlan] = useState<TradingPlan | null>(null);
   const [accounts, setAccounts] = useState<PropFirmAccount[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadTradingPlan = () => {
+      setLoading(true);
       if (user?.email) {
         // Load from localStorage based on user email
         const savedTradingPlan = localStorage.getItem(`trading_plan_${user.email}`);
@@ -145,6 +148,7 @@ export const TradingPlanProvider = ({ children }: { children: ReactNode }) => {
           setRiskConfig(JSON.parse(savedRiskConfig));
         }
       }
+      setLoading(false);
     };
 
     loadTradingPlan();
@@ -210,6 +214,7 @@ export const TradingPlanProvider = ({ children }: { children: ReactNode }) => {
       accountConfig,
       riskConfig,
       tradingPlan,
+      loading,
       updatePropFirm,
       updateAccountConfig,
       updateRiskConfig,

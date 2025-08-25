@@ -17,7 +17,7 @@ export const saveState = async (state: TradingState): Promise<void> => {
     
     // Also try to save to server
     try {
-      await api.post('/api/trading-state', state);
+      await api.post('/trading-state', state);
     } catch (error) {
       console.warn('Failed to save to server, using localStorage only:', error);
     }
@@ -52,7 +52,7 @@ export const loadState = async (): Promise<TradingState | null> => {
     
     // Fallback to server
     try {
-      const response = await api.get('/api/trading-state');
+      const response = await api.get('/trading-state');
       return response.data;
     } catch (error) {
       console.warn('Failed to load from server, using localStorage only:', error);
@@ -77,7 +77,7 @@ export const clearState = async (): Promise<void> => {
     
     // Also try to clear from server
     try {
-      await api.delete('/api/trading-state');
+      await api.delete('/trading-state');
     } catch (error) {
       console.warn('Failed to clear from server:', error);
     }

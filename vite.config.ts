@@ -7,17 +7,6 @@ export default defineConfig({
   build: {
     // Set a higher threshold for chunk size warnings (e.g., 1000 kB)
     chunkSizeWarningLimit: 1000,
-    // Configure Rollup options for more control over the build process
-    rollupOptions: {
-      output: {
-        // Use a manual chunking strategy to optimize bundle sizes
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
-        },
-      },
-    },
   },
   server: {
     port: 5175,

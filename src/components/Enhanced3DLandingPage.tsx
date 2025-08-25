@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, memo, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   TrendingUp, 
@@ -17,8 +17,10 @@ import {
   ChevronDown
 } from 'lucide-react';
 import Header from './Header';
-import Scene3D from './3D/Scene3D';
-import ScrollAnimations from './3D/ScrollAnimations';
+
+// Lazy load heavy 3D components
+const Scene3D = React.lazy(() => import('./3D/Scene3D'));
+const ScrollAnimations = React.lazy(() => import('./3D/ScrollAnimations'));
 
 const Enhanced3DLandingPage = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -27,32 +29,51 @@ const Enhanced3DLandingPage = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Throttled scroll handler for better performance
+  const handleScroll = useCallback(() => {
+    setScrollY(window.scrollY);
+  }, []);
+
+  // Throttled mouse move handler
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    setMousePosition({
+      x: (e.clientX / window.innerWidth) * 2 - 1,
+      y: -(e.clientY / window.innerHeight) * 2 + 1
+    });
+  }, []);
+
   useEffect(() => {
     // Add a small delay to ensure all elements are ready before fading in
     const timer = setTimeout(() => setIsLoaded(true), 100);
     
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
+    // Throttle scroll events for better performance
+    let scrollTimeout: NodeJS.Timeout;
+    const throttledScroll = () => {
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(handleScroll, 16); // ~60fps
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 2 - 1,
-        y: -(e.clientY / window.innerHeight) * 2 + 1
-      });
+    // Throttle mouse move events
+    let mouseTimeout: NodeJS.Timeout;
+    const throttledMouseMove = (e: MouseEvent) => {
+      if (mouseTimeout) clearTimeout(mouseTimeout);
+      mouseTimeout = setTimeout(() => handleMouseMove(e), 16); // ~60fps
     };
 
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    window.addEventListener('mousemove', throttledMouseMove, { passive: true });
 
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleMouseMove);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      if (mouseTimeout) clearTimeout(mouseTimeout);
+      window.removeEventListener('scroll', throttledScroll);
+      window.removeEventListener('mousemove', throttledMouseMove);
     };
-  }, []);
+  }, [handleScroll, handleMouseMove]);
 
-  const features = [
+  // Memoize static data to prevent re-renders
+  const features = useMemo(() => [
     {
       icon: <Target className="w-8 h-8" />,
       title: "Prop Firm Mastery",
@@ -95,16 +116,50 @@ const Enhanced3DLandingPage = () => {
       color: "text-cyan-400",
       gradient: "from-cyan-500/20 to-blue-500/20"
     }
-  ];
+  ], []);
 
-  const stats = [
-    { number: "2,847", label: "Funded Accounts", description: "Successfully cleared" },
-    { number: "94.7", label: "Success Rate", description: "Challenge completion" },
-    { number: "12.8", label: "Total Funded", description: "Million USD" },
-    { number: "150", label: "Prop Firms", description: "Supported platforms" }
-  ];
+  const [stats, setStats] = useState([
+    { number: "0", label: "Funded Accounts", description: "Successfully cleared" },
+    { number: "0", label: "Success Rate", description: "Challenge completion" },
+    { number: "0", label: "Total Funded", description: "Million USD" },
+    { number: "0", label: "Prop Firms", description: "Supported platforms" }
+  ]);
 
-  const testimonials = [
+  // Fetch real stats from API
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+        
+        const response = await fetch('/api/stats', {
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json();
+          setStats([
+            { number: data.fundedAccounts || "0", label: "Funded Accounts", description: "Successfully cleared" },
+            { number: data.successRate || "0", label: "Success Rate", description: "Challenge completion" },
+            { number: data.totalFunded || "0", label: "Total Funded", description: "Million USD" },
+            { number: data.propFirms || "0", label: "Prop Firms", description: "Supported platforms" }
+          ]);
+        }
+      } catch (error) {
+        // Only log errors in development mode
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Stats API not available:', error);
+        }
+        // Keep default values of "0" if API fails - this is normal during development
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const testimonials = useMemo(() => [
     {
       name: "Marcus Chen",
       role: "FTMO $200K Funded Trader",
@@ -129,14 +184,27 @@ const Enhanced3DLandingPage = () => {
       profit: "$34,680",
       image: "DR"
     }
-  ];
+  ], []);
+
+  // Memoize expensive calculations
+  const heroTransform = useMemo(() => 
+    `perspective(1000px) rotateX(${mousePosition.y * 5}deg) rotateY(${mousePosition.x * 5}deg)`,
+    [mousePosition.x, mousePosition.y]
+  );
+
+  const parallaxTransform = useMemo(() => 
+    `translateY(${scrollY * 0.5}px) scale(1.1)`,
+    [scrollY]
+  );
 
   return (
     <div className="min-h-screen bg-gray-950 text-white overflow-hidden relative">
       <Header />
       
-      {/* 3D Scene Background */}
-      <Scene3D scrollY={scrollY} isVisible={isLoaded} />
+      {/* 3D Scene Background - Lazy loaded */}
+      <Suspense fallback={<div className="fixed inset-0 bg-gray-950" />}>
+        <Scene3D scrollY={scrollY} isVisible={isLoaded} />
+      </Suspense>
       
       {/* Animated Background Elements */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -178,7 +246,8 @@ const Enhanced3DLandingPage = () => {
         ))}
       </div>
 
-      <ScrollAnimations>
+      <Suspense fallback={<div />}>
+        <ScrollAnimations>
         {/* Hero Section */}
         <section ref={heroRef} className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center relative z-10">
@@ -197,7 +266,7 @@ const Enhanced3DLandingPage = () => {
                 className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500"
                 style={{
                   textShadow: '0 0 30px rgba(0, 255, 255, 0.5)',
-                  transform: `perspective(1000px) rotateX(${mousePosition.y * 5}deg) rotateY(${mousePosition.x * 5}deg)`
+                  transform: heroTransform
                 }}
               >
                 Funded Account
@@ -214,22 +283,22 @@ const Enhanced3DLandingPage = () => {
             <div className="flex flex-wrap justify-center items-center gap-8 mb-12 text-sm">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-5 h-5 text-green-400" />
-                <span className="text-gray-300">2,847 Successful Traders</span>
+                <span className="text-gray-300">{stats[0]?.number || "0"} Successful Traders</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Star className="w-5 h-5 text-yellow-400" />
-                <span className="text-gray-300">94.7% Success Rate</span>
+                <span className="text-gray-300">{stats[1]?.number || "0"}% Success Rate</span>
               </div>
               <div className="flex items-center space-x-2">
                 <DollarSign className="w-5 h-5 text-blue-400" />
-                <span className="text-gray-300">$12.8M Total Funded</span>
+                <span className="text-gray-300">${stats[2]?.number || "0"}M Total Funded</span>
               </div>
             </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
               <Link
-                to="/affiliate-links"
+                to="/signup"
                 className="group relative border-2 border-cyan-500/50 text-cyan-400 hover:text-white hover:border-cyan-400 px-10 py-4 rounded-2xl font-bold text-lg transition-all duration-300 hover:bg-cyan-500/10 backdrop-blur-sm">
                 <span className="flex items-center">
                   GET FREE ACCESS
@@ -348,7 +417,7 @@ const Enhanced3DLandingPage = () => {
             className="parallax-bg absolute inset-0 z-0"
             style={{
               background: 'linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%)',
-              transform: `translateY(${scrollY * 0.5}px) scale(1.1)`
+              transform: parallaxTransform
             }}
           />
           
@@ -492,7 +561,8 @@ const Enhanced3DLandingPage = () => {
             </div>
           </div>
         </section>
-      </ScrollAnimations>
+        </ScrollAnimations>
+      </Suspense>
 
       {/* Loading Screen */}
       {!isLoaded && (

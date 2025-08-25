@@ -41,6 +41,7 @@ import CustomerServiceMpinLogin from './components/CustomerServiceMpinLogin';
 import CustomerServiceProtectedRoute from './components/CustomerServiceProtectedRoute';
 import EnhancedCustomerServiceDashboard from './components/EnhancedCustomerServiceDashboard';
 import CustomerDetail from './components/CustomerDetail';
+import ContactSupport from './components/ContactSupport';
 import AICoach from './components/AICoach';
 import Lightning from './components/Lightning';
 import Footer from './components/Footer';
@@ -50,6 +51,7 @@ const AppContent = () => {
   const { logout: adminLogout } = useAdmin();
   const { resetPlan } = useTradingPlan();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     userLogout();
@@ -131,6 +133,8 @@ const AppContent = () => {
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/contact-support" element={<ContactSupport />} />
+        <Route path="/payment" element={<PaymentFlow />} />
         <Route path="/trade-mentor/:tradeId" element={<TradeMentor />} />
         <Route path="/customer-service" element={<CustomerServiceMpinLogin />} />
           <Route
@@ -153,7 +157,9 @@ const AppContent = () => {
         <Route path="/lightning" element={<Lightning><LandingPage /></Lightning>} />
         </Routes>
       </Suspense>
-      <Footer />
+      {!(location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')) && (
+        <Footer />
+      )}
     </div>
   );
 }

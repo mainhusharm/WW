@@ -1,23 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { TradingState, TradeOutcome, Signal, Trade, PerformanceMetrics } from '../trading/types';
 import { 
   Layers, Zap, Shield, PieChart, BookOpen, GitBranch, Target, Cpu, Bell, Settings, LogOut, DollarSign, Activity, Award 
 } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
+import { useTradingPlan } from '../contexts/TradingPlanContext';
 import SignalsFeed from './SignalsFeed';
 import PerformanceAnalytics from './PerformanceAnalytics';
-import TradingJournalDashboard from './TradingJournalDashboard';
 import MultiAccountTracker from './MultiAccountTracker';
 import NotificationCenter from './NotificationCenter';
-import AccountSettings from './AccountSettings';
 import PropFirmRules from './PropFirmRules';
 import RiskManagementPlan from './RiskManagementPlan';
 import LiveChatWidget from './LiveChatWidget';
 import ConsentForm from './ConsentForm';
 import UserScreenshotTab from './UserScreenshotTab';
 import { getAllTimezones, getMarketStatus } from '../services/timezoneService';
-import { fetchForexFactoryNews, getImpactColor, getImpactIcon, formatEventTime, ForexFactoryEvent } from '../services/forexFactoryService';
+import { fetchForexFactoryNews, getImpactColor, formatEventTime, ForexFactoryEvent } from '../services/forexFactoryService';
 
 interface DashboardConcept1Props {
   onLogout: () => void;
@@ -26,9 +25,50 @@ interface DashboardConcept1Props {
   handleMarkAsTaken: (signal: Signal, outcome: TradeOutcome, pnl?: number) => void;
 }
 
-const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, tradingState, dashboardData, handleMarkAsTaken }) => {
+const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, tradingState, dashboardData: initialDashboardData, handleMarkAsTaken }) => {
   const { user } = useUser();
-  const { tab } = useParams();
+  const { tradingPlan, propFirm, accountConfig, loading: tradingPlanLoading } = useTradingPlan();
+
+  const [dashboardData, setDashboardData] = useState(initialDashboardData);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tradingPlanLoading && tradingPlan && propFirm && accountConfig) {
+      const accountValue = tradingPlan.userProfile.hasAccount === 'yes'
+        ? tradingPlan.userProfile.accountEquity
+        : accountConfig.size;
+
+      const newData = {
+        userProfile: {
+          propFirm: propFirm.name || 'Not Set',
+          accountType: accountConfig.challengeType || 'Not Set',
+          accountSize: accountValue || 10000,
+          experience: tradingPlan.userProfile.experience || 'Not Set',
+          uniqueId: user?.uniqueId || 'Not Set',
+        },
+        performance: {
+          accountBalance: accountValue || 10000,
+          totalPnl: tradingState?.performanceMetrics.totalPnl || 0,
+          winRate: tradingState?.performanceMetrics.winRate || 0,
+          totalTrades: tradingState?.performanceMetrics.totalTrades || 0,
+        },
+        riskProtocol: {
+          maxDailyRisk: tradingPlan.riskParameters.maxDailyRisk || 5000,
+          riskPerTrade: tradingPlan.riskParameters.baseTradeRisk || 1000,
+          maxDrawdown: tradingPlan.propFirmCompliance.totalDrawdownLimit || '10%',
+        },
+      };
+      setDashboardData(newData);
+      setIsLoading(false);
+    } else if (!tradingPlanLoading) {
+      // Handle case where context is loaded but data is missing
+      setIsLoading(false);
+    }
+  }, [tradingPlan, propFirm, accountConfig, user, tradingState, tradingPlanLoading]);
+
+  if (isLoading) {
+    return <div>Loading Dashboard Data...</div>;
+  }
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => {
     // Restore active tab from localStorage if available
@@ -217,8 +257,6 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   });
   
   const [activeSettingsTab, setActiveSettingsTab] = useState('risk');
-  
-  // Journal state
   const [journalEntries, setJournalEntries] = useState(() => {
     if (typeof window !== 'undefined' && user?.email) {
       const saved = localStorage.getItem(`journal_entries_${user.email}`);
@@ -354,42 +392,6 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
     });
   };
 
-  // Handle mark as taken with real trade tracking
-  const handleMarkAsTradeComplete = (signal: Signal, outcome: TradeOutcome, pnl?: number) => {
-    const actualPnl = pnl || 0;
-    const newTrade: Trade = {
-      id: `trade-${Date.now()}`,
-      signalId: signal.id,
-      pair: signal.pair,
-      direction: signal.direction,
-      entryPrice: signal.entryPrice,
-      stopLoss: signal.stopLoss,
-      takeProfit: signal.takeProfit,
-      riskAmount: signal.riskAmount || 0,
-      rewardAmount: signal.rewardAmount || 0,
-      status: 'closed',
-      entryTime: new Date(signal.timestamp),
-      closeTime: new Date(),
-      outcome,
-      pnl: actualPnl,
-      equityBefore: (dashboardData?.performance?.accountBalance || 10000) + performanceMetrics.totalPnl,
-      equityAfter: (dashboardData?.performance?.accountBalance || 10000) + performanceMetrics.totalPnl + actualPnl,
-      notes: `Signal taken from dashboard - ${outcome}`
-    };
-    
-    const updatedTrades = [...userTrades, newTrade];
-    setUserTrades(updatedTrades);
-    updatePerformanceMetrics(updatedTrades);
-    
-    // Save to localStorage
-    localStorage.setItem('userTrades', JSON.stringify(updatedTrades));
-    
-    // Call the original handler if provided
-    if (handleMarkAsTaken) {
-      handleMarkAsTaken(signal, outcome, actualPnl);
-    }
-  };
-
   // Load user trades from localStorage on component mount
   useEffect(() => {
     const storedTrades = localStorage.getItem('userTrades');
@@ -458,32 +460,12 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   const handleNewsDateChange = (e: React.ChangeEvent<HTMLInputElement>) => setSelectedNewsDate(new Date(e.target.value));
   const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => setSelectedCurrency(e.target.value);
 
-  useEffect(() => {
-    if (tab) {
-      setActiveTab(tab);
-    }
-  }, [tab]);
-
   const handleTabClick = (tabId: string) => {
     console.log('Clicked tab:', tabId);
     setActiveTab(tabId);
     navigate(`/dashboard/${tabId}`);
   };
 
-  const handleAddToJournal = (signal: Signal) => {
-    console.log('Adding to journal:', signal);
-    handleTabClick('journal');
-  };
-
-  const handleChatWithNexus = (signal: Signal) => {
-    handleTabClick('ai-coach');
-    setTimeout(() => {
-      if (aiCoachRef.current?.contentWindow) {
-        const signalData = { symbol: signal.pair, type: signal.direction, entryPrice: signal.entryPrice.toString() };
-        aiCoachRef.current.contentWindow.postMessage({ type: 'signal', signalData }, '*');
-      }
-    }, 100);
-  };
   
   const handleSettingsUpdate = (key: string, value: any) => {
     setUserSettings((prev: any) => ({
@@ -865,9 +847,7 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
           </div>
         )}
 
-        {activeSettingsTab === 'screenshot' && (
-          <UserScreenshotTab />
-        )}
+        {activeSettingsTab === 'screenshot' && <UserScreenshotTab />}
       </div>
     </div>
   );
@@ -1283,7 +1263,11 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
         <div className="holo-main">
             <div className="container mx-auto">
               {activeTab === 'overview' && renderOverview()}
-              {activeTab === 'signals' && <SignalsFeed onMarkAsTaken={handleMarkAsTradeComplete} onAddToJournal={handleAddToJournal} onChatWithNexus={handleChatWithNexus} />}
+              {activeTab === 'signals' && <SignalsFeed 
+                onMarkAsTaken={handleMarkAsTaken} 
+                onAddToJournal={() => console.log('Add to journal clicked')} 
+                onChatWithNexus={() => console.log('Chat with Nexus clicked')}
+              />}
               {activeTab === 'analytics' && <PerformanceAnalytics tradingState={{ 
                 initialEquity: initialBalance,
                 currentEquity: currentEquity,

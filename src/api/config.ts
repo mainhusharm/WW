@@ -1,4 +1,4 @@
-// Dynamic API URL configuration
+// Dynamic API URL configuration with better error handling
 const getApiBaseUrl = () => {
   const isDev = import.meta.env.DEV;
   const hostname = window.location.hostname;
@@ -6,17 +6,24 @@ const getApiBaseUrl = () => {
   const isAmplify = hostname.includes('amplifyapp.com');
 
   if (isDev || isLocal) {
-    // Development environment
-    const apiUrl = 'http://127.0.0.1:5000/api';
+    // Development environment - use local backend if available
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api';
     console.log('API Base URL (dev):', apiUrl, { isDev, isLocal, isAmplify, hostname });
     return apiUrl;
   }
 
-  // Production: prefer explicit backend URL from env
+  // Production: use environment variable or fallback to relative path
   const fromEnv = import.meta.env.VITE_API_URL as string | undefined;
-  const apiUrl = fromEnv && fromEnv.trim().length > 0 ? fromEnv : '/api';
-
-  console.log('API Base URL (prod):', apiUrl, {
+  
+  // If we have a specific API URL from environment, use it
+  if (fromEnv && fromEnv.trim().length > 0 && fromEnv !== 'https://forex-data-service.onrender.com') {
+    console.log('API Base URL (prod from env):', fromEnv);
+    return fromEnv;
+  }
+  
+  // For production deployment, use relative path to avoid CORS issues
+  const apiUrl = '/api';
+  console.log('API Base URL (prod relative):', apiUrl, {
     fromEnv,
     NODE_ENV: process.env.NODE_ENV,
     isDev,
@@ -40,8 +47,8 @@ console.log('API Configuration Initialized:', {
 export { API_BASE_URL };
 
 export const API_CONFIG = {
-  baseURL: API_BASE_URL, // Explicitly set baseURL
-  timeout: 10000,
+  baseURL: API_BASE_URL,
+  timeout: 15000, // Increased timeout for better reliability
   headers: {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest'
@@ -49,7 +56,7 @@ export const API_CONFIG = {
   withCredentials: false, // Disable for cross-origin requests to prevent CORS issues
   maxRedirects: 0, // Prevent automatic redirects that convert POST to GET
   validateStatus: function (status: number) {
-    return status >= 200 && status < 300; // Only accept success status codes
+    return status >= 200 && status < 500; // Accept more status codes to handle gracefully
   }
 };
 
@@ -58,4 +65,7 @@ export const ENV_CONFIG = {
   isDevelopment: import.meta.env.DEV,
   isProduction: import.meta.env.PROD,
   apiUrl: API_BASE_URL,
+  // Fallback URLs for different services
+  forexDataServiceUrl: 'https://forex-data-service.onrender.com',
+  customerServiceUrl: 'http://localhost:5001',
 };

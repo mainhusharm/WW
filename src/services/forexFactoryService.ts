@@ -88,9 +88,14 @@ export const getImpactIcon = (impact: 'low' | 'medium' | 'high'): string => {
   }
 };
 
-export const formatEventTime = (time: string, timezone: string = 'America/New_York'): string => {
+export const formatEventTime = (time: string | undefined, timezone: string = 'America/New_York'): string => {
   try {
     if (!time || typeof time !== 'string') {
+      return '00:00';
+    }
+
+    // Handle cases where time might be in different formats
+    if (!time.includes(':')) {
       return '00:00';
     }
 

@@ -12,13 +12,11 @@ import DashboardConcept1 from './DashboardConcept1';
 import DashboardConcept2 from './DashboardConcept2';
 import DashboardConcept3 from './DashboardConcept3';
 import DashboardConcept4 from './DashboardConcept4';
-import { logActivity } from '../api/activity';
 
 const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const { user } = useUser();
   const { tradingPlan } = useTradingPlan();
   const [theme, setTheme] = useState(() => {
-    // Load persisted theme from localStorage
     const savedTheme = localStorage.getItem('dashboard_selected_concept');
     return savedTheme || 'concept1';
   });
@@ -231,6 +229,28 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     }
   }, [tradingState, dashboardData, user?.email]);
 
+  // Sync dashboardData with tradingState
+  useEffect(() => {
+    if (tradingState && dashboardData) {
+      const { performanceMetrics, currentEquity } = tradingState;
+      setDashboardData((prevData: any) => ({
+        ...prevData,
+        performance: {
+          ...prevData.performance,
+          accountBalance: currentEquity,
+          totalPnl: performanceMetrics.totalPnl,
+          winRate: performanceMetrics.winRate,
+          totalTrades: performanceMetrics.totalTrades,
+        },
+        account: {
+            ...prevData.account,
+            balance: currentEquity,
+            equity: currentEquity,
+        }
+      }));
+    }
+  }, [tradingState]);
+
   const handleConsentAccept = () => {
     setShowConsentForm(false);
   };
@@ -380,7 +400,6 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
             setTheme(newTheme);
             // Persist theme selection to localStorage
             localStorage.setItem('dashboard_selected_concept', newTheme);
-            logActivity('theme_change', { theme: newTheme });
           }}
           value={theme}
           className="bg-gray-800 text-white p-2 rounded border border-gray-600"

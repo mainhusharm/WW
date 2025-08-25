@@ -19,24 +19,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'POST') {
     const form = formidable({ uploadDir, keepExtensions: true });
 
-    form.parse(req, (err, fields, files) => {
+        form.parse(req, (err, fields, files) => {
       if (err) {
         console.error('Error parsing form:', err);
         return res.status(500).json({ error: 'Error uploading file.' });
       }
 
-      const file = files.screenshot;
+      const emailField = fields.email;
+      const email = Array.isArray(emailField) ? emailField[0] : emailField;
 
-      if (!file) {
-        return res.status(400).json({ error: 'No file uploaded.' });
+      const screenshotFile = files.screenshot;
+      const file = Array.isArray(screenshotFile) ? screenshotFile[0] : screenshotFile;
+
+      if (!file || !email) {
+        if (file) {
+          fs.unlinkSync(file.filepath);
+        }
+        return res.status(400).json({ error: 'Missing file or email.' });
       }
 
-      // You can access the uploaded file's path using file.filepath
-      // In a real application, you would save this path to a database
-      // along with user information.
-      console.log('Screenshot uploaded:', file.filepath);
+      try {
+        const sanitizedEmail = email.replace(/[@.]/g, '_');
+        const newFilename = `${sanitizedEmail}${path.extname(file.originalFilename || file.newFilename)}`;
+        const newPath = path.join(uploadDir, newFilename);
 
-      res.status(200).json({ message: 'Screenshot uploaded successfully.' });
+        // Remove old screenshot for the same user if it exists
+        const filesInDir = fs.readdirSync(uploadDir);
+        filesInDir.forEach(f => {
+          if (f.startsWith(sanitizedEmail)) {
+            fs.unlinkSync(path.join(uploadDir, f));
+          }
+        });
+
+        fs.renameSync(file.filepath, newPath);
+
+        console.log('Screenshot uploaded and renamed to:', newFilename);
+        res.status(200).json({ message: 'Screenshot uploaded successfully.', path: `/uploads/${newFilename}` });
+      } catch (renameErr) {
+        console.error('Error processing file:', renameErr);
+        fs.unlinkSync(file.filepath);
+        res.status(500).json({ error: 'Error processing file.' });
+      }
     });
   } else {
     res.setHeader('Allow', ['POST']);

@@ -1,9 +1,19 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const axios = require('axios');
 const ProfessionalSMCEngine = require('./pine_translator');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Adjust for your frontend's origin in production
+    methods: ["GET", "POST"]
+  }
+});
+
 const port = 5005;
 let FMP_API_KEY = 'UjCJfQmCbeDxXcMQnoWGibtSWq1kbG9a'; // Replace with your actual API key
 
@@ -338,6 +348,53 @@ app.get('/api/signal', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
+const assets = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'BTCUSD', 'ETHUSD', 'LTCUSD'];
+const timeframes = ['1min', '5min', '15min'];
+
+app.get('/api/signals', async (req, res) => {
+  const allSignals = [];
+  for (const asset of assets) {
+    for (const timeframe of timeframes) {
+      const signal = await getSignalFor(asset, timeframe);
+      if (signal) {
+        allSignals.push({ ...signal, lastSignalTime: new Date().toISOString() });
+      }
+    }
+  }
+
+  if (allSignals.length > 0) {
+    res.json(allSignals);
+  } else {
+    res.status(200).json({ message: 'No signals generated for any assets' });
+  }
+});
+
+// WebSocket connection handling
+io.on('connection', (socket) => {
+  console.log('A user connected to WebSocket');
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
+});
+
+// Periodically generate and broadcast signals
+setInterval(async () => {
+  const allSignals = [];
+  for (const asset of assets) {
+    for (const timeframe of timeframes) {
+      const signal = await getSignalFor(asset, timeframe);
+      if (signal) {
+        allSignals.push({ ...signal, lastSignalTime: new Date().toISOString() });
+      }
+    }
+  }
+  if (allSignals.length > 0) {
+    console.log(`Broadcasting ${allSignals.length} new signals.`);
+    io.emit('newSignal', allSignals); // Broadcast all new signals
+  }
+}, 30000); // Every 30 seconds
+
+server.listen(port, () => {
   console.log(`Signal generator server listening at http://localhost:${port}`);
 });
