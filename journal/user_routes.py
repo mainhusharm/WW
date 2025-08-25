@@ -28,6 +28,22 @@ def update_plan():
 
     return jsonify({"msg": "Plan updated successfully"}), 200
 
+@user_bp.route('/user/progress', methods=['GET'])
+@jwt_required()
+def get_progress():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    # This is a placeholder. Replace with actual progress data from your model.
+    progress_data = {
+        "completed_lessons": 10,
+        "total_lessons": 50,
+        "current_module": "Advanced Strategies"
+    }
+    return jsonify(progress_data), 200
+
 @user_bp.route('/user/progress', methods=['POST'])
 @jwt_required()
 def save_progress():
@@ -130,39 +146,69 @@ def save_questionnaire():
 @user_bp.route('/user/profile', methods=['GET'])
 @jwt_required()
 def get_user_profile():
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"msg": "User not found"}), 404
+
+        risk_plan = RiskPlan.query.filter_by(user_id=user_id).first()
+        
+        profile_data = {
+            'id': user.id,
+            'unique_id': user.unique_id,
+            'username': user.username,
+            'email': user.email,
+            'plan_type': user.plan_type,
+            'created_at': user.created_at.isoformat() if user.created_at else None,
+            'tradingData': None
+        }
+
+        if risk_plan:
+            try:
+                crypto_assets = json.loads(risk_plan.crypto_assets) if risk_plan.crypto_assets else []
+                forex_assets = json.loads(risk_plan.forex_assets) if risk_plan.forex_assets else []
+            except (json.JSONDecodeError, TypeError):
+                crypto_assets = []
+                forex_assets = []
+
+            profile_data['tradingData'] = {
+                'propFirm': risk_plan.prop_firm,
+                'accountType': risk_plan.account_type,
+                'accountSize': str(risk_plan.account_size) if risk_plan.account_size else '100000',
+                'riskPerTrade': str(risk_plan.risk_percentage) if risk_plan.risk_percentage else '1',
+                'tradesPerDay': risk_plan.trades_per_day,
+                'tradingSession': risk_plan.trading_session,
+                'cryptoAssets': crypto_assets,
+                'forexAssets': forex_assets,
+                'hasAccount': risk_plan.has_account,
+                'accountEquity': str(risk_plan.account_equity) if risk_plan.account_equity else '0',
+                'riskRewardRatio': risk_plan.min_risk_reward
+            }
+
+        return jsonify(profile_data), 200
+    except Exception as e:
+        return jsonify({"msg": f"An error occurred: {str(e)}"}), 500
+
+@user_bp.route('/dashboard-data', methods=['GET'])
+@jwt_required()
+def get_dashboard_data():
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    risk_plan = RiskPlan.query.filter_by(user_id=user_id).first()
-    
-    profile_data = {
-        'id': user.id,
-        'unique_id': user.unique_id,
-        'username': user.username,
-        'email': user.email,
-        'plan_type': user.plan_type,
-        'created_at': user.created_at.isoformat() if user.created_at else None,
-        'tradingData': None
+    # This is a placeholder. Replace with actual dashboard data from your models.
+    dashboard_data = {
+        "account_balance": 100000,
+        "total_pnl": 5230.50,
+        "win_rate": 68.5,
+        "recent_trades": [
+            {"symbol": "EURUSD", "pnl": 150.25, "outcome": "win"},
+            {"symbol": "GBPUSD", "pnl": -75.50, "outcome": "loss"}
+        ]
     }
-
-    if risk_plan:
-        profile_data['tradingData'] = {
-            'propFirm': risk_plan.prop_firm,
-            'accountType': risk_plan.account_type,
-            'accountSize': str(risk_plan.account_size) if risk_plan.account_size else '100000',
-            'riskPerTrade': str(risk_plan.risk_percentage) if risk_plan.risk_percentage else '1',
-            'tradesPerDay': risk_plan.trades_per_day,
-            'tradingSession': risk_plan.trading_session,
-            'cryptoAssets': json.loads(risk_plan.crypto_assets) if risk_plan.crypto_assets else [],
-            'forexAssets': json.loads(risk_plan.forex_assets) if risk_plan.forex_assets else [],
-            'hasAccount': risk_plan.has_account,
-            'accountEquity': str(risk_plan.account_equity) if risk_plan.account_equity else '0',
-            'riskRewardRatio': risk_plan.min_risk_reward
-        }
-
-    return jsonify(profile_data), 200
+    return jsonify(dashboard_data), 200
 
 @user_bp.route('/customers', methods=['GET'])
 def get_all_customers():
