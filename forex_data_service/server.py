@@ -34,7 +34,7 @@ session = create_session_with_retries()
 app = Flask(__name__)
 
 # Enhanced CORS configuration
-CORS(app)
+CORS(app, origins=["https://www.traderedgepro.com", "https://traderedgepro.com", "http://localhost:3000", "http://127.0.0.1:3000"], supports_credentials=True)
 
 
 # Cache setup
@@ -184,7 +184,6 @@ def get_forex_data():
 
     except Exception as e:
         logger.error(f"Error fetching data for {pair}: {str(e)}")
-        print(f"Error fetching data for {pair}: {str(e)}")
         return jsonify({'error': f'An error occurred while fetching data for {pair}. Please try again.'}), 500
 
 @app.route('/api/bulk-forex-data')
@@ -252,7 +251,7 @@ def get_bulk_forex_data():
 
             except Exception as e:
                 logger.error(f"Error fetching data for {pair}: {str(e)}")
-                results[pair] = []  # Mark failed pair
+                results[pair] = {'error': f'Failed to fetch data for {pair}'}
 
     return jsonify(results)
 
@@ -300,7 +299,6 @@ def get_forex_price():
 
     except Exception as e:
         logger.error(f"Error fetching price for {pair}: {str(e)}")
-        print(f"Error fetching price for {pair}: {str(e)}")
         return jsonify({'error': f'An error occurred while fetching price for {pair}. Please try again.'}), 500
 
 @app.route('/api/bulk-forex-price')

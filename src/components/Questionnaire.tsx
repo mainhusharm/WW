@@ -123,6 +123,28 @@ const Questionnaire: React.FC = () => {
       // Continue without backend - this is expected in demo/offline mode
     }
 
+    // Also save to user context immediately
+    if (user) {
+      const updatedUser = {
+        ...user,
+        tradingData: {
+          propFirm: answers.propFirm,
+          accountType: answers.accountType,
+          accountSize: String(answers.accountSize), // Keep as string to preserve exact value
+          riskPerTrade: String(answers.riskPercentage),
+          riskRewardRatio: answers.riskRewardRatio,
+          tradesPerDay: answers.tradesPerDay,
+          tradingSession: answers.tradingSession,
+          cryptoAssets: answers.cryptoAssets,
+          forexAssets: answers.forexAssets,
+          hasAccount: answers.hasAccount,
+          tradingExperience: 'intermediate'
+        }
+      };
+      localStorage.setItem('current_user', JSON.stringify(updatedUser));
+      console.log('Updated user data with questionnaire answers:', updatedUser);
+    }
+
     // Always navigate to risk management plan regardless of backend status
     navigate('/risk-management-plan', { 
       state: { 
@@ -193,7 +215,10 @@ const Questionnaire: React.FC = () => {
                 <CustomSelect
                   options={propFirms.find(firm => firm.name === answers.propFirm)?.accountTypes.map(type => ({ value: type, label: type })) || []}
                   value={answers.accountType}
-                  onChange={(value) => setAnswers({ ...answers, accountType: value as string, accountSize: '' })}
+                  onChange={(value) => {
+                    console.log('Account type selected:', value);
+                    setAnswers({ ...answers, accountType: value as string, accountSize: '' });
+                  }}
                   placeholder="Select an account type..."
                 />
               </div>
@@ -203,7 +228,11 @@ const Questionnaire: React.FC = () => {
                   <CustomSelect
                     options={propFirms.find(firm => firm.name === answers.propFirm)?.accountSizes.map(size => ({ value: String(size), label: `$${size.toLocaleString()}` })) || []}
                     value={String(answers.accountSize)}
-                    onChange={(value) => setAnswers({ ...answers, accountSize: Number(value) })}
+                    onChange={(value) => {
+                      console.log('Account size selected:', value);
+                      // Store as exact number to preserve precision
+                      setAnswers({ ...answers, accountSize: parseInt(value) });
+                    }}
                     placeholder="Select an account size..."
                   />
                 </div>

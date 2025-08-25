@@ -39,13 +39,34 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
 
     const fetchSignals = async () => {
       try {
-        const response = await api.get('/signals');
+        // Try multiple endpoints to get signals
+        let response;
+        try {
+          response = await api.get('/signals');
+        } catch (mainApiError) {
+          console.warn('Main API signals endpoint failed, trying alternative:', mainApiError);
+          // Try direct backend URL
+          const backendUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+          response = await fetch(`${backendUrl}/api/signals`);
+          if (response.ok) {
+            const data = await response.json();
+            response = { data };
+          } else {
+            throw new Error('Alternative API also failed');
+          }
+        }
+        
         if (response.data && Array.isArray(response.data)) {
           const sortedSignals = response.data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
           setSignals(sortedSignals);
+          console.log('Signals loaded successfully:', sortedSignals.length);
+        } else {
+          console.log('No signals data received - waiting for admin to generate signals');
+          setSignals([]);
         }
       } catch (error) {
         console.error('Error fetching signals:', error);
+        setSignals([]);
       }
     };
 
@@ -73,12 +94,30 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
       console.log('New signal received:', newSignal);
       setSignals((prevSignals) => {
         // Check for duplicates
-        const exists = prevSignals.some(signal => signal.id === newSignal.id);
+        const exists = prevSignals.some(signal => 
+          signal.id === newSignal.id || 
+          signal.id === newSignal.signal_id
+        );
         if (exists) {
-          console.log('Duplicate signal detected, skipping:', newSignal.id);
+          console.log('Duplicate signal detected, skipping:', newSignal.id || newSignal.signal_id);
           return prevSignals;
         }
-        return [newSignal, ...prevSignals];
+        
+        // Normalize signal format
+        const normalizedSignal: Signal = {
+          id: newSignal.id || newSignal.signal_id,
+          pair: newSignal.pair || newSignal.currencyPair,
+          direction: (newSignal.direction === 'BUY' || newSignal.direction === 'LONG') ? 'LONG' : 'SHORT',
+          entryPrice: parseFloat(newSignal.entryPrice || newSignal.entry_price),
+          stopLoss: parseFloat(newSignal.stopLoss || newSignal.stop_loss),
+          takeProfit: parseFloat(newSignal.takeProfit || newSignal.take_profit),
+          confidence: newSignal.confidence,
+          timestamp: newSignal.timestamp,
+          status: newSignal.status || 'active',
+          description: newSignal.analysis || newSignal.description || ''
+        };
+        
+        return [normalizedSignal, ...prevSignals];
       });
     });
 
@@ -86,7 +125,7 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
       console.log('Signal status update received:', update);
       setSignals((prevSignals) => 
         prevSignals.map(signal => 
-          signal.id === update.signalId 
+          signal.id === update.signalId
             ? { ...signal, status: update.status }
             : signal
         )
@@ -96,12 +135,18 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
     socket.on('signalDeleted', (data) => {
       console.log('Signal deleted:', data);
       setSignals((prevSignals) => 
-        prevSignals.filter(signal => signal.id !== data.signalId)
+        prevSignals.filter(signal => 
+          signal.id !== data.signalId
+        )
       );
     });
 
+    // Refresh signals every 30 seconds
+    const refreshInterval = setInterval(fetchSignals, 30000);
+
     return () => {
       socket.disconnect();
+      clearInterval(refreshInterval);
     };
   }, []);
 

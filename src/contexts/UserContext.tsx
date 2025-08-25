@@ -57,6 +57,32 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (storedUser && activeToken) {
           const parsedUser = JSON.parse(storedUser);
           
+          // Load questionnaire data from localStorage to ensure data persistence
+          const questionnaireAnswers = localStorage.getItem('questionnaireAnswers');
+          let tradingData = parsedUser.tradingData;
+          
+          if (questionnaireAnswers) {
+            try {
+              const answers = JSON.parse(questionnaireAnswers);
+              // Ensure account size is stored as exact number without rounding
+              tradingData = {
+                propFirm: answers.propFirm || '',
+                accountType: answers.accountType || '',
+                accountSize: String(answers.accountSize), // Keep as string to preserve exact value
+                riskPerTrade: String(answers.riskPercentage || 1),
+                riskRewardRatio: answers.riskRewardRatio || '2',
+                tradesPerDay: answers.tradesPerDay || '1-2',
+                tradingSession: answers.tradingSession || 'any',
+                cryptoAssets: answers.cryptoAssets || [],
+                forexAssets: answers.forexAssets || [],
+                hasAccount: answers.hasAccount || 'no',
+                tradingExperience: answers.tradingExperience || 'intermediate'
+              };
+            } catch (parseError) {
+              console.warn('Could not parse questionnaire answers:', parseError);
+            }
+          }
+          
           // Set up API authorization
           if (activeToken && typeof activeToken === 'string' && !activeToken.startsWith('demo-token')) {
             api.defaults.headers.common['Authorization'] = `Bearer ${activeToken}`;
@@ -67,13 +93,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
               if (profileResponse.data) {
                 const backendUserData = profileResponse.data;
                 
-                // Merge backend data with stored data
+                // Merge backend data with stored data, preserving local questionnaire data
                 const mergedUserData = {
                   ...parsedUser,
                   ...backendUserData,
+                  tradingData: tradingData || backendUserData.tradingData, // Prefer local data
                   isAuthenticated: true,
                   token: activeToken,
-                  setupComplete: !!backendUserData.tradingData,
+                  setupComplete: !!tradingData,
                   rememberMe
                 };
                 
@@ -91,9 +118,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           
           // Check if user has completed setup by looking for trading plan data
           const hasCompletedSetup = parsedUser.setupComplete || 
-            localStorage.getItem('questionnaireAnswers') || 
+            questionnaireAnswers || 
             localStorage.getItem('tradingPlan') ||
-            parsedUser.tradingData;
+            tradingData;
 
           // Restore user data from backup if available (for returning users)
           const backupData = localStorage.getItem(`user_backup_${parsedUser.email}`);
@@ -102,10 +129,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           if (backupData) {
             try {
               const backup = JSON.parse(backupData);
-              // Merge backup data with current user data
+              // Merge backup data with current user data, preserving questionnaire data
               restoredUserData = {
                 ...backup,
                 ...parsedUser,
+                tradingData: tradingData || backup.tradingData, // Prefer current questionnaire data
                 token: activeToken,
                 isAuthenticated: true,
                 setupComplete: hasCompletedSetup
@@ -116,7 +144,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           }
 
           const userData = { 
-            ...restoredUserData, 
+            ...restoredUserData,
+            tradingData: tradingData || restoredUserData.tradingData, // Ensure trading data is included
             isAuthenticated: true, 
             token: activeToken,
             setupComplete: hasCompletedSetup,
