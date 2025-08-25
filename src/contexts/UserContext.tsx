@@ -270,7 +270,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const saveUserProgress = async (userData: User) => {
     if (userData.email) {
       try {
-        await api.post('/api/user/progress', {
+        await api.post('/user/progress', {
           email: userData.email,
           progress: userData,
         });

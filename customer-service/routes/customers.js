@@ -26,16 +26,20 @@ router.post('/', async (req, res) => {
             questionnaire_data
         } = req.body;
 
-        // Check if customer already exists
-        let customer = await Customer.findOne({ 
-            $or: [
-                { user_id: user_id },
-                { email: email }
-            ]
-        });
+        // Check if email already exists
+        const existingCustomer = await Customer.findOne({ email: email });
+        if (existingCustomer) {
+            return res.status(400).json({ 
+                error: 'Email already registered',
+                message: 'This email is already associated with an existing account.'
+            });
+        }
+
+        // Check if user_id exists (for updates)
+        let customer = await Customer.findOne({ user_id: user_id });
 
         if (customer) {
-            // Update existing customer
+            // Update existing customer (only if user_id matches)
             customer.username = username;
             customer.plan_type = plan_type;
             customer.questionnaire_data = questionnaire_data;

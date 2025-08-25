@@ -76,20 +76,33 @@ def health_check():
 
 def format_symbol_for_yfinance(symbol):
     """Format symbol for yfinance API"""
-    # Crypto symbols in the list are like 'BTCUSDT'
-    if symbol.endswith('USDT'):
-        return f"{symbol[:-4]}-USD"
-
-    # Forex symbols are like 'EUR/USD'
-    if '/' in symbol:
-        processed_symbol = symbol.replace('/', '')
-        return f"{processed_symbol}=X"
-
-    # Fallback for symbols without '/' that might be forex (e.g. from direct input)
-    if len(symbol) == 6 and symbol.isalpha():
-        return f"{symbol}=X"
+    # Check if symbol is a string and not empty
+    if not symbol or not isinstance(symbol, str):
+        logger.warning(f"Invalid symbol format: {symbol}")
+        return symbol
         
-    return symbol # Return as is if no specific format matches
+    try:
+        # Remove any whitespace and convert to uppercase
+        symbol = symbol.strip().upper()
+        
+        # Crypto symbols in the list are like 'BTCUSDT'
+        if symbol.endswith('USDT'):
+            return f"{symbol[:-4]}-USD"
+
+        # Forex symbols are like 'EUR/USD'
+        if '/' in symbol:
+            processed_symbol = symbol.replace('/', '')
+            return f"{processed_symbol}=X"
+
+        # Fallback for symbols without '/' that might be forex (e.g. from direct input)
+        if len(symbol) == 6 and symbol.isalpha():
+            return f"{symbol}=X"
+            
+        return symbol  # Return as is if no specific format matches
+        
+    except Exception as e:
+        logger.error(f"Error formatting symbol {symbol}: {str(e)}")
+        return symbol  # Return original symbol on error
 
 def get_yfinance_interval(timeframe):
     """Maps frontend timeframe to a valid yfinance interval."""
@@ -449,11 +462,22 @@ def analyze_symbol():
         data = request.get_json()
         if not data:
             return jsonify({'error': 'Invalid or missing JSON body.'}), 400
+            
         symbol = data.get('symbol')
         timeframe = data.get('timeframe', '15m')
         
-        if not symbol:
-            return jsonify({'error': 'Symbol parameter is required.'}), 400
+        # Validate symbol
+        if not symbol or not isinstance(symbol, str) or not symbol.strip():
+            return jsonify({
+                'error': 'Invalid symbol format. Symbol must be a non-empty string.',
+                'symbol': str(symbol)[:100],  # Truncate long strings for logging
+                'signalType': 'NEUTRAL',
+                'analysis': 'Invalid symbol format'
+            }), 400
+            
+        # Clean and validate timeframe
+        if not isinstance(timeframe, str) or timeframe.strip() not in ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '1d', '1w']:
+            timeframe = '15m'  # Default to 15m if invalid
 
         logger.info(f"Analyzing {symbol} on {timeframe}")
         

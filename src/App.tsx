@@ -51,6 +51,7 @@ const AppContent = () => {
   const { logout: adminLogout } = useAdmin();
   const { resetPlan } = useTradingPlan();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     userLogout();
@@ -156,7 +157,9 @@ const AppContent = () => {
         <Route path="/lightning" element={<Lightning><LandingPage /></Lightning>} />
         </Routes>
       </Suspense>
-      <Footer />
+      {!(location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')) && (
+        <Footer />
+      )}
     </div>
   );
 }

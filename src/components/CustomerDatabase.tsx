@@ -37,35 +37,37 @@ const CustomerDatabase: React.FC = () => {
   const fetchCustomers = async () => {
     setLoading(true);
     try {
+      // Get the authentication token from localStorage or use the one we have
+      const authToken = localStorage.getItem('customerServiceToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2VudCI6eyJpZCI6IjY4YWMzZmUyMjRmMWY0OTlkZDE4OGU5MCJ9LCJpYXQiOjE3NTYxMTkwMTAsImV4cCI6MTc1NjEyMjYxMH0.kQVfzTXSjP557ubGCf7ifhwdI-ETcTdrIg2MgYoz04s';
+      
       const customerData = await errorHandler.handleCustomersApi(async () => {
-        // Try main API first
+        // Try customer service API directly
         try {
-          const response = await fetch('/api/customers', {
+          const response = await fetch('http://localhost:5000/api/customers', {
             headers: {
               'Content-Type': 'application/json',
+              'x-auth-token': authToken
             },
             timeout: 5000
           } as any);
           
           if (response.ok) {
-            return await response.json();
+            const data = await response.json();
+            console.log('Fetched customers:', data);
+            return data;
           }
-          throw new Error('Main API failed');
-        } catch (mainApiError) {
-          // Try customer service API as fallback (only in development)
-          if (import.meta.env.DEV) {
-            const csResponse = await fetch('http://localhost:5000/api/customers', {
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              timeout: 3000
-            } as any);
-            
-            if (csResponse.ok) {
-              return await csResponse.json();
-            }
+          
+          // If unauthorized, try to re-authenticate
+          if (response.status === 401) {
+            console.log('Authentication required, attempting to re-authenticate...');
+            // Here you would typically implement token refresh logic
+            throw new Error('Authentication required');
           }
-          throw new Error('All customer APIs failed');
+          
+          throw new Error(`API request failed with status ${response.status}`);
+        } catch (error) {
+          console.error('Error fetching customers:', error);
+          throw error;
         }
       });
 
