@@ -1,3 +1,5 @@
+import eventlet
+eventlet.monkey_patch()
 import os
 import sys
 from journal import create_app
