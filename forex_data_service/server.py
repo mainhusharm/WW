@@ -34,7 +34,15 @@ session = create_session_with_retries()
 app = Flask(__name__)
 
 # Enhanced CORS configuration
-CORS(app)
+CORS(app, 
+     resources={
+         r"/api/*": {
+             "origins": ["*"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+             "supports_credentials": True
+         }
+     })
 
 
 # Cache setup
@@ -102,39 +110,6 @@ def get_yfinance_interval(timeframe):
         '1mo': '1mo',
     }
     return timeframe_map.get(timeframe, '1h') # Default to '1h' if not found
-
-
-def get_yfinance_data(formatted_pair, params, timeout=30):
-    """Fetch data from yfinance with a fallback mechanism."""
-    try:
-        logger.info(f"Attempting to fetch data for {formatted_pair} with yf.download")
-        data = yf.download(
-            tickers=formatted_pair,
-            **params,
-            auto_adjust=False,
-            progress=False,
-            timeout=timeout
-        )
-        if not data.empty:
-            return data
-    except Exception as e:
-        logger.warning(f"yf.download failed for {formatted_pair}: {e}. Trying fallback.")
-
-    try:
-        logger.info(f"Attempting to fetch data for {formatted_pair} with Ticker.history")
-        ticker = yf.Ticker(formatted_pair)
-        data = ticker.history(
-            period=params.get('period', '1mo'),
-            interval=params.get('interval', '1h'),
-            auto_adjust=False,
-            timeout=timeout
-        )
-        if not data.empty:
-            return data
-    except Exception as e:
-        logger.error(f"Ticker.history fallback also failed for {formatted_pair}: {e}")
-
-    return pd.DataFrame()
 
 
 @app.route('/api/forex-data')
