@@ -7,18 +7,32 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
-    plugins: [react()],
-    base: '/', // Set to your subdirectory if needed, e.g., '/app/'
+    plugins: [
+      react({
+        jsxImportSource: '@emotion/react',
+        babel: {
+          plugins: ['@emotion/babel-plugin'],
+        },
+      }),
+    ],
+    base: '/',
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
-      sourcemap: false, // Disable source maps in production
+      sourcemap: false,
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom'],
-            three: ['three', '@react-three/fiber', '@react-three/drei'],
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              if (id.includes('three') || id.includes('@react-three')) {
+                return 'three';
+              }
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'vendor';
+              }
+              return 'vendor-other';
+            }
           },
         },
       },
@@ -50,6 +64,15 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       'process.env': {},
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-router-dom'],
+      esbuildOptions: {
+        target: 'es2020',
+      },
+    },
+    esbuild: {
+      logOverride: { 'this-is-undefined-in-esm': 'silent' },
     },
   };
 });
