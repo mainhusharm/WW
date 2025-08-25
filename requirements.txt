@@ -2,9 +2,9 @@ Flask==2.3.3
 flask-cors==4.0.0
 flask-jwt-extended==4.5.2
 flask-sqlalchemy==3.1.1
-sqlalchemy==2.0.23
+SQLAlchemy==1.4.50
 python-dotenv==1.0.0
-werkzeug==2.3.7
+Werkzeug==2.3.7
 requests==2.31.0
 flask-socketio==5.3.5
 marshmallow==3.20.1
@@ -12,7 +12,10 @@ gunicorn==21.2.0
 mailchimp-marketing==3.0.80
 python-decouple==3.8
 whitenoise==6.6.0
-eventlet==0.33.3
 greenlet==2.0.2
 gevent==22.10.2
 gevent-websocket==0.10.1
+psycopg2-binary==2.9.9
+PyJWT==2.8.0
+pytz==2023.3
+six==1.16.0
