@@ -34,15 +34,7 @@ session = create_session_with_retries()
 app = Flask(__name__)
 
 # Enhanced CORS configuration
-CORS(app, 
-     resources={
-         r"/api/*": {
-             "origins": ["*"],
-             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
-             "supports_credentials": True
-         }
-     })
+CORS(app)
 
 
 # Cache setup
@@ -188,7 +180,7 @@ def get_forex_data():
         # Replace NaN with None for JSON compatibility
         data.replace({np.nan: None}, inplace=True)
         
-        return jsonify(data[required_cols].to_dict(orient='records'))
+        return jsonify(data[required_cols].to_dict('records'))
 
     except Exception as e:
         logger.error(f"Error fetching data for {pair}: {str(e)}")
@@ -253,7 +245,7 @@ def get_bulk_forex_data():
                         required_cols.append('volume')
                     
                     data.replace({np.nan: None}, inplace=True)
-                    results[pair] = data[required_cols].to_dict(orient='records')
+                    results[pair] = data[required_cols].to_dict('records')
                 else:
                     logger.warning(f"No data returned for {pair}")
                     results[pair] = []
