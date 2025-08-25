@@ -129,7 +129,15 @@ const Enhanced3DLandingPage = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/stats');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+        
+        const response = await fetch('/api/stats', {
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
         if (response.ok) {
           const data = await response.json();
           setStats([
@@ -140,8 +148,11 @@ const Enhanced3DLandingPage = () => {
           ]);
         }
       } catch (error) {
-        console.error('Error fetching stats:', error);
-        // Keep default values of "0" if API fails
+        // Only log errors in development mode
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Stats API not available:', error);
+        }
+        // Keep default values of "0" if API fails - this is normal during development
       }
     };
 

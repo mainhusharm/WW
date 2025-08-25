@@ -33,8 +33,12 @@ session = create_session_with_retries()
 
 app = Flask(__name__)
 
-# Enhanced CORS configuration
-CORS(app, origins=["https://www.traderedgepro.com", "https://traderedgepro.com", "http://localhost:3000", "http://127.0.0.1:3000"], supports_credentials=True)
+# Enhanced CORS configuration for deployment
+CORS(app, 
+     origins=["*"], 
+     methods=["GET", "POST", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+     supports_credentials=False)
 
 
 # Cache setup
@@ -106,23 +110,30 @@ def get_yfinance_interval(timeframe):
 
 @app.route('/api/forex-data')
 def get_forex_data():
-    pair = request.args.get('pair')
-    timeframe = request.args.get('timeframe', '1h')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+    try:
+        pair = request.args.get('pair')
+        timeframe = request.args.get('timeframe', '1h')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
 
-    if not pair:
-        return jsonify({'error': 'The "pair" parameter is required.'}), 400
+        if not pair:
+            return jsonify({'error': 'The "pair" parameter is required.'}), 400
 
-    # Check if the pair is a crypto pair
-    if pair.endswith('USDT'):
-        try:
-            data = get_binance_klines(pair, timeframe, start_date, end_date)
-            data['time'] = data['time'].dt.strftime('%Y-%m-%d %H:%M:%S')
-            return jsonify(data.to_dict(orient='records'))
-        except Exception as e:
-            logger.error(f"Error fetching Binance data for {pair}: {str(e)}")
-            return jsonify({'error': f'An error occurred while fetching data for {pair}.'}), 500
+        # Check if the pair is a crypto pair
+        if pair.endswith('USDT'):
+            try:
+                data = get_binance_klines(pair, timeframe, start_date, end_date)
+                if data.empty:
+                    return jsonify({'error': f'No data found for {pair}'}), 404
+                data_copy = data.copy()
+                data_copy['time'] = data_copy['time'].dt.strftime('%Y-%m-%d %H:%M:%S')
+                return jsonify(data_copy.to_dict(orient='records'))
+            except Exception as e:
+                logger.error(f"Error fetching Binance data for {pair}: {str(e)}")
+                return jsonify({'error': f'An error occurred while fetching data for {pair}.'}), 500
+    except Exception as e:
+        logger.error(f"Unexpected error in get_forex_data: {str(e)}")
+        return jsonify({'error': 'Internal server error occurred.'}), 500
 
     # Fallback to yfinance for non-crypto pairs
     formatted_pair = format_symbol_for_yfinance(pair)

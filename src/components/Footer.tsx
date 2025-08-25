@@ -4,7 +4,7 @@ import { TrendingUp, Award, Shield } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-950 border-t border-gray-800">
+    <footer className="relative z-50 py-16 px-4 sm:px-6 lg:px-8 bg-gray-950 border-t border-gray-800">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="md:col-span-2">
@@ -67,7 +67,7 @@ const Footer = () => {
             <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-3 text-gray-400">
                 <li><Link to="/faq" className="hover:text-blue-400 transition-colors">FAQ</Link></li>
-                <li><Link to="/customer-service" className="hover:text-blue-400 transition-colors">Contact Support</Link></li>
+                <li><Link to="/contact-support" className="hover:text-blue-400 transition-colors">Contact Support</Link></li>
                 <li><Link to="/privacy-policy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
                 <li><Link to="/terms-of-service" className="hover:text-blue-400 transition-colors">Terms of Service</Link></li>
               </ul>

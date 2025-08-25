@@ -47,6 +47,13 @@
       "status": "optional",
       "fallback": "mock_data"
     },
+    "forex_data_service": {
+      "url": "https://forex-data-service.onrender.com",
+      "endpoints": ["/api/forex-price", "/api/bulk-forex-price", "/api/forex-data", "/health"],
+      "status": "active",
+      "fallback": "simulated_data",
+      "description": "Live forex price data with 23 currency pairs (XAU/USD and XAG/USD removed)"
+    },
     "websocket": {
       "url": "ws://127.0.0.1:5000",
       "features": ["real-time signals", "status updates"],

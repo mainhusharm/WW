@@ -4,6 +4,7 @@ import api from '../api';
 import { useUser } from '../contexts/UserContext';
 import SignalCard from './SignalCard';
 import io from 'socket.io-client';
+import { errorHandler } from '../services/errorHandler';
 
 
 interface SignalsFeedProps {
@@ -39,25 +40,25 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
 
     const fetchSignals = async () => {
       try {
-        // Try multiple endpoints to get signals
-        let response;
-        try {
-          response = await api.get('/signals');
-        } catch (mainApiError) {
-          console.warn('Main API signals endpoint failed, trying alternative:', mainApiError);
-          // Try direct backend URL
-          const backendUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
-          response = await fetch(`${backendUrl}/api/signals`);
-          if (response.ok) {
-            const data = await response.json();
-            response = { data };
-          } else {
-            throw new Error('Alternative API also failed');
+        const signalsData = await errorHandler.handleSignalsApi(async () => {
+          // Try main API first
+          try {
+            const response = await api.get('/signals');
+            return response.data || [];
+          } catch (mainApiError) {
+            // Try direct backend URL as fallback
+            const backendUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+            const response = await fetch(`${backendUrl}/api/signals`);
+            if (response.ok) {
+              const data = await response.json();
+              return data || [];
+            }
+            throw new Error('All signal endpoints failed');
           }
-        }
+        });
         
-        if (response.data && Array.isArray(response.data)) {
-          const sortedSignals = response.data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        if (Array.isArray(signalsData) && signalsData.length > 0) {
+          const sortedSignals = signalsData.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
           setSignals(sortedSignals);
           console.log('Signals loaded successfully:', sortedSignals.length);
         } else {

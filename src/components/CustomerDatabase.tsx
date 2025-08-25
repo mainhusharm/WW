@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, User, Mail, Calendar, Activity, Filter, Download, RefreshCw } from 'lucide-react';
+import { errorHandler } from '../services/errorHandler';
 
 interface Customer {
   _id?: string;
@@ -36,46 +37,42 @@ const CustomerDatabase: React.FC = () => {
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      let customerData: Customer[] = [];
-      
-      // Try main API first
-      try {
-        const response = await fetch('/api/customers', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        if (response.ok) {
-          customerData = await response.json();
-        } else {
-          throw new Error(`API responded with status: ${response.status}`);
-        }
-      } catch (mainApiError) {
-        console.warn('Main API failed, trying customer service API:', mainApiError);
-        
-        // Try customer service API as backup
+      const customerData = await errorHandler.handleCustomersApi(async () => {
+        // Try main API first
         try {
-          const csResponse = await fetch('http://localhost:5001/api/customers', {
+          const response = await fetch('/api/customers', {
             headers: {
               'Content-Type': 'application/json',
             },
-          });
-          if (csResponse.ok) {
-            customerData = await csResponse.json();
-          } else {
-            throw new Error(`Customer service API responded with status: ${csResponse.status}`);
+            timeout: 5000
+          } as any);
+          
+          if (response.ok) {
+            return await response.json();
           }
-        } catch (csApiError) {
-          console.error('Customer service API also failed:', csApiError);
-          throw new Error('All customer APIs are unavailable');
+          throw new Error('Main API failed');
+        } catch (mainApiError) {
+          // Try customer service API as fallback (only in development)
+          if (import.meta.env.DEV) {
+            const csResponse = await fetch('http://localhost:5000/api/customers', {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              timeout: 3000
+            } as any);
+            
+            if (csResponse.ok) {
+              return await csResponse.json();
+            }
+          }
+          throw new Error('All customer APIs failed');
         }
-      }
+      });
 
       setCustomers(customerData || []);
       setError('');
     } catch (err) {
-      console.error('Error fetching customers:', err);
-      setError('Failed to load customer data. Please ensure the backend services are running.');
+      setError('Customer data services are currently offline. This is normal during development when backend services are not running.');
       setCustomers([]);
     } finally {
       setLoading(false);

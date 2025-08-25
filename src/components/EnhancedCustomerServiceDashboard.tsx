@@ -96,27 +96,51 @@ const EnhancedCustomerServiceDashboard = ({ onLogout }: { onLogout?: () => void 
   useEffect(() => {
     const fetchCustomerData = async () => {
       try {
-        // Try to fetch from main API first
-        const mainApiResponse = await api.get('/customers');
+        // Try to fetch from main API first with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        const mainApiResponse = await api.get('/customers', {
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
         if (mainApiResponse.data) {
           setCustomerData(mainApiResponse.data);
           return;
         }
       } catch (mainApiError) {
-        console.warn('Main API not available, trying customer service API:', mainApiError);
+        // Only log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Main API not available:', mainApiError);
+        }
       }
 
-      try {
-        // Fallback to customer service API
-        const customerServiceUrl = 'http://localhost:5001';
-        const response = await fetch(`${customerServiceUrl}/api/customers`);
-        if (response.ok) {
-          const data = await response.json();
-          setCustomerData(data);
+      // Only try customer service API in development
+      if (process.env.NODE_ENV === 'development') {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          
+          const customerServiceUrl = 'http://localhost:5001';
+          const response = await fetch(`${customerServiceUrl}/api/customers`, {
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (response.ok) {
+            const data = await response.json();
+            setCustomerData(data);
+          }
+        } catch (csError) {
+          // Only log in development
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Customer service API not available:', csError);
+          }
+          setError('Customer data services are currently offline. This is normal during development.');
         }
-      } catch (csError) {
-        console.warn('Customer service API not available:', csError);
-        setError('Unable to fetch customer data - services may be offline');
       }
     };
 
@@ -298,6 +322,7 @@ const EnhancedCustomerServiceDashboard = ({ onLogout }: { onLogout?: () => void 
               { id: 'live-chats', label: 'Live Chats', icon: MessageSquare, badge: liveChats.filter(c => c.status === 'active').length },
               { id: 'analytics', label: 'Analytics', icon: TrendingUp, badge: null },
               { id: 'customers', label: 'User Profiles', icon: Users, badge: null },
+              { id: 'support-queries', label: 'Support Queries', icon: Headphones, badge: null },
               { id: 'system', label: 'System Status', icon: Server, badge: null },
               { id: 'settings', label: 'Settings', icon: Settings, badge: null },
               { id: 'customer-database', label: 'Customer Database', icon: Database, badge: null }
@@ -346,6 +371,7 @@ const EnhancedCustomerServiceDashboard = ({ onLogout }: { onLogout?: () => void 
                    activePage === 'live-chats' ? 'Live Chats' :
                    activePage === 'analytics' ? 'Analytics' :
                    activePage === 'customers' ? 'User Profiles' :
+                   activePage === 'support-queries' ? 'Support Queries' :
                    activePage === 'system' ? 'System Status' :
                    activePage === 'customer-database' ? 'Customer Database' : 'Settings'}
                 </h2>
@@ -694,6 +720,69 @@ const EnhancedCustomerServiceDashboard = ({ onLogout }: { onLogout?: () => void 
                       <button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-3 rounded-lg hover:from-cyan-400 hover:to-blue-500 font-medium transition-all hover:scale-105">
                         Save Configuration
                       </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activePage === 'support-queries' && (
+              <div className="space-y-8">
+                <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-xl p-8 rounded-2xl border border-cyan-500/20">
+                  <h3 className="text-2xl font-bold text-cyan-100 mb-6 flex items-center gap-2">
+                    <Headphones className="w-6 h-6 text-cyan-400" />
+                    Contact Support Queries
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    {[
+                      { title: 'Total Queries', value: '0', icon: Mail, color: 'cyan' },
+                      { title: 'Pending', value: '0', icon: Clock, color: 'yellow' },
+                      { title: 'Resolved', value: '0', icon: CheckCircle, color: 'green' }
+                    ].map((stat, index) => (
+                      <div key={index} className="bg-gradient-to-br from-gray-700/60 to-gray-800/60 p-6 rounded-xl border border-cyan-500/20">
+                        <div className="flex justify-between items-start mb-4">
+                          <span className="text-cyan-200 text-sm font-medium">{stat.title}</span>
+                          <div className={`p-2 rounded-lg bg-gradient-to-r ${
+                            stat.color === 'cyan' ? 'from-cyan-500/20 to-cyan-600/20 text-cyan-400' :
+                            stat.color === 'yellow' ? 'from-yellow-500/20 to-yellow-600/20 text-yellow-400' :
+                            'from-green-500/20 to-green-600/20 text-green-400'
+                          }`}>
+                            <stat.icon className="w-5 h-5" />
+                          </div>
+                        </div>
+                        <div className="text-2xl font-bold text-white">{stat.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-gradient-to-br from-gray-700/40 to-gray-800/40 rounded-xl p-6 border border-cyan-500/10">
+                    <div className="flex justify-between items-center mb-6">
+                      <h4 className="text-xl font-bold text-cyan-100">Recent Support Queries</h4>
+                      <div className="flex gap-2">
+                        <button className="px-4 py-2 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/30 rounded-lg text-cyan-200 hover:from-cyan-500/30 hover:to-blue-500/30 transition-all text-sm">
+                          All
+                        </button>
+                        <button className="px-4 py-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-400/30 rounded-lg text-yellow-200 hover:from-yellow-500/30 hover:to-orange-500/30 transition-all text-sm">
+                          Pending
+                        </button>
+                        <button className="px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 rounded-lg text-green-200 hover:from-green-500/30 hover:to-emerald-500/30 transition-all text-sm">
+                          Resolved
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="text-center py-12 text-gray-400">
+                        <Headphones className="w-16 h-16 mx-auto mb-4 text-cyan-400/30" />
+                        <h3 className="text-xl font-semibold text-gray-300 mb-2">No Support Queries Yet</h3>
+                        <p className="text-gray-400 mb-4">Contact support queries from the website will appear here</p>
+                        <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-400/20 rounded-lg p-4 max-w-md mx-auto">
+                          <p className="text-sm text-cyan-200">
+                            <strong>Note:</strong> Queries submitted through the Contact Support page will be displayed here for agent review and response.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

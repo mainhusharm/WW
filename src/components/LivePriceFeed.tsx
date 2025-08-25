@@ -19,7 +19,9 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
   const symbols = {
     forex: [
       'EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD',
-      'EUR/JPY', 'GBP/JPY', 'XAU/USD', 'XAG/USD'
+      'EUR/JPY', 'GBP/JPY', 'EUR/GBP', 'AUD/JPY', 'GBP/CHF', 'EUR/CHF', 'CAD/JPY', 
+      'CHF/JPY', 'AUD/CAD', 'AUD/CHF', 'AUD/NZD', 'CAD/CHF', 'EUR/AUD', 'EUR/CAD', 
+      'EUR/NZD', 'GBP/AUD'
     ],
     crypto: [
       'BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'BNBUSDT', 'XRPUSDT', 'SOLUSDT', 'DOTUSDT'
@@ -152,48 +154,10 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
     };
     
     const generateFallbackData = () => {
-        
-      console.warn('Using fallback mock data due to service unavailability');
-      setError('Yahoo Finance service unavailable - using mock data');
-      
-      // Generate realistic mock prices based on typical forex ranges
-      const mockPrices: Record<string, PriceData> = {};
-      const basePrices: Record<string, number> = {
-        'EUR/USD': 1.0850,
-        'GBP/USD': 1.2650,
-        'USD/JPY': 149.50,
-        'USD/CHF': 0.8750,
-        'AUD/USD': 0.6450,
-        'USD/CAD': 1.3650,
-        'NZD/USD': 0.5950,
-        'EUR/JPY': 162.25,
-        'GBP/JPY': 189.15,
-        'XAU/USD': 2025.50,
-        'XAG/USD': 24.75,
-        'BTCUSDT': 43250.00,
-        'ETHUSDT': 2650.00,
-        'ADAUSDT': 0.4250,
-        'BNBUSDT': 315.50,
-        'XRPUSDT': 0.5850,
-        'SOLUSDT': 95.25,
-        'DOTUSDT': 5.75
-      };
-      
-      selectedSymbols.forEach((symbol) => {
-        const basePrice = basePrices[symbol] || 1.0000;
-        const variation = (Math.random() - 0.5) * 0.01; // ±0.5% variation
-        const price = basePrice * (1 + variation);
-        
-        mockPrices[symbol] = {
-          price: parseFloat(price.toFixed(5)),
-          provider: 'mock',
-          timestamp: new Date().toISOString(),
-          error: 'Service unavailable - mock data'
-        };
-      });
-      
-      setPrices(mockPrices);
-      return mockPrices;
+      console.warn('Real-time data service unavailable');
+      setError('Real-time data service is currently unavailable. Please try again later.');
+      setPrices({});
+      return {};
     };
 
     // Initial fetch with delay to avoid overwhelming the service
