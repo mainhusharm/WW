@@ -33,8 +33,12 @@ session = create_session_with_retries()
 
 app = Flask(__name__)
 
-# Enhanced CORS configuration
-CORS(app)
+# Enhanced CORS configuration for deployment
+CORS(app, 
+     origins=["*"], 
+     methods=["GET", "POST", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+     supports_credentials=False)
 
 
 # Cache setup
@@ -72,20 +76,33 @@ def health_check():
 
 def format_symbol_for_yfinance(symbol):
     """Format symbol for yfinance API"""
-    # Crypto symbols in the list are like 'BTCUSDT'
-    if symbol.endswith('USDT'):
-        return f"{symbol[:-4]}-USD"
-
-    # Forex symbols are like 'EUR/USD'
-    if '/' in symbol:
-        processed_symbol = symbol.replace('/', '')
-        return f"{processed_symbol}=X"
-
-    # Fallback for symbols without '/' that might be forex (e.g. from direct input)
-    if len(symbol) == 6 and symbol.isalpha():
-        return f"{symbol}=X"
+    # Check if symbol is a string and not empty
+    if not symbol or not isinstance(symbol, str):
+        logger.warning(f"Invalid symbol format: {symbol}")
+        return symbol
         
-    return symbol # Return as is if no specific format matches
+    try:
+        # Remove any whitespace and convert to uppercase
+        symbol = symbol.strip().upper()
+        
+        # Crypto symbols in the list are like 'BTCUSDT'
+        if symbol.endswith('USDT'):
+            return f"{symbol[:-4]}-USD"
+
+        # Forex symbols are like 'EUR/USD'
+        if '/' in symbol:
+            processed_symbol = symbol.replace('/', '')
+            return f"{processed_symbol}=X"
+
+        # Fallback for symbols without '/' that might be forex (e.g. from direct input)
+        if len(symbol) == 6 and symbol.isalpha():
+            return f"{symbol}=X"
+            
+        return symbol  # Return as is if no specific format matches
+        
+    except Exception as e:
+        logger.error(f"Error formatting symbol {symbol}: {str(e)}")
+        return symbol  # Return original symbol on error
 
 def get_yfinance_interval(timeframe):
     """Maps frontend timeframe to a valid yfinance interval."""
@@ -106,46 +123,71 @@ def get_yfinance_interval(timeframe):
 
 @app.route('/api/forex-data')
 def get_forex_data():
-    pair = request.args.get('pair')
-    timeframe = request.args.get('timeframe', '1h')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-
-    if not pair:
-        return jsonify({'error': 'The "pair" parameter is required.'}), 400
-
-    # Check if the pair is a crypto pair
-    if pair.endswith('USDT'):
-        try:
-            data = get_binance_klines(pair, timeframe, start_date, end_date)
-            data['time'] = data['time'].dt.strftime('%Y-%m-%d %H:%M:%S')
-            return jsonify(data.to_dict(orient='records'))
-        except Exception as e:
-            logger.error(f"Error fetching Binance data for {pair}: {str(e)}")
-            return jsonify({'error': f'An error occurred while fetching data for {pair}.'}), 500
-
-    # Fallback to yfinance for non-crypto pairs
-    formatted_pair = format_symbol_for_yfinance(pair)
-    interval = get_yfinance_interval(timeframe)
-    
-    # Construct parameters for yfinance
-    params = {'interval': interval}
-    if start_date and end_date:
-        params['start'] = start_date
-        params['end'] = end_date
-    else:
-        # Default period if no date range is provided
-        params['period'] = '1mo' if interval in ['1d', '1wk', '1mo'] else '7d'
-
     try:
-        logger.info(f"Fetching data for {formatted_pair}")
-        data = yf.download(
-            tickers=formatted_pair,
-            **params,
-            auto_adjust=False,
-            progress=False,
-            timeout=30
-        )
+        pair = request.args.get('pair')
+        timeframe = request.args.get('timeframe', '1h')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+
+        if not pair:
+            return jsonify({'error': 'The "pair" parameter is required.'}), 400
+
+        # Check cache first
+        cache_key = f"{pair}_{timeframe}_{start_date}_{end_date}"
+        current_time = time.time()
+        
+        if cache_key in cache and (current_time - cache[cache_key]['timestamp']) < CACHE_DURATION_SECONDS:
+            logger.info(f"Returning cached data for {pair}")
+            return jsonify(cache[cache_key]['data'])
+
+        # Check if the pair is a crypto pair
+        if pair.endswith('USDT'):
+            try:
+                data = get_binance_klines(pair, timeframe, start_date, end_date)
+                if data is None or data.empty:
+                    logger.warning(f"No Binance data found for {pair}")
+                    return jsonify({'error': f'No data found for {pair}'}), 404
+                data_copy = data.copy()
+                data_copy['time'] = data_copy['time'].dt.strftime('%Y-%m-%d %H:%M:%S')
+                result = data_copy.to_dict(orient='records')
+                
+                # Cache the result
+                cache[cache_key] = {
+                    'data': result,
+                    'timestamp': current_time
+                }
+                
+                return jsonify(result)
+            except Exception as e:
+                logger.error(f"Error fetching Binance data for {pair}: {str(e)}")
+                return jsonify({'error': f'An error occurred while fetching data for {pair}.'}), 500
+                
+        # Continue to yfinance processing for non-crypto pairs
+        return process_yfinance_data(pair, timeframe, start_date, end_date, cache_key, current_time)
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in get_forex_data: {str(e)}")
+        return jsonify({'error': 'Internal server error occurred.'}), 500
+
+def process_yfinance_data(pair, timeframe, start_date, end_date, cache_key, current_time):
+    """Process yfinance data with error handling"""
+    try:
+        # Fallback to yfinance for non-crypto pairs
+        formatted_pair = format_symbol_for_yfinance(pair)
+        interval = get_yfinance_interval(timeframe)
+    
+        # Construct parameters for yfinance
+        params = {'interval': interval}
+        if start_date and end_date:
+            params['start'] = start_date
+            params['end'] = end_date
+        else:
+            # Default period if no date range is provided
+            params['period'] = '1mo' if interval in ['1d', '1wk', '1mo'] else '7d'
+
+        # Fetch data from yfinance
+        ticker = yf.Ticker(formatted_pair)
+        data = ticker.history(**params)
 
         if data.empty:
             logger.warning(f"No data found for {pair} with the specified parameters. Trying with a different period.")
@@ -161,42 +203,26 @@ def get_forex_data():
         if data.empty:
             return jsonify({'error': f'No data found for {pair} with the specified parameters.'}), 404
 
+        # Reset index to make datetime a column
         data.reset_index(inplace=True)
-        
-        # Identify the correct timestamp column
-        timestamp_col = 'Datetime' if 'Datetime' in data.columns else 'Date'
-        
-        # Standardize timestamp to UTC
-        if data[timestamp_col].dt.tz:
-            data[timestamp_col] = data[timestamp_col].dt.tz_convert('UTC')
-        else:
-            data[timestamp_col] = data[timestamp_col].dt.tz_localize('UTC')
-        
-        data['time'] = data[timestamp_col].dt.strftime('%Y-%m-%d %H:%M:%S')
+        data.rename(columns={'Datetime': 'time', 'Date': 'time'}, inplace=True)
 
-        # Rename columns to be frontend-friendly
-        data.rename(columns={
-            'Open': 'open',
-            'High': 'high',
-            'Low': 'low',
-            'Close': 'close',
-            'Volume': 'volume'
-        }, inplace=True)
+        # Format the data
+        data['time'] = data['time'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        data.columns = data.columns.str.lower()
+        result = data[['time', 'open', 'high', 'low', 'close', 'volume']].to_dict(orient='records')
 
-        # Ensure all required columns are present
-        required_cols = ['time', 'open', 'high', 'low', 'close']
-        if 'volume' in data.columns:
-            required_cols.append('volume')
-        
-        # Replace NaN with None for JSON compatibility
-        data.replace({np.nan: None}, inplace=True)
-        
-        return jsonify(data[required_cols].to_dict('records'))
+        # Cache the result
+        cache[cache_key] = {
+            'data': result,
+            'timestamp': current_time
+        }
 
+        return jsonify(result)
+        
     except Exception as e:
-        logger.error(f"Error fetching data for {pair}: {str(e)}")
-        print(f"Error fetching data for {pair}: {str(e)}")
-        return jsonify({'error': f'An error occurred while fetching data for {pair}. Please try again.'}), 500
+        logger.error(f"Error processing yfinance data for {pair}: {str(e)}")
+        return jsonify({'error': f'An error occurred while fetching data for {pair}.'}), 500
 
 @app.route('/api/bulk-forex-data')
 def get_bulk_forex_data():
@@ -263,7 +289,7 @@ def get_bulk_forex_data():
 
             except Exception as e:
                 logger.error(f"Error fetching data for {pair}: {str(e)}")
-                results[pair] = []  # Mark failed pair
+                results[pair] = {'error': f'Failed to fetch data for {pair}'}
 
     return jsonify(results)
 
@@ -311,7 +337,6 @@ def get_forex_price():
 
     except Exception as e:
         logger.error(f"Error fetching price for {pair}: {str(e)}")
-        print(f"Error fetching price for {pair}: {str(e)}")
         return jsonify({'error': f'An error occurred while fetching price for {pair}. Please try again.'}), 500
 
 @app.route('/api/bulk-forex-price')
@@ -451,11 +476,22 @@ def analyze_symbol():
         data = request.get_json()
         if not data:
             return jsonify({'error': 'Invalid or missing JSON body.'}), 400
+            
         symbol = data.get('symbol')
         timeframe = data.get('timeframe', '15m')
         
-        if not symbol:
-            return jsonify({'error': 'Symbol parameter is required.'}), 400
+        # Validate symbol
+        if not symbol or not isinstance(symbol, str) or not symbol.strip():
+            return jsonify({
+                'error': 'Invalid symbol format. Symbol must be a non-empty string.',
+                'symbol': str(symbol)[:100],  # Truncate long strings for logging
+                'signalType': 'NEUTRAL',
+                'analysis': 'Invalid symbol format'
+            }), 400
+            
+        # Clean and validate timeframe
+        if not isinstance(timeframe, str) or timeframe.strip() not in ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '1d', '1w']:
+            timeframe = '15m'  # Default to 15m if invalid
 
         logger.info(f"Analyzing {symbol} on {timeframe}")
         
@@ -759,6 +795,30 @@ def get_binance_klines(symbol, timeframe, start_date=None, end_date=None, limit=
 
 import os
 
+# Add error handling for startup
+def create_instance_directory():
+    """Create instance directory if it doesn't exist"""
+    try:
+        instance_dir = os.path.join(os.path.dirname(__file__), 'instance')
+        os.makedirs(instance_dir, exist_ok=True)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to create instance directory: {e}")
+        return False
+
+# Initialize on startup
+try:
+    create_instance_directory()
+    logger.info("Forex data service initialized successfully")
+except Exception as e:
+    logger.error(f"Initialization error: {e}")
+
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 3004))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    try:
+        port = int(os.environ.get("PORT", 3004))
+        logger.info(f"Starting forex data service on port {port}")
+        app.run(host='0.0.0.0', port=port, debug=False)
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")
+        import sys
+        sys.exit(1)

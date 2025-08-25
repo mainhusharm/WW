@@ -15,23 +15,37 @@ import os
 import sys
 from dotenv import load_dotenv
 
-def create_app(config_object='journal.config.DevelopmentConfig'):
+def create_app(config_object='journal.config.ProductionConfig'):
     load_dotenv()
     app = Flask(__name__, static_folder='../dist', static_url_path='')
     
+    # Determine config based on environment
+    flask_env = os.getenv('FLASK_ENV', 'production')
+    if flask_env == 'development':
+        config_object = 'journal.config.DevelopmentConfig'
+    else:
+        config_object = 'journal.config.ProductionConfig'
+    
     try:
         app.config.from_object(config_object)
-    except ImportError:
-        print(f"Error: Configuration object '{config_object}' not found.")
-        sys.exit(1)
+    except ImportError as e:
+        print(f"Warning: Configuration object '{config_object}' not found. Using fallback config.")
+        # Fallback configuration
+        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback_secret_key')
+        app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'fallback_jwt_secret')
+        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # Validate DATABASE_URL
-    db_url = app.config.get('SQLALCHEMY_DATABASE_URI')
+    # Set DATABASE_URL with fallback
+    db_url = os.environ.get('DATABASE_URL') or app.config.get('SQLALCHEMY_DATABASE_URI')
     if not db_url:
-        print("Error: SQLALCHEMY_DATABASE_URI is not set.")
-        sys.exit(1)
+        # Create fallback SQLite database
+        instance_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'instance')
+        os.makedirs(instance_dir, exist_ok=True)
+        db_url = f"sqlite:///{os.path.join(instance_dir, 'fallback.db')}"
+        print("Warning: Using fallback SQLite database")
     
-    print(f"Database URL: {db_url}")
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+    print(f"Database URL configured: {db_url[:50]}...")
 
     # Initialize extensions with comprehensive CORS
     db.init_app(app)
@@ -173,8 +187,9 @@ def create_app(config_object='journal.config.DevelopmentConfig'):
     def handle_exception(e):
         """Return JSON instead of HTML for any other server error."""
         import traceback
+        print(f"Application error: {str(e)}")
         traceback.print_exc()
-        response = { "msg": "An unexpected error occurred. Please try again." }
+        response = { "msg": "An unexpected error occurred. Please try again.", "error": str(e) }
         return jsonify(response), 500
 
     return app

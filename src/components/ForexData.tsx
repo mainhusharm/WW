@@ -52,7 +52,7 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
             symbols: []
         },
         commodities: {
-            symbols: ['XAU/USD', 'XAG/USD']
+            symbols: []
         },
         forexMajors: {
             symbols: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD']

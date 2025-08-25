@@ -63,7 +63,7 @@ def create_signal():
         signal_dict = new_signal.to_dict()
         
         # Emit signal to all connected users via WebSocket
-        socketio.emit('newSignal', signal_dict)
+        socketio.emit('newSignal', [signal_dict])  # Send as array for consistency
         
         print(f"Signal created and broadcasted: {signal_dict}")
         

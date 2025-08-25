@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { errorHandler } from '../services/errorHandler';
 
 interface PriceData {
   price: number;
@@ -15,7 +16,7 @@ interface ReliableDataFeedProps {
 }
 
 const ReliableDataFeed: React.FC<ReliableDataFeedProps> = ({ 
-  symbols = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'XAU/USD', 'XAG/USD'],
+  symbols = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD', 'EUR/JPY', 'GBP/JPY', 'EUR/GBP', 'AUD/JPY', 'GBP/CHF', 'EUR/CHF', 'CAD/JPY', 'CHF/JPY', 'AUD/CAD', 'AUD/CHF', 'AUD/NZD', 'CAD/CHF', 'EUR/AUD', 'EUR/CAD', 'EUR/NZD', 'GBP/AUD'],
   updateInterval = 60000 
 }) => {
   const [prices, setPrices] = useState<Record<string, PriceData>>({});
@@ -35,8 +36,20 @@ const ReliableDataFeed: React.FC<ReliableDataFeedProps> = ({
       'NZD/USD': 0.5950,
       'EUR/JPY': 162.25,
       'GBP/JPY': 189.15,
-      'XAU/USD': 2025.50,
-      'XAG/USD': 24.75,
+      'EUR/GBP': 0.8580,
+      'AUD/JPY': 96.45,
+      'GBP/CHF': 1.1070,
+      'EUR/CHF': 0.9490,
+      'CAD/JPY': 109.60,
+      'CHF/JPY': 170.85,
+      'AUD/CAD': 0.8810,
+      'AUD/CHF': 0.5645,
+      'AUD/NZD': 1.0840,
+      'CAD/CHF': 0.6410,
+      'EUR/AUD': 1.6830,
+      'EUR/CAD': 1.4810,
+      'EUR/NZD': 1.8240,
+      'GBP/AUD': 1.9620,
       'BTCUSDT': 43250.00,
       'ETHUSDT': 2650.00
     };
@@ -60,32 +73,44 @@ const ReliableDataFeed: React.FC<ReliableDataFeedProps> = ({
 
   const fetchFromYahooFinance = async (symbol: string): Promise<PriceData | null> => {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const priceData = await errorHandler.handlePriceApi(async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`https://forex-data-service.onrender.com/api/forex-price?pair=${symbol}`, {
-        signal: controller.signal,
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
+        const response = await fetch(`https://forex-data-service.onrender.com/api/forex-price?pair=${symbol}`, {
+          signal: controller.signal,
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          mode: 'cors'
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.price && !isNaN(data.price)) {
+            return {
+              price: parseFloat(data.price),
+              symbol: symbol
+            };
+          }
         }
-      });
+        throw new Error(`Failed to fetch price for ${symbol}`);
+      }, symbol);
 
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.price && !isNaN(data.price)) {
-          return {
-            price: parseFloat(data.price.toFixed(symbol.includes('JPY') ? 3 : 5)),
-            provider: 'yahoo-finance',
-            timestamp: new Date().toISOString()
-          };
-        }
+      if (priceData && priceData.price && !isNaN(priceData.price)) {
+        return {
+          price: parseFloat(priceData.price.toFixed(symbol.includes('JPY') ? 3 : 5)),
+          provider: priceData.cached ? 'cached' : 'yahoo-finance',
+          timestamp: new Date().toISOString()
+        };
       }
       return null;
     } catch (error) {
-      console.warn(`Yahoo Finance fetch failed for ${symbol}:`, error);
+      // Error handler will have already logged this in development
       return null;
     }
   };

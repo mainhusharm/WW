@@ -44,64 +44,124 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('current_user');
-      const storedToken = localStorage.getItem('access_token');
-      const sessionToken = sessionStorage.getItem('session_token');
-      const rememberMe = localStorage.getItem('remember_me') === 'true';
-      
-      // Use stored token or session token based on remember me preference
-      const activeToken = storedToken || sessionToken;
-      
-      if (storedUser && activeToken) {
-        const parsedUser = JSON.parse(storedUser);
+    const initializeUser = async () => {
+      try {
+        const storedUser = localStorage.getItem('current_user');
+        const storedToken = localStorage.getItem('access_token');
+        const sessionToken = sessionStorage.getItem('session_token');
+        const rememberMe = localStorage.getItem('remember_me') === 'true';
         
-        // Set up API authorization
-        if (activeToken && typeof activeToken === 'string' && !activeToken.startsWith('demo-token')) {
-          api.defaults.headers.common['Authorization'] = `Bearer ${activeToken}`;
-        }
+        // Use stored token or session token based on remember me preference
+        const activeToken = storedToken || sessionToken;
         
-        // Check if user has completed setup by looking for trading plan data
-        const hasCompletedSetup = parsedUser.setupComplete || 
-          localStorage.getItem('questionnaireAnswers') || 
-          localStorage.getItem('tradingPlan') ||
-          parsedUser.tradingData;
-
-        // Restore user data from backup if available (for returning users)
-        const backupData = localStorage.getItem(`user_backup_${parsedUser.email}`);
-        let restoredUserData = parsedUser;
-        
-        if (backupData) {
-          try {
-            const backup = JSON.parse(backupData);
-            // Merge backup data with current user data
-            restoredUserData = {
-              ...backup,
-              ...parsedUser,
-              token: activeToken,
-              isAuthenticated: true,
-              setupComplete: hasCompletedSetup
-            };
-          } catch (backupError) {
-            console.warn('Could not restore backup data:', backupError);
+        if (storedUser && activeToken) {
+          const parsedUser = JSON.parse(storedUser);
+          
+          // Load questionnaire data from localStorage to ensure data persistence
+          const questionnaireAnswers = localStorage.getItem('questionnaireAnswers');
+          let tradingData = parsedUser.tradingData;
+          
+          if (questionnaireAnswers) {
+            try {
+              const answers = JSON.parse(questionnaireAnswers);
+              // Ensure account size is stored as exact number without rounding
+              tradingData = {
+                propFirm: answers.propFirm || '',
+                accountType: answers.accountType || '',
+                accountSize: String(answers.accountSize), // Keep as string to preserve exact value
+                riskPerTrade: String(answers.riskPercentage || 1),
+                riskRewardRatio: answers.riskRewardRatio || '2',
+                tradesPerDay: answers.tradesPerDay || '1-2',
+                tradingSession: answers.tradingSession || 'any',
+                cryptoAssets: answers.cryptoAssets || [],
+                forexAssets: answers.forexAssets || [],
+                hasAccount: answers.hasAccount || 'no',
+                tradingExperience: answers.tradingExperience || 'intermediate'
+              };
+            } catch (parseError) {
+              console.warn('Could not parse questionnaire answers:', parseError);
+            }
           }
-        }
+          
+          // Set up API authorization
+          if (activeToken && typeof activeToken === 'string' && !activeToken.startsWith('demo-token')) {
+            api.defaults.headers.common['Authorization'] = `Bearer ${activeToken}`;
+            
+            // Fetch fresh user profile data from backend
+            try {
+              const profileResponse = await api.get('/user/profile');
+              if (profileResponse.data) {
+                const backendUserData = profileResponse.data;
+                
+                // Merge backend data with stored data, preserving local questionnaire data
+                const mergedUserData = {
+                  ...parsedUser,
+                  ...backendUserData,
+                  tradingData: tradingData || backendUserData.tradingData, // Prefer local data
+                  isAuthenticated: true,
+                  token: activeToken,
+                  setupComplete: !!tradingData,
+                  rememberMe
+                };
+                
+                // Update stored user data with fresh backend data
+                localStorage.setItem('current_user', JSON.stringify(mergedUserData));
+                setUser(mergedUserData);
+                setIsLoading(false);
+                return;
+              }
+            } catch (profileError) {
+              console.warn('Could not fetch user profile from backend:', profileError);
+              // Continue with stored data if backend is unavailable
+            }
+          }
+          
+          // Check if user has completed setup by looking for trading plan data
+          const hasCompletedSetup = parsedUser.setupComplete || 
+            questionnaireAnswers || 
+            localStorage.getItem('tradingPlan') ||
+            tradingData;
 
-        const userData = { 
-          ...restoredUserData, 
-          isAuthenticated: true, 
-          token: activeToken,
-          setupComplete: hasCompletedSetup,
-          rememberMe
-        };
-        
-        setUser(userData);
+          // Restore user data from backup if available (for returning users)
+          const backupData = localStorage.getItem(`user_backup_${parsedUser.email}`);
+          let restoredUserData = parsedUser;
+          
+          if (backupData) {
+            try {
+              const backup = JSON.parse(backupData);
+              // Merge backup data with current user data, preserving questionnaire data
+              restoredUserData = {
+                ...backup,
+                ...parsedUser,
+                tradingData: tradingData || backup.tradingData, // Prefer current questionnaire data
+                token: activeToken,
+                isAuthenticated: true,
+                setupComplete: hasCompletedSetup
+              };
+            } catch (backupError) {
+              console.warn('Could not restore backup data:', backupError);
+            }
+          }
+
+          const userData = { 
+            ...restoredUserData,
+            tradingData: tradingData || restoredUserData.tradingData, // Ensure trading data is included
+            isAuthenticated: true, 
+            token: activeToken,
+            setupComplete: hasCompletedSetup,
+            rememberMe
+          };
+          
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Error loading user from storage:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading user from storage:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    initializeUser();
   }, []);
 
   useEffect(() => {
@@ -210,7 +270,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const saveUserProgress = async (userData: User) => {
     if (userData.email) {
       try {
-        await api.post('/api/user/progress', {
+        await api.post('/user/progress', {
           email: userData.email,
           progress: userData,
         });

@@ -254,7 +254,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                     </div>
                   </div>
                   <div className="space-y-6">
-                    <ReliableDataFeed symbols={['EUR/USD', 'GBP/USD', 'USD/JPY', 'XAU/USD', 'XAG/USD']} />
+                    <ReliableDataFeed symbols={['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD']} />
                   </div>
                 </div>
               </div>

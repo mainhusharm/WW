@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
@@ -13,21 +14,37 @@ const { configureWebRTC } = require('./services/webrtcService');
 const PORT = process.env.CS_API_PORT || 5000;
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Database Connection
-mongoose.connect(process.env.CS_DB_CONNECTION, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('Customer service database connected'))
-.catch(err => console.error('Database connection error:', err));
+// Database Connection with better error handling
+const connectDB = async () => {
+    try {
+        if (process.env.CS_DB_CONNECTION) {
+            await mongoose.connect(process.env.CS_DB_CONNECTION, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                serverSelectionTimeoutMS: 5000,
+                socketTimeoutMS: 45000,
+            });
+            console.log('Customer service database connected');
+        } else {
+            console.warn('CS_DB_CONNECTION not set, running without database');
+        }
+    } catch (err) {
+        console.error('Database connection error:', err);
+        // Don't exit the process, allow server to run without DB
+    }
+};
+
+connectDB();
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api', require('./routes/api'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/customers', require('./routes/customers'));
 
 
 // Health check endpoint
