@@ -28,6 +28,7 @@ mongoose.connect(process.env.CS_DB_CONNECTION, {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api', require('./routes/api'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/customers', require('./routes/customers'));
 
 
 // Health check endpoint

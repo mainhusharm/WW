@@ -114,8 +114,8 @@ const Questionnaire: React.FC = () => {
     localStorage.setItem('questionnaire_completed', 'true');
 
     try {
-      // Try to save questionnaire answers to backend (optional)
-      await api.post('/api/user/questionnaire', answers);
+      // Save questionnaire answers to backend
+      await api.post('/user/questionnaire', answers);
       logActivity('questionnaire_submit', { answers });
       console.log('Questionnaire saved to backend successfully');
     } catch (error) {

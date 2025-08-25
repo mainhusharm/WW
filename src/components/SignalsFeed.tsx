@@ -51,10 +51,53 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
 
     fetchSignals();
 
-    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+    // Create socket connection with proper configuration
+    const socketUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+    console.log('Connecting to socket at:', socketUrl);
+    
+    const socket = io(socketUrl, {
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      forceNew: true
+    });
+
+    socket.on('connect', () => {
+      console.log('Socket connected successfully');
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+    });
 
     socket.on('newSignal', (newSignal) => {
-      setSignals((prevSignals) => [newSignal, ...prevSignals]);
+      console.log('New signal received:', newSignal);
+      setSignals((prevSignals) => {
+        // Check for duplicates
+        const exists = prevSignals.some(signal => signal.id === newSignal.id);
+        if (exists) {
+          console.log('Duplicate signal detected, skipping:', newSignal.id);
+          return prevSignals;
+        }
+        return [newSignal, ...prevSignals];
+      });
+    });
+
+    socket.on('signalStatusUpdate', (update) => {
+      console.log('Signal status update received:', update);
+      setSignals((prevSignals) => 
+        prevSignals.map(signal => 
+          signal.id === update.signalId 
+            ? { ...signal, status: update.status }
+            : signal
+        )
+      );
+    });
+
+    socket.on('signalDeleted', (data) => {
+      console.log('Signal deleted:', data);
+      setSignals((prevSignals) => 
+        prevSignals.filter(signal => signal.id !== data.signalId)
+      );
     });
 
     return () => {

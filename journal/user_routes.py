@@ -1,6 +1,9 @@
 from flask import Blueprint, request, jsonify
-from .models import db, User
+from .models import db, User, RiskPlan
 from flask_jwt_extended import jwt_required, get_jwt_identity
+import json
+import requests
+import os
 
 user_bp = Blueprint('user_bp', __name__)
 
@@ -47,3 +50,156 @@ def save_progress():
     db.session.commit()
 
     return jsonify({"msg": "Progress saved successfully"}), 200
+
+@user_bp.route('/user/questionnaire', methods=['POST'])
+@jwt_required()
+def save_questionnaire():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    if not data:
+        return jsonify({"msg": "Missing JSON in request"}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    # Create or update risk plan with questionnaire data
+    risk_plan = RiskPlan.query.filter_by(user_id=user_id).first()
+    if not risk_plan:
+        risk_plan = RiskPlan(user_id=user_id)
+
+    # Map questionnaire data to risk plan fields
+    risk_plan.prop_firm = data.get('propFirm', '')
+    risk_plan.account_type = data.get('accountType', '')
+    risk_plan.account_size = float(data.get('accountSize', 0)) if data.get('accountSize') else 0
+    risk_plan.risk_percentage = float(data.get('riskPercentage', 1))
+    risk_plan.trades_per_day = data.get('tradesPerDay', '')
+    risk_plan.trading_session = data.get('tradingSession', '')
+    risk_plan.crypto_assets = json.dumps(data.get('cryptoAssets', []))
+    risk_plan.forex_assets = json.dumps(data.get('forexAssets', []))
+    risk_plan.has_account = data.get('hasAccount', 'no')
+    risk_plan.account_equity = float(data.get('accountEquity', 0)) if data.get('accountEquity') else 0
+    risk_plan.min_risk_reward = data.get('riskRewardRatio', '2')
+
+    # Calculate risk parameters
+    account_size = float(data.get('accountSize', 100000))
+    risk_pct = float(data.get('riskPercentage', 1))
+    risk_plan.base_trade_risk = account_size * (risk_pct / 100)
+    risk_plan.base_trade_risk_pct = f"{risk_pct}%"
+    risk_plan.max_daily_risk = risk_plan.base_trade_risk * 3  # Max 3 trades per day risk
+    risk_plan.max_daily_risk_pct = f"{risk_pct * 3}%"
+
+    db.session.add(risk_plan)
+    db.session.commit()
+
+    # Send user data to customer service dashboard
+    try:
+        customer_service_url = os.getenv('CUSTOMER_SERVICE_URL', 'http://localhost:5001')
+        user_data = {
+            'user_id': user.id,
+            'unique_id': user.unique_id,
+            'username': user.username,
+            'email': user.email,
+            'plan_type': user.plan_type,
+            'created_at': user.created_at.isoformat() if user.created_at else None,
+            'questionnaire_data': {
+                'prop_firm': data.get('propFirm', ''),
+                'account_type': data.get('accountType', ''),
+                'account_size': data.get('accountSize', 0),
+                'risk_percentage': data.get('riskPercentage', 1),
+                'has_account': data.get('hasAccount', 'no'),
+                'account_equity': data.get('accountEquity', 0),
+                'trading_session': data.get('tradingSession', ''),
+                'crypto_assets': data.get('cryptoAssets', []),
+                'forex_assets': data.get('forexAssets', [])
+            }
+        }
+        
+        response = requests.post(
+            f"{customer_service_url}/api/customers",
+            json=user_data,
+            timeout=5
+        )
+        print(f"Customer service sync: {response.status_code}")
+    except Exception as e:
+        print(f"Failed to sync with customer service: {e}")
+        # Don't fail the main request if customer service is down
+
+    return jsonify({"msg": "Questionnaire saved successfully"}), 200
+
+@user_bp.route('/user/profile', methods=['GET'])
+@jwt_required()
+def get_user_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    risk_plan = RiskPlan.query.filter_by(user_id=user_id).first()
+    
+    profile_data = {
+        'id': user.id,
+        'unique_id': user.unique_id,
+        'username': user.username,
+        'email': user.email,
+        'plan_type': user.plan_type,
+        'created_at': user.created_at.isoformat() if user.created_at else None,
+        'tradingData': None
+    }
+
+    if risk_plan:
+        profile_data['tradingData'] = {
+            'propFirm': risk_plan.prop_firm,
+            'accountType': risk_plan.account_type,
+            'accountSize': str(risk_plan.account_size) if risk_plan.account_size else '100000',
+            'riskPerTrade': str(risk_plan.risk_percentage) if risk_plan.risk_percentage else '1',
+            'tradesPerDay': risk_plan.trades_per_day,
+            'tradingSession': risk_plan.trading_session,
+            'cryptoAssets': json.loads(risk_plan.crypto_assets) if risk_plan.crypto_assets else [],
+            'forexAssets': json.loads(risk_plan.forex_assets) if risk_plan.forex_assets else [],
+            'hasAccount': risk_plan.has_account,
+            'accountEquity': str(risk_plan.account_equity) if risk_plan.account_equity else '0',
+            'riskRewardRatio': risk_plan.min_risk_reward
+        }
+
+    return jsonify(profile_data), 200
+
+@user_bp.route('/customers', methods=['GET'])
+def get_all_customers():
+    """Get all customers for customer service dashboard"""
+    try:
+        users = User.query.all()
+        customers_data = []
+        
+        for user in users:
+            risk_plan = RiskPlan.query.filter_by(user_id=user.id).first()
+            customer_data = {
+                'id': user.id,
+                'unique_id': user.unique_id,
+                'username': user.username,
+                'email': user.email,
+                'plan_type': user.plan_type,
+                'created_at': user.created_at.isoformat() if user.created_at else None,
+                'last_login': user.last_login.isoformat() if user.last_login else None,
+                'questionnaire_data': {}
+            }
+            
+            if risk_plan:
+                customer_data['questionnaire_data'] = {
+                    'prop_firm': risk_plan.prop_firm,
+                    'account_type': risk_plan.account_type,
+                    'account_size': risk_plan.account_size,
+                    'risk_percentage': risk_plan.risk_percentage,
+                    'has_account': risk_plan.has_account,
+                    'account_equity': risk_plan.account_equity,
+                    'trading_session': risk_plan.trading_session,
+                    'crypto_assets': json.loads(risk_plan.crypto_assets) if risk_plan.crypto_assets else [],
+                    'forex_assets': json.loads(risk_plan.forex_assets) if risk_plan.forex_assets else []
+                }
+            
+            customers_data.append(customer_data)
+        
+        return jsonify(customers_data), 200
+    except Exception as e:
+        print(f"Error fetching customers: {e}")
+        return jsonify({"error": "Failed to fetch customers"}), 500

@@ -1571,11 +1571,11 @@
                 }
 
                 const customer = data.customer;
-                const activities = data.activities || [];
-                const screenshots = data.screenshots || [];
-                const questionnaire = data.questionnaire_responses || [];
-                const riskPlan = data.risk_management_plan;
-                const dashboardData = data.dashboard_data || [];
+                const activities = customer.activities || [];
+                const screenshots = customer.screenshots || [];
+                const questionnaire = customer.questionnaireResponses || [];
+                const riskPlan = customer.riskManagementPlan;
+                const dashboardData = customer.dashboardData || [];
 
                 const modal = document.getElementById('customerModal');
                 const details = document.getElementById('customerDetails');
@@ -1583,10 +1583,10 @@
                 details.innerHTML = `
                     <!-- Action Buttons -->
                     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <button onclick="deleteCustomer('${customer.unique_id}')" style="background: var(--danger-red); border: none; border-radius: 8px; padding: 10px 20px; color: white; cursor: pointer; font-weight: 600;">
+                        <button onclick="deleteCustomer('${customer.uniqueId}')" style="background: var(--danger-red); border: none; border-radius: 8px; padding: 10px 20px; color: white; cursor: pointer; font-weight: 600;">
                             🗑️ Delete Customer
                         </button>
-                        <button onclick="exportCustomerData('${customer.unique_id}')" style="background: var(--primary-purple); border: none; border-radius: 8px; padding: 10px 20px; color: white; cursor: pointer; font-weight: 600;">
+                        <button onclick="exportCustomerData('${customer.uniqueId}')" style="background: var(--primary-purple); border: none; border-radius: 8px; padding: 10px 20px; color: white; cursor: pointer; font-weight: 600;">
                             📥 Export Data
                         </button>
                     </div>
@@ -1596,11 +1596,11 @@
                             <h4 style="color: var(--primary-purple); margin-bottom: 15px;">Basic Information</h4>
                             <div style="space-y: 10px;">
                                 <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Name:</span> <span style="color: white; margin-left: 10px;">${customer.name}</span></div>
-                                <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">User ID:</span> <span style="color: var(--primary-cyan); margin-left: 10px; font-weight: 600;">${customer.unique_id}</span></div>
+                                <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">User ID:</span> <span style="color: var(--primary-cyan); margin-left: 10px; font-weight: 600;">${customer.uniqueId}</span></div>
                                 <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Email:</span> <span style="color: white; margin-left: 10px;">${customer.email}</span></div>
-                                <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Tier:</span> <span style="color: var(--primary-green); margin-left: 10px; font-weight: 600;">${customer.membership_tier}</span></div>
+                                <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Tier:</span> <span style="color: var(--primary-green); margin-left: 10px; font-weight: 600;">${customer.membershipTier}</span></div>
                                 <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Phone:</span> <span style="color: white; margin-left: 10px;">${customer.phone || 'N/A'}</span></div>
-                                <div><span style="color: rgba(255, 255, 255, 0.6);">Joined:</span> <span style="color: white; margin-left: 10px;">${new Date(customer.join_date).toLocaleDateString()}</span></div>
+                                <div><span style="color: rgba(255, 255, 255, 0.6);">Joined:</span> <span style="color: white; margin-left: 10px;">${new Date(customer.joinDate).toLocaleDateString()}</span></div>
                             </div>
                         </div>
                         
@@ -1610,7 +1610,7 @@
                                 <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Total Activities:</span> <span style="color: var(--primary-green); margin-left: 10px; font-weight: 600;">${activities.length}</span></div>
                                 <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Screenshots:</span> <span style="color: var(--primary-cyan); margin-left: 10px; font-weight: 600;">${screenshots.length}</span></div>
                                 <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Questionnaire:</span> <span style="color: var(--primary-cyan); margin-left: 10px; font-weight: 600;">${questionnaire.length} responses</span></div>
-                                <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Last Active:</span> <span style="color: white; margin-left: 10px;">${customer.last_active ? new Date(customer.last_active).toLocaleString() : 'N/A'}</span></div>
+                                <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Last Active:</span> <span style="color: white; margin-left: 10px;">${customer.lastActive ? new Date(customer.lastActive).toLocaleString() : 'N/A'}</span></div>
                                 <div style="margin-bottom: 10px;"><span style="color: rgba(255, 255, 255, 0.6);">Status:</span> <span style="color: var(--primary-green); margin-left: 10px;">${customer.status}</span></div>
                             </div>
                         </div>
@@ -1653,7 +1653,7 @@
                     <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                         <h4 style="color: var(--primary-purple); margin-bottom: 20px;">Risk Management Plan</h4>
                         <div style="background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 15px;">
-                            <div style="color: rgba(255, 255, 255, 0.8); font-size: 14px; white-space: pre-wrap;">${JSON.stringify(JSON.parse(riskPlan.plan_data), null, 2)}</div>
+                            <div style="color: rgba(255, 255, 255, 0.8); font-size: 14px; white-space: pre-wrap;">${JSON.stringify(riskPlan.plan_data, null, 2)}</div>
                             <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin-top: 10px;">Last updated: ${new Date(riskPlan.updated_date).toLocaleString()}</div>
                         </div>
                     </div>
@@ -1666,7 +1666,7 @@
                             ${dashboardData.map(data => `
                                 <div style="background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 15px; margin-bottom: 10px;">
                                     <div style="color: var(--primary-cyan); font-weight: 600; margin-bottom: 8px;">${data.data_type}</div>
-                                    <div style="color: rgba(255, 255, 255, 0.8); font-size: 14px; margin-bottom: 5px; white-space: pre-wrap;">${JSON.stringify(JSON.parse(data.data_content), null, 2)}</div>
+                                    <div style="color: rgba(255, 255, 255, 0.8); font-size: 14px; margin-bottom: 5px; white-space: pre-wrap;">${JSON.stringify(data.data_content, null, 2)}</div>
                                     <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px;">Last updated: ${new Date(data.last_updated).toLocaleString()}</div>
                                 </div>
                             `).join('')}
@@ -1705,7 +1705,10 @@
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/customers/${uniqueId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
                 });
 
                 if (response.ok) {
@@ -1714,7 +1717,7 @@
                     loadAllCustomers(); // Refresh the list
                 } else {
                     const error = await response.json();
-                    alert(`Error deleting customer: ${error.error}`);
+                    alert(`Error deleting customer: ${error.msg}`);
                 }
             } catch (error) {
                 console.error('Error deleting customer:', error);
@@ -1724,7 +1727,11 @@
 
         function exportCustomerData(uniqueId) {
             // This would export customer data as JSON or CSV
-            fetch(`${API_BASE_URL}/api/customers/${uniqueId}`)
+            fetch(`${API_BASE_URL}/api/customers/${uniqueId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            })
                 .then(response => response.json())
                 .then(data => {
                     const dataStr = JSON.stringify(data, null, 2);

@@ -44,64 +44,95 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('current_user');
-      const storedToken = localStorage.getItem('access_token');
-      const sessionToken = sessionStorage.getItem('session_token');
-      const rememberMe = localStorage.getItem('remember_me') === 'true';
-      
-      // Use stored token or session token based on remember me preference
-      const activeToken = storedToken || sessionToken;
-      
-      if (storedUser && activeToken) {
-        const parsedUser = JSON.parse(storedUser);
+    const initializeUser = async () => {
+      try {
+        const storedUser = localStorage.getItem('current_user');
+        const storedToken = localStorage.getItem('access_token');
+        const sessionToken = sessionStorage.getItem('session_token');
+        const rememberMe = localStorage.getItem('remember_me') === 'true';
         
-        // Set up API authorization
-        if (activeToken && typeof activeToken === 'string' && !activeToken.startsWith('demo-token')) {
-          api.defaults.headers.common['Authorization'] = `Bearer ${activeToken}`;
-        }
+        // Use stored token or session token based on remember me preference
+        const activeToken = storedToken || sessionToken;
         
-        // Check if user has completed setup by looking for trading plan data
-        const hasCompletedSetup = parsedUser.setupComplete || 
-          localStorage.getItem('questionnaireAnswers') || 
-          localStorage.getItem('tradingPlan') ||
-          parsedUser.tradingData;
-
-        // Restore user data from backup if available (for returning users)
-        const backupData = localStorage.getItem(`user_backup_${parsedUser.email}`);
-        let restoredUserData = parsedUser;
-        
-        if (backupData) {
-          try {
-            const backup = JSON.parse(backupData);
-            // Merge backup data with current user data
-            restoredUserData = {
-              ...backup,
-              ...parsedUser,
-              token: activeToken,
-              isAuthenticated: true,
-              setupComplete: hasCompletedSetup
-            };
-          } catch (backupError) {
-            console.warn('Could not restore backup data:', backupError);
+        if (storedUser && activeToken) {
+          const parsedUser = JSON.parse(storedUser);
+          
+          // Set up API authorization
+          if (activeToken && typeof activeToken === 'string' && !activeToken.startsWith('demo-token')) {
+            api.defaults.headers.common['Authorization'] = `Bearer ${activeToken}`;
+            
+            // Fetch fresh user profile data from backend
+            try {
+              const profileResponse = await api.get('/user/profile');
+              if (profileResponse.data) {
+                const backendUserData = profileResponse.data;
+                
+                // Merge backend data with stored data
+                const mergedUserData = {
+                  ...parsedUser,
+                  ...backendUserData,
+                  isAuthenticated: true,
+                  token: activeToken,
+                  setupComplete: !!backendUserData.tradingData,
+                  rememberMe
+                };
+                
+                // Update stored user data with fresh backend data
+                localStorage.setItem('current_user', JSON.stringify(mergedUserData));
+                setUser(mergedUserData);
+                setIsLoading(false);
+                return;
+              }
+            } catch (profileError) {
+              console.warn('Could not fetch user profile from backend:', profileError);
+              // Continue with stored data if backend is unavailable
+            }
           }
-        }
+          
+          // Check if user has completed setup by looking for trading plan data
+          const hasCompletedSetup = parsedUser.setupComplete || 
+            localStorage.getItem('questionnaireAnswers') || 
+            localStorage.getItem('tradingPlan') ||
+            parsedUser.tradingData;
 
-        const userData = { 
-          ...restoredUserData, 
-          isAuthenticated: true, 
-          token: activeToken,
-          setupComplete: hasCompletedSetup,
-          rememberMe
-        };
-        
-        setUser(userData);
+          // Restore user data from backup if available (for returning users)
+          const backupData = localStorage.getItem(`user_backup_${parsedUser.email}`);
+          let restoredUserData = parsedUser;
+          
+          if (backupData) {
+            try {
+              const backup = JSON.parse(backupData);
+              // Merge backup data with current user data
+              restoredUserData = {
+                ...backup,
+                ...parsedUser,
+                token: activeToken,
+                isAuthenticated: true,
+                setupComplete: hasCompletedSetup
+              };
+            } catch (backupError) {
+              console.warn('Could not restore backup data:', backupError);
+            }
+          }
+
+          const userData = { 
+            ...restoredUserData, 
+            isAuthenticated: true, 
+            token: activeToken,
+            setupComplete: hasCompletedSetup,
+            rememberMe
+          };
+          
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Error loading user from storage:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading user from storage:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    initializeUser();
   }, []);
 
   useEffect(() => {

@@ -96,16 +96,27 @@ const EnhancedCustomerServiceDashboard = ({ onLogout }: { onLogout?: () => void 
   useEffect(() => {
     const fetchCustomerData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const config = {
-          headers: {
-            'x-auth-token': token,
-          },
-        };
-        const res = await api.get('/api/customers', config);
-        setCustomerData(res.data.customers);
-      } catch (err) {
-        setError('Failed to fetch customer data');
+        // Try to fetch from main API first
+        const mainApiResponse = await api.get('/customers');
+        if (mainApiResponse.data) {
+          setCustomerData(mainApiResponse.data);
+          return;
+        }
+      } catch (mainApiError) {
+        console.warn('Main API not available, trying customer service API:', mainApiError);
+      }
+
+      try {
+        // Fallback to customer service API
+        const customerServiceUrl = 'http://localhost:5001';
+        const response = await fetch(`${customerServiceUrl}/api/customers`);
+        if (response.ok) {
+          const data = await response.json();
+          setCustomerData(data);
+        }
+      } catch (csError) {
+        console.warn('Customer service API not available:', csError);
+        setError('Unable to fetch customer data - services may be offline');
       }
     };
 
