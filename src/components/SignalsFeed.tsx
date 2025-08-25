@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Signal } from '../trading/types';
+import { Signal, TradeOutcome } from '../trading/types';
 import api from '../api';
-
-// Define the TradeOutcome type
-type TradeOutcome = 'win' | 'loss' | 'breakeven' | 'Target Hit' | 'Stop Loss Hit' | 'Manual Close';
 
 // WebSocket connection manager
 const useWebSocket = (url: string) => {
@@ -114,9 +111,9 @@ const SignalCardComponent: React.FC<SignalCardProps> = ({
       <div className="signal-actions">
         {!isTaken && !isSkipped && (
           <>
-            <button onClick={() => onMarkAsTaken(signal, 'win')}>Mark as Won</button>
-            <button onClick={() => onMarkAsTaken(signal, 'loss')}>Mark as Lost</button>
-            <button onClick={() => onMarkAsTaken(signal, 'breakeven')}>Mark as Break Even</button>
+                        <button onClick={() => onMarkAsTaken(signal, 'Target Hit')}>Mark as Won</button>
+            <button onClick={() => onMarkAsTaken(signal, 'Stop Loss Hit')}>Mark as Lost</button>
+            <button onClick={() => onMarkAsTaken(signal, 'Breakeven')}>Mark as Break Even</button>
           </>
         )}
         <button onClick={() => onAddToJournal(signal)}>Add to Journal</button>
@@ -162,8 +159,18 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
   useEffect(() => {
     if (!socket) return;
     
-    const handleNewSignal = (newSignal: Signal) => {
-      setSignals(prev => [newSignal, ...prev]);
+    const handleNewSignal = (newSignals: Signal[]) => {
+      setSignals(prevSignals => {
+        const existingSignalIds = new Set(prevSignals.map(s => s.id));
+        const uniqueNewSignals = newSignals.filter(s => !existingSignalIds.has(s.id));
+
+        if (uniqueNewSignals.length > 0) {
+          console.log(`Received ${uniqueNewSignals.length} new unique signals.`);
+          return [...uniqueNewSignals, ...prevSignals];
+        }
+
+        return prevSignals;
+      });
     };
     
     socket.on('newSignal', handleNewSignal);

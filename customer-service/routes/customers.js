@@ -15,59 +15,61 @@ router.get('/', async (req, res) => {
 
 // Create or update customer
 router.post('/', async (req, res) => {
-    try {
-        const {
-            user_id,
-            unique_id,
-            username,
-            email,
-            plan_type,
-            created_at,
-            questionnaire_data
-        } = req.body;
+    const {
+        user_id, // This might be from an external auth system
+        unique_id,
+        username,
+        email,
+        plan_type,
+        created_at,
+        questionnaire_data
+    } = req.body;
 
-        // Check if email already exists
-        const existingCustomer = await Customer.findOne({ email: email });
-        if (existingCustomer) {
-            return res.status(400).json({ 
+    if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+
+    try {
+        // Check if a customer with this email already exists
+        let customer = await Customer.findOne({ email: email });
+
+        if (customer) {
+            // If customer exists, return an error to prevent duplicates
+            return res.status(409).json({ 
                 error: 'Email already registered',
                 message: 'This email is already associated with an existing account.'
             });
         }
 
-        // Check if user_id exists (for updates)
-        let customer = await Customer.findOne({ user_id: user_id });
+        // If customer does not exist, create a new one
+        const newCustomer = new Customer({
+            user_id, // Can be null if not provided
+            unique_id,
+            username,
+            email,
+            plan_type,
+            created_at: created_at ? new Date(created_at) : new Date(),
+            questionnaire_data,
+            status: 'active',
+            last_updated: new Date()
+        });
 
-        if (customer) {
-            // Update existing customer (only if user_id matches)
-            customer.username = username;
-            customer.plan_type = plan_type;
-            customer.questionnaire_data = questionnaire_data;
-            customer.last_updated = new Date();
-            await customer.save();
-            console.log('Customer updated:', email);
-        } else {
-            // Create new customer
-            customer = new Customer({
-                user_id,
-                unique_id,
-                username,
-                email,
-                plan_type,
-                created_at: created_at ? new Date(created_at) : new Date(),
-                questionnaire_data,
-                status: 'active',
-                last_updated: new Date()
-            });
-            await customer.save();
-            console.log('New customer created:', email);
-        }
+        await newCustomer.save();
+        console.log('New customer created:', email);
 
         res.status(201).json({ 
-            message: 'Customer data saved successfully',
-            customer: customer
+            message: 'Customer created successfully',
+            customer: newCustomer
         });
+
     } catch (error) {
+        // Handle potential database errors, including unique index violations
+        if (error.code === 11000) {
+            return res.status(409).json({ 
+                error: 'Email already exists',
+                message: 'A user with this email address has already been registered.'
+            });
+        }
         console.error('Error saving customer:', error);
         res.status(500).json({ error: 'Failed to save customer data' });
     }
