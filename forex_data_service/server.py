@@ -132,15 +132,31 @@ def get_forex_data():
         if not pair:
             return jsonify({'error': 'The "pair" parameter is required.'}), 400
 
+        # Check cache first
+        cache_key = f"{pair}_{timeframe}_{start_date}_{end_date}"
+        current_time = time.time()
+        
+        if cache_key in cache and (current_time - cache[cache_key]['timestamp']) < CACHE_DURATION_SECONDS:
+            logger.info(f"Returning cached data for {pair}")
+            return jsonify(cache[cache_key]['data'])
+
         # Check if the pair is a crypto pair
         if pair.endswith('USDT'):
             try:
                 data = get_binance_klines(pair, timeframe, start_date, end_date)
-                if data.empty:
+                if data is None or data.empty:
                     return jsonify({'error': f'No data found for {pair}'}), 404
                 data_copy = data.copy()
                 data_copy['time'] = data_copy['time'].dt.strftime('%Y-%m-%d %H:%M:%S')
-                return jsonify(data_copy.to_dict(orient='records'))
+                result = data_copy.to_dict(orient='records')
+                
+                # Cache the result
+                cache[cache_key] = {
+                    'data': result,
+                    'timestamp': current_time
+                }
+                
+                return jsonify(result)
             except Exception as e:
                 logger.error(f"Error fetching Binance data for {pair}: {str(e)}")
                 return jsonify({'error': f'An error occurred while fetching data for {pair}.'}), 500
@@ -163,15 +179,28 @@ def get_forex_data():
 
     try:
         logger.info(f"Fetching data for {formatted_pair}")
-        data = yf.download(
-            tickers=formatted_pair,
-            **params,
-            auto_adjust=False,
-            progress=False,
-            timeout=30
-        )
+        
+        # Use Ticker for better error handling
+        ticker = yf.Ticker(formatted_pair)
+        
+        if 'start' in params and 'end' in params:
+            data = ticker.history(
+                start=params['start'],
+                end=params['end'],
+                interval=params['interval'],
+                auto_adjust=False,
+                timeout=30
+            )
+        else:
+            data = ticker.history(
+                period=params['period'],
+                interval=params['interval'],
+                auto_adjust=False,
+                timeout=30
+            )
 
-        if data.empty:
+        if data is None or data.empty:
+            logger.warning(f"No data returned for {formatted_pair}")
             return jsonify({'error': f'No data found for {pair} with the specified parameters.'}), 404
 
         data.reset_index(inplace=True)
@@ -204,7 +233,15 @@ def get_forex_data():
         # Replace NaN with None for JSON compatibility
         data.replace({np.nan: None}, inplace=True)
         
-        return jsonify(data[required_cols].to_dict('records'))
+        result = data[required_cols].to_dict('records')
+        
+        # Cache the result
+        cache[cache_key] = {
+            'data': result,
+            'timestamp': current_time
+        }
+        
+        return jsonify(result)
 
     except Exception as e:
         logger.error(f"Error fetching data for {pair}: {str(e)}")

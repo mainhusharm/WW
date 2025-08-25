@@ -31,18 +31,25 @@ def update_plan():
 @user_bp.route('/user/progress', methods=['GET'])
 @jwt_required()
 def get_progress():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"msg": "User not found"}), 404
+    try:
+        user_id = get_jwt_identity()
+        if not user_id:
+            return jsonify({"msg": "Invalid token"}), 401
+            
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"msg": "User not found"}), 404
 
-    # This is a placeholder. Replace with actual progress data from your model.
-    progress_data = {
-        "completed_lessons": 10,
-        "total_lessons": 50,
-        "current_module": "Advanced Strategies"
-    }
-    return jsonify(progress_data), 200
+        # This is a placeholder. Replace with actual progress data from your model.
+        progress_data = {
+            "completed_lessons": 10,
+            "total_lessons": 50,
+            "current_module": "Advanced Strategies"
+        }
+        return jsonify(progress_data), 200
+    except Exception as e:
+        print(f"Error in get_progress: {str(e)}")
+        return jsonify({"msg": "Failed to fetch progress data"}), 500
 
 @user_bp.route('/user/progress', methods=['POST'])
 @jwt_required()
@@ -108,9 +115,15 @@ def save_questionnaire():
     db.session.add(risk_plan)
     db.session.commit()
 
-    # Send user data to customer service dashboard
+    # Send user data to customer service dashboard with retry mechanism
     try:
-        customer_service_url = os.getenv('CUSTOMER_SERVICE_URL', 'http://localhost:5001')
+        # Try multiple customer service URLs for reliability
+        customer_service_urls = [
+            os.getenv('CUSTOMER_SERVICE_URL', 'http://localhost:3005'),
+            'http://localhost:3005',
+            'https://customer-service.render.com'  # Add production URL if available
+        ]
+        
         user_data = {
             'user_id': user.id,
             'unique_id': user.unique_id,
@@ -131,14 +144,30 @@ def save_questionnaire():
             }
         }
         
-        response = requests.post(
-            f"{customer_service_url}/api/customers",
-            json=user_data,
-            timeout=5
-        )
-        print(f"Customer service sync: {response.status_code}")
+        sync_successful = False
+        for url in customer_service_urls:
+            try:
+                response = requests.post(
+                    f"{url}/api/customers",
+                    json=user_data,
+                    timeout=10,
+                    headers={'Content-Type': 'application/json'}
+                )
+                if response.status_code in [200, 201, 409]:  # 409 = already exists
+                    print(f"Customer service sync successful: {response.status_code} from {url}")
+                    sync_successful = True
+                    break
+                else:
+                    print(f"Customer service sync failed: {response.status_code} from {url}")
+            except Exception as url_error:
+                print(f"Failed to sync with {url}: {url_error}")
+                continue
+        
+        if not sync_successful:
+            print("All customer service sync attempts failed, but continuing with main request")
+            
     except Exception as e:
-        print(f"Failed to sync with customer service: {e}")
+        print(f"Customer service sync error: {e}")
         # Don't fail the main request if customer service is down
 
     return jsonify({"msg": "Questionnaire saved successfully"}), 200
@@ -193,22 +222,29 @@ def get_user_profile():
 @user_bp.route('/dashboard-data', methods=['GET'])
 @jwt_required()
 def get_dashboard_data():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"msg": "User not found"}), 404
+    try:
+        user_id = get_jwt_identity()
+        if not user_id:
+            return jsonify({"msg": "Invalid token"}), 401
+            
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"msg": "User not found"}), 404
 
-    # This is a placeholder. Replace with actual dashboard data from your models.
-    dashboard_data = {
-        "account_balance": 100000,
-        "total_pnl": 5230.50,
-        "win_rate": 68.5,
-        "recent_trades": [
-            {"symbol": "EURUSD", "pnl": 150.25, "outcome": "win"},
-            {"symbol": "GBPUSD", "pnl": -75.50, "outcome": "loss"}
-        ]
-    }
-    return jsonify(dashboard_data), 200
+        # This is a placeholder. Replace with actual dashboard data from your models.
+        dashboard_data = {
+            "account_balance": 100000,
+            "total_pnl": 5230.50,
+            "win_rate": 68.5,
+            "recent_trades": [
+                {"symbol": "EURUSD", "pnl": 150.25, "outcome": "win"},
+                {"symbol": "GBPUSD", "pnl": -75.50, "outcome": "loss"}
+            ]
+        }
+        return jsonify(dashboard_data), 200
+    except Exception as e:
+        print(f"Error in get_dashboard_data: {str(e)}")
+        return jsonify({"msg": "Failed to fetch dashboard data"}), 500
 
 @user_bp.route('/customers', methods=['GET'])
 def get_all_customers():

@@ -5,11 +5,22 @@ const Customer = require('../models/customer');
 // Get all customers
 router.get('/', async (req, res) => {
     try {
-        const customers = await Customer.find().sort({ createdAt: -1 });
-        res.json(customers);
+        // Add timeout and error handling for database queries
+        const customers = await Customer.find().sort({ createdAt: -1 }).timeout(10000);
+        res.json(customers || []);
     } catch (error) {
         console.error('Error fetching customers:', error);
-        res.status(500).json({ error: 'Failed to fetch customers' });
+        
+        // Return empty array if database is unavailable
+        if (error.name === 'MongooseError' || error.name === 'MongoError') {
+            return res.json([]);
+        }
+        
+        res.status(500).json({ 
+            error: 'Failed to fetch customers',
+            message: 'Database connection issue',
+            customers: []
+        });
     }
 });
 

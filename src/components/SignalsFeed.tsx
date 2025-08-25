@@ -101,24 +101,109 @@ const SignalCardComponent: React.FC<SignalCardProps> = ({
   onAddToJournal, 
   onChatWithNexus 
 }) => {
+  const formatTakeProfit = (tp: any) => {
+    if (Array.isArray(tp)) {
+      return tp.join(', ');
+    }
+    return tp;
+  };
+
   return (
-    <div className={`signal-card ${isTaken ? 'taken' : ''} ${isSkipped ? 'skipped' : ''}`}>
-      <h3>{signal.pair} - {signal.direction}</h3>
-      <p>Entry: {signal.entryPrice}</p>
-      <p>Stop Loss: {signal.stopLoss}</p>
-      <p>Take Profit: {signal.takeProfit}</p>
+    <div className={`signal-card bg-gray-800/60 backdrop-blur-sm p-4 rounded-xl border border-gray-700 mb-4 ${isTaken ? 'border-green-500' : ''} ${isSkipped ? 'border-red-500' : ''}`}>
+      <div className="flex justify-between items-start mb-3">
+        <h3 className="text-xl font-bold text-white">{signal.pair} - {signal.type?.toUpperCase() || signal.direction}</h3>
+        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+          signal.type?.toLowerCase() === 'buy' || signal.direction?.toLowerCase() === 'buy' 
+            ? 'bg-green-600 text-white' 
+            : 'bg-red-600 text-white'
+        }`}>
+          {signal.type?.toUpperCase() || signal.direction}
+        </span>
+      </div>
       
-      <div className="signal-actions">
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <p className="text-gray-400 text-sm">Entry Price</p>
+          <p className="text-white font-semibold">{signal.entry || signal.entryPrice}</p>
+        </div>
+        <div>
+          <p className="text-gray-400 text-sm">Stop Loss</p>
+          <p className="text-white font-semibold">{signal.stopLoss}</p>
+        </div>
+        <div className="col-span-2">
+          <p className="text-gray-400 text-sm">Take Profit</p>
+          <p className="text-white font-semibold">{formatTakeProfit(signal.takeProfit)}</p>
+        </div>
+      </div>
+
+      {signal.analysis && (
+        <div className="mb-4">
+          <p className="text-gray-400 text-sm">Analysis</p>
+          <p className="text-gray-300 text-sm">{signal.analysis}</p>
+        </div>
+      )}
+
+      {signal.ictConcepts && signal.ictConcepts.length > 0 && (
+        <div className="mb-4">
+          <p className="text-gray-400 text-sm mb-2">ICT Concepts</p>
+          <div className="flex flex-wrap gap-2">
+            {signal.ictConcepts.map((concept: string, index: number) => (
+              <span key={index} className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded text-xs">
+                {concept}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      <div className="signal-actions flex flex-wrap gap-2">
         {!isTaken && !isSkipped && (
           <>
-                        <button onClick={() => onMarkAsTaken(signal, 'Target Hit')}>Mark as Won</button>
-            <button onClick={() => onMarkAsTaken(signal, 'Stop Loss Hit')}>Mark as Lost</button>
-            <button onClick={() => onMarkAsTaken(signal, 'Breakeven')}>Mark as Break Even</button>
+            <button 
+              onClick={() => onMarkAsTaken(signal, 'Target Hit')}
+              className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors"
+            >
+              Mark as Won
+            </button>
+            <button 
+              onClick={() => onMarkAsTaken(signal, 'Stop Loss Hit')}
+              className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
+            >
+              Mark as Lost
+            </button>
+            <button 
+              onClick={() => onMarkAsTaken(signal, 'Breakeven')}
+              className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm transition-colors"
+            >
+              Break Even
+            </button>
           </>
         )}
-        <button onClick={() => onAddToJournal(signal)}>Add to Journal</button>
-        <button onClick={() => onChatWithNexus(signal)}>Chat with Nexus</button>
+        <button 
+          onClick={() => onAddToJournal(signal)}
+          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+        >
+          Add to Journal
+        </button>
+        <button 
+          onClick={() => onChatWithNexus(signal)}
+          className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-colors"
+        >
+          Chat with Nexus
+        </button>
       </div>
+      
+      {isTaken && (
+        <div className="mt-3 p-2 bg-green-600/20 border border-green-500/30 rounded text-green-300 text-sm">
+          ✅ Signal taken
+        </div>
+      )}
+      
+      {isSkipped && (
+        <div className="mt-3 p-2 bg-red-600/20 border border-red-500/30 rounded text-red-300 text-sm">
+          ❌ Signal skipped
+        </div>
+      )}
     </div>
   );
 };

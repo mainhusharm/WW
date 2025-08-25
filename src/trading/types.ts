@@ -7,15 +7,19 @@ export interface Signal {
   id: string;
   pair: string;
   direction: 'LONG' | 'SHORT';
+  type?: string; // BUY/SELL format compatibility
+  entry?: string | number; // Alternative entry field
   entryPrice: number;
   stopLoss: number;
-  takeProfit: number;
+  takeProfit: number | string | string[]; // Support multiple formats
   market?: string;
   status?: 'active' | 'closed' | 'pending';
   confidence?: number;
   riskRewardRatio?: string;
   timestamp: string;
-  description: string;
+  description?: string;
+  analysis?: string; // Market analysis
+  ictConcepts?: string[]; // ICT trading concepts
   // Optional risk/reward details if provided by the signal
   riskAmount?: number;
   rewardAmount?: number;
