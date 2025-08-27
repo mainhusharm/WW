@@ -6,12 +6,14 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python init_database.py
-    startCommand: gunicorn render_backend_server:app --bind 0.0.0.0:$PORT
+    startCommand: gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.16
       - key: RENDER_ENVIRONMENT
         value: production
+      - key: PORT
+        value: 10000
     healthCheckPath: /api/health
     autoDeploy: true
 

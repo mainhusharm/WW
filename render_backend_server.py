@@ -5,17 +5,20 @@ Optimized for deployment with proper error handling and dependencies
 """
 
 import os
+import sys
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
 from pathlib import Path
 from datetime import datetime
 import json
-import requests
 import logging
 
 # Configure logging for production
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Create Flask app
@@ -87,7 +90,11 @@ def init_db():
         logger.error(f"Database initialization error: {e}")
 
 # Initialize database on startup
-init_db()
+try:
+    init_db()
+    logger.info("Database setup completed")
+except Exception as e:
+    logger.error(f"Failed to setup database: {e}")
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -129,6 +136,7 @@ def test_endpoint():
 def yfinance_price(symbol):
     """Get current price from YFinance (direct implementation for production)"""
     try:
+        # Import yfinance here to avoid startup issues
         import yfinance as yf
         
         # Clean symbol for yfinance
@@ -184,6 +192,7 @@ def yfinance_price(symbol):
 def yfinance_historical(symbol, timeframe):
     """Get historical data from YFinance (direct implementation for production)"""
     try:
+        # Import yfinance here to avoid startup issues
         import yfinance as yf
         
         # Clean symbol for yfinance
@@ -409,6 +418,29 @@ def internal_error(error):
         'timestamp': datetime.now().isoformat()
     }), 500
 
+# Root endpoint for basic health check
+@app.route('/', methods=['GET'])
+def root():
+    """Root endpoint"""
+    return jsonify({
+        'message': 'Forex Bot Backend Server',
+        'status': 'running',
+        'timestamp': datetime.now().isoformat(),
+        'endpoints': [
+            '/api/health',
+            '/api/test',
+            '/api/yfinance/price/<symbol>',
+            '/api/yfinance/historical/<symbol>/<timeframe>',
+            '/api/bot/data',
+            '/api/database/bot-data'
+        ]
+    }), 200
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    try:
+        port = int(os.environ.get('PORT', 5000))
+        logger.info(f"Starting server on port {port}")
+        app.run(host='0.0.0.0', port=port, debug=False)
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")
+        sys.exit(1)

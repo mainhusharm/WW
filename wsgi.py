@@ -1,30 +1,47 @@
 #!/usr/bin/env python3
 """
 WSGI entry point for Render deployment
+Simple and reliable startup
 """
+
 import os
 import sys
-from dotenv import load_dotenv
+from pathlib import Path
 
-# Load environment variables
-load_dotenv()
+# Add the current directory to Python path
+current_dir = Path(__file__).parent
+sys.path.insert(0, str(current_dir))
 
-# Add current directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-# Import the Flask app
-from journal import create_app
-
-# Create the app instance
-application = create_app()
-
-# Debug: Print the app type and available attributes
-print(f"WSGI Application created: {type(application)}")
-print(f"Available attributes: {dir(application)}")
-
-if __name__ == "__main__":
-    # Get port from environment variable (Render requirement)
-    port = int(os.environ.get("PORT", 8080))
+try:
+    from render_backend_server import app
     
-    # Run the app
-    application.run(host="0.0.0.0", port=port)
+    # Ensure database is initialized
+    from render_backend_server import init_db
+    init_db()
+    
+    # Create the WSGI application
+    application = app
+    
+    print("✅ WSGI application loaded successfully")
+    print(f"📁 Current directory: {current_dir}")
+    print(f"🐍 Python version: {sys.version}")
+    print(f"🌐 Flask app: {app.name}")
+    
+except Exception as e:
+    print(f"❌ Failed to load WSGI application: {e}")
+    import traceback
+    traceback.print_exc()
+    
+    # Create a minimal fallback app
+    from flask import Flask, jsonify
+    fallback_app = Flask(__name__)
+    
+    @fallback_app.route('/')
+    def fallback():
+        return jsonify({
+            'error': 'Backend failed to start',
+            'message': str(e),
+            'status': 'error'
+        }), 500
+    
+    application = fallback_app
