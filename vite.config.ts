@@ -8,12 +8,7 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [
-      react({
-        jsxImportSource: '@emotion/react',
-        babel: {
-          plugins: ['@emotion/babel-plugin'],
-        },
-      }),
+      react(),
     ],
     base: '/',
     build: {
@@ -25,9 +20,6 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: (id) => {
             if (id.includes('node_modules')) {
-              if (id.includes('three') || id.includes('@react-three')) {
-                return 'three';
-              }
               if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
                 return 'vendor';
               }

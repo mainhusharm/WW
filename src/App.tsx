@@ -6,8 +6,8 @@ import SignUp from './components/SignUp';
 import SignIn from './components/SignIn';
 import MembershipPlans from './components/MembershipPlans';
 import PaymentFlow from './components/PaymentFlow';
-import PayPalPayment from './components/PayPalPayment';
-import StripePayment from './components/StripePayment';
+// import PayPalPayment from './components/PayPalPayment';
+// import StripePayment from './components/StripePayment';
 import SuccessfulPaymentPage from './components/SuccessfulPaymentPage';
 import Questionnaire from './components/Questionnaire';
 import PropFirmSelection from './components/PropFirmSelection';
@@ -136,8 +136,8 @@ const AppContent = () => {
         <Route path="/signin" element={<SignIn />} />
         <Route path="/membership" element={<MembershipPlans />} />
         <Route path="/payment-flow" element={<ProtectedRoute><PaymentFlow /></ProtectedRoute>} />
-        <Route path="/paypal-payment" element={<ProtectedRoute><PayPalPayment /></ProtectedRoute>} />
-        <Route path="/stripe-payment" element={<ProtectedRoute><StripePayment /></ProtectedRoute>} />
+        {/* <Route path="/paypal-payment" element={<ProtectedRoute><PayPalPayment /></ProtectedRoute>} />
+        <Route path="/stripe-payment" element={<ProtectedRoute><StripePayment /></ProtectedRoute>} /> */}
         <Route path="/successful-payment" element={<SuccessfulPaymentPage />} />
         <Route path="/questionnaire" element={<Questionnaire />} />
         <Route path="/risk-management" element={<RiskManagementPage />} />

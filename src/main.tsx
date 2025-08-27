@@ -1,14 +1,10 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { LazyMotion, domAnimation } from 'framer-motion';
-import App from './App';
-import './index.css';
-import './effects.css';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <LazyMotion features={domAnimation}>
-      <App />
-    </LazyMotion>
-  </StrictMode>
-);
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)

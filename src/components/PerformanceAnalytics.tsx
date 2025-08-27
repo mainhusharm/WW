@@ -1,170 +1,175 @@
-import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { TradingState } from '../trading/types';
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, TrendingDown, DollarSign, Target, AlertTriangle } from 'lucide-react';
 
+const PerformanceAnalytics: React.FC = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState('1M');
+  const [performanceData] = useState([
+    { month: 'Jan', profit: 2500, loss: 800, net: 1700 },
+    { month: 'Feb', profit: 3200, loss: 1200, net: 2000 },
+    { month: 'Mar', profit: 2800, loss: 900, net: 1900 },
+    { month: 'Apr', profit: 4100, loss: 1500, net: 2600 },
+    { month: 'May', profit: 3600, loss: 1100, net: 2500 },
+    { month: 'Jun', profit: 4800, loss: 1800, net: 3000 },
+  ]);
 
-interface PerformanceAnalyticsProps {
-  tradingState: TradingState | null;
-}
+  const [tradeData] = useState([
+    { type: 'Winning Trades', count: 45, percentage: 75 },
+    { type: 'Losing Trades', count: 15, percentage: 25 },
+  ]);
 
-
-const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({ tradingState }) => {
-  const [timeframe, setTimeframe] = React.useState('ALL');
-
-
-  if (!tradingState || tradingState.trades.length === 0) {
-    return (
-      <div className="page-content">
-        <div className="page-header">
-          <div>
-            <h1 className="page-title">Performance Analytics</h1>
-            <p className="page-subtitle">No trading data available.</p>
-          </div>
-        </div>
-        <div className="glass-panel">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-white text-lg">Start trading to see your performance analysis.</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-
-  const { trades } = tradingState;
-
-
-  const equityData = trades.map(trade => ({
-    name: new Date(trade.entryTime).toLocaleDateString(),
-    equity: trade.equityAfter || 0,
-  }));
-
-
-  const monthlyPnl = trades.reduce((acc, trade) => {
-    const month = new Date(trade.entryTime).toLocaleString('default', { month: 'short' });
-    acc[month] = (acc[month] || 0) + (trade.pnl || 0);
-    return acc;
-  }, {} as Record<string, number>);
-
-
-  const monthlyData = Object.keys(monthlyPnl).map(month => ({
-    name: month,
-    pnl: monthlyPnl[month],
-  }));
-
+  const maxNet = Math.max(...performanceData.map(d => d.net));
+  const maxProfit = Math.max(...performanceData.map(d => d.profit));
 
   return (
-    <>
-      <style>{`
-        :root {
-            --primary-cyan: #00ffff;
-            --primary-green: #00ff88;
-            --bg-dark: #0a0a0f;
-            --bg-panel: rgba(15, 15, 35, 0.6);
-            --border-glow: rgba(0, 255, 136, 0.3);
-        }
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: var(--bg-panel);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            border: 1px solid var(--border-glow);
-        }
-        .page-title {
-            font-size: 32px;
-            font-weight: bold;
-            background: linear-gradient(135deg, var(--primary-cyan), var(--primary-green));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .page-subtitle {
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 5px;
-        }
-        .filters-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-        .tab-btn {
-            padding: 10px 20px;
-            background: transparent;
-            border: 1px solid var(--border-glow);
-            color: white;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .tab-btn.active {
-            background: var(--primary-green);
-            color: var(--bg-dark);
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
-        }
-        .glass-panel {
-            background: var(--bg-panel);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glow);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 25px;
-        }
-        .recharts-text {
-            fill: #A0AEC0;
-        }
-      `}</style>
-      <div className="page-content">
-        <div className="page-header">
-          <div>
-            <h1 className="page-title">Performance Analytics</h1>
-            <p className="page-subtitle">Real-time analysis of your trading performance</p>
+    <div className="bg-gray-900 rounded-lg p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-white">Performance Analytics</h2>
+        <div className="flex space-x-2">
+          {['1W', '1M', '3M', '6M', '1Y'].map((period) => (
+            <button
+              key={period}
+              onClick={() => setSelectedPeriod(period)}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                selectedPeriod === period
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              {period}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-gray-800 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Total Profit</p>
+              <p className="text-2xl font-bold text-green-400">$18,200</p>
+            </div>
+            <TrendingUp className="w-8 h-8 text-green-400" />
+          </div>
+        </div>
+        
+        <div className="bg-gray-800 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Total Loss</p>
+              <p className="text-2xl font-bold text-red-400">$7,300</p>
+            </div>
+            <TrendingDown className="w-8 h-8 text-red-400" />
+          </div>
+        </div>
+        
+        <div className="bg-gray-800 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Net P&L</p>
+              <p className="text-2xl font-bold text-blue-400">$10,900</p>
+            </div>
+            <DollarSign className="w-8 h-8 text-blue-400" />
+          </div>
+        </div>
+        
+        <div className="bg-gray-800 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-400 text-sm">Win Rate</p>
+              <p className="text-2xl font-bold text-yellow-400">75%</p>
+            </div>
+            <Target className="w-8 h-8 text-yellow-400" />
+          </div>
+        </div>
+      </div>
+
+      {/* Performance Chart */}
+      <div className="bg-gray-800 rounded-lg p-6 mb-8">
+        <h3 className="text-lg font-semibold text-white mb-4">Monthly Performance</h3>
+        <div className="space-y-4">
+          {performanceData.map((data, index) => (
+            <div key={index} className="flex items-center space-x-4">
+              <div className="w-16 text-sm text-gray-400">{data.month}</div>
+              <div className="flex-1 bg-gray-700 rounded-full h-8 relative overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-green-500 to-blue-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${(data.net / maxNet) * 100}%` }}
+                ></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-medium text-white">
+                    ${data.net.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Trade Distribution */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Trade Distribution</h3>
+          <div className="space-y-4">
+            {tradeData.map((trade, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <span className="text-gray-300">{trade.type}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-24 bg-gray-700 rounded-full h-3">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        trade.type === 'Winning Trades' ? 'bg-green-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${trade.percentage}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-sm text-gray-400 w-12 text-right">
+                    {trade.count}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-
-        <div className="filters-bar">
-          <button onClick={() => setTimeframe('1D')} className={`tab-btn ${timeframe === '1D' ? 'active' : ''}`}>1D</button>
-          <button onClick={() => setTimeframe('1W')} className={`tab-btn ${timeframe === '1W' ? 'active' : ''}`}>1W</button>
-          <button onClick={() => setTimeframe('1M')} className={`tab-btn ${timeframe === '1M' ? 'active' : ''}`}>1M</button>
-          <button onClick={() => setTimeframe('ALL')} className={`tab-btn ${timeframe === 'ALL' ? 'active' : ''}`}>ALL</button>
-        </div>
-
-
-        <div className="glass-panel">
-          <h3 className="text-xl font-semibold text-white mb-4">Equity Curve</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={equityData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-              <XAxis dataKey="name" stroke="#A0AEC0" />
-              <YAxis stroke="#A0AEC0" />
-              <Tooltip contentStyle={{ backgroundColor: '#1A202C', border: '1px solid var(--border-glow)' }} />
-              <Legend wrapperStyle={{ color: '#A0AEC0' }} />
-              <Line type="monotone" dataKey="equity" stroke="var(--primary-cyan)" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-
-        <div className="glass-panel">
-          <h3 className="text-xl font-semibold text-white mb-4">Monthly Performance (PNL)</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-              <XAxis dataKey="name" stroke="#A0AEC0" />
-              <YAxis stroke="#A0AEC0" />
-              <Tooltip contentStyle={{ backgroundColor: '#1A202C', border: '1px solid var(--border-glow)' }} />
-              <Legend wrapperStyle={{ color: '#A0AEC0' }} />
-              <Bar dataKey="pnl" fill="var(--primary-green)" />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Risk Metrics</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between">
+              <span className="text-gray-300">Max Drawdown</span>
+              <span className="text-red-400 font-medium">-12.5%</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-300">Sharpe Ratio</span>
+              <span className="text-green-400 font-medium">1.8</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-300">Risk/Reward</span>
+              <span className="text-blue-400 font-medium">2.5:1</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-300">Avg Trade</span>
+              <span className="text-yellow-400 font-medium">$182</span>
+            </div>
+          </div>
         </div>
       </div>
-    </>
+
+      {/* Alert */}
+      <div className="mt-6 bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+        <div className="flex items-center space-x-3">
+          <AlertTriangle className="w-5 h-5 text-yellow-400" />
+          <div>
+            <p className="text-yellow-200 font-medium">Performance Notice</p>
+            <p className="text-yellow-300 text-sm">
+              Your current performance is above the 75% win rate target. Consider increasing position sizes gradually.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
-
 
 export default PerformanceAnalytics;
