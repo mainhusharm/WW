@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
       minify: 'terser',
       terserOptions: {
         compress: {
-          drop_console: true,
+          drop_console: mode === 'production',
           drop_debugger: true,
         },
       },
@@ -48,7 +48,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5175,
       host: true,
-      strictPort: true,
+      strictPort: false,
       proxy: {
         '/api': {
           target: env.VITE_API_URL || 'http://localhost:5000',
@@ -57,6 +57,11 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },
+    },
+    preview: {
+      port: parseInt(process.env.PORT) || 4173,
+      host: '0.0.0.0',
+      strictPort: false,
     },
     resolve: {
       alias: {

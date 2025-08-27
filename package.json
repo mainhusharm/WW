@@ -1,21 +1,19 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "trading-journal-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "python3 run.py",
     "dev": "vite",
     "build": "vite build",
+    "preview": "vite preview --port 4173",
+    "start": "vite preview --host 0.0.0.0 --port $PORT",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "server": "node -r dotenv/config server/index.js",
-    "telegram-webhook": "npx ts-node src/api/telegramWebhook.ts",
-    "render-start": "gunicorn --bind 0.0.0.0:$PORT journal:create_app()"
+    "server": "node -r dotenv/config server/index.js"
   },
   "dependencies": {
     "@heroicons/react": "^2.1.1",
-    "@react-three/drei": "^9.99.0",
+    "@react-three/drei": "^9.88.0",
     "@react-three/fiber": "^8.15.16",
     "axios": "^1.6.2",
     "cors": "^2.8.5",
@@ -29,7 +27,6 @@
     "react-router-dom": "^6.20.1",
     "socket.io-client": "^4.7.2",
     "three": "^0.158.0",
-    "ts-node": "^10.9.1",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
@@ -51,5 +48,8 @@
     "terser": "^5.43.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.10"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

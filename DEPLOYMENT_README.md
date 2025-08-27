@@ -334,3 +334,77 @@ For deployment issues:
 **Version**: 1.0.0  
 **Last Updated**: December 2024  
 **Status**: ✅ Ready for Render Deployment
+
+---
+
+# Trading Journal App - Deployment Guide
+
+## 🚀 Quick Deploy to Render
+
+This trading journal application is configured for one-click deployment to Render.com.
+
+### Prerequisites
+- GitHub account
+- Render.com account (free tier available)
+
+### Deployment Steps
+
+1. **Push to GitHub**:
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial deployment commit"
+   git branch -M main
+   git remote add origin https://github.com/mainhusharm/WW.git
+   git push -u origin main
+   ```
+
+2. **Deploy on Render**:
+   - Go to [render.com](https://render.com)
+   - Click "New +" → "Web Service"
+   - Connect your GitHub repository
+   - Render will automatically detect the `render.yaml` file
+   - Click "Deploy"
+
+### Configuration
+
+The app is pre-configured with:
+- **Build Command**: `npm ci && npm run build`
+- **Start Command**: `npm start`
+- **Port**: Automatically assigned by Render
+- **Node Version**: 18+
+
+### Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+The app will be available at `http://localhost:5175`
+
+### Features
+
+- Modern React + TypeScript frontend
+- Real-time trading dashboard
+- 3D visualizations with Three.js
+- Responsive design with Tailwind CSS
+- Session persistence and user data backup
+
+### Environment Variables
+
+No additional environment variables required for basic deployment. The app uses mock data for demonstration purposes.
+
+### Troubleshooting
+
+If deployment fails:
+1. Check build logs in Render dashboard
+2. Ensure all dependencies are in `package.json`
+3. Verify Node.js version compatibility (18+)
+
+### Support
+
+For issues or questions, check the GitHub repository issues section.
