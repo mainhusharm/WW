@@ -49,7 +49,6 @@ const InteractiveButton: React.FC<InteractiveButtonProps> = ({
         color={hovered ? '#000000' : '#ffffff'}
         anchorX="center"
         anchorY="middle"
-        font="/fonts/inter-bold.woff"
       >
         {text}
       </Text>
@@ -117,7 +116,6 @@ const FloatingCard: React.FC<FloatingCardProps> = ({ position, title, value, col
         color={color}
         anchorX="center"
         anchorY="middle"
-        font="/fonts/inter-bold.woff"
       >
         {title}
       </Text>
@@ -129,7 +127,6 @@ const FloatingCard: React.FC<FloatingCardProps> = ({ position, title, value, col
         color="#ffffff"
         anchorX="center"
         anchorY="middle"
-        font="/fonts/inter-bold.woff"
       >
         {value}
       </Text>
@@ -140,7 +137,7 @@ const FloatingCard: React.FC<FloatingCardProps> = ({ position, title, value, col
 const TradingGraph3D: React.FC<{ position: [number, number, number] }> = ({ position }) => {
   const graphRef = useRef<THREE.Group>(null);
   
-  const graphData = useMemo(() => {
+  const graphData = React.useMemo(() => {
     return Array.from({ length: 20 }, (_, i) => ({
       x: i * 0.2 - 2,
       y: Math.sin(i * 0.3) * 0.5 + Math.random() * 0.3,

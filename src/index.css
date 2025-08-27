@@ -16,88 +16,83 @@
 @layer base {
   body {
     @apply bg-gray-950 text-gray-300;
+    scroll-behavior: smooth;
   }
 }
 
-@layer base {
-  body {
-    @apply bg-gray-950 text-gray-300;
-  }
+/* Staggered animations - these work with the Tailwind classes defined in tailwind.config.js */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease-out;
 }
 
-@keyframes fade-in-down {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.animate-on-scroll.animate-fade-in {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.animate-on-scroll.animate-slide-up {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-@keyframes fade-in-zoom {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.animate-stagger {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease-out;
 }
 
-.animate-fade-in-down {
-  animation: fade-in-down 0.8s ease-out forwards;
+.animate-stagger.animate-fade-in {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.animate-fade-in-up {
-  animation: fade-in-up 0.8s ease-out 0.2s forwards;
+.animate-stagger.animate-slide-up {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.bg-grid-pattern {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 40px 40px;
+/* Enhanced hover effects */
+.hover-lift {
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
 }
 
-/* Futuristic scrollbar */
-.futuristic-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 255, 255, 0.5) rgba(0, 0, 0, 0.1);
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
-.futuristic-scrollbar::-webkit-scrollbar {
-  width: 6px;
+/* Glow effects */
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
 }
 
-.futuristic-scrollbar::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
 }
 
-.futuristic-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(0, 255, 255, 0.8), rgba(0, 255, 255, 0.4));
-  border-radius: 3px;
+.glow-purple {
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
 }
 
-.futuristic-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(0, 255, 255, 1), rgba(0, 255, 255, 0.6));
+/* Backdrop blur utilities */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
 }
 
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+}
 
-/* Background Grid Styles */
+.backdrop-blur-lg {
+  backdrop-filter: blur(16px);
+}
+
+.backdrop-blur-xl {
+  backdrop-filter: blur(24px);
+}
+
 .bg-grid {
   background-image: 
     linear-gradient(rgba(0, 255, 255, 0.3) 1px, transparent 1px),

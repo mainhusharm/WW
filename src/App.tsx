@@ -36,7 +36,8 @@ import TermsOfService from './components/TermsOfService';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import FAQ from './components/FAQ';
 import { SignalDistributionProvider } from './components/SignalDistributionService';
-import FuturisticBackground from './components/FuturisticBackground';
+import AnimationTest from './components/AnimationTest';
+
 import CustomerServiceMpinLogin from './components/CustomerServiceMpinLogin';
 import CustomerServiceProtectedRoute from './components/CustomerServiceProtectedRoute';
 // import EnhancedCustomerServiceDashboard from './components/EnhancedCustomerServiceDashboard';
@@ -124,12 +125,16 @@ const AppContent = () => {
     };
   }, []);
 
+  // Check if current route is a dashboard route
+  const isDashboardRoute = location.pathname.startsWith('/dashboard') || 
+                          location.pathname.startsWith('/admin/dashboard') ||
+                          location.pathname.startsWith('/customer-service/dashboard');
+
   return (
     <div className="min-h-screen" style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}>
-      <FuturisticBackground />
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<Enhanced3DLandingPage />} />
           <Route path="/3d" element={<Enhanced3DLandingPage />} />
           <Route path="/classic" element={<LandingPage />} />
           <Route path="/signup" element={<SignUp />} />
@@ -203,11 +208,11 @@ const AppContent = () => {
           />
         <Route path="/ai-coach" element={<ProtectedRoute><AICoach /></ProtectedRoute>} />
         <Route path="/lightning" element={<Lightning><LandingPage /></Lightning>} />
+        <Route path="/animation-test" element={<AnimationTest />} />
         </Routes>
       </Suspense>
-      {!(location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/')) && (
-        <Footer />
-      )}
+      {/* Show footer on all pages except dashboards */}
+      {!isDashboardRoute && <Footer />}
     </div>
   );
 }
