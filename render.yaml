@@ -1,19 +1,16 @@
 services:
-  # Enhanced Backend API Server
   - type: web
-    name: enhanced-trading-backend
+    name: WW-backend
     env: python
     plan: free
     buildCommand: |
       pip install -r requirements.txt
-      python -c "import sqlite3; print('SQLite available')"
-    startCommand: python enhanced_trading_server.py
+      python init_database.py
+    startCommand: gunicorn render_backend_server:app --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.16
-      - key: PORT
-        value: 10000
-      - key: FLASK_ENV
+      - key: RENDER_ENVIRONMENT
         value: production
     healthCheckPath: /api/health
     autoDeploy: true
