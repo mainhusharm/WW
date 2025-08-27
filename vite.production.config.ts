@@ -15,7 +15,7 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000,
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true,
@@ -23,26 +23,10 @@ export default defineConfig({
     rollupOptions: {
       external: [],
       output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            // Ensure ALL React-related packages are bundled together
-            if (id.includes('react') || 
-                id.includes('react-dom') || 
-                id.includes('react-router') ||
-                id.includes('@react-three') ||
-                id.includes('three') ||
-                id.includes('gsap') ||
-                id.includes('socket.io') ||
-                id.includes('uuid') ||
-                id.includes('axios') ||
-                id.includes('lucide-react') ||
-                id.includes('@heroicons/react')) {
-              return 'react-core';
-            }
-            // Bundle other vendor packages
-            return 'vendor';
-          }
-        },
+        // Disable chunking completely - bundle everything into one file
+        manualChunks: undefined,
+        // Force single bundle
+        inlineDynamicImports: true,
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
