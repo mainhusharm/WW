@@ -8,7 +8,9 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [
-      react(),
+      react({
+        fastRefresh: true,
+      }),
     ],
     base: '/',
     build: {
@@ -20,10 +22,17 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: (id) => {
             if (id.includes('node_modules')) {
+              // Keep React and related packages together to prevent hook errors
               if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-                return 'vendor';
+                return 'react-vendor';
               }
-              return 'vendor-other';
+              if (id.includes('@react-three') || id.includes('three')) {
+                return 'three-vendor';
+              }
+              if (id.includes('gsap')) {
+                return 'gsap-vendor';
+              }
+              return 'vendor';
             }
           },
         },
@@ -58,7 +67,7 @@ export default defineConfig(({ mode }) => {
       'process.env': {},
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-router-dom'],
+      include: ['react', 'react-dom', 'react-router-dom', '@react-three/drei', '@react-three/fiber', 'three', 'gsap'],
       esbuildOptions: {
         target: 'es2020',
       },

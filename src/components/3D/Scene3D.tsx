@@ -3,6 +3,21 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Sphere, Box, Torus, Float, Text3D, Environment, PerspectiveCamera, Points } from '@react-three/drei';
 import * as THREE from 'three';
 
+// Client-side only wrapper to prevent SSR issues
+const ClientOnly = ({ children }: { children: React.ReactNode }) => {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) {
+    return null;
+  }
+
+  return <>{children}</>;
+};
+
 interface AnimatedGeometryProps {
   position: [number, number, number];
   color: string;
@@ -146,31 +161,33 @@ const Scene3D: React.FC<Scene3DProps> = ({ scrollY, isVisible }) => {
 
   return (
     <div className="fixed inset-0 z-0 pointer-events-none">
-      <Canvas>
-        <PerspectiveCamera makeDefault position={[0, 0, 5]} />
-        <CameraController scrollY={scrollY} />
-        
-        {/* Lighting */}
-        <ambientLight intensity={0.3} />
-        <pointLight position={[10, 10, 10]} intensity={1} color="#00ffff" />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff00ff" />
-        <spotLight position={[0, 10, 0]} angle={0.3} penumbra={1} intensity={1} color="#ffffff" />
+      <ClientOnly>
+        <Canvas>
+          <PerspectiveCamera makeDefault position={[0, 0, 5]} />
+          <CameraController scrollY={scrollY} />
+          
+          {/* Lighting */}
+          <ambientLight intensity={0.3} />
+          <pointLight position={[10, 10, 10]} intensity={1} color="#00ffff" />
+          <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff00ff" />
+          <spotLight position={[0, 10, 0]} angle={0.3} penumbra={1} intensity={1} color="#ffffff" />
 
-        {/* 3D Objects */}
-        <AnimatedSphere position={[-3, 2, -2]} color="#00ffff" scale={0.8} />
-        <AnimatedSphere position={[3, -1, -1]} color="#ff00ff" scale={0.6} />
-        <AnimatedTorus position={[0, 0, -3]} color="#00ff88" scale={1.2} />
-        <AnimatedTorus position={[-2, -2, -4]} color="#ffaa00" scale={0.8} />
-        
-        {/* Trading Chart */}
-        <TradingChart3D position={[0, -1, 0]} />
-        
-        {/* Particle Field */}
-        <ParticleField />
-        
-        {/* Environment */}
-        <Environment preset="night" />
-      </Canvas>
+          {/* 3D Objects */}
+          <AnimatedSphere position={[-3, 2, -2]} color="#00ffff" scale={0.8} />
+          <AnimatedSphere position={[3, -1, -1]} color="#ff00ff" scale={0.6} />
+          <AnimatedTorus position={[0, 0, -3]} color="#00ff88" scale={1.2} />
+          <AnimatedTorus position={[-2, -2, -4]} color="#ffaa00" scale={0.8} />
+          
+          {/* Trading Chart */}
+          <TradingChart3D position={[0, -1, 0]} />
+          
+          {/* Particle Field */}
+          <ParticleField />
+          
+          {/* Environment */}
+          <Environment preset="night" />
+        </Canvas>
+      </ClientOnly>
     </div>
   );
 };
