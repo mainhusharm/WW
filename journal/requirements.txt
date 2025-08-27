@@ -10,3 +10,5 @@ werkzeug==2.2.2
 requests
 flask-socketio
 eventlet
+yfinance
+pandas

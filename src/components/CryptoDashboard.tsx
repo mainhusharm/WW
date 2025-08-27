@@ -14,8 +14,8 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
   // Bot status management
   const fetchBotStatus = async () => {
     try {
-      const response = await api.get('/api/database/bot-status');
-      const cryptoBot = response.data.find((bot: any) => bot.bot_type === 'crypto');
+      const response = await api.get('/api/bot/status');
+      const cryptoBot = response.data.crypto;
       if (cryptoBot) {
         setBotStatus(cryptoBot);
         setIsBotRunning(cryptoBot.is_active);
@@ -27,17 +27,23 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
 
   const updateBotStatus = async (isActive: boolean) => {
     try {
-      await api.post('/api/database/bot-status/crypto', { is_active: isActive });
+      const endpoint = isActive ? '/api/bot/start' : '/api/bot/stop';
+      await api.post(endpoint, { 
+        bot_type: 'crypto',
+        updated_by: 'crypto_dashboard'
+      });
+      
       setBotStatus(prev => ({ ...prev, is_active: isActive }));
       setIsBotRunning(isActive);
       
       if (isActive) {
-        // Start the bot logic here
         console.log('Crypto bot started');
       } else {
-        // Stop the bot logic here
         console.log('Crypto bot stopped');
       }
+      
+      // Refresh bot status
+      fetchBotStatus();
     } catch (error) {
       console.error('Error updating bot status:', error);
     }

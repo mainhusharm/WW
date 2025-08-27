@@ -14,6 +14,7 @@ from .crypto_payment_routes import crypto_payment_bp
 from .database_routes import database_bp
 from .yfinance_routes import yfinance_bp
 from .landing_routes import landing_bp
+from .bot_routes import bot_bp
 import os
 import sys
 from dotenv import load_dotenv
@@ -155,6 +156,7 @@ def create_app(config_object='journal.config.ProductionConfig'):
     app.register_blueprint(database_bp, url_prefix='/api')
     app.register_blueprint(yfinance_bp, url_prefix='/api')
     app.register_blueprint(landing_bp, url_prefix='/api')
+    app.register_blueprint(bot_bp, url_prefix='/api')
     
     # Log registered routes for debugging
     print("Registered routes:")
@@ -206,6 +208,14 @@ def create_app(config_object='journal.config.ProductionConfig'):
                 </body>
                 </html>
                 '''
+
+    # Start bot service in background
+    try:
+        from .bot_service import start_bot_service
+        start_bot_service()
+        print("Bot service started successfully")
+    except Exception as e:
+        print(f"Failed to start bot service: {str(e)}")
 
     # Database tables are created via create_db.py
 

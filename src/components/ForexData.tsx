@@ -23,8 +23,8 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
   // Bot status management
   const fetchBotStatus = async () => {
     try {
-      const response = await api.get('/api/database/bot-status');
-      const forexBot = response.data.find((bot: any) => bot.bot_type === 'forex');
+      const response = await api.get('/api/bot/status');
+      const forexBot = response.data.forex;
       if (forexBot) {
         setBotStatus(forexBot);
         setIsBotRunning(forexBot.is_active);
@@ -36,17 +36,23 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
 
   const updateBotStatus = async (isActive: boolean) => {
     try {
-      await api.post('/api/database/bot-status/forex', { is_active: isActive });
+      const endpoint = isActive ? '/api/bot/start' : '/api/bot/stop';
+      await api.post(endpoint, { 
+        bot_type: 'forex',
+        updated_by: 'forex_dashboard'
+      });
+      
       setBotStatus(prev => ({ ...prev, is_active: isActive }));
       setIsBotRunning(isActive);
       
       if (isActive) {
-        // Start the bot logic here
         console.log('Forex bot started');
       } else {
-        // Stop the bot logic here
         console.log('Forex bot stopped');
       }
+      
+      // Refresh bot status
+      fetchBotStatus();
     } catch (error) {
       console.error('Error updating bot status:', error);
     }
