@@ -10,30 +10,46 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react({
         fastRefresh: true,
+        jsxRuntime: 'automatic',
       }),
     ],
     base: '/',
     build: {
+      target: 'es2015',
       outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: false,
       chunkSizeWarningLimit: 1000,
+      commonjsOptions: {
+        include: [/node_modules/],
+        transformMixedEsModules: true,
+      },
       rollupOptions: {
+        external: [],
         output: {
           manualChunks: (id) => {
             if (id.includes('node_modules')) {
-              // Keep React and related packages together to prevent hook errors
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-                return 'react-vendor';
+              // Ensure ALL React-related packages are bundled together
+              if (id.includes('react') || 
+                  id.includes('react-dom') || 
+                  id.includes('react-router') ||
+                  id.includes('@react-three') ||
+                  id.includes('three') ||
+                  id.includes('gsap') ||
+                  id.includes('socket.io') ||
+                  id.includes('uuid') ||
+                  id.includes('axios') ||
+                  id.includes('lucide-react') ||
+                  id.includes('@heroicons/react')) {
+                return 'react-core';
               }
-              if (id.includes('@react-three') || id.includes('three')) {
-                return 'three-vendor';
-              }
-              if (id.includes('gsap')) {
-                return 'gsap-vendor';
-              }
+              // Bundle other vendor packages
               return 'vendor';
             }
+          },
+          globals: {
+            react: 'React',
+            'react-dom': 'ReactDOM',
           },
         },
       },
@@ -66,6 +82,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src'),
+        'react': resolve(__dirname, 'node_modules/react'),
+        'react-dom': resolve(__dirname, 'node_modules/react-dom'),
       },
     },
     define: {
