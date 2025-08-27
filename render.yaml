@@ -32,7 +32,7 @@ services:
       --log-level=info 
       --access-logfile - 
       --error-logfile - 
-      wsgi:application
+      app:application
       
     envVars:
       - key: PYTHON_VERSION
