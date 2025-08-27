@@ -190,8 +190,18 @@ def process_yfinance_data(pair, timeframe, start_date, end_date, cache_key, curr
         data = ticker.history(**params)
 
         if data.empty:
-            logger.warning(f"No yfinance data found for {pair}")
-            return jsonify({'error': f'No data found for {pair}'}), 404
+            logger.warning(f"No data found for {pair} with the specified parameters. Trying with a different period.")
+            params['period'] = '1y' # Try with a longer period
+            data = yf.download(
+                tickers=formatted_pair,
+                **params,
+                auto_adjust=False,
+                progress=False,
+                timeout=30
+            )
+
+        if data.empty:
+            return jsonify({'error': f'No data found for {pair} with the specified parameters.'}), 404
 
         # Reset index to make datetime a column
         data.reset_index(inplace=True)

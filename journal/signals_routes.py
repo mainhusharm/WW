@@ -84,8 +84,23 @@ def get_signals():
         # Get all signals, ordered by newest first
         signals = Signal.query.order_by(Signal.timestamp.desc()).all()
         
-        # Convert to frontend format
-        signals_data = [signal.to_dict() for signal in signals]
+        # Convert to frontend format and remove duplicates
+        signals_data = []
+        seen_signals = set()
+        for signal in signals:
+            signal_dict = signal.to_dict()
+            # Create a unique identifier for the signal based on its content
+            signal_identifier = (
+                signal_dict['pair'],
+                signal_dict['timeframe'],
+                signal_dict['type'],
+                signal_dict['entry'],
+                signal_dict['stopLoss'],
+                tuple(signal_dict['takeProfit'])
+            )
+            if signal_identifier not in seen_signals:
+                signals_data.append(signal_dict)
+                seen_signals.add(signal_identifier)
         
         return jsonify(signals_data), 200
         
