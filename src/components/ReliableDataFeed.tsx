@@ -77,14 +77,14 @@ const ReliableDataFeed: React.FC<ReliableDataFeedProps> = ({
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-        const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1m&range=1d`)}`, {
+        // Use our YFinance proxy server instead of direct Yahoo Finance calls
+        const response = await fetch(`http://localhost:3001/api/yfinance/price/${encodeURIComponent(symbol)}`, {
           signal: controller.signal,
           method: 'GET',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-          },
-          mode: 'cors'
+          }
         });
 
         clearTimeout(timeoutId);
@@ -104,7 +104,7 @@ const ReliableDataFeed: React.FC<ReliableDataFeedProps> = ({
       if (priceData && priceData.price && !isNaN(priceData.price)) {
         return {
           price: parseFloat(priceData.price.toFixed(symbol.includes('JPY') ? 3 : 5)),
-          provider: priceData.cached ? 'cached' : 'yahoo-finance',
+          provider: priceData.cached ? 'cached' : 'yfinance-proxy',
           timestamp: new Date().toISOString()
         };
       }

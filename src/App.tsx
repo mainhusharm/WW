@@ -40,7 +40,7 @@ import AnimationTest from './components/AnimationTest';
 
 import CustomerServiceMpinLogin from './components/CustomerServiceMpinLogin';
 import CustomerServiceProtectedRoute from './components/CustomerServiceProtectedRoute';
-// import EnhancedCustomerServiceDashboard from './components/EnhancedCustomerServiceDashboard';
+import EnhancedCustomerServiceDashboard from './components/EnhancedCustomerServiceDashboard';
 import CustomerDetail from './components/CustomerDetail';
 import ContactSupport from './components/ContactSupport';
 import AICoach from './components/AICoach';
@@ -194,7 +194,7 @@ const AppContent = () => {
             path="/customer-service/dashboard"
             element={
               <CustomerServiceProtectedRoute>
-                {/* <EnhancedCustomerServiceDashboard onLogout={handleAdminLogout} /> */}
+                <EnhancedCustomerServiceDashboard />
               </CustomerServiceProtectedRoute>
             }
           />

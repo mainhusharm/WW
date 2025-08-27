@@ -1,21 +1,78 @@
 services:
-  # Main Trading Journal Frontend
+  # Enhanced Backend API Server
   - type: web
-    name: trading-journal-app
+    name: enhanced-trading-backend
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+      python -c "import sqlite3; print('SQLite available')"
+    startCommand: python enhanced_trading_server.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
+      - key: PORT
+        value: 10000
+      - key: FLASK_ENV
+        value: production
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  # YFinance Proxy Server
+  - type: web
+    name: yfinance-proxy
     env: node
     plan: free
-    buildCommand: npm ci && npm run build
-    startCommand: npm start
+    buildCommand: |
+      cd server
+      npm install
+    startCommand: |
+      cd server
+      node yfinance-proxy.js
     envVars:
-      - key: NODE_ENV
-        value: production
+      - key: NODE_VERSION
+        value: 18.17.0
       - key: PORT
-        generateValue: true
-    healthCheckPath: /
+        value: 10001
+    healthCheckPath: /health
+    autoDeploy: true
+
+  # Binance Service
+  - type: web
+    name: binance-service
+    env: node
+    plan: free
+    buildCommand: |
+      cd binance_service
+      npm install
+    startCommand: |
+      cd binance_service
+      node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: PORT
+        value: 10002
+    healthCheckPath: /health
+    autoDeploy: true
+
+  # Frontend Dashboard
+  - type: web
+    name: enhanced-trading-dashboard
+    env: static
+    plan: free
+    buildCommand: |
+      npm install
+      npm run build:prod
+    staticPublishPath: ./dist
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
     autoDeploy: true
 
 databases:
-  - name: trading-journal-db
+  # SQLite database (for development/testing)
+  - name: enhanced-trading-db
+    databaseName: trading_bot
+    user: trading_bot_user
     plan: free
-    databaseName: trading_journal
-    user: trading_journal_user

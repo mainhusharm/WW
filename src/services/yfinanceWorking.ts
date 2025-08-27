@@ -1,5 +1,5 @@
-// Working YFinance Service - No CORS Issues
-// Uses alternative data sources and working methods
+// Clean YFinance Service - Single Source of Truth
+// Uses ONLY backend server for real-time data with SMC signal generation
 
 interface YFinanceData {
   history: any[];
@@ -11,10 +11,22 @@ interface YFinancePrice {
   provider: string;
 }
 
+interface SMCSignal {
+  pair: string;
+  signal_type: 'buy' | 'sell';
+  entry_price: number;
+  stop_loss: number;
+  take_profit: number;
+  timestamp: string;
+  confidence: number;
+  structure_type: 'BOS' | 'CHoCH' | 'OrderBlock';
+}
+
 class YFinanceWorkingService {
   private static instance: YFinanceWorkingService;
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
   private readonly CACHE_DURATION = 30000; // 30 seconds
+  private readonly BACKEND_URL = 'http://localhost:5000'; // Single source of truth
 
   static getInstance(): YFinanceWorkingService {
     if (!YFinanceWorkingService.instance) {
@@ -24,145 +36,30 @@ class YFinanceWorkingService {
   }
 
   private formatSymbol(symbol: string): string {
-    const symbolMap: { [key: string]: string } = {
-      'EUR/USD': 'EURUSD=X',
-      'GBP/USD': 'GBPUSD=X',
-      'USD/JPY': 'USDJPY=X',
-      'USD/CHF': 'USDCHF=X',
-      'AUD/USD': 'AUDUSD=X',
-      'USD/CAD': 'USDCAD=X',
-      'NZD/USD': 'NZDUSD=X',
-      'EUR/JPY': 'EURJPY=X',
-      'GBP/JPY': 'GBPJPY=X',
-      'EUR/GBP': 'EURGBP=X',
-      'EUR/AUD': 'EURAUD=X',
-      'GBP/AUD': 'GBPAUD=X',
-      'AUD/CAD': 'AUDCAD=X',
-      'CAD/JPY': 'CADJPY=X',
-      'CHF/JPY': 'CHFJPY=X',
-      'AUD/CHF': 'AUDCHF=X',
-      'CAD/CHF': 'CADCHF=X',
-      'EUR/CHF': 'EURCHF=X',
-      'GBP/CHF': 'GBPCHF=X',
-      'NZD/CAD': 'NZDCAD=X',
-      'NZD/JPY': 'NZDJPY=X',
-      'AUD/NZD': 'AUDNZD=X',
-      'XAU/USD': 'GC=F',
-      'XAG/USD': 'SI=F',
-      'USOIL': 'CL=F'
-    };
-    
-    return symbolMap[symbol] || symbol;
+    // Convert forex symbols to proper format for backend
+    return symbol.replace('/', '%2F');
   }
 
-  // Method 1: Use our backend proxy server (NO CORS issues)
-  private async fetchWithBackendProxy(symbol: string, timeframe: string): Promise<Response | null> {
+  // SINGLE METHOD: Use backend server only (NO fallbacks, NO multiple sources)
+  private async fetchFromBackend(symbol: string, timeframe: string): Promise<Response | null> {
     try {
-      const response = await fetch(`http://localhost:3001/api/yfinance/historical/${encodeURIComponent(symbol)}/${timeframe}`);
+      const response = await fetch(`${this.BACKEND_URL}/api/yfinance/historical/${this.formatSymbol(symbol)}/${timeframe}`);
       
       if (response.ok) {
         return response;
+      } else {
+        console.error(`❌ Backend fetch failed for ${symbol}: ${response.status}`);
+        return null;
       }
     } catch (error) {
-      console.warn('Backend proxy failed:', error);
+      console.error(`❌ Backend connection failed for ${symbol}:`, error);
+      return null;
     }
-    
-    return null;
   }
 
-  // Method 2: Use Alpha Vantage API as backup (free tier available)
-  private async fetchWithAlphaVantage(symbol: string): Promise<any> {
-    try {
-      // Convert forex symbol to Alpha Vantage format
-      const avSymbol = symbol.replace('/', '');
-      const response = await fetch(`https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${avSymbol.split('')[0]}&to_symbol=${avSymbol.split('')[1]}&apikey=demo`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        return this.convertAlphaVantageData(data, symbol);
-      }
-    } catch (error) {
-      console.warn('Alpha Vantage fallback failed:', error);
-    }
-    
-    return null;
-  }
-
-  private convertAlphaVantageData(avData: any, symbol: string): YFinanceData {
-    if (!avData['Time Series FX (Daily)']) {
-      return { history: [], provider: 'alphavantage' };
-    }
-
-    const history = [];
-    const timeSeries = avData['Time Series FX (Daily)'];
-    
-    for (const [date, values] of Object.entries(timeSeries)) {
-      const data = values as any;
-      history.push({
-        time: new Date(date).toISOString(),
-        open: parseFloat(data['1. open']),
-        high: parseFloat(data['2. high']),
-        low: parseFloat(data['3. low']),
-        close: parseFloat(data['4. close']),
-        volume: 1000000 // Default volume
-      });
-    }
-    
-    return { history: history.slice(0, 100).reverse(), provider: 'alphavantage' };
-  }
-
-  // Method 3: Generate realistic market data based on current trends
-  private generateRealisticData(symbol: string, timeframe: string): YFinanceData {
-    const basePrices: { [key: string]: number } = {
-      'EUR/USD': 1.0850, 'GBP/USD': 1.2650, 'USD/JPY': 149.50,
-      'USD/CHF': 0.8750, 'AUD/USD': 0.6450, 'USD/CAD': 1.3650,
-      'NZD/USD': 0.5950, 'EUR/JPY': 162.25, 'GBP/JPY': 189.15,
-      'EUR/GBP': 0.8580, 'EUR/AUD': 1.6820, 'GBP/AUD': 1.9610,
-      'AUD/CAD': 0.8960, 'CAD/JPY': 109.50, 'CHF/JPY': 170.85,
-      'AUD/CHF': 0.7370, 'CAD/CHF': 0.6410, 'EUR/CHF': 1.2400,
-      'GBP/CHF': 1.4450, 'NZD/CAD': 0.4360, 'NZD/JPY': 89.00,
-      'AUD/NZD': 1.0840, 'XAU/USD': 2025.50, 'XAG/USD': 24.75
-    };
-    
-    const basePrice = basePrices[symbol] || 1.0000;
-    const bars = timeframe === '1d' ? 30 : timeframe === '4h' ? 180 : timeframe === '1h' ? 168 : 100;
-    const history = [];
-    
-    let currentPrice = basePrice;
-    
-    for (let i = 0; i < bars; i++) {
-      const timeOffset = i * (timeframe === '1d' ? 24 * 60 * 60 * 1000 : 
-                            timeframe === '4h' ? 4 * 60 * 60 * 1000 : 
-                            timeframe === '1h' ? 60 * 60 * 1000 : 5 * 60 * 1000);
-      
-      const timestamp = new Date(Date.now() - timeOffset);
-      
-      // Generate realistic price movement
-      const volatility = 0.002; // 0.2% volatility
-      const trend = (Math.random() - 0.5) * 0.001; // Slight trend
-      const random = (Math.random() - 0.5) * volatility;
-      
-      currentPrice = currentPrice * (1 + trend + random);
-      
-      const high = currentPrice * (1 + Math.random() * 0.003);
-      const low = currentPrice * (1 - Math.random() * 0.003);
-      const open = currentPrice * (1 + (Math.random() - 0.5) * 0.002);
-      
-      history.push({
-        time: timestamp.toISOString(),
-        open: open.toFixed(symbol.includes('JPY') ? 3 : 5),
-        high: high.toFixed(symbol.includes('JPY') ? 3 : 5),
-        low: low.toFixed(symbol.includes('JPY') ? 3 : 5),
-        close: currentPrice.toFixed(symbol.includes('JPY') ? 3 : 5),
-        volume: Math.floor(Math.random() * 1000000) + 100000
-      });
-    }
-    
-    return { history: history.reverse(), provider: 'realistic-simulation' };
-  }
-
-  async fetchHistoricalData(symbol: string, timeframe: string): Promise<YFinanceData | null> {
-    const cacheKey = `${symbol}_${timeframe}_history`;
+  // SINGLE METHOD: Get historical data from backend only
+  async fetchHistoricalData(symbol: string, timeframe: string = '1m'): Promise<YFinanceData> {
+    const cacheKey = `${symbol}_${timeframe}`;
     const now = Date.now();
     
     // Check cache first
@@ -173,42 +70,28 @@ class YFinanceWorkingService {
       }
     }
 
-    const formattedSymbol = this.formatSymbol(symbol);
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${formattedSymbol}?interval=${timeframe}&range=7d`;
+    // SINGLE SOURCE: Backend server only
+    const response = await this.fetchFromBackend(symbol, timeframe);
     
-    // Try Method 1: Backend proxy (NO CORS issues)
-    try {
-      const response = await this.fetchWithBackendProxy(symbol, timeframe);
-      if (response) {
+    if (response) {
+      try {
         const data = await response.json();
         
         if (data.history && Array.isArray(data.history) && data.history.length > 0) {
-          const resultData = { history: data.history, provider: data.provider || 'yfinance-server' };
+          const resultData = { history: data.history, provider: 'backend-server' };
           this.cache.set(cacheKey, { data: resultData, timestamp: now });
           return resultData;
         }
+      } catch (error) {
+        console.error(`❌ Data parsing failed for ${symbol}:`, error);
       }
-    } catch (error) {
-      console.warn('Backend proxy method failed:', error);
     }
-
-    // Try Method 2: Alpha Vantage
-    try {
-      const data = await this.fetchWithAlphaVantage(symbol);
-      if (data && data.history.length > 0) {
-        this.cache.set(cacheKey, { data, timestamp: now });
-        return data;
-      }
-    } catch (error) {
-      console.warn('Alpha Vantage method failed:', error);
-    }
-
-    // Method 3: Realistic simulation (always works)
-    const data = this.generateRealisticData(symbol, timeframe);
-    this.cache.set(cacheKey, { data, timestamp: now });
-    return data;
+    
+    // Return empty data if backend fails (NO fallbacks)
+    return { history: [], provider: 'backend-server' };
   }
 
+  // SINGLE METHOD: Get current price from backend only
   async fetchLatestPrice(symbol: string): Promise<YFinancePrice | null> {
     const cacheKey = `${symbol}_latest_price`;
     const now = Date.now();
@@ -221,51 +104,32 @@ class YFinanceWorkingService {
       }
     }
 
-    const formattedSymbol = this.formatSymbol(symbol);
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${formattedSymbol}?interval=1m&range=1d`;
-    
-    // Try Method 1: Backend proxy (NO CORS issues)
+    // SINGLE SOURCE: Backend server only
     try {
-      const response = await fetch(`http://localhost:3001/api/yfinance/price/${encodeURIComponent(symbol)}`);
+      const response = await fetch(`${this.BACKEND_URL}/api/yfinance/price/${this.formatSymbol(symbol)}`);
+      
       if (response.ok) {
         const data = await response.json();
         
         if (data.price && !isNaN(parseFloat(data.price))) {
-          const resultData = { price: data.price, provider: data.provider || 'yfinance-server' };
+          const resultData = { price: data.price, provider: 'backend-server' };
           this.cache.set(cacheKey, { data: resultData, timestamp: now });
           return resultData;
         }
       }
     } catch (error) {
-      console.warn('Backend proxy price fetch failed:', error);
+      console.error(`❌ Backend price fetch failed for ${symbol}:`, error);
     }
-
-    // Fallback to realistic price
-    const basePrices: { [key: string]: number } = {
-      'EUR/USD': 1.0850, 'GBP/USD': 1.2650, 'USD/JPY': 149.50,
-      'USD/CHF': 0.8750, 'AUD/USD': 0.6450, 'USD/CAD': 1.3650,
-      'NZD/USD': 0.5950, 'EUR/JPY': 162.25, 'GBP/JPY': 189.15,
-      'EUR/GBP': 0.8580, 'EUR/AUD': 1.6820, 'GBP/AUD': 1.9610,
-      'AUD/CAD': 0.8960, 'CAD/JPY': 109.50, 'CHF/JPY': 170.85,
-      'AUD/CHF': 0.7370, 'CAD/CHF': 0.6410, 'EUR/CHF': 1.2400,
-      'GBP/CHF': 1.4450, 'NZD/CAD': 0.4360, 'NZD/JPY': 89.00,
-      'AUD/NZD': 1.0840, 'XAU/USD': 2025.50, 'XAG/USD': 24.75
-    };
     
-    const basePrice = basePrices[symbol] || 1.0000;
-    const variation = (Math.random() - 0.5) * 0.01;
-    const price = basePrice * (1 + variation);
-    
-    const resultData = { price: price.toFixed(symbol.includes('JPY') ? 3 : 5), provider: 'realistic-simulation' };
-    this.cache.set(cacheKey, { data: resultData, timestamp: now });
-    
-    return resultData;
+    // Return null if backend fails (NO fallbacks)
+    return null;
   }
 
+  // SINGLE METHOD: Get bulk data from backend only
   async fetchBulkData(symbols: string[], timeframe: string): Promise<{ [key: string]: any[] }> {
     try {
-      // Use backend proxy for bulk fetch (NO CORS issues)
-      const response = await fetch(`http://localhost:3001/api/yfinance/bulk`, {
+      // SINGLE SOURCE: Backend server only
+      const response = await fetch(`${this.BACKEND_URL}/api/yfinance/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -281,38 +145,158 @@ class YFinanceWorkingService {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('❌ Backend bulk fetch failed:', error);
+      console.error(`❌ Backend bulk fetch failed:`, error);
       
-      // Fallback to individual fetches
-      const results: { [key: string]: any[] } = {};
-      
-      for (const symbol of symbols) {
-        try {
-          const data = await this.fetchHistoricalData(symbol, timeframe);
-          if (data && data.history) {
-            results[symbol] = data.history;
-            console.log(`✅ Fallback fetch for ${symbol} via ${data.provider}`);
-          } else {
-            console.warn(`⚠️ No data for ${symbol}`);
-            results[symbol] = [];
-          }
-          
-          // Add delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-        } catch (error) {
-          console.error(`❌ Failed to fetch ${symbol}:`, error);
-          results[symbol] = [];
-        }
-      }
-      
-      return results;
+      // Return empty results for all symbols (NO fallbacks)
+      const emptyResults: { [key: string]: any[] } = {};
+      symbols.forEach(symbol => {
+        emptyResults[symbol] = [];
+      });
+      return emptyResults;
     }
   }
 
-  clearCache(): void {
-    this.cache.clear();
+  // SMC Signal Generation based on the Pine Script logic
+  async generateSMCSignals(symbol: string, timeframe: string = '1m'): Promise<SMCSignal[]> {
+    try {
+      // Get historical data from backend
+      const data = await this.fetchHistoricalData(symbol, timeframe);
+      
+      if (!data.history || data.history.length < 50) {
+        console.warn(`⚠️ Insufficient data for SMC analysis on ${symbol}`);
+        return [];
+      }
+
+      const signals: SMCSignal[] = [];
+      const history = data.history;
+      
+      // Implement SMC logic based on the Pine Script
+      for (let i = 20; i < history.length - 1; i++) {
+        const current = history[i];
+        const previous = history[i - 1];
+        const next = history[i + 1];
+        
+        if (!current || !previous || !next) continue;
+        
+        const currentClose = parseFloat(current.close);
+        const previousClose = parseFloat(previous.close);
+        const nextClose = parseFloat(next.close);
+        const currentHigh = parseFloat(current.high);
+        const currentLow = parseFloat(current.low);
+        const previousHigh = parseFloat(previous.high);
+        const previousLow = parseFloat(previous.low);
+        
+        // BOS (Break of Structure) Detection
+        if (currentClose > previousHigh && previousClose < previousHigh) {
+          // Bullish BOS
+          const stopLoss = Math.min(previousLow, currentLow) - (currentHigh - currentLow) * 0.5;
+          const risk = currentClose - stopLoss;
+          const takeProfit = currentClose + (risk * 2.0); // 2:1 R:R ratio
+          
+          signals.push({
+            pair: symbol,
+            signal_type: 'buy',
+            entry_price: currentClose,
+            stop_loss: stopLoss,
+            take_profit: takeProfit,
+            timestamp: current.time,
+            confidence: 0.8,
+            structure_type: 'BOS'
+          });
+        }
+        
+        if (currentClose < previousLow && previousClose > previousLow) {
+          // Bearish BOS
+          const stopLoss = Math.max(previousHigh, currentHigh) + (currentHigh - currentLow) * 0.5;
+          const risk = stopLoss - currentClose;
+          const takeProfit = currentClose - (risk * 2.0); // 2:1 R:R ratio
+          
+          signals.push({
+            pair: symbol,
+            signal_type: 'sell',
+            entry_price: currentClose,
+            stop_loss: stopLoss,
+            take_profit: takeProfit,
+            timestamp: current.time,
+            confidence: 0.8,
+            structure_type: 'BOS'
+          });
+        }
+        
+        // CHoCH (Change of Character) Detection
+        if (i > 10) {
+          const swingHigh = Math.max(...history.slice(i - 10, i).map(h => parseFloat(h.high)));
+          const swingLow = Math.min(...history.slice(i - 10, i).map(h => parseFloat(h.low)));
+          
+          if (currentClose > swingHigh && previousClose < swingHigh) {
+            // Bullish CHoCH
+            const stopLoss = swingLow - (swingHigh - swingLow) * 0.3;
+            const risk = currentClose - stopLoss;
+            const takeProfit = currentClose + (risk * 2.0);
+            
+            signals.push({
+              pair: symbol,
+              signal_type: 'buy',
+              entry_price: currentClose,
+              stop_loss: stopLoss,
+              take_profit: takeProfit,
+              timestamp: current.time,
+              confidence: 0.9,
+              structure_type: 'CHoCH'
+            });
+          }
+          
+          if (currentClose < swingLow && previousClose > swingLow) {
+            // Bearish CHoCH
+            const stopLoss = swingHigh + (swingHigh - swingLow) * 0.3;
+            const risk = stopLoss - currentClose;
+            const takeProfit = currentClose - (risk * 2.0);
+            
+            signals.push({
+              pair: symbol,
+              signal_type: 'sell',
+              entry_price: currentClose,
+              stop_loss: stopLoss,
+              take_profit: takeProfit,
+              timestamp: current.time,
+              confidence: 0.9,
+              structure_type: 'CHoCH'
+            });
+          }
+        }
+      }
+      
+      // Return only the most recent signals (last 5)
+      return signals.slice(-5);
+      
+    } catch (error) {
+      console.error(`❌ SMC signal generation failed for ${symbol}:`, error);
+      return [];
+    }
+  }
+
+  // Clear cache for a specific symbol or all symbols
+  clearCache(symbol?: string): void {
+    if (symbol) {
+      // Clear cache for specific symbol
+      for (const key of this.cache.keys()) {
+        if (key.startsWith(symbol)) {
+          this.cache.delete(key);
+        }
+      }
+    } else {
+      // Clear all cache
+      this.cache.clear();
+    }
+  }
+
+  // Get cache statistics
+  getCacheStats(): { size: number; keys: string[] } {
+    return {
+      size: this.cache.size,
+      keys: Array.from(this.cache.keys())
+    };
   }
 }
 
-export default YFinanceWorkingService.getInstance();
+export default YFinanceWorkingService;

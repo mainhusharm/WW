@@ -1,157 +1,313 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, Shield } from 'lucide-react';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { useNavigate } from 'react-router-dom';
+import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
+import { CheckCircle, Lock, Shield, CreditCard, ArrowLeft } from 'lucide-react';
 
-const PayPalPayment = () => {
+interface PayPalPaymentProps {
+  amount?: number;
+  planName?: string;
+  onSuccess?: (details: any) => void;
+  onError?: (error: any) => void;
+}
+
+const PayPalPayment: React.FC<PayPalPaymentProps> = ({
+  amount = 99.99,
+  planName = 'Premium Plan',
+  onSuccess,
+  onError
+}) => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { selectedPlan } = location.state || {};
-  const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'error'>('pending');
 
-  if (!selectedPlan) {
+  const paypalOptions = {
+    'client-id': process.env.REACT_APP_PAYPAL_CLIENT_ID || 'your-paypal-client-id',
+    currency: 'USD',
+    intent: 'capture'
+  };
+
+  const handlePaymentSuccess = (details: any) => {
+    setIsProcessing(false);
+    setPaymentStatus('success');
+    
+    if (onSuccess) {
+      onSuccess(details);
+    }
+    
+    // Redirect to success page after 2 seconds
+    setTimeout(() => {
+      navigate('/successful-payment');
+    }, 2000);
+  };
+
+  const handlePaymentError = (error: any) => {
+    setIsProcessing(false);
+    setPaymentStatus('error');
+    
+    if (onError) {
+      onError(error);
+    }
+    
+    console.error('PayPal payment error:', error);
+  };
+
+  const handlePaymentCancel = () => {
+    setIsProcessing(false);
+    setPaymentStatus('pending');
+  };
+
+  const handleBackToPlans = () => {
+    navigate('/membership');
+  };
+
+  if (paymentStatus === 'success') {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Invalid Plan</h2>
-          <p>No plan selected. Please go back and select a plan.</p>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Payment Successful!</h1>
+          <p className="text-gray-600 mb-6">
+            Thank you for your payment. Your subscription has been activated.
+          </p>
+          <div className="bg-green-50 rounded-lg p-4 mb-6">
+            <p className="text-sm text-green-800">
+              You will receive a confirmation email shortly with your account details.
+            </p>
+          </div>
           <button
-            onClick={() => navigate('/membership')}
-            className="mt-4 px-4 py-2 bg-blue-600 rounded-lg"
+            onClick={() => navigate('/dashboard')}
+            className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-medium"
           >
-            Go to Membership Plans
+            Go to Dashboard
           </button>
         </div>
       </div>
     );
   }
 
-  const paypalOptions = {
-    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID as string,
-    currency: 'USD',
-  };
-
-  const createOrder = (data: any, actions: any) => {
-    return actions.order.create({
-      purchase_units: [
-        {
-          description: selectedPlan.name,
-          amount: {
-            value: selectedPlan.price.toFixed(2),
-          },
-        },
-      ],
-    });
-  };
-
-  const onApprove = async (data: any, actions: any) => {
-    setIsProcessing(true);
-    try {
-      const details = await actions.order.capture();
-      console.log('PayPal payment successful', details);
-
-      const paymentToken = 'paypal_' + details.id;
-
-      localStorage.setItem(
-        'payment_details',
-        JSON.stringify({
-          method: 'paypal',
-          amount: selectedPlan.price,
-          plan: selectedPlan.name,
-          paymentId: paymentToken,
-          timestamp: new Date().toISOString(),
-        })
-      );
-
-      navigate('/payment-flow', {
-        state: {
-          selectedPlan,
-          paymentToken,
-        },
-      });
-    } catch (err) {
-      console.error('PayPal payment failed:', err);
-      setError('Payment failed. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const onError = (err: any) => {
-    console.error('PayPal error:', err);
-    setError('An error occurred with the PayPal payment. Please try again.');
-  };
+  if (paymentStatus === 'error') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Shield className="w-8 h-8 text-red-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Payment Failed</h1>
+          <p className="text-gray-600 mb-6">
+            There was an issue processing your payment. Please try again.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => setPaymentStatus('pending')}
+              className="w-full bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition-colors font-medium"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={handleBackToPlans}
+              className="w-full border border-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              Back to Plans
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white">
-      <header className="border-b border-gray-800 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back</span>
-          </button>
-          <h1 className="text-xl font-bold">Pay with PayPal</h1>
-        </div>
-      </header>
-
-      <main className="py-12">
-        <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-2xl border border-gray-700">
-          <div className="text-center mb-6">
-            <Shield className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold">Complete Your Payment</h2>
-            <p className="text-gray-400">
-              You are paying for the{' '}
-              <span className="font-semibold text-white">{selectedPlan.name}</span> plan.
-            </p>
-          </div>
-
-          <div className="bg-gray-700 p-4 rounded-lg mb-6">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">Total Amount:</span>
-              <span className="text-2xl font-bold text-white">
-                ${selectedPlan.price.toFixed(2)}
-              </span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={handleBackToPlans}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Plans
+            </button>
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4 text-green-600" />
+              <span className="text-sm text-green-600 font-medium">Secure Payment</span>
             </div>
-          </div>
-
-          {error && (
-            <div className="p-3 bg-red-600/20 border border-red-600 rounded-lg text-red-400 text-sm mb-4">
-              {error}
-            </div>
-          )}
-
-          <PayPalScriptProvider options={paypalOptions}>
-            <PayPalButtons
-              style={{ layout: 'vertical' }}
-              createOrder={createOrder}
-              onApprove={onApprove}
-              onError={onError}
-            />
-          </PayPalScriptProvider>
-
-          {isProcessing && (
-            <div className="flex items-center justify-center space-x-2 mt-4">
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span>Processing...</span>
-            </div>
-          )}
-
-          <div className="bg-gray-700/50 rounded-xl p-4 border border-gray-600 mt-6">
-            <div className="flex items-center space-x-2 text-blue-400 mb-2">
-              <Lock className="w-4 h-4" />
-              <span className="font-medium">Secure Transaction</span>
-            </div>
-            <p className="text-sm text-gray-400">
-              Your payment is processed securely. We do not store your PayPal
-              details.
-            </p>
           </div>
         </div>
-      </main>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Payment Form */}
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CreditCard className="w-8 h-8 text-blue-600" />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Payment</h1>
+              <p className="text-gray-600">Secure payment powered by PayPal</p>
+            </div>
+
+            {/* Order Summary */}
+            <div className="bg-gray-50 rounded-lg p-6 mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Plan:</span>
+                  <span className="font-medium text-gray-900">{planName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Amount:</span>
+                  <span className="font-bold text-xl text-blue-600">${amount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>Billing Cycle:</span>
+                  <span>Monthly</span>
+                </div>
+              </div>
+            </div>
+
+            {/* PayPal Payment Button */}
+            <div className="space-y-4">
+              <PayPalScriptProvider options={paypalOptions}>
+                <PayPalButtons
+                  createOrder={(data, actions) => {
+                    return actions.order.create({
+                      purchase_units: [
+                        {
+                          amount: {
+                            value: amount.toString(),
+                            currency_code: 'USD'
+                          },
+                          description: `TraderEdge Pro - ${planName}`,
+                          custom_id: `plan_${planName.toLowerCase().replace(/\s+/g, '_')}`
+                        }
+                      ],
+                      application_context: {
+                        shipping_preference: 'NO_SHIPPING'
+                      }
+                    });
+                  }}
+                  onApprove={(data, actions) => {
+                    setIsProcessing(true);
+                    return actions.order.capture().then((details) => {
+                      handlePaymentSuccess(details);
+                    });
+                  }}
+                  onError={(err) => {
+                    handlePaymentError(err);
+                  }}
+                  onCancel={() => {
+                    handlePaymentCancel();
+                  }}
+                  style={{
+                    layout: 'vertical',
+                    color: 'blue',
+                    shape: 'rect',
+                    label: 'pay'
+                  }}
+                />
+              </PayPalScriptProvider>
+            </div>
+
+            {/* Security Notice */}
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Your payment is secure</p>
+                  <p>We use PayPal's secure payment system. Your financial information is never stored on our servers.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Benefits and Features */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">What You'll Get</h2>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Premium Trading Signals</h3>
+                    <p className="text-sm text-gray-600">Get access to our AI-powered trading signals</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Risk Management Tools</h3>
+                    <p className="text-sm text-gray-600">Advanced risk calculation and portfolio management</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">24/7 Support</h3>
+                    <p className="text-sm text-gray-600">Round-the-clock customer support and assistance</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Mobile App Access</h3>
+                    <p className="text-sm text-gray-600">Trade on the go with our mobile application</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Why Choose TraderEdge Pro?</h2>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Shield className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Proven Track Record</h3>
+                    <p className="text-sm text-gray-600">Trusted by thousands of traders worldwide</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Shield className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">AI-Powered Analysis</h3>
+                    <p className="text-sm text-gray-600">Advanced algorithms for market analysis</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Shield className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Risk-Free Trial</h3>
+                    <p className="text-sm text-gray-600">30-day money-back guarantee</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

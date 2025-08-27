@@ -1,11 +1,17 @@
 from flask import Blueprint, request, jsonify
-from .models import Trade, User, RiskPlan
-from .extensions import db
+try:
+    from .models import Trade, User, RiskPlan
+    from .extensions import db
+    from .auth_middleware import session_required
+    from .mailchimp_service import send_transactional_email, create_futuristic_email_template
+except ImportError:
+    from models import Trade, User, RiskPlan
+    from extensions import db
+    from auth_middleware import session_required
+    from mailchimp_service import send_transactional_email, create_futuristic_email_template
 from datetime import datetime
-from .auth_middleware import session_required
 import json
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from .mailchimp_service import send_transactional_email, create_futuristic_email_template
 
 trades_bp = Blueprint('trades', __name__)
 risk_plan_bp = Blueprint('risk_plan', __name__)

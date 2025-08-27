@@ -30,6 +30,7 @@ import FuturisticBackground from './FuturisticBackground';
 import FuturisticCursor from './FuturisticCursor';
 import CryptoSignalGenerator from './CryptoSignalGenerator';
 import ForexSignalGenerator from './ForexSignalGenerator';
+import TradingBotManager from './TradingBotManager';
 
 interface User {
   id: string;
@@ -585,6 +586,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               💱 Forex Generator
             </button>
             <button
+              onClick={() => setActiveTab('trading-bot')}
+              className={`py-2 px-4 text-lg font-medium transition-all duration-300 ${activeTab === 'trading-bot' ? 'text-cyan-300 border-b-2 border-cyan-300' : 'text-gray-400 hover:text-white'}`}
+            >
+              🤖 Trading Bot
+            </button>
+            <button
               onClick={() => setActiveTab('affiliate-screenshots')}
               className={`py-2 px-4 text-lg font-medium transition-all duration-300 ${activeTab === 'affiliate-screenshots' ? 'text-cyan-300 border-b-2 border-cyan-300' : 'text-gray-400 hover:text-white'}`}
             >
@@ -921,6 +928,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         )}
         {activeTab === 'forex-generator' && (
           <ForexSignalGenerator />
+        )}
+        {activeTab === 'trading-bot' && (
+          <TradingBotManager />
         )}
         {activeTab === 'affiliate-screenshots' && (
           <div className="text-white">

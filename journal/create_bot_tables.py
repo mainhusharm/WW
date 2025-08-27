@@ -11,9 +11,13 @@ from pathlib import Path
 journal_dir = Path(__file__).parent
 sys.path.insert(0, str(journal_dir))
 
-from journal import create_app
-from journal.extensions import db
-from journal.models import BotStatus, BotData, OHLCData
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from __init__ import create_app
+from extensions import db
+from models import BotStatus, BotData, OHLCData
 
 def create_bot_tables():
     """Create bot-related database tables"""

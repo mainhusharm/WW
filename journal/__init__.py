@@ -1,20 +1,36 @@
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from .extensions import db, socketio
-from .routes import trades_bp, risk_plan_bp, plan_generation_bp
-from .auth import auth_bp
-from .user_routes import user_bp
-from .admin_auth import admin_auth_bp
-from .telegram_routes import telegram_bp
-from .account_routes import account_bp
-from .signals_routes import signals_bp
-from .payment_routes import payment_bp
-from .crypto_payment_routes import crypto_payment_bp
-from .database_routes import database_bp
-from .yfinance_routes import yfinance_bp
-from .landing_routes import landing_bp
-from .bot_routes import bot_bp
+try:
+    from .extensions import db, socketio
+    from .routes import trades_bp, risk_plan_bp, plan_generation_bp
+    from .auth import auth_bp
+    from .user_routes import user_bp
+    from .admin_auth import admin_auth_bp
+    from .telegram_routes import telegram_bp
+    from .account_routes import account_bp
+    from .signals_routes import signals_bp
+    from .payment_routes import payment_bp
+    from .crypto_payment_routes import crypto_payment_bp
+    from .database_routes import database_bp
+    from .yfinance_routes import yfinance_bp
+    from .landing_routes import landing_bp
+    from .bot_routes import bot_bp
+except ImportError:
+    from extensions import db, socketio
+    from routes import trades_bp, risk_plan_bp, plan_generation_bp
+    from auth import auth_bp
+    from user_routes import user_bp
+    from admin_auth import admin_auth_bp
+    from telegram_routes import telegram_bp
+    from account_routes import account_bp
+    from signals_routes import signals_bp
+    from payment_routes import payment_bp
+    from crypto_payment_routes import crypto_payment_bp
+    from database_routes import database_bp
+    from yfinance_routes import yfinance_bp
+    from landing_routes import landing_bp
+    from bot_routes import bot_bp
 import os
 import sys
 from dotenv import load_dotenv

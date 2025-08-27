@@ -7,6 +7,7 @@ import NewForexSignalGenerator from './NewForexSignalGenerator';
 import ReliableDataFeed from './ReliableDataFeed';
 import ForexDataDashboard from './ForexData';
 import TransferredQueries from './TransferredQueries';
+import TradingBotManager from './TradingBotManager';
 
 const StatCard = ({ label, value, icon }: { label: string, value: string | number, icon: React.ReactNode }) => (
     <div className="bg-gray-900/50 backdrop-blur-sm p-6 rounded-2xl border border-blue-500/30 transition-all duration-300 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/20 group">
@@ -167,6 +168,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                 Forex Data
               </button>
               <button
+                onClick={() => setActiveTab('trading-bots')}
+                className={`px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg ${activeTab === 'trading-bots' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                Trading Bots
+              </button>
+              <button
                 onClick={() => setActiveTab('transferred-queries')}
                 className={`px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg ${activeTab === 'transferred-queries' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'}`}
               >
@@ -300,6 +307,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
             {activeTab === 'forex-data' && (
               <div className="animate-fade-in-up">
                 <ForexDataDashboard isBotRunning={isForexBotRunning} setIsBotRunning={setIsForexBotRunning} />
+              </div>
+            )}
+
+            {activeTab === 'trading-bots' && (
+              <div className="animate-fade-in-up">
+                <TradingBotManager />
               </div>
             )}
 

@@ -1,4 +1,7 @@
-from .extensions import db
+try:
+    from .extensions import db
+except ImportError:
+    from extensions import db
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from sqlite3 import Connection as SQLite3Connection
