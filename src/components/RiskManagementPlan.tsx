@@ -21,10 +21,62 @@ const RiskManagementPlan: React.FC = () => {
   // TODO: These should ideally come from user input or a more sophisticated calculation
   const [stopLossPips, setStopLossPips] = useState(20); // Default stop loss in pips
   const [pipValue, setPipValue] = useState(10); // Default pip value for a standard lot (e.g., for EUR/USD)
+  
+  // New state for compounding and earnings projection
+  const [compoundingMethod, setCompoundingMethod] = useState<'flat' | 'compounding'>('flat');
+  const [showEarningsProjection, setShowEarningsProjection] = useState(false);
 
+
+    // Calculate projected earnings based on win rate and compounding method
+  const calculateProjectedEarnings = (winRate: number, method: 'flat' | 'compounding') => {
+    const accountSize = planData.accountSize || 0;
+    const riskPercentage = planData.riskPercentage || 1;
+    const riskRewardRatio = planData.riskRewardRatio || 2;
+    const tradingDays = 30;
+    const tradesPerDay = planData.tradesPerDay === '1-2' ? 1.5 : 
+                         planData.tradesPerDay === '3-4' ? 3.5 : 
+                         planData.tradesPerDay === '5+' ? 6 : 1.5;
+    
+    let totalEarnings = 0;
+    let currentBalance = accountSize;
+    
+    for (let day = 1; day <= tradingDays; day++) {
+      const dailyTrades = Math.floor(tradesPerDay);
+      let dailyEarnings = 0;
+      
+      for (let trade = 1; trade <= dailyTrades; trade++) {
+        // Calculate risk amount based on method
+        let riskAmount;
+        if (method === 'flat') {
+          riskAmount = accountSize * (riskPercentage / 100);
+        } else {
+          // Compounding: risk grows with current balance
+          riskAmount = currentBalance * (riskPercentage / 100);
+        }
+        
+        // Simulate trade outcome based on win rate
+        const isWin = Math.random() * 100 < winRate;
+        
+        if (isWin) {
+          // Win: gain risk amount * risk/reward ratio
+          const winAmount = riskAmount * riskRewardRatio;
+          dailyEarnings += winAmount;
+          currentBalance += winAmount;
+        } else {
+          // Loss: lose risk amount
+          dailyEarnings -= riskAmount;
+          currentBalance -= riskAmount;
+        }
+      }
+      
+      totalEarnings += dailyEarnings;
+    }
+    
+    return Math.max(0, totalEarnings);
+  };
 
   // Generate comprehensive plan based on all questionnaire data
-  const generatePlan = (data: any) => {
+const generatePlan = (data: any) => {
     const accountSize = Number(data.accountSize) || 10000;
     const riskPercentage = data.riskPercentage || 1;
     const riskRewardRatio = Number(data.riskRewardRatio) || 2;
@@ -622,6 +674,135 @@ const RiskManagementPlan: React.FC = () => {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Compounding Method Section */}
+        <div className="mt-12 mb-8">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-30"></div>
+            <div className="relative bg-gray-900/90 backdrop-blur-sm border border-purple-500/30 rounded-2xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30">
+                  <TrendingUp className="w-6 h-6 text-purple-400" />
+                </div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  Compounding Strategy
+                </h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-3">Risk Method</label>
+                  <div className="space-y-3">
+                    <label className="flex items-center p-3 bg-gray-800/60 rounded-lg border border-gray-600 hover:border-purple-500/50 transition-colors cursor-pointer">
+                      <input
+                        type="radio"
+                        value="flat"
+                        checked={compoundingMethod === 'flat'}
+                        onChange={(e) => setCompoundingMethod(e.target.value as 'flat' | 'compounding')}
+                        className="mr-3 text-purple-500 focus:ring-purple-500"
+                      />
+                      <div>
+                        <span className="text-gray-200 font-medium">Flat Risk</span>
+                        <p className="text-xs text-gray-400">Fixed $ amount per trade</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center p-3 bg-gray-800/60 rounded-lg border border-gray-600 hover:border-purple-500/50 transition-colors cursor-pointer">
+                      <input
+                        type="radio"
+                        value="compounding"
+                        checked={compoundingMethod === 'compounding'}
+                        onChange={(e) => setCompoundingMethod(e.target.value as 'flat' | 'compounding')}
+                        className="mr-3 text-purple-500 focus:ring-purple-500"
+                      />
+                      <div>
+                        <span className="text-gray-200 font-medium">Compounding</span>
+                        <p className="text-xs text-gray-400">Risk grows with account balance</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3">Method Comparison</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Flat Risk:</span>
+                      <span className="text-gray-200">${((planData.accountSize || 0) * ((planData.riskPercentage || 1) / 100)).toFixed(2)} per trade</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Compounding:</span>
+                      <span className="text-gray-200">Variable based on current balance</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Growth Potential:</span>
+                      <span className="text-gray-200">{compoundingMethod === 'compounding' ? 'Higher' : 'Lower'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Earnings Projection Section */}
+        <div className="mb-8">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl blur opacity-30"></div>
+            <div className="relative bg-gray-900/90 backdrop-blur-sm border border-green-500/30 rounded-2xl p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-green-600/20 to-blue-600/20 border border-green-500/30">
+                    <DollarSign className="w-6 h-6 text-green-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+                    Estimated Earnings Projection
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowEarningsProjection(!showEarningsProjection)}
+                  className="px-4 py-2 bg-gray-800/60 hover:bg-gray-700/60 text-gray-300 rounded-lg transition-colors"
+                >
+                  {showEarningsProjection ? 'Hide' : 'Show'} Projection
+                </button>
+              </div>
+              
+              {showEarningsProjection && (
+                <div className="space-y-6">
+                  <p className="text-gray-300 text-sm">
+                    Projected earnings over 30 trading days based on your account size (${(planData.accountSize || 0).toLocaleString()}) 
+                    and risk percentage ({planData.riskPercentage || 1}%) using {compoundingMethod} risk method.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {[50, 60, 70, 80, 90].map((winRate) => {
+                      const projectedEarnings = calculateProjectedEarnings(winRate, compoundingMethod);
+                      return (
+                        <div key={winRate} className="bg-gray-800/60 border border-gray-600 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-green-400 mb-1">{winRate}%</div>
+                          <div className="text-sm text-gray-400 mb-2">Win Rate</div>
+                          <div className="text-lg font-semibold text-white">
+                            ${projectedEarnings.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-500">Projected</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="bg-gray-800/40 rounded-lg p-4">
+                    <h4 className="text-white font-semibold mb-2">Calculation Details</h4>
+                    <div className="text-sm text-gray-400 space-y-1">
+                      <div>• Base Risk per Trade: ${((planData.accountSize || 0) * ((planData.riskPercentage || 1) / 100)).toFixed(2)}</div>
+                      <div>• Risk/Reward Ratio: 1:{planData.riskRewardRatio || 2}</div>
+                      <div>• Trading Days: 30</div>
+                      <div>• Method: {compoundingMethod === 'compounding' ? 'Compounding (risk grows with balance)' : 'Flat Risk (fixed amount)'}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

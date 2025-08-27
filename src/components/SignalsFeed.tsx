@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { io, Socket } from 'socket.io-client';
 import { Signal, TradeOutcome } from '../trading/types';
 import api from '../api';
+import botDataService from '../services/botDataService';
 
 // WebSocket connection manager
 const useWebSocket = (url: string) => {
@@ -111,7 +112,14 @@ const SignalCardComponent: React.FC<SignalCardProps> = ({
   return (
     <div className={`signal-card bg-gray-800/60 backdrop-blur-sm p-4 rounded-xl border border-gray-700 mb-4 ${isTaken ? 'border-green-500' : ''} ${isSkipped ? 'border-red-500' : ''}`}>
       <div className="flex justify-between items-start mb-3">
-        <h3 className="text-xl font-bold text-white">{signal.pair} - {signal.type?.toUpperCase() || signal.direction}</h3>
+        <div className="flex items-center space-x-2">
+          <h3 className="text-xl font-bold text-white">{signal.pair} - {signal.type?.toUpperCase() || signal.direction}</h3>
+          {signal.is_recommended && (
+            <span className="px-2 py-1 bg-yellow-600 text-white text-xs font-semibold rounded-full flex items-center">
+              ⭐ Recommended
+            </span>
+          )}
+        </div>
         <span className={`px-2 py-1 rounded text-xs font-semibold ${
           signal.type?.toLowerCase() === 'buy' || signal.direction?.toLowerCase() === 'buy' 
             ? 'bg-green-600 text-white' 
@@ -270,22 +278,72 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
     const fetchSignals = async () => {
       try {
         setIsLoading(true);
-        const response = await api.get('/signals');
-        setSignals(response.data);
+        setError(null);
+        
+        // Fetch signals from new signal feed API
+        const response = await api.get(`/api/signals/feed?page=1&per_page=${signalsPerPage}`);
+        if (response.data.signals && Array.isArray(response.data.signals)) {
+          setSignals(response.data.signals);
+        } else {
+          console.error('Unexpected data format:', response.data);
+          setError('Invalid data format received from server');
+        }
       } catch (err) {
-        setError('Failed to fetch signals');
+        console.error('Error fetching signals:', err);
+        setError('Failed to fetch signals. Please try again later.');
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchSignals();
-  }, []);
+  }, [signalsPerPage]);
   
   // Handle marking signal as taken
-  const handleMarkAsTaken = (signal: Signal, outcome: TradeOutcome, pnl?: number) => {
-    onMarkAsTaken(signal, outcome, pnl);
-    setTakenSignalIds(prev => [...prev, signal.id]);
+  const handleMarkAsTaken = async (signal: Signal, outcome: TradeOutcome, pnl?: number) => {
+    try {
+      // Store signal in database for persistent history
+      const signalResult = outcome === 'Target Hit' ? 'win' : 
+                          outcome === 'Stop Loss Hit' ? 'loss' : 'skipped';
+      
+      await botDataService.storeUserSignal({
+        user_id: 'current_user', // This should come from user context
+        pair: signal.pair,
+        signal_type: signal.direction === 'LONG' ? 'buy' : 'sell',
+        result: signalResult,
+        confidence_pct: signal.confidence,
+        is_recommended: signal.is_recommended,
+        entry_price: typeof signal.entry === 'string' ? parseFloat(signal.entry) : signal.entryPrice,
+        stop_loss: signal.stopLoss,
+        take_profit: Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit,
+        analysis: signal.analysis,
+        ict_concepts: signal.ictConcepts,
+        pnl: pnl,
+        notes: `Signal outcome: ${outcome}`
+      });
+      
+      // Mark signal as taken in backend
+      await api.post('/api/signals/mark-taken', {
+        signalId: signal.id,
+        outcome,
+        pnl,
+        userId: 'current_user' // This should come from user context
+      });
+      
+      // Update local state
+      onMarkAsTaken(signal, outcome, pnl);
+      setTakenSignalIds(prev => [...prev, signal.id]);
+      
+      // Update signal status locally
+      setSignals(prev => prev.map(s => 
+        s.id === signal.id ? { ...s, status: 'taken', outcome, pnl } : s
+      ));
+    } catch (error) {
+      console.error('Error marking signal as taken:', error);
+      // Still update local state even if backend fails
+      onMarkAsTaken(signal, outcome, pnl);
+      setTakenSignalIds(prev => [...prev, signal.id]);
+    }
   };
   
   // Handle adding signal to journal

@@ -45,6 +45,7 @@ import ContactSupport from './components/ContactSupport';
 import AICoach from './components/AICoach';
 import Lightning from './components/Lightning';
 import Footer from './components/Footer';
+import DatabaseDashboard from './components/DatabaseDashboard';
 
 const AppContent = () => {
   const { logout: userLogout } = useUser();
@@ -126,6 +127,7 @@ const AppContent = () => {
             </AdminProtectedRoute>
           }
         />
+        <Route path="/database" element={<DatabaseDashboard />} />
         <Route path="/affiliate-links" element={<AffiliateLinks />} />
         <Route path="/features" element={<Features />} />
         <Route path="/about" element={<About />} />

@@ -9,6 +9,43 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
   const [tradeHistory, setTradeHistory] = useState<any[]>([]);
   const [wins, setWins] = useState<any[]>([]);
   const [losses, setLosses] = useState<any[]>([]);
+  const [botStatus, setBotStatus] = useState<{ is_active: boolean; last_started?: string; last_stopped?: string }>({ is_active: false });
+
+  // Bot status management
+  const fetchBotStatus = async () => {
+    try {
+      const response = await api.get('/api/database/bot-status');
+      const cryptoBot = response.data.find((bot: any) => bot.bot_type === 'crypto');
+      if (cryptoBot) {
+        setBotStatus(cryptoBot);
+        setIsBotRunning(cryptoBot.is_active);
+      }
+    } catch (error) {
+      console.error('Error fetching bot status:', error);
+    }
+  };
+
+  const updateBotStatus = async (isActive: boolean) => {
+    try {
+      await api.post('/api/database/bot-status/crypto', { is_active: isActive });
+      setBotStatus(prev => ({ ...prev, is_active: isActive }));
+      setIsBotRunning(isActive);
+      
+      if (isActive) {
+        // Start the bot logic here
+        console.log('Crypto bot started');
+      } else {
+        // Stop the bot logic here
+        console.log('Crypto bot stopped');
+      }
+    } catch (error) {
+      console.error('Error updating bot status:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchBotStatus();
+  }, []);
 
   useEffect(() => {
     // --- DOM Elements ---
@@ -253,10 +290,12 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
         return null;
     }
 
-    function getPrecision(symbol: string) {
-        if (['USDJPY'].includes(symbol)) return 3;
-        if (['EURUSD', 'GBPUSD', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'].includes(symbol)) return 5;
-        return 2;
+    function getCryptoPrecision(symbol: string) {
+        // Crypto precision is typically 2-8 decimal places
+        if (['BTCUSDT', 'ETHUSDT'].includes(symbol)) return 2;
+        if (['BNBUSDT', 'ADAUSDT', 'XRPUSDT', 'SOLUSDT', 'AVAXUSDT', 'LINKUSDT', 'LTCUSDT', 'AAVEUSDT'].includes(symbol)) return 4;
+        if (['DOTUSDT', 'DOGEUSDT', 'XLMUSDT', 'FILUSDT'].includes(symbol)) return 6;
+        return 4; // Default precision
     }
 
     // --- Data Engines ---
@@ -311,54 +350,33 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
             };
         }
 
-        async fetchForexPrice(symbol: string) {
-            // Use production URL instead of localhost
-            const url = `https://forex-data-service.onrender.com/api/get-price`;
-            const body = { symbol, timeframe: '1m' };
-            const options = {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(body)
-            };
+        async fetchCryptoPrice(symbol: string) {
+            // Only use Binance API for crypto data
+            const urls = [
+                `https://binance-service.onrender.com/api/ticker/price?symbol=${symbol}`,
+                `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`
+            ];
             
-            try {
-                const data = await fetchWithRetry(url, options, 2); // Reduce retries
-                if (data && data.price) {
-                    return { price: data.price, provider: 'yfinance' };
+            for (const url of urls) {
+                try {
+                    const data = await fetchWithRetry(url);
+                    if (data && data.price) {
+                        return { price: parseFloat(data.price), provider: 'Binance' };
+                    }
+                } catch (error) {
+                    continue; // Try next URL
                 }
-                throw new Error(`Invalid price data from forex service for ${symbol}`);
-            } catch (error) {
-                // Return mock data as fallback to prevent errors
-                log(`Using fallback data for ${symbol}`, 'warning');
-                return { 
-                    price: this.generateMockPrice(symbol), 
-                    provider: 'fallback' 
-                };
             }
+            
+            // Return mock data as fallback
+            log(`Using fallback data for ${symbol}`, 'warning');
+            return { 
+                price: this.generateMockCryptoPrice(symbol), 
+                provider: 'fallback' 
+            };
         }
 
-        generateMockPrice(symbol: string) {
-            // Generate realistic mock prices based on symbol
-            const basePrices: { [key: string]: number } = {
-                'EUR/USD': 1.0850,
-                'GBP/USD': 1.2650,
-                'USD/JPY': 149.50,
-                'USD/CHF': 0.8750,
-                'AUD/USD': 0.6550,
-                'USD/CAD': 1.3650,
-                'NZD/USD': 0.6050,
-                'XAU/USD': 2025.50,
-                'XAG/USD': 24.50,
-                'USOIL': 78.50
-            };
-            
-            const basePrice = basePrices[symbol] || 1.0000;
-            const variation = (Math.random() - 0.5) * 0.01; // ±0.5% variation
-            return basePrice * (1 + variation);
-        }
+
 
         generateMockCryptoPrice(symbol: string) {
             // Generate realistic mock prices for crypto
@@ -389,19 +407,17 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
             if (cached) return cached;
 
             try {
-                let result;
-                const isCrypto = markets.crypto.symbols.includes(symbol);
-
-                if (isCrypto) {
-                    log(`📡 Routing ${symbol} to Binance service...`, 'info');
-                    result = await this.fetchBinancePrice(symbol);
-                } else {
-                    log(`📡 Routing ${symbol} to forex service...`, 'info');
-                    result = await this.fetchForexPrice(symbol);
+                // CryptoDashboard only handles crypto data
+                if (!markets.crypto.symbols.includes(symbol)) {
+                    log(`⚠️ ${symbol} is not a crypto symbol, skipping...`, 'warning');
+                    return null;
                 }
 
+                log(`📡 Fetching ${symbol} from Binance service...`, 'info');
+                const result = await this.fetchCryptoPrice(symbol);
+
                 const priceData = {
-                    price: result.price.toFixed(getPrecision(symbol.replace('/', ''))),
+                    price: result.price.toFixed(getCryptoPrecision(symbol)),
                     provider: result.provider,
                     timestamp: new Date(),
                     isReal: true,
@@ -1326,6 +1342,26 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
                             takeProfit: [signal.takeProfit],
                             id: signal.id,
                           });
+                          
+                          // Use centralized signal service to relay to users
+                          try {
+                            const signalService = await import('../services/signalService');
+                            await signalService.default.addSignal({
+                              id: signal.id,
+                              pair: signal.symbol,
+                              direction: signal.signalType === 'BUY' ? 'LONG' : 'SHORT',
+                              entry: signal.entryPrice,
+                              stopLoss: signal.stopLoss,
+                              takeProfit: signal.takeProfit,
+                              confidence: signal.confidence,
+                              timestamp: signal.timestamp.toISOString(),
+                              status: 'active',
+                              market: 'crypto',
+                              timeframe: timeframe
+                            });
+                          } catch (error) {
+                            console.error('Error relaying crypto signal:', error);
+                          }
                         } catch (error) {
                           console.error('Error saving signal:', error);
                           log(`❌ Error saving signal for ${signal.symbol}`, 'error');
@@ -1662,6 +1698,54 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
               </select>
             </div>
             
+            {/* Bot Status Toggle */}
+            <div className="bot-status-toggle mb-4 p-4 bg-gray-800/60 rounded-lg border border-gray-700">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold text-white">Bot Status Control</h4>
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  botStatus.is_active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                }`}>
+                  {botStatus.is_active ? '🟢 ACTIVE' : '🔴 INACTIVE'}
+                </span>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => updateBotStatus(true)}
+                  disabled={botStatus.is_active}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    botStatus.is_active
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
+                >
+                  🚀 Start Bot
+                </button>
+                <button
+                  onClick={() => updateBotStatus(false)}
+                  disabled={!botStatus.is_active}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    !botStatus.is_active
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
+                >
+                  ⏹️ Stop Bot
+                </button>
+              </div>
+              
+              {botStatus.last_started && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Started: {new Date(botStatus.last_started).toLocaleString()}
+                </p>
+              )}
+              {botStatus.last_stopped && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Stopped: {new Date(botStatus.last_stopped).toLocaleString()}
+                </p>
+              )}
+            </div>
+
             <button className="btn btn-primary" onClick={() => (window as any).startBot()} id="startBtn">
               🚀 Start Real Data Analysis
             </button>

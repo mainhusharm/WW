@@ -12,6 +12,7 @@ import DashboardConcept1 from './DashboardConcept1';
 import DashboardConcept2 from './DashboardConcept2';
 import DashboardConcept3 from './DashboardConcept3';
 import DashboardConcept4 from './DashboardConcept4';
+import DashboardConcept5 from './DashboardConcept5';
 
 const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const { user } = useUser();
@@ -379,6 +380,8 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         return <DashboardConcept3 {...props} />;
       case 'concept4':
         return <DashboardConcept4 {...props} />;
+      case 'concept5':
+        return <DashboardConcept5 {...props} />;
       default:
         return <DashboardConcept1 {...props} />;
     }
@@ -408,6 +411,7 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
           <option value="concept2">Concept 2</option>
           <option value="concept3">Concept 3</option>
           <option value="concept4">Concept 4</option>
+          <option value="concept5">Forex & Crypto</option>
         </select>
       </div>
       {renderTheme()}

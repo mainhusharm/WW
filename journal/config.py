@@ -10,13 +10,13 @@ class DevelopmentConfig(Config):
     """Development configuration."""
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL', f"sqlite:///{os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'instance', 'dev.db')}")
     DEBUG = True
-    CORS_ORIGINS = ["http://localhost:5175", "http://127.0.0.1:5175"]
+    CORS_ORIGINS = ["http://localhost:5175", "http://127.0.0.1:5175", "http://localhost:3000"]
 
 class ProductionConfig(Config):
     """Production configuration."""
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f"sqlite:///{os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'instance', 'production.db')}")
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f"sqlite:///{os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'production.db')}")
     DEBUG = False
-    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'https://main.d2stsvxryuguud.amplifyapp.com').split(',')
+    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'https://main.d2stsvxryuguud.amplifyapp.com,https://your-render-app.onrender.com').split(',')
     
     # Add these for better production handling
     SQLALCHEMY_ENGINE_OPTIONS = {

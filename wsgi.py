@@ -1,21 +1,22 @@
-import eventlet
-eventlet.monkey_patch()
+#!/usr/bin/env python3
+"""
+WSGI entry point for Render deployment
+"""
 import os
-import sys
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Import the Flask app
 from journal import create_app
 
-try:
-    # Use production config for deployment
-    application = create_app('journal.config.ProductionConfig')
+# Create the app instance
+app = create_app()
+
+if __name__ == "__main__":
+    # Get port from environment variable (Render requirement)
+    port = int(os.environ.get("PORT", 8080))
     
-    # Create database tables if they don't exist
-    with application.app_context():
-        from journal.extensions import db
-        db.create_all()
-        print("Database tables created successfully")
-        
-except Exception as e:
-    print(f"Error initializing application: {str(e)}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+    # Run the app
+    app.run(host="0.0.0.0", port=port)

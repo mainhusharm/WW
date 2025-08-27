@@ -13,3 +13,7 @@ mailchimp-marketing==3.0.80
 python-decouple==3.8
 whitenoise==6.5.0
 eventlet==0.33.3
+yfinance==0.2.40
+pandas>=2.0.0
+numpy>=1.24.0
+psycopg2-binary>=2.9.0

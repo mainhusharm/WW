@@ -42,7 +42,7 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
       try {
         // Try multiple data sources for better reliability
         const dataSources = [
-          'https://forex-data-service.onrender.com',
+          'https://api.allorigins.win/raw?url=',
           // Fallback to local mock data if service is down
         ];
         

@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { bindTilt } from '../utils/parallax';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, useReducedMotion } from 'framer-motion';
 import { 
   TrendingUp, 
   Shield, 
@@ -21,8 +21,53 @@ import KickstarterPlan from './KickstarterPlan';
 import MembershipPlans from './MembershipPlans';
 import HeroBackground from './HeroBackground';
 import ExtractedCard from './ExtractedCard';
+import landingStatsService from '../services/landingStatsService';
 
 const LandingPage = () => {
+  const [isPerformanceMode, setIsPerformanceMode] = useState(false);
+  const [stats, setStats] = useState([
+    { number: "2,436", label: "Funded Accounts", description: "Successfully cleared" },
+    { number: "82.3%", label: "Success Rate", description: "Challenge completion" },
+    { number: "$12.8M", label: "Total Funded", description: "Across all prop firms" },
+    { number: "150+", label: "Prop Firms", description: "Supported platforms" }
+  ]);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const prefersReducedMotion = useReducedMotion();
+  
+  // Fetch dynamic landing page statistics
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setIsLoadingStats(true);
+        const landingStats = await landingStatsService.getLandingStats();
+        const formattedStats = landingStatsService.formatStats(landingStats);
+        setStats(formattedStats);
+      } catch (error) {
+        console.error('Error fetching landing stats:', error);
+        // Keep default stats on error
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  // Performance optimization: detect low-end devices
+  useEffect(() => {
+    const checkPerformance = () => {
+      const isLowEnd = navigator.hardwareConcurrency < 4 || 
+                      ((navigator as any).deviceMemory && (navigator as any).deviceMemory < 4) ||
+                      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      setIsPerformanceMode(isLowEnd || (prefersReducedMotion === true));
+    };
+    
+    checkPerformance();
+    window.addEventListener('resize', checkPerformance);
+    return () => window.removeEventListener('resize', checkPerformance);
+  }, [prefersReducedMotion]);
+
   const features = [
     {
       icon: <Target className="w-8 h-8" />,
@@ -95,12 +140,7 @@ const LandingPage = () => {
     }
   ];
 
-  const stats = [
-    { number: "2,847", label: "Funded Accounts", description: "Successfully cleared" },
-    { number: "94.7%", label: "Success Rate", description: "Challenge completion" },
-    { number: "$12.8M", label: "Total Funded", description: "Across all prop firms" },
-    { number: "150+", label: "Prop Firms", description: "Supported platforms" }
-  ];
+
 
   const testimonials = [
     {
@@ -135,47 +175,139 @@ const LandingPage = () => {
   const testimonialsRef = useRef<(HTMLDivElement | null)[]>([]);
   const ctaRef = useRef<HTMLElement>(null);
 
+  // Optimized scroll animations using GPU-friendly transforms
+  const { scrollY } = useScroll();
+  const heroY = useTransform(scrollY, [0, 500], [0, -100]);
+  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0.8]);
+  
+  // Smooth spring animations
+  const smoothHeroY = useSpring(heroY, { stiffness: 100, damping: 30 });
+  const smoothHeroOpacity = useSpring(heroOpacity, { stiffness: 100, damping: 30 });
+
+  // Throttled scroll handler for performance
+  const handleScroll = useCallback(() => {
+    if (isPerformanceMode || prefersReducedMotion) return;
+    
+    // Use requestAnimationFrame for smooth scrolling
+    requestAnimationFrame(() => {
+      // Minimal scroll handling for performance
+    });
+  }, [isPerformanceMode, prefersReducedMotion]);
+
   useEffect(() => {
+    if (isPerformanceMode || prefersReducedMotion) return;
+
+    // Bind tilt effects only if performance allows
     if (heroRef.current) {
       bindTilt(heroRef.current);
     }
     if (ctaRef.current) {
       bindTilt(ctaRef.current);
     }
-    featuresRef.current.forEach((el) => el && bindTilt(el));
-    processRef.current.forEach((el) => el && bindTilt(el));
-    testimonialsRef.current.forEach((el) => el && bindTilt(el));
-  }, []);
+    
+    // Bind tilt to interactive elements with reduced frequency
+    featuresRef.current.forEach((el) => {
+      if (el && !isPerformanceMode) {
+        bindTilt(el);
+      }
+    });
+    processRef.current.forEach((el) => {
+      if (el && !isPerformanceMode) {
+        bindTilt(el);
+      }
+    });
+    testimonialsRef.current.forEach((el) => {
+      if (el && !isPerformanceMode) {
+        bindTilt(el);
+      }
+    });
+
+    // Add scroll listener with throttling
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isPerformanceMode, prefersReducedMotion, handleScroll]);
+
+  // Performance toggle component
+  const PerformanceToggle = () => (
+    <div className="fixed top-4 right-4 z-50">
+      <button
+        onClick={() => setIsPerformanceMode(!isPerformanceMode)}
+        className="bg-gray-800/80 backdrop-blur-sm text-white px-3 py-2 rounded-lg text-sm hover:bg-gray-700/80 transition-colors"
+        title="Toggle performance mode"
+      >
+        {isPerformanceMode ? '🚀' : '⚡'} Performance
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen">
       <Header />
+      {!prefersReducedMotion && <PerformanceToggle />}
       
-      {/* Hero Section */}
-      <section ref={heroRef} className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      {/* Hero Section with optimized animations */}
+      <motion.section 
+        ref={heroRef} 
+        className="relative pt-24 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
+        style={{
+          y: isPerformanceMode ? 0 : smoothHeroY,
+          opacity: isPerformanceMode ? 1 : smoothHeroOpacity,
+          willChange: isPerformanceMode ? 'auto' : 'transform, opacity'
+        }}
+      >
         <HeroBackground />
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-transparent to-purple-600/10"></div>
         
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center">
-            <div className="inline-flex items-center space-x-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-full px-4 py-2 mb-6">
+            <motion.div 
+              className="inline-flex items-center space-x-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-full px-4 py-2 mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span className="text-sm text-gray-300">
                 Professional Prop Firm Clearing Service
               </span>
-            </div>
+            </motion.div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight hero-text-3d">
+            <motion.h1 
+              className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight hero-text-3d"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+            >
               Master Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Funded Account</span> Journey
-            </h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-6 max-w-3xl mx-auto leading-relaxed">
-              Professional clearing service for prop firm challenges with custom trading plans and expert guidance
-            </p>
-            <p className="text-base text-gray-400 mb-10 max-w-2xl mx-auto">
-              Join <span className="text-blue-400 font-semibold">2,847 successful traders</span> who cleared their challenges with our proven methodology.
-            </p>
+            </motion.h1>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+            <motion.p 
+              className="text-lg md:text-xl text-gray-300 mb-6 max-w-3xl mx-auto leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+            >
+              Professional clearing service for prop firm challenges with custom trading plans and expert guidance
+            </motion.p>
+            
+            <motion.p 
+              className="text-base text-gray-400 mb-10 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
+            >
+              Join <span className="text-blue-400 font-semibold">2,847 successful traders</span> who cleared their challenges with our proven methodology.
+            </motion.p>
+            
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
+            >
               <Link
                 to="/membership"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 shadow-xl hover:shadow-blue-500/25"
@@ -194,31 +326,59 @@ const LandingPage = () => {
               >
                 Get Free Access <ArrowRight className="w-5 h-5" />
               </Link>
-            </div>
+            </motion.div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            {/* Stats with staggered animations */}
+            <motion.div 
+              className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 1.0 }}
+            >
               {stats.map((stat, index) => (
-                <div key={index} className="text-center p-4 bg-gray-800/30 backdrop-blur-sm rounded-xl border border-gray-700">
-                  <div className="text-2xl md:text-3xl font-bold text-blue-400 mb-1">{stat.number}</div>
+                <motion.div 
+                  key={index} 
+                  className="text-center p-4 bg-gray-800/30 backdrop-blur-sm rounded-xl border border-gray-700"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ 
+                    duration: 0.5, 
+                    ease: "easeOut", 
+                    delay: 1.2 + (index * 0.1) 
+                  }}
+                  whileHover={!isPerformanceMode ? { scale: 1.05 } : {}}
+                >
+                  <div className="text-2xl md:text-3xl font-bold text-blue-400 mb-1">
+                    {isLoadingStats ? (
+                      <div className="animate-pulse bg-blue-400/20 rounded h-8 w-20 mx-auto"></div>
+                    ) : (
+                      stat.number
+                    )}
+                  </div>
                   <div className="text-white font-medium mb-1">{stat.label}</div>
                   <div className="text-xs text-gray-400">{stat.description}</div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* Process Flow */}
+      {/* Process Flow with optimized animations */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900/50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">5-Step Clearing Process</h2>
             <p className="text-lg text-gray-400 max-w-3xl mx-auto">
               Our proven methodology takes you from prop firm selection to funded account success
             </p>
-          </div>
+          </motion.div>
           
           <div className="relative">
             {/* Connection Line */}
@@ -226,8 +386,21 @@ const LandingPage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
               {processSteps.map((step, index) => (
-                <div key={index} className="relative" ref={(el) => (processRef.current[index] = el)}>
-                  <div className="bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group hover:transform hover:scale-105">
+                <motion.div 
+                  key={index} 
+                  className="relative" 
+                  ref={(el) => (processRef.current[index] = el)}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ 
+                    duration: 0.6, 
+                    ease: "easeOut", 
+                    delay: index * 0.1 
+                  }}
+                  whileHover={!isPerformanceMode ? { scale: 1.05 } : {}}
+                >
+                  <div className="bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group">
                     <div className="text-center">
                       <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                         <span className="text-white font-bold text-xl">{step.step}</span>
@@ -236,31 +409,48 @@ const LandingPage = () => {
                       <p className="text-gray-400 text-sm leading-relaxed">{step.description}</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section with optimized animations */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Professional-Grade Features</h2>
             <p className="text-lg text-gray-400 max-w-3xl mx-auto">
               Everything you need to successfully clear prop firm challenges and manage funded accounts
             </p>
-          </div>
+          </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
                 ref={(el) => (featuresRef.current[index] = el)}
-                className="bg-gray-800/60 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group hover:transform hover:scale-105 card-3d lightning-border"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="bg-gray-800/60 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300 group card-3d lightning-border"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ 
+                  duration: 0.6, 
+                  ease: "easeOut", 
+                  delay: index * 0.1 
+                }}
+                whileHover={!isPerformanceMode ? { scale: 1.05 } : {}}
+                whileTap={!isPerformanceMode ? { scale: 0.95 } : {}}
+                style={{
+                  willChange: isPerformanceMode ? 'auto' : 'transform'
+                }}
               >
                 <div className={`${feature.color} mb-6 group-hover:scale-110 transition-transform duration-300`}>
                   {feature.icon}
@@ -276,22 +466,34 @@ const LandingPage = () => {
       {/* Kickstarter Plan Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Kickstarter Plan</h2>
             <p className="text-lg text-gray-400 max-w-3xl mx-auto">
               Get started with our free plan by using our affiliate links.
             </p>
-          </div>
+          </motion.div>
           <div className="max-w-md mx-auto">
             <KickstarterPlan />
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Testimonials with optimized animations */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900/50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Success Stories</h2>
             <p className="text-lg text-gray-400 mb-2">Real results from traders who cleared their challenges</p>
             <div className="flex items-center justify-center space-x-1">
@@ -300,11 +502,24 @@ const LandingPage = () => {
               ))}
               <span className="ml-2 text-gray-300">4.9/5 from 2,847 reviews</span>
             </div>
-          </div>
+          </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <div key={index} ref={(el) => (testimonialsRef.current[index] = el)} className="bg-gray-800/60 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300">
+              <motion.div 
+                key={index} 
+                ref={(el) => (testimonialsRef.current[index] = el)} 
+                className="bg-gray-800/60 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 hover:border-blue-500/50 transition-all duration-300"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ 
+                  duration: 0.6, 
+                  ease: "easeOut", 
+                  delay: index * 0.1 
+                }}
+                whileHover={!isPerformanceMode ? { scale: 1.02 } : {}}
+              >
                 <div className="flex mb-6">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
@@ -326,7 +541,7 @@ const LandingPage = () => {
                     <div className="text-xs text-gray-400">Total Profit</div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -338,12 +553,18 @@ const LandingPage = () => {
       {/* Membership Plans Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Membership Plans</h2>
             <p className="text-lg text-gray-400 max-w-3xl mx-auto">
               Choose the plan that's right for you.
             </p>
-          </div>
+          </motion.div>
           <MembershipPlans />
         </div>
       </section>

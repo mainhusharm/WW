@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "start": "python3 run.py",
-    "dev": "node_modules/.bin/vite",
+    "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "node -r dotenv/config server/index.js",
-    "telegram-webhook": "npx ts-node src/api/telegramWebhook.ts"
+    "telegram-webhook": "npx ts-node src/api/telegramWebhook.ts",
+    "render-start": "gunicorn --bind 0.0.0.0:$PORT journal:create_app()"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

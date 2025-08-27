@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import LivePriceFeed from './LivePriceFeed';
 import TradePerformance from './TradePerformance';
+import api from '../api';
+import yfinanceWorking from '../services/yfinanceWorking';
 
 interface ForexBar {
   time: string;
@@ -16,6 +18,43 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
   const [tradeHistory, setTradeHistory] = useState<any[]>([]);
   const [wins, setWins] = useState<any[]>([]);
   const [losses, setLosses] = useState<any[]>([]);
+  const [botStatus, setBotStatus] = useState<{ is_active: boolean; last_started?: string; last_stopped?: string }>({ is_active: false });
+
+  // Bot status management
+  const fetchBotStatus = async () => {
+    try {
+      const response = await api.get('/api/database/bot-status');
+      const forexBot = response.data.find((bot: any) => bot.bot_type === 'forex');
+      if (forexBot) {
+        setBotStatus(forexBot);
+        setIsBotRunning(forexBot.is_active);
+      }
+    } catch (error) {
+      console.error('Error fetching bot status:', error);
+    }
+  };
+
+  const updateBotStatus = async (isActive: boolean) => {
+    try {
+      await api.post('/api/database/bot-status/forex', { is_active: isActive });
+      setBotStatus(prev => ({ ...prev, is_active: isActive }));
+      setIsBotRunning(isActive);
+      
+      if (isActive) {
+        // Start the bot logic here
+        console.log('Forex bot started');
+      } else {
+        // Stop the bot logic here
+        console.log('Forex bot stopped');
+      }
+    } catch (error) {
+      console.error('Error updating bot status:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchBotStatus();
+  }, []);
 
   useEffect(() => {
     // --- DOM Elements ---
@@ -142,6 +181,8 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
         return 2;
     }
 
+
+
     // --- Data Engines ---
     class DataEngine {
         priceCache: Map<string, any>;
@@ -155,16 +196,17 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
         }
 
         async fetchYfinancePrice(symbol: string, timeframe: string) {
-            const baseUrl = 'https://forex-data-service.onrender.com';
-            const url = `${baseUrl}/api/forex-data?pair=${symbol}&timeframe=${timeframe}`;
-            
             try {
-                const data = await fetchWithRetry(url);
-                if (data && Array.isArray(data) && data.length > 0) {
-                    log(`✅ Successfully fetched ${data.length} historical bars for ${symbol} from yfinance`, 'success');
-                    return { history: data, provider: 'yfinance' };
+                log(`📡 Fetching ${symbol} from yfinance...`, 'info');
+                const data = await yfinanceWorking.fetchHistoricalData(symbol, timeframe);
+                
+                if (data && data.history) {
+                    log(`✅ Successfully fetched ${data.history.length} historical bars for ${symbol} from yfinance`, 'success');
+                    return data;
                 }
-                throw new Error(`Empty historical data array from yfinance for ${symbol}`);
+                
+                throw new Error(`No data returned for ${symbol}`);
+                
             } catch (error: any) {
                 log(`❌ Historical data fetch failed for ${symbol}: ${error.message}`, 'error');
                 throw error;
@@ -172,16 +214,38 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
         }
 
         async fetchLatestYfinancePrice(symbol: string) {
-            const baseUrl = 'https://forex-data-service.onrender.com';
-            const url = `${baseUrl}/api/forex-price?pair=${symbol}`;
-            
-            const data = await fetchWithRetry(url);
-            if (data && typeof data.price === 'number' && !isNaN(data.price)) {
-                log(`✅ Yahoo Finance price for ${symbol}: ${data.price}`, 'success');
-                return { price: data.price.toString(), provider: 'yfinance' };
+            try {
+                log(`📡 Fetching latest price for ${symbol} from yfinance...`, 'info');
+                const data = await yfinanceWorking.fetchLatestPrice(symbol);
+                
+                if (data && data.price) {
+                    log(`✅ Yahoo Finance price for ${symbol}: ${data.price}`, 'success');
+                    return data;
+                }
+                
+                return null;
+                
+            } catch (error: any) {
+                log(`❌ Price fetch failed for ${symbol}: ${error.message}`, 'error');
+                return null;
             }
-            
-            return null; // Return null instead of throwing
+        }
+
+        async fetchBulkYfinanceData(symbols: string[], timeframe: string) {
+            try {
+                log(`📡 Fetching bulk data for ${symbols.length} symbols from yfinance...`, 'info');
+                const results = await yfinanceWorking.fetchBulkData(symbols, timeframe);
+                
+                const successCount = Object.values(results).filter(history => history.length > 0).length;
+                const failedCount = symbols.length - successCount;
+                
+                log(`✅ Bulk fetch completed: ${successCount} successful, ${failedCount} failed`, 'success');
+                return results;
+                
+            } catch (error: any) {
+                log(`❌ Bulk fetch failed: ${error.message}`, 'error');
+                return {};
+            }
         }
 
         async getPrice(symbol: string, timeframe: string) {
@@ -211,33 +275,12 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
                 log(`🟡 Yahoo Finance failed for ${symbol}: ${error.message}`, 'warning');
             }
             
-            // Fallback to simulated data
-            log(`🎲 Generating simulated data for ${symbol}`, 'info');
-            const fallbackPrice = this.generateFallbackPrice(symbol);
-            
-            this.priceCache.set(cacheKey, fallbackPrice);
-            this.lastUpdateTime.set(cacheKey, now);
-            
-            return fallbackPrice;
+            // No fallback - return null if yfinance fails
+            log(`❌ No price data available for ${symbol}`, 'error');
+            return null;
         }
         
-        generateFallbackPrice(symbol: string) {
-            const basePrices: Record<string, number> = {
-                'EUR/USD': 1.0850, 'GBP/USD': 1.2650, 'USD/JPY': 149.50,
-                'USD/CHF': 0.8750, 'AUD/USD': 0.6450, 'USD/CAD': 1.3650,
-                'NZD/USD': 0.5950, 'EUR/JPY': 162.25, 'GBP/JPY': 189.15,
-                'XAU/USD': 2025.50, 'XAG/USD': 24.75
-            };
-            
-            const basePrice = basePrices[symbol] || 1.0000;
-            const variation = (Math.random() - 0.5) * 0.01; // ±0.5% variation
-            const price = basePrice * (1 + variation);
-            
-            return {
-                price: price.toFixed(symbol.includes('JPY') ? 3 : 5),
-                provider: 'simulated'
-            };
-        }
+
     }
     const dataEngine = new DataEngine();
 
@@ -1278,17 +1321,17 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
 
         const initialFetch = async () => {
             try {
-                const baseUrl = 'https://forex-data-service.onrender.com';
-                // We'll fetch for a primary timeframe initially, and the analysis will fetch more as needed.
-                const primaryTimeframe = timeframes[0] || '1h';
-                const url = `${baseUrl}/api/bulk-forex-data?pairs=${symbols.join(',')}&timeframe=${primaryTimeframe}`;
-                const initialData = await fetchWithRetry(url);
-
-                if (initialData && typeof initialData === 'object') {
-                    for (const symbol of symbols) {
-                        const historicalData = initialData[symbol];
+                log(`🔄 Initializing data for ${symbols.length} symbols...`, 'info');
+                
+                // Use bulk fetching for better performance
+                const bulkData = await dataEngine.fetchBulkYfinanceData(symbols, timeframes[0] || '1h');
+                
+                for (const symbol of symbols) {
+                    try {
+                        const historicalData = bulkData[symbol];
+                        
                         if (historicalData && Array.isArray(historicalData) && historicalData.length > 0) {
-                            smcEngine.priceHistory.set(symbol, historicalData.map((bar: ForexBar) => ({
+                            smcEngine.priceHistory.set(symbol, historicalData.map((bar: any) => ({
                                 timestamp: new Date(bar.time).getTime(),
                                 open: parseFloat(bar.open) || 0,
                                 high: parseFloat(bar.high) || 0,
@@ -1296,15 +1339,20 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
                                 close: parseFloat(bar.close) || 0,
                                 volume: parseInt(bar.volume, 10) || 0
                             })));
+                            
+                            log(`✅ Initialized ${symbol} with ${historicalData.length} bars`, 'success');
                         } else {
-                            log(`No historical data available for ${symbol}`, 'warning');
+                            log(`⚠️ No historical data available for ${symbol}`, 'warning');
                         }
+                        
+                    } catch (error: any) {
+                        log(`❌ Failed to initialize ${symbol}: ${error.message}`, 'error');
                     }
-                } else {
-                    log(`Failed to fetch initial data.`, 'warning');
                 }
+                
+                log(`✅ Initial data fetch completed`, 'success');
             } catch (error: any) {
-                log(`Error during initial fetch: ${error.message}`, 'error');
+                log(`❌ Error during initial fetch: ${error.message}`, 'error');
             }
         };
 
@@ -1316,12 +1364,12 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
                     try {
                         const historicalData = await dataEngine.fetchYfinancePrice(symbol, timeframes[0]);
 
-                        if (historicalData && historicalData.history && historicalData.history.length > 0) {
-                            const latestPrice = historicalData.history[historicalData.history.length - 1].close;
+                        if (historicalData && historicalData.history && Array.isArray(historicalData.history) && historicalData.history.length > 0) {
+                            const latestPrice = (historicalData.history as any[])[historicalData.history.length - 1].close;
                             lastData[symbol] = latestPrice; // Update lastData for monitorActiveSignals
                             
                             log(`📊 Analyzing ${symbol} - Price: ${latestPrice}`, 'info');
-                            const signals = await performAdvancedSMCAnalysis(symbol, historicalData.history, timeframes[0]);
+                            const signals = await performAdvancedSMCAnalysis(symbol, historicalData.history as any[], timeframes[0]);
 
                             if (signals && Array.isArray(signals)) {
                                 signals.forEach(signal => {
@@ -1699,6 +1747,54 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
               </select>
             </div>
             
+            {/* Bot Status Toggle */}
+            <div className="bot-status-toggle mb-4 p-4 bg-gray-800/60 rounded-lg border border-gray-700">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold text-white">Bot Status Control</h4>
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  botStatus.is_active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                }`}>
+                  {botStatus.is_active ? '🟢 ACTIVE' : '🔴 INACTIVE'}
+                </span>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => updateBotStatus(true)}
+                  disabled={botStatus.is_active}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    botStatus.is_active
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
+                >
+                  🚀 Start Bot
+                </button>
+                <button
+                  onClick={() => updateBotStatus(false)}
+                  disabled={!botStatus.is_active}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    !botStatus.is_active
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
+                >
+                  ⏹️ Stop Bot
+                </button>
+              </div>
+              
+              {botStatus.last_started && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Started: {new Date(botStatus.last_started).toLocaleString()}
+                </p>
+              )}
+              {botStatus.last_stopped && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Stopped: {new Date(botStatus.last_stopped).toLocaleString()}
+                </p>
+              )}
+            </div>
+
             <button className="btn btn-primary" onClick={() => (window as any).startBot()} id="startBtn">
               🚀 Start Real Data Analysis
             </button>

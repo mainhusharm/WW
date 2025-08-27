@@ -77,7 +77,7 @@ const ReliableDataFeed: React.FC<ReliableDataFeedProps> = ({
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-        const response = await fetch(`https://forex-data-service.onrender.com/api/forex-price?pair=${symbol}`, {
+        const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1m&range=1d`)}`, {
           signal: controller.signal,
           method: 'GET',
           headers: {

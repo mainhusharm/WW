@@ -98,7 +98,7 @@ const ForexSignalGenerator: React.FC<ForexSignalGeneratorProps> = ({ isBotRunnin
     }
   };
 
-  const processSignal = (signal: any) => {
+  const processSignal = async (signal: any) => {
     const formattedSignal: ForexSignal = {
       id: `forex-signal-${signal.symbol}-${signal.timeframe}-${Date.now()}`,
       symbol: signal.symbol,
@@ -139,6 +139,27 @@ const ForexSignalGenerator: React.FC<ForexSignalGeneratorProps> = ({ isBotRunnin
     const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
     existingMessages.unshift(signalForUser);
     localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+
+    // Use centralized signal service to relay to users
+    try {
+      const signalService = await import('../services/signalService');
+      await signalService.default.addSignal({
+        id: formattedSignal.id,
+        pair: formattedSignal.symbol,
+        direction: formattedSignal.signalType === 'BUY' ? 'LONG' : 'SHORT',
+        entry: formattedSignal.entryPrice,
+        stopLoss: formattedSignal.stopLoss,
+        takeProfit: formattedSignal.takeProfit,
+        confidence: formattedSignal.confidence,
+        analysis: formattedSignal.analysis,
+        timestamp: formattedSignal.timestamp.toISOString(),
+        status: 'active',
+        market: 'forex',
+        timeframe: formattedSignal.timeframe
+      });
+    } catch (error) {
+      console.error('Error relaying forex signal:', error);
+    }
 
     setStats(prev => ({
       ...prev,

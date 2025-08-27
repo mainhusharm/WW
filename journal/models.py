@@ -16,7 +16,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     unique_id = db.Column(db.String(6), unique=True, nullable=False)  # 6-digit unique ID
     username = db.Column(db.String(80), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(128))
     active_session_id = db.Column(db.String(255), nullable=True, unique=True)
     plan_type = db.Column(db.String(20), nullable=False, default='free') # e.g., 'free', 'premium', 'enterprise'
@@ -147,6 +147,57 @@ class Signal(db.Model):
     def __repr__(self):
         return f'<Signal {self.signal_id} - {self.pair} {self.direction}>'
 
+class SignalFeed(db.Model):
+    __tablename__ = 'signal_feed'
+    id = db.Column(db.Integer, primary_key=True)
+    unique_key = db.Column(db.String(64), unique=True, nullable=False)  # Deduplication key
+    signal_id = db.Column(db.String(100), nullable=False)
+    pair = db.Column(db.String(20), nullable=False)
+    direction = db.Column(db.String(10), nullable=False)  # LONG, SHORT
+    entry_price = db.Column(db.String(20), nullable=False)
+    stop_loss = db.Column(db.String(20), nullable=False)
+    take_profit = db.Column(db.Text, nullable=False)  # JSON array or string
+    confidence = db.Column(db.Integer, nullable=False, default=90)
+    analysis = db.Column(db.Text, nullable=True)
+    ict_concepts = db.Column(db.Text, nullable=True)  # JSON array
+    timestamp = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    status = db.Column(db.String(20), nullable=False, default='active')  # active, taken, expired
+    market = db.Column(db.String(10), nullable=False, default='forex')  # forex, crypto
+    timeframe = db.Column(db.String(10), nullable=True)
+    created_by = db.Column(db.String(50), nullable=False, default='admin')
+    
+    # User interaction fields
+    outcome = db.Column(db.String(20), nullable=True)  # Target Hit, Stop Loss Hit, Breakeven
+    pnl = db.Column(db.Float, nullable=True)
+    taken_by = db.Column(db.String(50), nullable=True)
+    taken_at = db.Column(db.DateTime, nullable=True)
+    
+    # Recommended signal field
+    is_recommended = db.Column(db.Boolean, nullable=False, default=False)
+    
+    def to_dict(self):
+        return {
+            'id': self.signal_id,
+            'pair': self.pair,
+            'direction': self.direction,
+            'entry': self.entry_price,
+            'stopLoss': self.stop_loss,
+            'takeProfit': self.take_profit,
+            'confidence': self.confidence,
+            'analysis': self.analysis,
+            'ictConcepts': self.ict_concepts,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'status': self.status,
+            'market': self.market,
+            'timeframe': self.timeframe,
+            'outcome': self.outcome,
+            'pnl': self.pnl,
+            'is_recommended': self.is_recommended
+        }
+
+    def __repr__(self):
+        return f'<SignalFeed {self.signal_id} - {self.pair} {self.direction}>'
+
 class RiskPlan(db.Model):
     __tablename__ = 'risk_plans'
     id = db.Column(db.Integer, primary_key=True)
@@ -194,3 +245,93 @@ class UserActivity(db.Model):
     
     def __repr__(self):
         return f'<UserActivity {self.activity_type} for User {self.user_id}>'
+
+class BotData(db.Model):
+    """Stores all raw + processed data from Crypto Bot & Forex Data Bot"""
+    __tablename__ = 'bot_data'
+    id = db.Column(db.Integer, primary_key=True)
+    bot_type = db.Column(db.String(20), nullable=False)  # 'crypto' or 'forex'
+    pair = db.Column(db.String(20), nullable=False)  # e.g., BTC/USDT, EUR/USD
+    timestamp = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    price = db.Column(db.Numeric(20, 8), nullable=False)  # last fetched price
+    signal_type = db.Column(db.String(10), nullable=True)  # 'buy', 'sell', 'neutral'
+    signal_strength = db.Column(db.Numeric(5, 2), nullable=True)  # numeric or % if available
+    is_recommended = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    
+    # Additional fields for comprehensive data storage
+    volume = db.Column(db.Numeric(20, 8), nullable=True)
+    high = db.Column(db.Numeric(20, 8), nullable=True)
+    low = db.Column(db.Numeric(20, 8), nullable=True)
+    open_price = db.Column(db.Numeric(20, 8), nullable=True)
+    close_price = db.Column(db.Numeric(20, 8), nullable=True)
+    timeframe = db.Column(db.String(10), nullable=True)  # 1m, 5m, 15m, 1h, etc.
+    
+    def __repr__(self):
+        return f'<BotData {self.bot_type} - {self.pair} at {self.timestamp}>'
+
+class UserSignal(db.Model):
+    """Stores user signal history with trade outcomes"""
+    __tablename__ = 'user_signals'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    pair = db.Column(db.String(20), nullable=False)  # e.g., BTC/USDT
+    signal_type = db.Column(db.String(10), nullable=False)  # 'buy', 'sell', 'neutral'
+    result = db.Column(db.String(20), nullable=True)  # 'win', 'loss', 'skipped'
+    confidence_pct = db.Column(db.Numeric(5, 2), nullable=True)  # numeric
+    is_recommended = db.Column(db.Boolean, nullable=False, default=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    
+    # Signal details
+    entry_price = db.Column(db.Numeric(20, 8), nullable=True)
+    stop_loss = db.Column(db.Numeric(20, 8), nullable=True)
+    take_profit = db.Column(db.Numeric(20, 8), nullable=True)
+    analysis = db.Column(db.Text, nullable=True)
+    ict_concepts = db.Column(db.Text, nullable=True)  # JSON array
+    
+    # Trade outcome details
+    pnl = db.Column(db.Numeric(20, 8), nullable=True)
+    outcome_timestamp = db.Column(db.DateTime, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    
+    # Relationships
+    user = db.relationship('User', backref=db.backref('user_signals', lazy=True))
+    
+    def __repr__(self):
+        return f'<UserSignal {self.pair} {self.signal_type} for User {self.user_id}>'
+
+class BotStatus(db.Model):
+    """Manages bot active/inactive status"""
+    __tablename__ = 'bot_status'
+    id = db.Column(db.Integer, primary_key=True)
+    bot_type = db.Column(db.String(20), nullable=False, unique=True)  # 'crypto', 'forex'
+    is_active = db.Column(db.Boolean, nullable=False, default=False)
+    last_started = db.Column(db.DateTime, nullable=True)
+    last_stopped = db.Column(db.DateTime, nullable=True)
+    status_updated_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    updated_by = db.Column(db.String(50), nullable=True)  # user who changed status
+    
+    def __repr__(self):
+        return f'<BotStatus {self.bot_type} - {"Active" if self.is_active else "Inactive"}>'
+
+class OHLCData(db.Model):
+    """Stores aggregated OHLC candle data for charting"""
+    __tablename__ = 'ohlc_data'
+    id = db.Column(db.Integer, primary_key=True)
+    pair = db.Column(db.String(20), nullable=False)
+    timeframe = db.Column(db.String(10), nullable=False)  # 1m, 5m, 15m, 1h
+    timestamp = db.Column(db.DateTime, nullable=False)
+    open_price = db.Column(db.Numeric(20, 8), nullable=False)
+    high_price = db.Column(db.Numeric(20, 8), nullable=False)
+    low_price = db.Column(db.Numeric(20, 8), nullable=False)
+    close_price = db.Column(db.Numeric(20, 8), nullable=False)
+    volume = db.Column(db.Numeric(20, 8), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    
+    # Index for efficient querying
+    __table_args__ = (
+        db.Index('idx_ohlc_pair_timeframe_timestamp', 'pair', 'timeframe', 'timestamp'),
+    )
+    
+    def __repr__(self):
+        return f'<OHLCData {self.pair} {self.timeframe} at {self.timestamp}>'

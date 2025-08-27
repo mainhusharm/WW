@@ -11,6 +11,9 @@ from .account_routes import account_bp
 from .signals_routes import signals_bp
 from .payment_routes import payment_bp
 from .crypto_payment_routes import crypto_payment_bp
+from .database_routes import database_bp
+from .yfinance_routes import yfinance_bp
+from .landing_routes import landing_bp
 import os
 import sys
 from dotenv import load_dotenv
@@ -117,6 +120,26 @@ def create_app(config_object='journal.config.ProductionConfig'):
             output.append(line)
         return '<br>'.join(sorted(output))
 
+    # Health check endpoint for Render
+    @app.route('/healthz')
+    def health_check():
+        try:
+            # Check database connection
+            from sqlalchemy import text
+            db.session.execute(text('SELECT 1'))
+            return jsonify({
+                'status': 'healthy',
+                'database': 'connected',
+                'timestamp': datetime.utcnow().isoformat()
+            }), 200
+        except Exception as e:
+            return jsonify({
+                'status': 'unhealthy',
+                'database': 'disconnected',
+                'error': str(e),
+                'timestamp': datetime.utcnow().isoformat()
+            }), 500
+
     # Register blueprints - AUTH FIRST to ensure it's properly registered
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(admin_auth_bp, url_prefix='/api/admin')
@@ -129,6 +152,9 @@ def create_app(config_object='journal.config.ProductionConfig'):
     app.register_blueprint(signals_bp, url_prefix='/api')
     app.register_blueprint(payment_bp, url_prefix='/api/payment')
     app.register_blueprint(crypto_payment_bp, url_prefix='/api/crypto-payment')
+    app.register_blueprint(database_bp, url_prefix='/api')
+    app.register_blueprint(yfinance_bp, url_prefix='/api')
+    app.register_blueprint(landing_bp, url_prefix='/api')
     
     # Log registered routes for debugging
     print("Registered routes:")

@@ -342,6 +342,7 @@ def get_bulk_forex_price():
     
     cached_results = {}
     pairs_to_fetch = []
+    # Check cache for all pairs
     if current_time - cache_timestamp < CACHE_DURATION_SECONDS:
         for pair in pairs_list:
             if pair in cache:
@@ -354,46 +355,74 @@ def get_bulk_forex_price():
 
     if pairs_to_fetch:
         fetched_data = {}
-        for pair in pairs_to_fetch:
-            if pair.endswith('USDT'):
-                try:
-                    BINANCE_PRICE_URL = "https://api.binance.com/api/v3/ticker/price"
-                    params = {'symbol': pair}
-                    response = session.get(BINANCE_PRICE_URL, params=params)
-                    response.raise_for_status()
-                    data = response.json()
-                    price_data = {'pair': pair, 'price': float(data['price'])}
-                    fetched_data[pair] = price_data
-                    cache[pair] = price_data
-                except Exception as e:
-                    logger.error(f"Error fetching Binance price for {pair}: {str(e)}")
-                    fetched_data[pair] = {'error': 'Failed to fetch data.'}
-            else:
-                # yfinance logic for non-crypto pairs
-                formatted_pair = format_symbol_for_yfinance(pair)
-                try:
-                    time.sleep(0.5) # Avoid rate limiting
-                    logger.info(f"Fetching price for single pair: {pair} ({formatted_pair})")
-                    ticker = yf.Ticker(formatted_pair)
-                    data = ticker.history(period='1d', interval='1m', auto_adjust=True)
+        # Separate crypto and forex pairs for different fetching strategies
+        crypto_pairs = [p for p in pairs_to_fetch if p.endswith('USDT')]
+        forex_pairs = [p for p in pairs_to_fetch if not p.endswith('USDT')]
 
-                    if not data.empty:
-                        last_price = data['Close'].dropna().iloc[-1] if not data['Close'].dropna().empty else None
-                        if last_price is not None and pd.notna(last_price):
-                            price_data = {'pair': pair, 'price': last_price}
-                            fetched_data[pair] = price_data
-                            cache[pair] = price_data
+        # Fetch crypto pairs individually using Binance API
+        for pair in crypto_pairs:
+            try:
+                BINANCE_PRICE_URL = "https://api.binance.com/api/v3/ticker/price"
+                params = {'symbol': pair}
+                response = session.get(BINANCE_PRICE_URL, params=params)
+                response.raise_for_status()
+                data = response.json()
+                price_data = {'pair': pair, 'price': float(data['price'])}
+                fetched_data[pair] = price_data
+                cache[pair] = price_data
+            except Exception as e:
+                logger.error(f"Error fetching Binance price for {pair}: {str(e)}")
+                fetched_data[pair] = {'error': 'Failed to fetch data.'}
+
+        # Fetch all forex pairs in a single bulk request using yfinance
+        if forex_pairs:
+            formatted_forex_pairs = [format_symbol_for_yfinance(p) for p in forex_pairs]
+            try:
+                logger.info(f"Fetching bulk prices for: {formatted_forex_pairs}")
+                # Use yf.download for efficient bulk fetching of recent price data
+                data = yf.download(
+                    tickers=formatted_forex_pairs,
+                    period='1d',       # Get data for the last day
+                    interval='1m',     # Get the most recent minute-by-minute data
+                    auto_adjust=True,
+                    group_by='ticker', # Group data by ticker symbol
+                    threads=True       # Use multiple threads for faster downloads
+                )
+                
+                if not data.empty:
+                    for i, pair in enumerate(forex_pairs):
+                        formatted_pair = formatted_forex_pairs[i]
+                        
+                        # Access data for the specific ticker
+                        # When fetching a single ticker, yf.download doesn't create a multi-level index
+                        pair_data = data[formatted_pair] if len(formatted_forex_pairs) > 1 else data
+
+                        if not pair_data.empty and 'Close' in pair_data.columns:
+                            # Get the last valid price from the 'Close' column
+                            last_price = pair_data['Close'].dropna().iloc[-1] if not pair_data['Close'].dropna().empty else None
+                            if last_price is not None and pd.notna(last_price):
+                                price_data = {'pair': pair, 'price': float(last_price)}
+                                fetched_data[pair] = price_data
+                                cache[pair] = price_data # Update cache
+                            else:
+                                fetched_data[pair] = {'error': f'No recent price data for {pair}'}
                         else:
-                            fetched_data[pair] = {'error': f'No recent price data for {pair}'}
-                    else:
-                        fetched_data[pair] = {'error': f'No data found for {pair}'}
-                except Exception as e:
-                    logger.error(f"Error fetching price for {pair}: {str(e)}")
-                    fetched_data[pair] = {'error': 'Failed to fetch data.'}
+                            fetched_data[pair] = {'error': f'No data found for {pair}'}
+                else:
+                    logger.warning(f"yf.download returned no data for pairs: {forex_pairs}")
+                    for pair in forex_pairs:
+                        fetched_data[pair] = {'error': f'No data returned from yfinance for {pair}'}
 
+            except Exception as e:
+                logger.error(f"Error fetching bulk forex prices with yfinance: {str(e)}")
+                for pair in forex_pairs:
+                    fetched_data[pair] = {'error': 'Failed to fetch data in bulk.'}
+
+        # Update cache timestamp if any new data was fetched
         if fetched_data:
             cache_timestamp = time.time()
 
+        # Combine cached results with newly fetched data
         cached_results.update(fetched_data)
 
     return jsonify(cached_results)

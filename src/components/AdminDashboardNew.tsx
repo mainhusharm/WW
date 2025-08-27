@@ -337,6 +337,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       setSignals(prev => [signal, ...prev]);
       setLastSignalSent(new Date());
 
+      // Use centralized signal service to relay to users
+      try {
+        const signalService = await import('../services/signalService');
+        const success = await signalService.default.addSignal({
+          id: signal.id,
+          pair: signal.pair,
+          direction: signal.direction === 'BUY' ? 'LONG' : 'SHORT',
+          entry: signal.entry,
+          stopLoss: signal.stopLoss,
+          takeProfit: signal.takeProfit,
+          confidence: signal.confidence,
+          analysis: signal.analysis,
+          ictConcepts: signal.ictConcepts,
+          timestamp: signal.timestamp.toISOString(),
+          status: 'active',
+          market: 'forex'
+        });
+        
+        if (success) {
+          console.log('Signal successfully relayed to user feed');
+        } else {
+          console.log('Signal was duplicate or already exists');
+        }
+      } catch (error) {
+        console.error('Error relaying signal:', error);
+        // Continue with local storage even if relay fails
+      }
+
       // Reset form
       setNewSignal({
         pair: 'EURUSD',

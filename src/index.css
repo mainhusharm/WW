@@ -1,3 +1,6 @@
+/* Import 3D Animations */
+@import './styles/3d-animations.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

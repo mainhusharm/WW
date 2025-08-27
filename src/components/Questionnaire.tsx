@@ -103,7 +103,11 @@ const Questionnaire: React.FC = () => {
 
   const handleSubmit = async () => {
     setIsLoading(true);
-    localStorage.setItem('questionnaireAnswers', JSON.stringify(answers));
+    
+    // Use centralized service to store data with exact precision
+    const questionnaireService = await import('../services/questionnaireDataService');
+    questionnaireService.default.storeQuestionnaireData(answers);
+    
     console.log('User Answers:', answers);
 
     // Check if coming from payment flow
@@ -114,10 +118,19 @@ const Questionnaire: React.FC = () => {
     localStorage.setItem('questionnaire_completed', 'true');
 
     try {
-      // Save questionnaire answers to backend
-      await api.post('/user/questionnaire', answers);
-      logActivity('questionnaire_submit', { answers });
-      console.log('Questionnaire saved to backend successfully');
+      // Save questionnaire answers to backend using centralized service
+      const customerDataService = await import('../services/customerDataService');
+      const success = await customerDataService.default.saveQuestionnaire(
+        user?.id || 'anonymous',
+        answers
+      );
+      
+      if (success) {
+        console.log('Questionnaire saved to backend successfully');
+        logActivity('questionnaire_submit', { answers });
+      } else {
+        console.warn('Failed to save questionnaire to backend, continuing with local storage');
+      }
     } catch (error) {
       console.warn('Backend not available, continuing with local storage:', error);
       // Continue without backend - this is expected in demo/offline mode
