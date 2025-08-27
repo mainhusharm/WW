@@ -4,6 +4,11 @@ services:
     name: trading-journal-backend
     env: python
     plan: starter
+    buildEnvVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: PYTHON_FULL_VERSION
+        value: "3.11.0"
     buildCommand: |
       # Install system dependencies
       apt-get update && apt-get install -y --no-install-recommends \
@@ -14,10 +19,25 @@ services:
           libssl-dev \
           && rm -rf /var/lib/apt/lists/*
       
-      # Install Python dependencies with proper version handling
-      export PYTHONPATH=/opt/render/project/src
+      # Force Python 3.11 environment - MORE AGGRESSIVE
+      export PATH="/usr/local/bin:/opt/render/project/src/.venv/bin:$PATH"
+      export PYTHONPATH="/opt/render/project/src"
+      export PYTHON_VERSION="3.11.0"
+      export PYTHON_FULL_VERSION="3.11.0"
+      
+      # Create symlink to force python3.11 as default
+      ln -sf /usr/bin/python3.11 /usr/local/bin/python
+      ln -sf /usr/bin/python3.11 /usr/local/bin/python3
+      
+      # Install Python 3.11 explicitly
       python3.11 -m pip install --upgrade pip setuptools wheel
       python3.11 -m pip install --no-cache-dir -r requirements.txt
+      
+      # Verify Python version
+      python3.11 --version
+      which python3.11
+      python --version
+      python3 --version
       
       # Create necessary directories
       mkdir -p instance
@@ -103,17 +123,44 @@ services:
   - type: web
     name: forex-data-service
     env: python
+    buildEnvVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: PYTHON_FULL_VERSION
+        value: "3.11.0"
     buildCommand: |
+      # Force Python 3.11 environment - MORE AGGRESSIVE
+      export PATH="/usr/local/bin:/opt/render/project/src/.venv/bin:$PATH"
+      export PYTHONPATH="/opt/render/project/src"
+      export PYTHON_VERSION="3.11.0"
+      export PYTHON_FULL_VERSION="3.11.0"
+      
+      # Create symlink to force python3.11 as default
+      ln -sf /usr/bin/python3.11 /usr/local/bin/python
+      ln -sf /usr/bin/python3.11 /usr/local/bin/python3
+      
       cd forex_data_service
+      
+      # Install Python 3.11 explicitly
       python3.11 -m pip install --upgrade pip setuptools wheel
       python3.11 -m pip install -r requirements.txt
+      
+      # Verify Python version
+      python3.11 --version
+      which python3.11
+      python --version
+      python3 --version
     startCommand: cd forex_data_service && python3.11 server.py
     plan: starter
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.0"
+      - key: PYTHON_FULL_VERSION
+        value: "3.11.0"
       - key: PORT
         value: 3004
+      - key: PYTHONPATH
+        value: "/opt/render/project/src"
     healthCheckPath: /health
 
   # Customer Service

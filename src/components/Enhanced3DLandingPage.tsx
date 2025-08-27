@@ -18,9 +18,9 @@ import {
 } from 'lucide-react';
 import Header from './Header';
 
-// Lazy load heavy 3D components
-const Scene3D = React.lazy(() => import('./3D/Scene3D'));
-const ScrollAnimations = React.lazy(() => import('./3D/ScrollAnimations'));
+// Temporarily disable 3D components to prevent crashes
+// const Scene3D = React.lazy(() => import('./3D/Scene3D'));
+// const ScrollAnimations = React.lazy(() => import('./3D/ScrollAnimations'));
 
 const Enhanced3DLandingPage = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -203,7 +203,10 @@ const Enhanced3DLandingPage = () => {
       
       {/* 3D Scene Background - Lazy loaded */}
       <Suspense fallback={<div className="fixed inset-0 bg-gray-950" />}>
-        <Scene3D scrollY={scrollY} isVisible={isLoaded} />
+        {/* <Scene3D scrollY={scrollY} isVisible={isLoaded} /> */}
+        <div className="fixed inset-0 bg-gray-950">
+          <div className="w-full h-full bg-gradient-to-br from-cyan-900/20 via-transparent to-purple-900/20"></div>
+        </div>
       </Suspense>
       
       {/* Animated Background Elements */}
@@ -247,7 +250,7 @@ const Enhanced3DLandingPage = () => {
       </div>
 
       <Suspense fallback={<div />}>
-        <ScrollAnimations>
+        {/* <ScrollAnimations> */}
         {/* Hero Section */}
         <section ref={heroRef} className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center relative z-10">
@@ -561,7 +564,7 @@ const Enhanced3DLandingPage = () => {
             </div>
           </div>
         </section>
-        </ScrollAnimations>
+        {/* </ScrollAnimations> */}
       </Suspense>
 
       {/* Loading Screen */}

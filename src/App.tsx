@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, Component, ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import Enhanced3DLandingPage from './components/Enhanced3DLandingPage';
@@ -47,6 +47,51 @@ import Lightning from './components/Lightning';
 import Footer from './components/Footer';
 import DatabaseDashboard from './components/DatabaseDashboard';
 
+// Global Error Boundary for the entire app
+class GlobalErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Global Error Boundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-8">
+          <div className="text-center max-w-md">
+            <h1 className="text-2xl font-bold mb-4 text-red-400">Something went wrong</h1>
+            <p className="text-gray-300 mb-4">
+              We encountered an error while loading the application. This might be due to a temporary issue.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Reload Page
+            </button>
+            <div className="mt-4 text-sm text-gray-400">
+              <p>Error: {this.state.error?.message}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const AppContent = () => {
   const { logout: userLogout } = useUser();
   const { logout: adminLogout } = useAdmin();
@@ -84,7 +129,8 @@ const AppContent = () => {
       <FuturisticBackground />
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          <Route path="/" element={<Enhanced3DLandingPage />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/3d" element={<Enhanced3DLandingPage />} />
           <Route path="/classic" element={<LandingPage />} />
           <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
@@ -168,17 +214,19 @@ const AppContent = () => {
 
 function App() {
   return (
-    <SignalDistributionProvider>
-      <AdminProvider>
-        <UserProvider>
-          <TradingPlanProvider>
-            <Router>
-              <AppContent />
-            </Router>
-          </TradingPlanProvider>
-        </UserProvider>
-      </AdminProvider>
-    </SignalDistributionProvider>
+    <GlobalErrorBoundary>
+      <SignalDistributionProvider>
+        <AdminProvider>
+          <UserProvider>
+            <TradingPlanProvider>
+              <Router>
+                <AppContent />
+              </Router>
+            </TradingPlanProvider>
+          </UserProvider>
+        </AdminProvider>
+      </SignalDistributionProvider>
+    </GlobalErrorBoundary>
   );
 }
 

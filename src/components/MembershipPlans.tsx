@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, Star, Zap, Crown, Shield } from 'lucide-react';
 import Header from './Header';
-import ScrollAnimations from './3D/ScrollAnimations';
+// import ScrollAnimations from './3D/ScrollAnimations';
 
 const MembershipPlans: React.FC = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -155,7 +155,7 @@ const MembershipPlans: React.FC = () => {
         
       </div>
 
-      <ScrollAnimations>
+      {/* <ScrollAnimations> */}
         <section className="py-20 px-4 sm:px-6 lg:px-8 relative z-10 mt-20">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
@@ -234,7 +234,7 @@ const MembershipPlans: React.FC = () => {
             </div>
           </div>
         </section>
-      </ScrollAnimations>
+              {/* </ScrollAnimations> */}
     </div>
   );
 };

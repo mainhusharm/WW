@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Target, Shield, BarChart3, Zap, Award, Users } from 'lucide-react';
 import Header from './Header';
-import ScrollAnimations from './3D/ScrollAnimations';
+// import ScrollAnimations from './3D/ScrollAnimations';
 
 const Features: React.FC = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -89,7 +89,7 @@ const Features: React.FC = () => {
         
       </div>
 
-      <ScrollAnimations>
+      {/* <ScrollAnimations> */}
         <section className="features-section py-20 px-4 sm:px-6 lg:px-8 relative z-10 mt-20">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-20">
@@ -138,7 +138,7 @@ const Features: React.FC = () => {
             </div>
           </div>
         </section>
-      </ScrollAnimations>
+      {/* </ScrollAnimations> */}
     </div>
   );
 };
