@@ -284,8 +284,9 @@ const EnhancedCustomerServiceDashboard = () => {
 
         {/* Content */}
         <div className="flex-1 p-8 overflow-y-auto">
-          {activePage === 'dashboard' && (
-            <div className="space-y-8">
+          <>
+            {activePage === 'dashboard' && (
+              <div className="space-y-8">
               {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
@@ -804,7 +805,7 @@ const EnhancedCustomerServiceDashboard = () => {
             )}
 
             {activePage === 'customer-database' && <CustomerDatabase />}
-          </div>
+          </>
         </div>
       </div>
     </div>

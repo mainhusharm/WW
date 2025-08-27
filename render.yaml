@@ -14,9 +14,9 @@ services:
           libssl-dev \
           && rm -rf /var/lib/apt/lists/*
       
-      # Install Python dependencies
-      pip install --upgrade pip setuptools wheel
-      pip install --no-cache-dir -r requirements.txt
+      # Install Python dependencies with proper version handling
+      python -m pip install --upgrade pip setuptools wheel
+      python -m pip install --no-cache-dir -r requirements.txt
       
       # Create necessary directories
       mkdir -p instance
@@ -34,6 +34,8 @@ services:
       wsgi:app
       
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
       - key: PORT
         value: 5000
       - key: FLASK_ENV
@@ -80,6 +82,8 @@ services:
     startCommand: cd binance_service && node server.js
     plan: starter
     envVars:
+      - key: NODE_VERSION
+        value: "18.17.0"
       - key: PORT
         value: 5010
       - key: BINANCE_API_KEY
@@ -92,10 +96,15 @@ services:
   - type: web
     name: forex-data-service
     env: python
-    buildCommand: cd forex_data_service && pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
+    buildCommand: |
+      cd forex_data_service
+      python -m pip install --upgrade pip setuptools wheel
+      python -m pip install -r requirements.txt
     startCommand: cd forex_data_service && python server.py
     plan: starter
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
       - key: PORT
         value: 3004
     healthCheckPath: /health

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Shield, Zap, Scale, BrainCircuit, DatabaseZap, Landmark } from 'lucide-react';
+import { FileText, Shield, Zap, Scale, BrainCircuit, Database, Landmark } from 'lucide-react';
 import Header from './Header';
 
 const Terms: React.FC = () => {
@@ -32,7 +32,7 @@ const Terms: React.FC = () => {
             <h2><BrainCircuit className="inline-block w-6 h-6 mr-2" />3. AI & Algorithmic Liability</h2>
             <p>Our services incorporate advanced artificial intelligence and machine learning algorithms. While we strive for accuracy, you acknowledge that these systems are probabilistic and may have inherent errors or biases. You agree to hold TraderEdge Pro harmless for any decisions, trades, or actions you take based on the output of our AI systems. We are not liable for any financial losses or damages resulting from the use of our algorithmic tools.</p>
 
-            <h2><DatabaseZap className="inline-block w-6 h-6 mr-2" />4. Data Privacy in the Quantum Age</h2>
+                            <h2><Database className="inline-block w-6 h-6 mr-2" />4. Data Privacy in the Quantum Age</h2>
             <p>We employ state-of-the-art encryption and data protection protocols. By using our services, you consent to the collection and use of your data as described in our Privacy Policy. This includes anonymized data for training our AI models. We will not sell your personal data to third parties. You acknowledge that in the age of quantum computing, no data is ever 100% secure, and you agree to hold us harmless for any data breaches that may occur despite our security measures.</p>
 
             <h2><Shield className="inline-block w-6 h-6 mr-2" />5. Absolute No Legal Action & Mandatory Arbitration</h2>
