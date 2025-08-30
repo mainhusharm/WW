@@ -6,12 +6,44 @@ const cron = require('node-cron');
 const app = express();
 const PORT = process.env.PORT || 10002;
 
+// Helper function to format forex symbols for Yahoo Finance
+const formatForexSymbol = (symbol) => {
+  // Convert forex pairs to Yahoo Finance format
+  const symbolMap = {
+    'EUR/USD': 'EURUSD=X',
+    'GBP/USD': 'GBPUSD=X',
+    'USD/JPY': 'USDJPY=X',
+    'USD/CHF': 'USDCHF=X',
+    'AUD/USD': 'AUDUSD=X',
+    'USD/CAD': 'USDCAD=X',
+    'NZD/USD': 'NZDUSD=X',
+    'EUR/JPY': 'EURJPY=X',
+    'GBP/JPY': 'GBPJPY=X',
+    'EUR/GBP': 'EURGBP=X',
+    'EUR/AUD': 'EURAUD=X',
+    'GBP/AUD': 'GBPAUD=X',
+    'AUD/CAD': 'AUDCAD=X',
+    'CAD/JPY': 'CADJPY=X',
+    'CHF/JPY': 'CHFJPY=X',
+    'AUD/CHF': 'AUDCHF=X',
+    'CAD/CHF': 'CADCHF=X',
+    'EUR/CHF': 'EURCHF=X',
+    'GBP/CHF': 'GBPCHF=X',
+    'NZD/CAD': 'NZDCAD=X',
+    'NZD/JPY': 'NZDJPY=X',
+    'AUD/NZD': 'AUDNZD=X'
+  };
+  
+  return symbolMap[symbol] || symbol;
+};
+
 // Enhanced CORS configuration
 app.use(cors({
   origin: [
     'https://www.traderedgepro.com',
     'https://traderedgepro.com',
     'https://traderedgepro.onrender.com',
+    'https://frontend-01uh.onrender.com',
     'http://localhost:3000',
     'http://localhost:5173'
   ],
@@ -21,6 +53,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -40,7 +75,8 @@ app.get('/api/price/:symbol', async (req, res) => {
     
     console.log(`Fetching price for ${symbol} with timeframe ${timeframe} and range ${range}`);
     
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${timeframe}&range=${range}`;
+    const formattedSymbol = formatForexSymbol(symbol);
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${formattedSymbol}?interval=${timeframe}&range=${range}`;
     
     const response = await axios.get(url, {
       headers: {
@@ -114,7 +150,8 @@ app.post('/api/bulk', async (req, res) => {
     
     const promises = symbols.map(async (symbol) => {
       try {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${timeframe}&range=${range}`;
+        const formattedSymbol = formatForexSymbol(symbol);
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${formattedSymbol}?interval=${timeframe}&range=${range}`;
         
         const response = await axios.get(url, {
           headers: {
