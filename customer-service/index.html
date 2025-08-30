@@ -1510,8 +1510,10 @@
 
         async function loadAllCustomers() {
             try {
+                console.log('Loading all customers...');
                 const response = await fetch(`${API_BASE_URL}/api/customers`);
                 const data = await response.json();
+                console.log('API response:', data);
                 
                 // Handle both response formats and ensure customers is always an array
                 let customers = [];
@@ -1527,6 +1529,7 @@
                     customers = [];
                 }
                 
+                console.log('Processed customers:', customers);
                 displayCustomers(customers);
             } catch (error) {
                 console.error('Error loading customers:', error);
@@ -1813,7 +1816,18 @@
 
         // Make buttons functional
         document.addEventListener('DOMContentLoaded', () => {
-            const socket = io();
+            // Initialize socket with fallback
+            let socket;
+            try {
+                if (typeof io !== 'undefined') {
+                    socket = io();
+                }
+            } catch (error) {
+                console.warn('Socket.IO not available, continuing without real-time features');
+            }
+
+            // Load initial customer data
+            loadAllCustomers();
 
             // Handle chat actions
             document.querySelector('.action-btn[title="Video Call"]').addEventListener('click', () => alert('Video call initiated'));
