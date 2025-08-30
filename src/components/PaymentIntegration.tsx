@@ -76,7 +76,9 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || '';
-      const endpoint = `${apiUrl}/payment/validate-coupon`;
+      // In production, VITE_API_URL is '/api', so we need to call the backend service
+      const baseUrl = window.location.hostname === 'localhost' ? '' : 'https://ww-whoa.onrender.com';
+      const endpoint = `${baseUrl}${apiUrl}/payment/validate-coupon`;
       console.log(`Calling API endpoint: ${endpoint}`);
       setDebugInfo(prev => prev + `\nAPI endpoint: ${endpoint}`);
       
