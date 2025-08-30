@@ -40,6 +40,28 @@ export default defineConfig(({ mode }) => {
             return `assets/[name]-[hash].${ext}`;
           },
         },
+        plugins: [
+          {
+            name: 'csp-injection',
+            generateBundle(options, bundle) {
+              // Inject CSP meta tag into HTML files
+              Object.keys(bundle).forEach(fileName => {
+                if (fileName.endsWith('.html')) {
+                  const file = bundle[fileName];
+                  if (file.type === 'asset' && file.source) {
+                    const html = file.source.toString();
+                    const cspMeta = '<meta http-equiv="Content-Security-Policy" content="default-src \'self\' https:; script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://js.stripe.com https://m.stripe.network https://s3.tradingview.com; style-src \'self\' \'unsafe-inline\' \'unsafe-hashes\' https://m.stripe.network; frame-src \'self\' https://js.stripe.com https://hooks.stripe.com https://s3.tradingview.com; connect-src \'self\' https:; img-src \'self\' https: data: blob:;">';
+                    
+                    if (!html.includes('Content-Security-Policy')) {
+                      const updatedHtml = html.replace('<head>', `<head>${cspMeta}`);
+                      file.source = updatedHtml;
+                    }
+                  }
+                }
+              });
+            }
+          }
+        ]
       },
       minify: 'terser',
       terserOptions: {
@@ -63,6 +85,9 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },
+      headers: {
+        'Content-Security-Policy': "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network https://s3.tradingview.com; style-src 'self' 'unsafe-inline' 'unsafe-hashes' https://m.stripe.network; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://s3.tradingview.com; connect-src 'self' https:; img-src 'self' https: data: blob:;"
+      }
     },
     resolve: {
       alias: {

@@ -79,38 +79,8 @@ class RealYfinanceService {
       console.warn(`forex-data-service failed for ${symbol}:`, error);
     }
 
-    // Try direct Yahoo Finance API as last resort
-    try {
-      const formattedSymbol = this.formatForexSymbol(symbol);
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${formattedSymbol}?interval=1m&range=1d`;
-      
-      const response = await this.fetchWithRetry(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-      });
-      
-      if (response && response.chart && response.chart.result && response.chart.result[0]) {
-        const result = response.chart.result[0];
-        const meta = result.meta;
-        const latestPrice = meta.regularMarketPrice || meta.previousClose;
-        
-        if (latestPrice && !isNaN(latestPrice)) {
-          const priceData: RealPriceData = {
-            symbol: symbol,
-            price: parseFloat(latestPrice),
-            timestamp: new Date().toISOString(),
-            provider: 'yahoo-finance-direct'
-          };
-          
-          this.priceCache.set(cacheKey, { data: priceData, timestamp: now });
-          console.log(`✅ Real price fetched for ${symbol}: ${priceData.price} from Yahoo Finance direct`);
-          return priceData;
-        }
-      }
-    } catch (error) {
-      console.warn(`Direct Yahoo Finance API failed for ${symbol}:`, error);
-    }
+    // No direct Yahoo Finance API calls - only use working forex-data-service
+    console.log(`⚠️ All price sources failed for ${symbol} - no fallback data available`);
 
     // NO FALLBACK DATA - return null if all sources fail
     console.warn(`❌ All price sources failed for ${symbol} - no fallback data generated`);
@@ -223,23 +193,7 @@ class RealYfinanceService {
     throw lastError;
   }
 
-  /**
-   * Format forex symbols for Yahoo Finance API
-   */
-  private formatForexSymbol(symbol: string): string {
-    const symbolMap: { [key: string]: string } = {
-      'EUR/USD': 'EURUSD=X', 'GBP/USD': 'GBPUSD=X', 'USD/JPY': 'USDJPY=X',
-      'USD/CHF': 'USDCHF=X', 'AUD/USD': 'AUDUSD=X', 'USD/CAD': 'USDCAD=X',
-      'NZD/USD': 'NZDUSD=X', 'EUR/JPY': 'EURJPY=X', 'GBP/JPY': 'GBPJPY=X',
-      'EUR/GBP': 'EURGBP=X', 'EUR/AUD': 'EURAUD=X', 'GBP/AUD': 'GBPAUD=X',
-      'AUD/CAD': 'AUDCAD=X', 'CAD/JPY': 'CADJPY=X', 'CHF/JPY': 'CHFJPY=X',
-      'AUD/CHF': 'AUDCHF=X', 'CAD/CHF': 'CADCHF=X', 'EUR/CHF': 'EURCHF=X',
-      'GBP/CHF': 'GBPCHF=X', 'NZD/CAD': 'NZDCAD=X', 'NZD/JPY': 'NZDJPY=X',
-      'AUD/NZD': 'AUDNZD=X'
-    };
-    
-    return symbolMap[symbol] || symbol;
-  }
+  // formatForexSymbol method removed - no longer needed
 
   /**
    * Clear cache
