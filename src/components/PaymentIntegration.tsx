@@ -23,6 +23,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
   const [selectedMethod, setSelectedMethod] = useState('paypal');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
+  const [debugInfo, setDebugInfo] = useState('');
   const [showCryptoVerification, setShowCryptoVerification] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState('');
   const [verificationData, setVerificationData] = useState({
@@ -71,6 +72,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
     }
 
     console.log(`Applying coupon: ${couponCode} for plan: ${selectedPlan.name} with price: $${selectedPlan.price}`);
+    setDebugInfo(`Applying coupon: ${couponCode} for plan: ${selectedPlan.name} with price: $${selectedPlan.price}`);
 
     try {
       const response = await fetch('/api/payment/validate-coupon', {
@@ -88,21 +90,25 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
       console.log(`Coupon response status: ${response.status}`);
       const data = await response.json();
       console.log(`Coupon response data:`, data);
+      setDebugInfo(prev => prev + `\nResponse status: ${response.status}\nResponse data: ${JSON.stringify(data)}`);
 
       if (data.valid) {
         setCouponApplied(true);
         setDiscountAmount(data.discount_amount);
         setError('');
+        setDebugInfo(prev => prev + `\n✅ SUCCESS: Coupon applied! Final price: $${data.final_price}, Discount: $${data.discount_amount}`);
         console.log(`Coupon applied successfully: ${couponCode}, Final price: $${data.final_price}, Discount: $${data.discount_amount}`);
       } else {
         setError(data.error || 'Invalid coupon code');
         setCouponApplied(false);
         setDiscountAmount(0);
+        setDebugInfo(prev => prev + `\n❌ FAILED: ${data.error}`);
         console.log(`Coupon validation failed: ${data.error}`);
       }
     } catch (error) {
       console.error('Error applying coupon:', error);
       setError('Failed to apply coupon. Please try again.');
+      setDebugInfo(prev => prev + `\n💥 EXCEPTION: ${error.message}`);
     }
   };
 
@@ -600,6 +606,13 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
                 <div className="p-4 bg-red-600/20 border border-red-600 rounded-lg flex items-center space-x-2">
                   <AlertCircle className="w-5 h-5 text-red-400" />
                   <span className="text-red-400 text-sm">{error}</span>
+                </div>
+              )}
+              
+              {debugInfo && (
+                <div className="p-4 bg-blue-600/20 border border-blue-600 rounded-lg">
+                  <div className="text-blue-400 text-sm font-medium mb-2">Debug Info:</div>
+                  <pre className="text-blue-300 text-xs whitespace-pre-wrap">{debugInfo}</pre>
                 </div>
               )}
 
