@@ -41,6 +41,7 @@ import AnimationTest from './components/AnimationTest';
 
 import CustomerServiceMpinLogin from './components/CustomerServiceMpinLogin';
 import CustomerServiceProtectedRoute from './components/CustomerServiceProtectedRoute';
+import CustomerServiceRedirect from './components/CustomerServiceRedirect';
 import EnhancedCustomerServiceDashboard from './components/EnhancedCustomerServiceDashboard';
 import CustomerDetail from './components/CustomerDetail';
 import ContactSupport from './components/ContactSupport';
@@ -193,11 +194,11 @@ const AppContent = () => {
         <Route path="/payment" element={<PaymentFlow />} />
         <Route path="/trade-mentor/:tradeId" element={<TradeMentor />} />
         <Route path="/customer-service" element={<CustomerServiceMpinLogin />} />
-                  <Route
+        <Route
           path="/customer-service/dashboard"
           element={
             <CustomerServiceProtectedRoute>
-              <CustomerServiceDashboard onLogout={handleAdminLogout} />
+              <CustomerServiceRedirect />
             </CustomerServiceProtectedRoute>
           }
         />
