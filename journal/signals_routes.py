@@ -3,6 +3,7 @@ from .models import Signal
 from .extensions import db, socketio
 from datetime import datetime
 import uuid
+import json
 
 signals_bp = Blueprint('signals', __name__)
 
@@ -65,45 +66,52 @@ def create_signal():
         # Also relay to user feed directly
         try:
             # Generate unique key for deduplication
-            unique_key = f"{signal_dict['pair']}_{signal_dict['timeframe']}_{signal_dict['direction']}_{datetime.utcnow().timestamp()}"
+            unique_key = f"{signal_dict['pair']}_{signal_dict['timeframe']}_{signal_dict['type']}_{datetime.utcnow().timestamp()}"
             
             # Check if signal already exists
             from .models import SignalFeed
             existing_signal = SignalFeed.query.filter_by(unique_key=unique_key).first()
             
             if not existing_signal:
-                            # Create new signal feed entry
-            new_signal_feed = SignalFeed(
-                unique_key=unique_key,
-                signal_id=signal_dict['id'],
-                pair=signal_dict['pair'],
-                direction=signal_dict['type'].upper(),  # Convert to uppercase for consistency
-                entry_price=str(signal_dict['entry']),
-                stop_loss=str(signal_dict['stopLoss']),
-                take_profit=json.dumps(signal_dict['takeProfit']) if isinstance(signal_dict['takeProfit'], list) else str(signal_dict['takeProfit']),
-                confidence=signal_dict['confidence'],
-                analysis=signal_dict['analysis'],
-                ict_concepts=json.dumps(signal_dict['ictConcepts']) if isinstance(signal_dict['ictConcepts'], list) else str(signal_dict['ictConcepts']),
-                timestamp=datetime.utcnow(),
-                status='active',
-                market='forex',  # Default to forex, can be enhanced
-                timeframe=signal_dict['timeframe'],
-                created_by='admin',
-                is_recommended=signal_dict['confidence'] > 85
-            )
+                # Always try to create the signal feed entry
+                # The database constraints will prevent duplicates
+                new_signal_feed = SignalFeed(
+                    unique_key=unique_key,
+                    signal_id=signal_dict['id'],
+                    pair=signal_dict['pair'],
+                    direction=signal_dict['type'].upper(),  # Convert to uppercase for consistency
+                    entry_price=str(signal_dict['entry']),
+                    stop_loss=str(signal_dict['stopLoss']),
+                    take_profit=json.dumps(signal_dict['takeProfit']) if isinstance(signal_dict['takeProfit'], list) else str(signal_dict['takeProfit']),
+                    confidence=signal_dict['confidence'],
+                    analysis=signal_dict['analysis'],
+                    ict_concepts=json.dumps(signal_dict['ictConcepts']) if isinstance(signal_dict['ictConcepts'], list) else str(signal_dict['ictConcepts']),
+                    timestamp=datetime.utcnow(),
+                    status='active',
+                    market='forex',  # Default to forex, can be enhanced
+                    timeframe=signal_dict['timeframe'],
+                    created_by='admin',
+                    is_recommended=signal_dict['confidence'] > 85
+                )
                 
-                db.session.add(new_signal_feed)
-                db.session.commit()
-                print(f"Signal successfully relayed to user feed")
-            else:
-                print(f"Signal already exists in user feed")
+                try:
+                    db.session.add(new_signal_feed)
+                    db.session.commit()
+                    print(f"Signal successfully relayed to user feed")
+                except Exception as db_error:
+                    # If it's a duplicate key error, that's fine
+                    if "UNIQUE constraint failed" in str(db_error):
+                        print(f"Signal already exists in user feed (duplicate prevented)")
+                    else:
+                        print(f"Database error when relaying signal: {str(db_error)}")
+                    db.session.rollback()
                 
         except Exception as relay_error:
             print(f"Warning: Failed to relay signal to user feed: {str(relay_error)}")
             db.session.rollback()
         
         # Emit signal to all connected users via WebSocket
-        socketio.emit('newSignal', [signal_dict])  # Send as array for consistency
+        socketio.emit('new_signal', signal_dict)  # Send as single signal object
         
         print(f"Signal created and broadcasted: {signal_dict}")
         
