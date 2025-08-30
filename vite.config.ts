@@ -102,7 +102,7 @@ export default defineConfig(({ mode }) => {
       // Ensure React 18 features are properly defined
       __DEV__: mode === 'development',
       // Force React 18 mode
-      __REACT_18__: true,
+      __REACT_18__: 'true',
     },
     optimizeDeps: {
       include: [
@@ -126,7 +126,7 @@ export default defineConfig(({ mode }) => {
         // Force React 18 compatibility
         define: {
           'process.env': '{}',
-          '__REACT_18__': true
+          '__REACT_18__': 'true'
         }
       },
     },

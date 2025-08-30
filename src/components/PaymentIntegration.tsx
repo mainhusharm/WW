@@ -70,6 +70,8 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
       return;
     }
 
+    console.log(`Applying coupon: ${couponCode} for plan: ${selectedPlan.name} with price: $${selectedPlan.price}`);
+
     try {
       const response = await fetch('/api/payment/validate-coupon', {
         method: 'POST',
@@ -83,17 +85,20 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
         }),
       });
 
+      console.log(`Coupon response status: ${response.status}`);
       const data = await response.json();
+      console.log(`Coupon response data:`, data);
 
       if (data.valid) {
         setCouponApplied(true);
         setDiscountAmount(data.discount_amount);
         setError('');
-        console.log(`Coupon applied: ${couponCode}, Final price: $${data.final_price}`);
+        console.log(`Coupon applied successfully: ${couponCode}, Final price: $${data.final_price}, Discount: $${data.discount_amount}`);
       } else {
         setError(data.error || 'Invalid coupon code');
         setCouponApplied(false);
         setDiscountAmount(0);
+        console.log(`Coupon validation failed: ${data.error}`);
       }
     } catch (error) {
       console.error('Error applying coupon:', error);
