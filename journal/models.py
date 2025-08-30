@@ -17,6 +17,7 @@ class User(db.Model):
     unique_id = db.Column(db.String(6), unique=True, nullable=False)  # 6-digit unique ID
     username = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    normalized_email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(128))
     active_session_id = db.Column(db.String(255), nullable=True, unique=True)
     plan_type = db.Column(db.String(20), nullable=False, default='free') # e.g., 'free', 'premium', 'enterprise'
@@ -36,6 +37,38 @@ class User(db.Model):
         super(User, self).__init__(**kwargs)
         if not self.unique_id:
             self.unique_id = self.generate_unique_id()
+        
+        # Auto-normalize email if provided
+        if self.email and not self.normalized_email:
+            self.normalized_email = self.normalize_email(self.email)
+    
+    @staticmethod
+    def normalize_email(email):
+        """
+        Normalize email to prevent duplicates:
+        - Convert to lowercase
+        - Remove dots from Gmail addresses
+        - Remove everything after + in Gmail addresses
+        """
+        if not email:
+            return email
+        
+        email = email.lower().strip()
+        
+        # Split email into local and domain parts
+        if '@' not in email:
+            return email
+        
+        local_part, domain = email.split('@', 1)
+        
+        # Special handling for Gmail
+        if domain == 'gmail.com':
+            # Remove dots
+            local_part = local_part.replace('.', '')
+            # Remove everything after +
+            local_part = local_part.split('+')[0]
+        
+        return f"{local_part}@{domain}"
     
     @staticmethod
     def generate_unique_id():

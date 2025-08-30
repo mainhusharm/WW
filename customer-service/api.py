@@ -453,6 +453,149 @@ class SecureDatabaseDashboard:
             return False
 
 # ============================================
+# AUDIT TRAIL & PERMANENT STORAGE SERVICE
+# ============================================
+
+class AuditTrailService:
+    """Service for comprehensive audit logging and permanent data storage"""
+    
+    def __init__(self, db_path):
+        self.db_path = db_path
+    
+    def log_action(self, table_name, record_id, action, old_data=None, new_data=None, user_id=None, ip_address=None, user_agent=None, details=None):
+        """Log any action to the audit trail"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                INSERT INTO audit_logs (table_name, record_id, action, user_id, old_data, new_data, ip_address, user_agent, details)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                table_name,
+                record_id,
+                action,
+                user_id,
+                json.dumps(old_data) if old_data else None,
+                json.dumps(new_data) if new_data else None,
+                ip_address,
+                user_agent,
+                json.dumps(details) if details else None
+            ))
+            
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            logger.error(f"Error logging audit action: {e}")
+            return False
+    
+    def log_user_change(self, user_id, action, field_name=None, old_value=None, new_value=None, ip_address=None, user_agent=None):
+        """Log user-specific changes to the audit trail"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                INSERT INTO user_audit_trail (user_id, action, field_name, old_value, new_value, ip_address, user_agent)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                user_id,
+                action,
+                field_name,
+                old_value,
+                new_value,
+                ip_address,
+                user_agent
+            ))
+            
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            logger.error(f"Error logging user change: {e}")
+            return False
+    
+    def create_permanent_record(self, user_data):
+        """Create a permanent record that can never be deleted"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Create hash of email for uniqueness
+            email_hash = hashlib.sha256(user_data['email'].encode()).hexdigest()
+            
+            cursor.execute('''
+                INSERT INTO permanent_user_records (original_user_id, email, email_hash, name, membership_tier, join_date, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                user_data['id'],
+                user_data['email'],
+                email_hash,
+                user_data['name'],
+                user_data['membership_tier'],
+                user_data['join_date'],
+                user_data['status']
+            ))
+            
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            logger.error(f"Error creating permanent record: {e}")
+            return False
+    
+    def get_audit_logs(self, table_name=None, record_id=None, limit=100):
+        """Retrieve audit logs with optional filtering"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            query = "SELECT * FROM audit_logs WHERE 1=1"
+            params = []
+            
+            if table_name:
+                query += " AND table_name = ?"
+                params.append(table_name)
+            
+            if record_id:
+                query += " AND record_id = ?"
+                params.append(record_id)
+            
+            query += " ORDER BY timestamp DESC LIMIT ?"
+            params.append(limit)
+            
+            cursor.execute(query, params)
+            logs = cursor.fetchall()
+            conn.close()
+            
+            return logs
+        except Exception as e:
+            logger.error(f"Error retrieving audit logs: {e}")
+            return []
+    
+    def get_user_audit_trail(self, user_id, limit=50):
+        """Retrieve audit trail for a specific user"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT * FROM user_audit_trail 
+                WHERE user_id = ? 
+                ORDER BY timestamp DESC 
+                LIMIT ?
+            ''', (user_id, limit))
+            
+            trail = cursor.fetchall()
+            conn.close()
+            
+            return trail
+        except Exception as e:
+            logger.error(f"Error retrieving user audit trail: {e}")
+            return []
+
+# ============================================
 # ENHANCED DATABASE SCHEMA
 # ============================================
 
@@ -555,6 +698,65 @@ def init_enhanced_database():
         )
     ''')
     
+    # ============================================
+    # PERMANENT DATA STORAGE & AUDIT TRAIL
+    # ============================================
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            table_name TEXT NOT NULL,
+            record_id INTEGER NOT NULL,
+            action TEXT NOT NULL CHECK (action IN ('CREATE', 'UPDATE', 'DELETE_ATTEMPTED', 'EMAIL_CHANGE_ATTEMPTED')),
+            user_id INTEGER,
+            old_data TEXT,
+            new_data TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            details TEXT
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_audit_trail (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            field_name TEXT,
+            old_value TEXT,
+            new_value TEXT,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            ip_address TEXT,
+            user_agent TEXT,
+            FOREIGN KEY (user_id) REFERENCES customers (id)
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS permanent_user_records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            original_user_id INTEGER NOT NULL,
+            email TEXT NOT NULL,
+            email_hash TEXT NOT NULL,
+            name TEXT NOT NULL,
+            membership_tier TEXT NOT NULL,
+            join_date TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            is_active BOOLEAN DEFAULT 1,
+            deletion_attempted_at TEXT,
+            deletion_attempted_by TEXT,
+            FOREIGN KEY (original_user_id) REFERENCES customers (id)
+        )
+    ''')
+    
+    # Create indexes for audit performance
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_audit_logs_table_record ON audit_logs(table_name, record_id)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_user_audit_user_id ON user_audit_trail(user_id)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_permanent_user_email ON permanent_user_records(email_hash)')
+    
     conn.commit()
     conn.close()
 
@@ -567,6 +769,7 @@ customer_sync_service = CustomerDataSyncService(sqlite3.connect(DATABASE_PATH))
 signal_service = SignalPropagationService(sqlite3.connect(DATABASE_PATH))
 bot_manager = BotStateManager(sqlite3.connect(DATABASE_PATH))
 dashboard_service = SecureDatabaseDashboard()
+audit_service = AuditTrailService(DATABASE_PATH)
 
 def init_database():
     """Initialize the customer service database"""
@@ -660,81 +863,57 @@ def init_database():
 
 def create_sample_data():
     """Create sample customer data for testing"""
-    try:
-        conn = sqlite3.connect(DATABASE_PATH)
-        cursor = conn.cursor()
-        
-        # Check if sample data already exists
-        cursor.execute('SELECT COUNT(*) FROM customers')
-        if cursor.fetchone()[0] > 0:
-            conn.close()
-            return
-        
-        # Create sample customers
-        sample_customers = [
-            ('CUST001', 'John Smith', 'john.smith@example.com', 'hashed_password_123', 'premium', '2024-01-15', '2024-12-01', '+1-555-0101'),
-            ('CUST002', 'Sarah Johnson', 'sarah.j@example.com', 'hashed_password_456', 'standard', '2024-02-20', '2024-12-01', '+1-555-0102'),
-            ('CUST003', 'Mike Davis', 'mike.davis@example.com', 'hashed_password_789', 'free', '2024-03-10', '2024-12-01', '+1-555-0103'),
-            ('CUST004', 'Emily Wilson', 'emily.w@example.com', 'hashed_password_101', 'premium', '2024-04-05', '2024-12-01', '+1-555-0104'),
-            ('CUST005', 'David Brown', 'david.brown@example.com', 'hashed_password_112', 'standard', '2024-05-12', '2024-12-01', '+1-555-0105')
-        ]
-        
-        for customer in sample_customers:
-            cursor.execute('''
-                INSERT INTO customers (unique_id, name, email, password_hash, membership_tier, join_date, last_active, phone)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', customer)
-        
-        # Get customer IDs for related data
-        cursor.execute('SELECT id FROM customers LIMIT 3')
-        customer_ids = [row[0] for row in cursor.fetchall()]
-        
-        # Create sample activities
-        for customer_id in customer_ids:
-            activities = [
-                ('login', 'User logged in successfully', '192.168.1.100', 'Mozilla/5.0'),
-                ('profile_update', 'Updated profile information', '192.168.1.100', 'Mozilla/5.0'),
-                ('support_request', 'Submitted support ticket', '192.168.1.100', 'Mozilla/5.0')
-            ]
-            for activity in activities:
-                cursor.execute('''
-                    INSERT INTO customer_activities (customer_id, activity_type, activity_details, ip_address, user_agent)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (customer_id, activity[0], activity[1], activity[2], activity[3]))
-        
-        # Create sample screenshots
-        for customer_id in customer_ids[:2]:
-            screenshots = [
-                ('trading_chart', 'https://example.com/screenshot1.png', 'Monthly trading performance chart'),
-                ('portfolio', 'https://example.com/screenshot2.png', 'Current portfolio overview')
-            ]
-            for screenshot in screenshots:
-                cursor.execute('''
-                    INSERT INTO customer_screenshots (customer_id, screenshot_type, screenshot_url, description)
-                    VALUES (?, ?, ?, ?)
-                ''', (customer_id, screenshot[0], screenshot[1], screenshot[2]))
-        
-        # Create sample questionnaire responses
-        for customer_id in customer_ids[:2]:
-            responses = [
-                ('What is your risk tolerance?', 'Moderate', 'risk_assessment'),
-                ('How long do you plan to invest?', '5-10 years', 'risk_assessment'),
-                ('What is your investment experience?', 'Intermediate', 'risk_assessment')
-            ]
-            for response in responses:
-                cursor.execute('''
-                    INSERT INTO questionnaire_responses (customer_id, question, answer, questionnaire_type)
-                    VALUES (?, ?, ?, ?)
-                ''', (customer_id, response[0], response[1], response[2]))
-        
-        conn.commit()
-        conn.close()
-        logger.info("Sample data created successfully")
-        
-    except Exception as e:
-        logger.error(f"Error creating sample data: {str(e)}")
-        if 'conn' in locals():
-            conn.close()
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    
+    # Sample customers with your real business plans
+    sample_customers = [
+        ('CUST001', 'John Smith', 'john.smith@example.com', 'hashed_password_123', 'enterprise', '2024-01-15', '2024-12-01', '+1-555-0101', 'active'),
+        ('CUST002', 'Sarah Johnson', 'sarah.j@example.com', 'hashed_password_456', 'pro', '2024-02-20', '2024-12-01', '+1-555-0102', 'active'),
+        ('CUST003', 'Mike Davis', 'mike.davis@example.com', 'hashed_password_789', 'starter', '2024-03-10', '2024-12-01', '+1-555-0103', 'active'),
+        ('CUST004', 'Emily Wilson', 'emily.w@example.com', 'hashed_password_101', 'enterprise', '2024-04-05', '2024-12-01', '+1-555-0104', 'active'),
+        ('CUST005', 'David Brown', 'david.brown@example.com', 'hashed_password_112', 'kickstarter', '2024-05-12', '2024-12-01', '+1-555-0105', 'active'),
+    ]
+    
+    for customer in sample_customers:
+        cursor.execute('''
+            INSERT OR IGNORE INTO customers (unique_id, name, email, password_hash, membership_tier, join_date, last_active, phone, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', customer)
+    
+    # Create sample customer service data
+    sample_service_data = [
+        (1, 'john.smith@example.com', '{"experience": "Advanced", "risk_tolerance": "High", "preferred_pairs": ["BTC/USD", "ETH/USD"]}', '["screenshot1.png", "screenshot2.png"]', '{"risk_level": "low", "strategy": "aggressive"}', 'enterprise', 'Individual', 'Smith Trading', 100000),
+        (2, 'sarah.j@example.com', '{"experience": "Intermediate", "risk_tolerance": "Medium", "preferred_pairs": ["BTC/USD"]}', '["screenshot3.png"]', '{"risk_level": "medium", "strategy": "balanced"}', 'pro', 'Individual', 'Johnson Capital', 50000),
+        (3, 'mike.davis@example.com', '{"experience": "Beginner", "risk_tolerance": "Low", "preferred_pairs": ["BTC/USD"]}', '[]', '{"risk_level": "high", "strategy": "conservative"}', 'starter', 'Individual', 'Davis Investments', 10000),
+        (4, 'emily.w@example.com', '{"experience": "Expert", "risk_tolerance": "Very High", "preferred_pairs": ["BTC/USD", "ETH/USD", "ADA/USD"]}', '["screenshot4.png", "screenshot5.png", "screenshot6.png"]', '{"risk_level": "low", "strategy": "very_aggressive"}', 'enterprise', 'Professional', 'Wilson Trading Co', 250000),
+        (5, 'david.brown@example.com', '{"experience": "Beginner", "risk_tolerance": "Very Low", "preferred_pairs": ["BTC/USD"]}', '[]', '{"risk_level": "very_high", "strategy": "ultra_conservative"}', 'kickstarter', 'Individual', 'Brown Financial', 5000),
+    ]
+    
+    for service_data in sample_service_data:
+        cursor.execute('''
+            INSERT OR IGNORE INTO customer_service_data (customer_id, email, questionnaire_data, screenshots, risk_management_plan, subscription_plan, account_type, prop_firm, account_size)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', service_data)
+    
+    # Create sample tickets
+    sample_tickets = [
+        (1, 'Premium features not working', 'I cannot access my enterprise trading features', 'open', 'high', 'Agent Smith'),
+        (2, 'Account upgrade request', 'I want to upgrade from Pro to Enterprise plan', 'in_progress', 'medium', 'Agent Johnson'),
+        (3, 'Beginner guidance needed', 'I need help understanding the starter plan features', 'open', 'low', 'Agent Davis'),
+        (4, 'Advanced strategy consultation', 'Request for enterprise-level trading strategy consultation', 'resolved', 'high', 'Agent Wilson'),
+        (5, 'Kickstarter plan questions', 'I have questions about my kickstarter plan benefits', 'open', 'low', 'Agent Brown'),
+    ]
+    
+    for ticket in sample_tickets:
+        cursor.execute('''
+            INSERT OR IGNORE INTO tickets (customer_id, subject, description, status, priority, assigned_to)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', ticket)
+    
+    conn.commit()
+    conn.close()
+    logger.info("Sample data created successfully")
 
 # Initialize database on startup
 init_database()
@@ -1525,37 +1704,95 @@ def get_customer_details(customer_id):
 
 @app.route('/api/customers/<customer_id>', methods=['DELETE'])
 def delete_customer(customer_id):
-    """Delete a customer and all associated data"""
+    """Attempt to delete customer (BLOCKED - No-delete policy enforced)"""
     try:
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
         
-        # Get customer ID
+        # Get customer ID first
         cursor.execute('SELECT id FROM customers WHERE unique_id = ?', (customer_id,))
+        customer_result = cursor.fetchone()
+        
+        if not customer_result:
+            conn.close()
+            return jsonify({'error': 'Customer not found'}), 404
+        
+        customer_db_id = customer_result[0]
+        
+        # Get customer data before "deletion" attempt
+        cursor.execute('SELECT * FROM customers WHERE id = ?', (customer_db_id,))
         customer = cursor.fetchone()
         
         if not customer:
+            conn.close()
             return jsonify({'error': 'Customer not found'}), 404
         
-        customer_db_id = customer[0]
+        # Instead of deleting, create a permanent record and mark as inactive
+        customer_data = {
+            'id': customer[0],
+            'email': customer[3],
+            'name': customer[2],
+            'membership_tier': customer[5],
+            'join_date': customer[6],
+            'status': customer[9]
+        }
         
-        # Delete all associated data
-        cursor.execute('DELETE FROM customer_activities WHERE customer_id = ?', (customer_db_id,))
-        cursor.execute('DELETE FROM customer_screenshots WHERE customer_id = ?', (customer_db_id,))
-        cursor.execute('DELETE FROM questionnaire_responses WHERE customer_id = ?', (customer_db_id,))
-        cursor.execute('DELETE FROM risk_management_plans WHERE customer_id = ?', (customer_db_id,))
-        cursor.execute('DELETE FROM dashboard_data WHERE customer_id = ?', (customer_db_id,))
-        cursor.execute('DELETE FROM customers WHERE id = ?', (customer_db_id,))
+        # Create permanent record
+        audit_service.create_permanent_record(customer_data)
+        
+        # Mark customer as inactive instead of deleting
+        cursor.execute('''
+            UPDATE customers 
+            SET status = 'inactive', updated_at = ? 
+            WHERE id = ?
+        ''', (datetime.now().isoformat(), customer_db_id))
+        
+        # Log the deletion attempt (blocked)
+        audit_service.log_action(
+            table_name='customers',
+            record_id=customer_db_id,
+            action='DELETE_ATTEMPTED',
+            old_data=customer_data,
+            new_data={'status': 'inactive'},
+            user_id=customer_db_id,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent'),
+            details={
+                'blocked': True,
+                'reason': 'No-delete policy enforced',
+                'permanent_record_created': True,
+                'status_changed_to': 'inactive'
+            }
+        )
+        
+        # Log user change
+        audit_service.log_user_change(
+            user_id=customer_db_id,
+            action='DELETE_ATTEMPTED_BLOCKED',
+            field_name='status',
+            old_value='active',
+            new_value='inactive',
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
         
         conn.commit()
         conn.close()
         
-        logger.info(f"Customer {customer_id} and all associated data deleted")
-        return jsonify({'message': 'Customer deleted successfully'})
+        return jsonify({
+            'success': False,
+            'error': 'DELETE_BLOCKED',
+            'message': 'Customer deletion blocked - No-delete policy enforced. Customer marked as inactive instead.',
+            'details': {
+                'customer_id': customer_db_id,
+                'permanent_record_created': True,
+                'status_changed_to': 'inactive'
+            }
+        }), 403
         
     except Exception as e:
-        logger.error(f"Error deleting customer: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error processing delete request for customer {customer_id}: {e}")
+        return jsonify({'error': 'Failed to process delete request'}), 500
 
 @app.route('/api/customers', methods=['POST'])
 def create_customer():
@@ -1598,57 +1835,142 @@ def create_customer():
 
 @app.route('/api/customers/<unique_id>', methods=['PUT'])
 def update_customer(unique_id):
-    """Update customer information"""
+    """Update customer information with audit logging and email protection"""
     try:
         data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
         
-        # Update customer fields
+        # Get customer ID first
+        cursor.execute('SELECT id FROM customers WHERE unique_id = ?', (unique_id,))
+        customer_result = cursor.fetchone()
+        
+        if not customer_result:
+            conn.close()
+            return jsonify({'error': 'Customer not found'}), 404
+        
+        customer_id = customer_result[0]
+        
+        # Get current customer data for audit logging
+        cursor.execute('SELECT * FROM customers WHERE id = ?', (customer_id,))
+        current_customer = cursor.fetchone()
+        
+        if not current_customer:
+            conn.close()
+            return jsonify({'error': 'Customer not found'}), 404
+        
+        # Check if email is being modified (PREVENT EMAIL CHANGES)
+        if 'email' in data and data['email'] != current_customer[3]:  # email is at index 3
+            # Log the email change attempt
+            audit_service.log_action(
+                table_name='customers',
+                record_id=customer_id,
+                action='EMAIL_CHANGE_ATTEMPTED',
+                old_data={'email': current_customer[3]},
+                new_data={'email': data['email']},
+                user_id=customer_id,
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent'),
+                details={'blocked': True, 'reason': 'Email modification not allowed'}
+            )
+            
+            conn.close()
+            return jsonify({
+                'error': 'EMAIL_MODIFICATION_BLOCKED',
+                'message': 'Email addresses cannot be modified once created for security reasons'
+            }), 403
+        
+        # Build update query dynamically
         update_fields = []
         params = []
         
-        if 'name' in data:
-            update_fields.append('name = ?')
-            params.append(data['name'])
+        # Define allowed fields that can be updated
+        allowed_fields = ['name', 'membership_tier', 'phone', 'status', 'last_active']
         
-        if 'email' in data:
-            update_fields.append('email = ?')
-            params.append(data['email'])
-            
-        if 'phone' in data:
-            update_fields.append('phone = ?')
-            params.append(data['phone'])
-            
-        if 'membership_tier' in data:
-            update_fields.append('membership_tier = ?')
-            params.append(data['membership_tier'])
-            
-        if 'status' in data:
-            update_fields.append('status = ?')
-            params.append(data['status'])
+        for field in allowed_fields:
+            if field in data:
+                update_fields.append(f"{field} = ?")
+                params.append(data[field])
         
-        update_fields.append('updated_at = ?')
+        if not update_fields:
+            conn.close()
+            return jsonify({'error': 'No valid fields to update'}), 400
+        
+        # Add timestamp and unique_id
+        update_fields.append("updated_at = ?")
         params.append(datetime.now().isoformat())
         params.append(unique_id)
         
-        if update_fields:
-            query = f"UPDATE customers SET {', '.join(update_fields)} WHERE unique_id = ?"
-            cursor.execute(query, params)
-            conn.commit()
-            
-            if cursor.rowcount > 0:
-                return jsonify({'message': 'Customer updated successfully'}), 200
-            else:
-                return jsonify({'error': 'Customer not found'}), 404
-        else:
-            return jsonify({'error': 'No fields to update'}), 400
-            
-    except Exception as e:
-        logger.error(f"Error updating customer: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
-    finally:
+        # Execute update
+        query = f"UPDATE customers SET {', '.join(update_fields)} WHERE unique_id = ?"
+        cursor.execute(query, params)
+        
+        # Get updated customer data
+        cursor.execute('SELECT * FROM customers WHERE id = ?', (customer_id,))
+        updated_customer = cursor.fetchone()
+        
+        # Log the successful update
+        audit_service.log_action(
+            table_name='customers',
+            record_id=customer_id,
+            action='UPDATE',
+            old_data={
+                'name': current_customer[2],
+                'membership_tier': current_customer[5],
+                'phone': current_customer[8],
+                'status': current_customer[9]
+            },
+            new_data={
+                'name': updated_customer[2],
+                'membership_tier': updated_customer[5],
+                'phone': updated_customer[8],
+                'status': updated_customer[9]
+            },
+            user_id=customer_id,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent'),
+            details={'fields_updated': list(data.keys())}
+        )
+        
+        # Log individual field changes
+        for field in allowed_fields:
+            if field in data and data[field] != current_customer[allowed_fields.index(field) + 2]:  # +2 for offset
+                audit_service.log_user_change(
+                    user_id=customer_id,
+                    action='FIELD_UPDATED',
+                    field_name=field,
+                    old_value=str(current_customer[allowed_fields.index(field) + 2]),
+                    new_value=str(data[field]),
+                    ip_address=request.remote_addr,
+                    user_agent=request.headers.get('User-Agent')
+                )
+        
+        conn.commit()
         conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Customer updated successfully',
+            'customer': {
+                'id': updated_customer[0],
+                'unique_id': updated_customer[1],
+                'name': updated_customer[2],
+                'email': updated_customer[3],
+                'membership_tier': updated_customer[5],
+                'join_date': updated_customer[6],
+                'last_active': updated_customer[7],
+                'phone': updated_customer[8],
+                'status': updated_customer[9]
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error updating customer {unique_id}: {e}")
+        return jsonify({'error': 'Failed to update customer'}), 500
 
 @app.route('/api/customers/<unique_id>/activities', methods=['GET'])
 def get_customer_activities(unique_id):
@@ -2031,6 +2353,170 @@ def add_dashboard_data(customer_id):
 def serve_dashboard():
     """Serve the customer service dashboard"""
     return send_from_directory('.', 'index.html')
+
+# ============================================
+# AUDIT TRAIL ACCESS ENDPOINTS
+# ============================================
+
+@app.route('/api/audit/logs', methods=['GET'])
+def get_audit_logs():
+    """Get audit logs with optional filtering"""
+    try:
+        table_name = request.args.get('table_name')
+        record_id = request.args.get('record_id')
+        limit = int(request.args.get('limit', 100))
+        
+        logs = audit_service.get_audit_logs(
+            table_name=table_name,
+            record_id=record_id,
+            limit=limit
+        )
+        
+        return jsonify({
+            'success': True,
+            'logs': logs,
+            'count': len(logs)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error retrieving audit logs: {e}")
+        return jsonify({'error': 'Failed to retrieve audit logs'}), 500
+
+@app.route('/api/audit/users/<int:user_id>/trail', methods=['GET'])
+def get_user_audit_trail(user_id):
+    """Get audit trail for a specific user"""
+    try:
+        limit = int(request.args.get('limit', 50))
+        
+        trail = audit_service.get_user_audit_trail(user_id, limit)
+        
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'trail': trail,
+            'count': len(trail)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error retrieving user audit trail: {e}")
+        return jsonify({'error': 'Failed to retrieve user audit trail'}), 500
+
+@app.route('/api/audit/permanent-records', methods=['GET'])
+def get_permanent_records():
+    """Get all permanent user records"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM permanent_user_records 
+            ORDER BY created_at DESC
+        ''')
+        
+        records = cursor.fetchall()
+        conn.close()
+        
+        formatted_records = []
+        for record in records:
+            formatted_records.append({
+                'id': record[0],
+                'original_user_id': record[1],
+                'email': record[2],
+                'email_hash': record[3],
+                'name': record[4],
+                'membership_tier': record[5],
+                'join_date': record[6],
+                'status': record[7],
+                'created_at': record[8],
+                'is_active': record[9],
+                'deletion_attempted_at': record[10],
+                'deletion_attempted_by': record[11]
+            })
+        
+        return jsonify({
+            'success': True,
+            'records': formatted_records,
+            'count': len(formatted_records)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error retrieving permanent records: {e}")
+        return jsonify({'error': 'Failed to retrieve permanent records'}), 500
+
+@app.route('/api/audit/compliance-report', methods=['GET'])
+def get_compliance_report():
+    """Get compliance report with audit summary"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Get audit summary
+        cursor.execute('''
+            SELECT 
+                action,
+                COUNT(*) as count,
+                MIN(timestamp) as first_occurrence,
+                MAX(timestamp) as last_occurrence
+            FROM audit_logs 
+            GROUP BY action
+        ''')
+        
+        audit_summary = cursor.fetchall()
+        
+        # Get user change summary
+        cursor.execute('''
+            SELECT 
+                action,
+                COUNT(*) as count
+            FROM user_audit_trail 
+            GROUP BY action
+        ''')
+        
+        user_changes = cursor.fetchall()
+        
+        # Get permanent records count
+        cursor.execute('SELECT COUNT(*) FROM permanent_user_records')
+        permanent_records_count = cursor.fetchone()[0]
+        
+        # Get blocked operations count
+        cursor.execute('''
+            SELECT COUNT(*) FROM audit_logs 
+            WHERE action IN ('DELETE_ATTEMPTED', 'EMAIL_CHANGE_ATTEMPTED')
+        ''')
+        
+        blocked_operations = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        report = {
+            'audit_summary': [
+                {
+                    'action': row[0],
+                    'count': row[1],
+                    'first_occurrence': row[2],
+                    'last_occurrence': row[3]
+                } for row in audit_summary
+            ],
+            'user_changes': [
+                {
+                    'action': row[0],
+                    'count': row[1]
+                } for row in user_changes
+            ],
+            'permanent_records_count': permanent_records_count,
+            'blocked_operations': blocked_operations,
+            'compliance_status': 'COMPLIANT',
+            'last_updated': datetime.now().isoformat()
+        }
+        
+        return jsonify({
+            'success': True,
+            'report': report
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error generating compliance report: {e}")
+        return jsonify({'error': 'Failed to generate compliance report'}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 3005))

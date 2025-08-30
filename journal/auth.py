@@ -73,10 +73,21 @@ def register():
     trading_data = data.get('tradingData', {})
 
     # Enhanced email uniqueness validation with normalization
-    normalized_email = email.lower().strip()
-    existing_user = User.query.filter_by(email=normalized_email).first()
+    normalized_email = User.normalize_email(email)
+    
+    # Check for existing user by normalized email
+    existing_user = User.query.filter_by(normalized_email=normalized_email).first()
     if existing_user:
-        logging.warning(f"Registration attempt with existing email: {normalized_email}")
+        logging.warning(f"Registration attempt with existing normalized email: {normalized_email} (original: {email})")
+        return jsonify({
+            "msg": "An account with this email already exists. Please sign in.",
+            "error_code": "EMAIL_ALREADY_EXISTS"
+        }), 409
+    
+    # Also check by original email for additional safety
+    existing_user_original = User.query.filter_by(email=email.lower().strip()).first()
+    if existing_user_original:
+        logging.warning(f"Registration attempt with existing original email: {email}")
         return jsonify({
             "msg": "An account with this email already exists. Please sign in.",
             "error_code": "EMAIL_ALREADY_EXISTS"
@@ -87,7 +98,8 @@ def register():
     
     new_user = User(
         username=username,
-        email=normalized_email,
+        email=email.lower().strip(),
+        normalized_email=normalized_email,
         password_hash=hashed_password,
         plan_type=plan_type
     )

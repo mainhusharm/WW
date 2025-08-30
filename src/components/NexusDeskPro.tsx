@@ -236,10 +236,21 @@ const NexusDeskPro = () => {
 
   const getPlanColor = (plan: string) => {
     switch(plan.toLowerCase()) {
-      case 'premium': return 'bg-purple-600';
-      case 'standard': return 'bg-blue-600';
-      case 'free': return 'bg-gray-600';
+      case 'enterprise': return 'bg-purple-600';
+      case 'pro': return 'bg-blue-600';
+      case 'starter': return 'bg-green-600';
+      case 'kickstarter': return 'bg-orange-600';
       default: return 'bg-gray-600';
+    }
+  };
+
+  const getPlanDisplayName = (plan: string) => {
+    switch(plan.toLowerCase()) {
+      case 'enterprise': return 'Enterprise';
+      case 'pro': return 'Pro';
+      case 'starter': return 'Starter';
+      case 'kickstarter': return 'Kickstarter';
+      default: return plan;
     }
   };
 
@@ -373,63 +384,240 @@ const NexusDeskPro = () => {
 
         {/* Main Content */}
         <div className="flex-1 flex">
-          {/* Central Column - Customer Database */}
+          {/* Central Column - Dynamic Content Based on Active Tab */}
           <div className="w-1/2 p-6 border-r border-purple-500/20">
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-purple-300 mb-4">Customer Database</h2>
-              <div className="flex items-center space-x-4 mb-4">
-                <button 
-                  onClick={fetchDashboardData}
-                  className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>Refresh</span>
-                </button>
-                <span className="text-sm text-gray-400">
-                  {loading ? 'Loading...' : `${customers.length} customers`}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
-              {customers.map((customer) => {
-                const riskLevel = getRiskLevel(customer);
-                const serviceData = customerServiceData.find(d => d.customer_id === customer.id);
+            {activeTab === 'overview' && (
+              <div>
+                <h2 className="text-xl font-bold text-purple-300 mb-6">Dashboard Overview</h2>
                 
-                return (
-                  <div
-                    key={customer.id}
-                    onClick={() => handleCustomerSelect(customer)}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                      selectedCustomer?.id === customer.id
-                        ? 'border-purple-500 bg-purple-600/20'
-                        : 'border-purple-500/20 bg-gray-800/30 hover:bg-gray-800/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${getStatusColor(customer.status)}`} />
-                        <span className="font-medium">{customer.name}</span>
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanColor(customer.membership_tier)}`}>
-                        {customer.membership_tier}
-                      </span>
-                    </div>
-                    
-                    <div className="text-sm text-gray-300 mb-2">{customer.email}</div>
-                    
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-gray-800/30 rounded-lg p-4 border border-purple-500/20">
                     <div className="flex items-center justify-between">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(riskLevel)}`}>
-                        {riskLevel} risk
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {getTimeAgo(customer.last_active || customer.created_at)}
-                      </span>
+                      <div>
+                        <p className="text-gray-400 text-sm">Total Customers</p>
+                        <p className="text-2xl font-bold text-white">{stats.totalCustomers}</p>
+                      </div>
+                      <User className="w-8 h-8 text-purple-400" />
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  
+                  <div className="bg-gray-800/30 rounded-lg p-4 border border-purple-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-gray-400 text-sm">Active Chats</p>
+                        <p className="text-2xl font-bold text-white">{stats.activeChats}</p>
+                      </div>
+                      <MessageCircle className="w-8 h-8 text-blue-400" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-800/30 rounded-lg p-4 border border-purple-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-gray-400 text-sm">Open Tickets</p>
+                        <p className="text-2xl font-bold text-white">{stats.openTickets}</p>
+                      </div>
+                      <FileText className="w-8 h-8 text-yellow-400" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-800/30 rounded-lg p-4 border border-purple-500/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-gray-400 text-sm">Satisfaction</p>
+                        <p className="text-2xl font-bold text-white">{stats.satisfactionScore}%</p>
+                      </div>
+                      <Star className="w-8 h-8 text-yellow-400 fill-current" />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Recent Activity */}
+                <div className="bg-gray-800/30 rounded-lg p-4 border border-purple-500/20">
+                  <h3 className="text-lg font-semibold text-purple-300 mb-4">Recent Activity</h3>
+                  <div className="space-y-3">
+                    {customers.slice(0, 5).map((customer) => (
+                      <div key={customer.id} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-bold">
+                            {customer.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium text-white">{customer.name}</p>
+                            <p className="text-sm text-gray-400">{customer.email}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanColor(customer.membership_tier)}`}>
+                            {getPlanDisplayName(customer.membership_tier)}
+                          </span>
+                          <p className="text-xs text-gray-400 mt-1">{getTimeAgo(customer.last_active || customer.created_at)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'customers' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-purple-300 mb-4">Customer Database</h2>
+                  <div className="flex items-center space-x-4 mb-4">
+                    <button 
+                      onClick={fetchDashboardData}
+                      className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Refresh</span>
+                    </button>
+                    <span className="text-sm text-gray-400">
+                      {loading ? 'Loading...' : `${customers.length} customers`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+                  {customers.map((customer) => {
+                    const riskLevel = getRiskLevel(customer);
+                    const serviceData = customerServiceData.find(d => d.customer_id === customer.id);
+                    
+                    return (
+                      <div
+                        key={customer.id}
+                        onClick={() => handleCustomerSelect(customer)}
+                        className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                          selectedCustomer?.id === customer.id
+                            ? 'border-purple-500 bg-purple-600/20'
+                            : 'border-purple-500/20 bg-gray-800/30 hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-3 h-3 rounded-full ${getStatusColor(customer.status)}`} />
+                            <span className="font-medium">{customer.name}</span>
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanColor(customer.membership_tier)}`}>
+                            {getPlanDisplayName(customer.membership_tier)}
+                          </span>
+                        </div>
+                        
+                        <div className="text-sm text-gray-300 mb-2">{customer.email}</div>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(riskLevel)}`}>
+                            {riskLevel} risk
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {getTimeAgo(customer.last_active || customer.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'live-chat' && (
+              <div>
+                <h2 className="text-xl font-bold text-purple-300 mb-6">Live Chat</h2>
+                <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+                  {liveChats.map((chat) => (
+                    <div key={chat.id} className="bg-gray-800/30 rounded-lg p-4 border border-purple-500/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-bold">
+                            {chat.customer_name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium text-white">{chat.customer_name}</p>
+                            <p className="text-sm text-gray-400">{chat.message}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-gray-400">{getTimeAgo(chat.timestamp)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'tickets' && (
+              <div>
+                <h2 className="text-xl font-bold text-purple-300 mb-6">Support Tickets</h2>
+                <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+                  {tickets.map((ticket) => (
+                    <div key={ticket.id} className="bg-gray-800/30 rounded-lg p-4 border border-purple-500/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-bold">
+                            {customers.find(c => c.id === ticket.customer_id)?.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium text-white">{ticket.subject}</p>
+                            <p className="text-sm text-gray-400">{ticket.description}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-gray-400">{getTimeAgo(ticket.created_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'risk' && (
+              <div>
+                <h2 className="text-xl font-bold text-purple-300 mb-6">Risk Management</h2>
+                <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+                  {customerServiceData.map((service) => (
+                    <div key={service.id} className="bg-gray-800/30 rounded-lg p-4 border border-purple-500/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-bold">
+                            {customers.find(c => c.id === service.customer_id)?.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium text-white">{customers.find(c => c.id === service.customer_id)?.name}</p>
+                            <p className="text-sm text-gray-400">Risk Level: {getRiskLevel(customers.find(c => c.id === service.customer_id) || {} as Customer)}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-gray-400">{getTimeAgo(service.last_updated)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'analytics' && (
+              <div>
+                <h2 className="text-xl font-bold text-purple-300 mb-6">Analytics</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-800/30 rounded-lg p-4 border border-purple-500/20">
+                    <h3 className="text-lg font-semibold text-purple-300 mb-3">New Customers Today</h3>
+                    <p className="text-3xl font-bold text-white">{stats.newCustomersToday}</p>
+                  </div>
+                  <div className="bg-gray-800/30 rounded-lg p-4 border border-purple-500/20">
+                    <h3 className="text-lg font-semibold text-purple-300 mb-3">Resolved Tickets Today</h3>
+                    <p className="text-3xl font-bold text-white">{stats.resolvedTicketsToday}</p>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-purple-300 mb-3">Average Response Time</h3>
+                  <p className="text-3xl font-bold text-white">{stats.avgResponseTime}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Customer Details */}
@@ -517,6 +705,58 @@ const NexusDeskPro = () => {
                   </div>
                 </div>
 
+                {/* Screenshots Section */}
+                <div className="mb-6">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Upload className="w-5 h-5 text-purple-400" />
+                    <h4 className="font-semibold">Screenshots & Files</h4>
+                  </div>
+                  <div className="bg-gray-800/30 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      {['screenshot1.png', 'screenshot2.png', 'screenshot3.png', 'screenshot4.png'].map((file, index) => (
+                        <div key={index} className="bg-gray-700/50 rounded-lg p-3 text-center">
+                          <div className="w-12 h-12 bg-gray-600 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                            <FileText className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <p className="text-xs text-gray-300 truncate">{file}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="w-full mt-3 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg transition-colors text-sm">
+                      View All Files
+                    </button>
+                  </div>
+                </div>
+
+                {/* Questionnaire Responses */}
+                <div className="mb-6">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <HelpCircle className="w-5 h-5 text-purple-400" />
+                    <h4 className="font-semibold">Questionnaire Responses</h4>
+                  </div>
+                  <div className="bg-gray-800/30 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Experience Level:</span>
+                      <span className="text-white">Advanced</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Risk Tolerance:</span>
+                      <span className="text-white">High</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Preferred Pairs:</span>
+                      <span className="text-white">BTC/USD, ETH/USD</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Investment Goal:</span>
+                      <span className="text-white">Long-term Growth</span>
+                    </div>
+                    <button className="w-full mt-3 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg transition-colors text-sm">
+                      View Full Questionnaire
+                    </button>
+                  </div>
+                </div>
+
                 {/* Risk Management Plan */}
                 <div>
                   <div className="flex items-center space-x-2 mb-3">
@@ -529,6 +769,20 @@ const NexusDeskPro = () => {
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(getRiskLevel(selectedCustomer))}`}>
                         {getRiskLevel(selectedCustomer).toUpperCase()}
                       </span>
+                    </div>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Strategy:</span>
+                        <span className="text-white">Aggressive</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Max Drawdown:</span>
+                        <span className="text-white">25%</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Position Size:</span>
+                        <span className="text-white">5-10%</span>
+                      </div>
                     </div>
                     <button className="w-full bg-purple-600 hover:bg-purple-700 py-2 rounded-lg transition-colors">
                       View Full Plan

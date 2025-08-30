@@ -62,31 +62,45 @@ def create_signal():
         # Convert to frontend format
         signal_dict = new_signal.to_dict()
         
-        # Also relay to user feed
+        # Also relay to user feed directly
         try:
-            # Create a proper relay request to the signal feed API
-            relay_data = {
-                'signal': signal_dict,
-                'uniqueKey': f"{signal_dict['pair']}_{signal_dict['timeframe']}_{signal_dict['type']}_{datetime.utcnow().timestamp()}"
-            }
+            # Generate unique key for deduplication
+            unique_key = f"{signal_dict['pair']}_{signal_dict['timeframe']}_{signal_dict['direction']}_{datetime.utcnow().timestamp()}"
             
-            # Make an internal request to relay the signal
-            import requests
-            try:
-                relay_response = requests.post(
-                    'http://localhost:5000/api/signal-feed/signals/relay',
-                    json=relay_data,
-                    timeout=5
-                )
-                if relay_response.status_code == 200:
-                    print(f"Signal successfully relayed to user feed")
-                else:
-                    print(f"Warning: Signal relay failed with status {relay_response.status_code}")
-            except requests.exceptions.RequestException as relay_error:
-                print(f"Warning: Failed to relay signal to user feed: {str(relay_error)}")
+            # Check if signal already exists
+            from .models import SignalFeed
+            existing_signal = SignalFeed.query.filter_by(unique_key=unique_key).first()
+            
+            if not existing_signal:
+                            # Create new signal feed entry
+            new_signal_feed = SignalFeed(
+                unique_key=unique_key,
+                signal_id=signal_dict['id'],
+                pair=signal_dict['pair'],
+                direction=signal_dict['type'].upper(),  # Convert to uppercase for consistency
+                entry_price=str(signal_dict['entry']),
+                stop_loss=str(signal_dict['stopLoss']),
+                take_profit=json.dumps(signal_dict['takeProfit']) if isinstance(signal_dict['takeProfit'], list) else str(signal_dict['takeProfit']),
+                confidence=signal_dict['confidence'],
+                analysis=signal_dict['analysis'],
+                ict_concepts=json.dumps(signal_dict['ictConcepts']) if isinstance(signal_dict['ictConcepts'], list) else str(signal_dict['ictConcepts']),
+                timestamp=datetime.utcnow(),
+                status='active',
+                market='forex',  # Default to forex, can be enhanced
+                timeframe=signal_dict['timeframe'],
+                created_by='admin',
+                is_recommended=signal_dict['confidence'] > 85
+            )
+                
+                db.session.add(new_signal_feed)
+                db.session.commit()
+                print(f"Signal successfully relayed to user feed")
+            else:
+                print(f"Signal already exists in user feed")
                 
         except Exception as relay_error:
             print(f"Warning: Failed to relay signal to user feed: {str(relay_error)}")
+            db.session.rollback()
         
         # Emit signal to all connected users via WebSocket
         socketio.emit('newSignal', [signal_dict])  # Send as array for consistency
