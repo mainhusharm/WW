@@ -81,7 +81,7 @@ const EnhancedCustomerServiceDashboard = () => {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-          const customerServiceUrl = 'http://localhost:5001';
+          const customerServiceUrl = 'http://localhost:3005';
           const response = await fetch(`${customerServiceUrl}/api/customers`, {
             signal: controller.signal,
           });

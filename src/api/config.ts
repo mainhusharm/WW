@@ -41,7 +41,7 @@ export const API_CONFIG = {
   binanceServiceUrl: 'https://binance-service.onrender.com',
 
   // Customer service
-  customerServiceUrl: 'https://customer-service.onrender.com',
+  customerServiceUrl: import.meta.env.DEV ? 'http://localhost:3005' : 'https://customer-service.onrender.com',
 
   // Telegram service
   telegramServiceUrl: 'https://yfinance-service-kyce.onrender.com/api/telegram',
