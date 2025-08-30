@@ -11,6 +11,7 @@ from .account_routes import account_bp
 from .signals_routes import signals_bp
 from .signal_feed_routes import signal_feed_bp
 from .crypto_payment_routes import crypto_payment_bp
+from .payment_routes import payment_bp
 from .database_routes import database_bp
 from .yfinance_routes import yfinance_bp
 from .landing_routes import landing_bp
@@ -153,6 +154,7 @@ def create_app(config_object='journal.config.ProductionConfig'):
     app.register_blueprint(signals_bp, url_prefix='/api')
     app.register_blueprint(signal_feed_bp, url_prefix='/api/signal-feed')
     app.register_blueprint(crypto_payment_bp, url_prefix='/api/crypto-payment')
+    app.register_blueprint(payment_bp, url_prefix='/api/payment')
     app.register_blueprint(database_bp, url_prefix='/api')
     app.register_blueprint(yfinance_bp, url_prefix='/api')
     app.register_blueprint(landing_bp, url_prefix='/api')

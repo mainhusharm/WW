@@ -71,7 +71,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
     }
 
     try {
-      const response = await fetch('/api/validate-coupon', {
+      const response = await fetch('/api/payment/validate-coupon', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -364,6 +364,8 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
                     <div className="flex items-center space-x-2">
                       <input
                         type="text"
+                        id="crypto-address"
+                        name="crypto-address"
                         value={cryptoAddresses[selectedCrypto as keyof typeof cryptoAddresses].address}
                         readOnly
                         className="flex-1 px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white font-mono text-sm"
@@ -410,6 +412,8 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
                     </label>
                     <input
                       type="text"
+                      id="transaction-hash"
+                      name="transaction-hash"
                       value={verificationData.transactionHash}
                       onChange={(e) => setVerificationData(prev => ({ ...prev, transactionHash: e.target.value }))}
                       className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500"
@@ -423,6 +427,8 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
                     </label>
                     <input
                       type="number"
+                      id="amount-sent"
+                      name="amount-sent"
                       step="0.01"
                       value={verificationData.amount}
                       onChange={(e) => setVerificationData(prev => ({ ...prev, amount: e.target.value }))}
@@ -439,6 +445,8 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
                   </label>
                   <input
                     type="text"
+                    id="wallet-address"
+                    name="wallet-address"
                     value={verificationData.fromAddress}
                     onChange={(e) => setVerificationData(prev => ({ ...prev, fromAddress: e.target.value }))}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500"
@@ -452,6 +460,8 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
                   </label>
                   <input
                     type="file"
+                    id="transaction-screenshot"
+                    name="transaction-screenshot"
                     accept="image/*"
                     onChange={handleFileUpload}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:cursor-pointer"
@@ -539,11 +549,14 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
                   <div className="flex space-x-2">
                     <input
                       type="text"
+                      id="coupon-code"
+                      name="coupon-code"
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                       placeholder="Enter coupon code"
                       className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-blue-500"
                       disabled={couponApplied}
+                      autoComplete="off"
                     />
                     {!couponApplied ? (
                       <button

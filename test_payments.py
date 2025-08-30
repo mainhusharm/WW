@@ -38,8 +38,8 @@ def test_coupon_validation():
         print(f"\n   Test Case {i}: {test_case['coupon_code']}")
         
         try:
-            response = requests.post(
-                f"{BASE_URL}/api/validate-coupon",
+                    response = requests.post(
+            f"{BASE_URL}/api/payment/validate-coupon",
                 json={
                     "coupon_code": test_case["coupon_code"],
                     "plan_id": test_case["plan_id"],
