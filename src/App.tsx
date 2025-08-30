@@ -50,6 +50,7 @@ import Lightning from './components/Lightning';
 import Footer from './components/Footer';
 import DatabaseDashboard from './components/DatabaseDashboard';
 import CustomerServiceDashboard from './components/CustomerServiceDashboard';
+import QuantumSupportHub from './components/QuantumSupportHub';
 
 // Global Error Boundary for the entire app
 class GlobalErrorBoundary extends Component<
@@ -198,7 +199,7 @@ const AppContent = () => {
           path="/customer-service/dashboard"
           element={
             <CustomerServiceProtectedRoute>
-              <CustomerServiceRedirect />
+              <QuantumSupportHub />
             </CustomerServiceProtectedRoute>
           }
         />
