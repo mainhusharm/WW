@@ -57,47 +57,22 @@ class RealYfinanceService {
       }
     }
 
-    // Try yfinance-service first (most reliable)
+    // Try forex-data-service first (most reliable)
     try {
       const response = await this.fetchWithRetry(
-        `https://forex-data-service.onrender.com/api/forex-price?pair=${encodeURIComponent(symbol)}`
+        `https://forex-data-service.onrender.com/api/bulk-forex-price?pairs=${encodeURIComponent(symbol)}`
       );
       
-      if (response && response.price) {
+      if (response && response[symbol] && response[symbol].price) {
         const priceData: RealPriceData = {
           symbol: symbol,
-          price: parseFloat(response.price),
-          timestamp: response.timestamp || new Date().toISOString(),
-          provider: 'forex-data-service',
-          change: response.change,
-          changePercent: response.changePercent,
-          volume: response.volume
-        };
-        
-        this.priceCache.set(cacheKey, { data: priceData, timestamp: now });
-        console.log(`✅ Real price fetched for ${symbol}: ${priceData.price}`);
-        return priceData;
-      }
-    } catch (error) {
-      console.warn(`forex-data-service failed for ${symbol}:`, error);
-    }
-
-    // Try forex-data-service as backup
-    try {
-      const response = await this.fetchWithRetry(
-        `https://forex-data-service.onrender.com/api/forex-price?pair=${encodeURIComponent(symbol)}`
-      );
-      
-      if (response && response.price) {
-        const priceData: RealPriceData = {
-          symbol: symbol,
-          price: parseFloat(response.price),
-          timestamp: response.timestamp || new Date().toISOString(),
+          price: parseFloat(response[symbol].price),
+          timestamp: new Date().toISOString(),
           provider: 'forex-data-service'
         };
         
         this.priceCache.set(cacheKey, { data: priceData, timestamp: now });
-        console.log(`✅ Real price fetched for ${symbol}: ${priceData.price} from forex-data-service`);
+        console.log(`✅ Real price fetched for ${symbol}: ${priceData.price}`);
         return priceData;
       }
     } catch (error) {
