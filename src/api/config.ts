@@ -8,18 +8,18 @@ export const ENV_CONFIG = {
   apiBaseUrl: process.env.NODE_ENV === 'production'
     ? 'https://www.traderedgepro.com'
     : 'http://localhost:5000',
-  yfinanceServiceUrl: 'https://yfinance-service-kyce.onrender.com',
+  yfinanceServiceUrl: 'https://forex-data-service.onrender.com', // Temporary fix - use forex-data-service
   binanceServiceUrl: 'https://binance-service.onrender.com',
   telegramServiceUrl: 'https://yfinance-service-kyce.onrender.com/api/telegram',
 };
 
 // YFinance service configuration
 export const YFINANCE_CONFIG = {
-  baseUrl: 'https://yfinance-service-kyce.onrender.com',
+  baseUrl: 'https://forex-data-service.onrender.com' // Temporary fix
   endpoints: {
-    price: '/api/price',
-    bulk: '/api/bulk',
-    historical: '/api/historical',
+    price: '/api/forex-price',
+    bulk: '/api/bulk-forex-price',
+    historical: '/api/forex-data',
     health: '/health'
   }
 };
@@ -29,13 +29,13 @@ export const API_CONFIG = {
   // Main backend
   backendUrl: ENV_CONFIG.apiBaseUrl,
 
-  // YFinance service (for forex and stocks)
-  yfinanceServiceUrl: 'https://yfinance-service-kyce.onrender.com',
+  // YFinance service (for forex and stocks) - TEMPORARY FIX
+  yfinanceServiceUrl: 'https://forex-data-service.onrender.com',
 
-  // Specific YFinance endpoints
-  yfinancePriceUrl: 'https://yfinance-service-kyce.onrender.com/api/price',
-  yfinanceBulkUrl: 'https://yfinance-service-kyce.onrender.com/api/bulk',
-  yfinanceHistoricalUrl: 'https://yfinance-service-kyce.onrender.com/api/historical',
+  // Specific YFinance endpoints - TEMPORARY FIX
+  yfinancePriceUrl: 'https://forex-data-service.onrender.com/api/forex-price',
+  yfinanceBulkUrl: 'https://forex-data-service.onrender.com/api/bulk-forex-price',
+  yfinanceHistoricalUrl: 'https://forex-data-service.onrender.com/api/forex-data',
 
   // Binance service (for crypto only)
   binanceServiceUrl: 'https://binance-service.onrender.com',

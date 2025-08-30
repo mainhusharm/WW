@@ -60,7 +60,7 @@ class RealYfinanceService {
     // Try yfinance-service first (most reliable)
     try {
       const response = await this.fetchWithRetry(
-        `${API_CONFIG.yfinanceServiceUrl}/api/price/${encodeURIComponent(symbol)}?timeframe=1m&range=1d`
+        `https://forex-data-service.onrender.com/api/forex-price?pair=${encodeURIComponent(symbol)}`
       );
       
       if (response && response.price) {
@@ -68,7 +68,7 @@ class RealYfinanceService {
           symbol: symbol,
           price: parseFloat(response.price),
           timestamp: response.timestamp || new Date().toISOString(),
-          provider: 'yfinance-service',
+          provider: 'forex-data-service',
           change: response.change,
           changePercent: response.changePercent,
           volume: response.volume
@@ -79,7 +79,7 @@ class RealYfinanceService {
         return priceData;
       }
     } catch (error) {
-      console.warn(`yfinance-service failed for ${symbol}:`, error);
+      console.warn(`forex-data-service failed for ${symbol}:`, error);
     }
 
     // Try forex-data-service as backup
@@ -185,12 +185,12 @@ class RealYfinanceService {
   async fetchRealHistoricalData(symbol: string, timeframe: string = '1m', range: string = '5d'): Promise<RealHistoricalData[] | null> {
     try {
       const response = await this.fetchWithRetry(
-        `${API_CONFIG.yfinanceServiceUrl}/api/historical/${encodeURIComponent(symbol)}?timeframe=${timeframe}&range=${range}`
+        `https://forex-data-service.onrender.com/api/forex-data?pair=${encodeURIComponent(symbol)}&timeframe=${timeframe}`
       );
       
-      if (response && response.data && Array.isArray(response.data)) {
-        const historicalData: RealHistoricalData[] = response.data.map((bar: any) => ({
-          time: bar.timestamp || bar.time,
+      if (response && Array.isArray(response)) {
+        const historicalData: RealHistoricalData[] = response.map((bar: any) => ({
+          time: bar.time || bar.timestamp,
           open: parseFloat(bar.open),
           high: parseFloat(bar.high),
           low: parseFloat(bar.low),

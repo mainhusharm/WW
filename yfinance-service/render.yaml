@@ -13,6 +13,6 @@ services:
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGIN
-        value: "https://www.traderedgepro.com"
+        value: "https://www.traderedgepro.com,https://frontend-01uh.onrender.com,https://traderedgepro.onrender.com"
     healthCheckPath: /health
     autoDeploy: true
