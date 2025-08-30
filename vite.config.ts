@@ -100,7 +100,6 @@ export default defineConfig(({ mode }) => {
         jsx: 'automatic',
         // Force React 18 compatibility
         define: {
-          'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
           'process.env': '{}',
           '__REACT_18__': true
         }

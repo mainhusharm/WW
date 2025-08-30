@@ -5,7 +5,7 @@ export const ENV_CONFIG = {
   isLocal: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
   isAmplify: window.location.hostname.includes('amplifyapp.com'),
   isRender: window.location.hostname.includes('onrender.com'),
-  apiBaseUrl: process.env.NODE_ENV === 'production'
+  apiBaseUrl: import.meta.env.PROD
     ? 'https://www.traderedgepro.com'
     : 'http://localhost:5000',
   yfinanceServiceUrl: 'https://forex-data-service.onrender.com', // Temporary fix - use forex-data-service
@@ -15,7 +15,7 @@ export const ENV_CONFIG = {
 
 // YFinance service configuration
 export const YFINANCE_CONFIG = {
-  baseUrl: 'https://forex-data-service.onrender.com' // Temporary fix
+  baseUrl: 'https://forex-data-service.onrender.com', // Temporary fix
   endpoints: {
     price: '/api/forex-price',
     bulk: '/api/bulk-forex-price',
