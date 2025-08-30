@@ -1513,12 +1513,18 @@
                 const response = await fetch(`${API_BASE_URL}/api/customers`);
                 const data = await response.json();
                 
-                // Handle both response formats
+                // Handle both response formats and ensure customers is always an array
                 let customers = [];
-                if (data.customers && Array.isArray(data.customers)) {
+                if (data && data.customers && Array.isArray(data.customers)) {
                     customers = data.customers;
-                } else if (Array.isArray(data)) {
+                } else if (data && Array.isArray(data)) {
                     customers = data;
+                } else if (data && data.error) {
+                    console.error('API Error:', data.error);
+                    customers = [];
+                } else {
+                    console.warn('Unexpected API response format:', data);
+                    customers = [];
                 }
                 
                 displayCustomers(customers);
@@ -1537,6 +1543,9 @@
                 customers = [];
             }
             
+            // Filter out any null or undefined customers
+            customers = customers.filter(customer => customer && typeof customer === 'object');
+            
             if (customers.length === 0) {
                 customerList.innerHTML = `
                     <div style="text-center; padding: 60px; color: rgba(255, 255, 255, 0.5);">
@@ -1548,41 +1557,55 @@
             }
 
             try {
-                customerList.innerHTML = customers.map(customer => `
-                    <div onclick="showCustomerDetails('${customer.uniqueId || 'unknown'}')" style="background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.3s; hover:background: rgba(139, 92, 246, 0.1);" 
+                customerList.innerHTML = customers.map(customer => {
+                    // Ensure customer has required properties
+                    const safeCustomer = {
+                        uniqueId: customer.uniqueId || customer.unique_id || 'unknown',
+                        name: customer.name || 'Unknown',
+                        email: customer.email || 'N/A',
+                        membershipTier: customer.membershipTier || customer.membership_tier || 'Standard',
+                        lastActive: customer.lastActive || customer.last_active,
+                        joinDate: customer.joinDate || customer.join_date,
+                        phone: customer.phone || 'N/A',
+                        activities: Array.isArray(customer.activities) ? customer.activities : []
+                    };
+                    
+                    return `
+                    <div onclick="showCustomerDetails('${safeCustomer.uniqueId}')" style="background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.3s; hover:background: rgba(139, 92, 246, 0.1);" 
                          onmouseover="this.style.background='rgba(139, 92, 246, 0.1)'; this.style.borderColor='rgba(139, 92, 246, 0.4)'" 
                          onmouseout="this.style.background='rgba(139, 92, 246, 0.05)'; this.style.borderColor='rgba(139, 92, 246, 0.2)'">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <div style="display: flex; align-items: center; gap: 15px;">
                                 <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-cyan), var(--primary-green)); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
-                                    ${customer.name ? customer.name.split(' ').map(n => n[0]).join('') : 'N/A'}
+                                    ${safeCustomer.name ? safeCustomer.name.split(' ').map(n => n[0]).join('') : 'N/A'}
                                 </div>
                                 <div>
-                                    <div style="color: white; font-weight: 600; font-size: 16px;">${customer.name || 'Unknown'}</div>
-                                    <div style="color: rgba(255, 255, 255, 0.6); font-size: 14px;">ID: ${customer.uniqueId || 'N/A'}</div>
+                                    <div style="color: white; font-weight: 600; font-size: 16px;">${safeCustomer.name}</div>
+                                    <div style="color: rgba(255, 255, 255, 0.6); font-size: 14px;">ID: ${safeCustomer.uniqueId}</div>
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="color: var(--primary-cyan); font-weight: 600;">${customer.membershipTier || 'Standard'}</div>
-                                <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px;">Last active: ${customer.lastActive ? new Date(customer.lastActive).toLocaleString() : 'N/A'}</div>
+                                <div style="color: var(--primary-cyan); font-weight: 600;">${safeCustomer.membershipTier}</div>
+                                <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px;">Last active: ${safeCustomer.lastActive ? new Date(safeCustomer.lastActive).toLocaleString() : 'N/A'}</div>
                             </div>
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
                             <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 8px;">
                                 <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px;">Email</div>
-                                <div style="color: white; font-size: 14px;">${customer.email || 'N/A'}</div>
+                                <div style="color: white; font-size: 14px;">${safeCustomer.email}</div>
                             </div>
                             <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 8px;">
                                 <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px;">Member Since</div>
-                                <div style="color: white; font-size: 14px;">${customer.joinDate ? new Date(customer.joinDate).toLocaleDateString() : 'N/A'}</div>
+                                <div style="color: white; font-size: 14px;">${safeCustomer.joinDate ? new Date(safeCustomer.joinDate).toLocaleDateString() : 'N/A'}</div>
                             </div>
                             <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 8px;">
                                 <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px;">Activities</div>
-                                <div style="color: var(--primary-green); font-size: 14px; font-weight: 600;">${Array.isArray(customer.activities) ? customer.activities.length : 0} recorded</div>
+                                <div style="color: var(--primary-green); font-size: 14px; font-weight: 600;">${safeCustomer.activities.length} recorded</div>
                             </div>
                         </div>
                     </div>
-                `).join('');
+                `;
+                }).join('');
             } catch (error) {
                 console.error('Error rendering customers:', error);
                 customerList.innerHTML = `
@@ -1606,11 +1629,11 @@
                 }
 
                 const customer = data.customer;
-                const activities = customer.activities || [];
-                const screenshots = customer.screenshots || [];
-                const questionnaire = customer.questionnaireResponses || [];
+                const activities = Array.isArray(customer.activities) ? customer.activities : [];
+                const screenshots = Array.isArray(customer.screenshots) ? customer.screenshots : [];
+                const questionnaire = Array.isArray(customer.questionnaireResponses) ? customer.questionnaireResponses : [];
                 const riskPlan = customer.riskManagementPlan;
-                const dashboardData = customer.dashboardData || [];
+                const dashboardData = Array.isArray(customer.dashboardData) ? customer.dashboardData : [];
 
                 const modal = document.getElementById('customerModal');
                 const details = document.getElementById('customerDetails');
@@ -1824,7 +1847,11 @@
                 const query = prompt('Enter your search query for the knowledge base:');
                 if (query) {
                     const results = await fetch(`/api/knowledge-base?query=${query}`).then(res => res.json());
-                    alert(`Found ${results.length} results:\n${results.map(r => r.title).join('\n')}`);
+                    if (Array.isArray(results)) {
+                        alert(`Found ${results.length} results:\n${results.map(r => r.title).join('\n')}`);
+                    } else {
+                        alert('No results found or error occurred');
+                    }
                 }
             });
         });

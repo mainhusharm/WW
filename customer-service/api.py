@@ -105,18 +105,111 @@ def init_database():
     
     conn.commit()
     conn.close()
-    logger.info("Database initialized successfully")
+
+def create_sample_data():
+    """Create sample customer data for testing"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Check if sample data already exists
+        cursor.execute('SELECT COUNT(*) FROM customers')
+        if cursor.fetchone()[0] > 0:
+            conn.close()
+            return
+        
+        # Create sample customers
+        sample_customers = [
+            ('CUST001', 'John Smith', 'john.smith@example.com', 'premium', '2024-01-15', '2024-12-01', '+1-555-0101'),
+            ('CUST002', 'Sarah Johnson', 'sarah.j@example.com', 'standard', '2024-02-20', '2024-12-01', '+1-555-0102'),
+            ('CUST003', 'Mike Davis', 'mike.davis@example.com', 'free', '2024-03-10', '2024-12-01', '+1-555-0103'),
+            ('CUST004', 'Emily Wilson', 'emily.w@example.com', 'premium', '2024-04-05', '2024-12-01', '+1-555-0104'),
+            ('CUST005', 'David Brown', 'david.brown@example.com', 'standard', '2024-05-12', '2024-12-01', '+1-555-0105')
+        ]
+        
+        for customer in sample_customers:
+            cursor.execute('''
+                INSERT INTO customers (unique_id, name, email, membership_tier, join_date, last_active, phone)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', customer)
+        
+        # Get customer IDs for related data
+        cursor.execute('SELECT id FROM customers LIMIT 3')
+        customer_ids = [row[0] for row in cursor.fetchall()]
+        
+        # Create sample activities
+        for customer_id in customer_ids:
+            activities = [
+                ('login', 'User logged in successfully', '192.168.1.100', 'Mozilla/5.0'),
+                ('profile_update', 'Updated profile information', '192.168.1.100', 'Mozilla/5.0'),
+                ('support_request', 'Submitted support ticket', '192.168.1.100', 'Mozilla/5.0')
+            ]
+            for activity in activities:
+                cursor.execute('''
+                    INSERT INTO customer_activities (customer_id, activity_type, activity_details, ip_address, user_agent)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (customer_id, activity[0], activity[1], activity[2], activity[3]))
+        
+        # Create sample screenshots
+        for customer_id in customer_ids[:2]:
+            screenshots = [
+                ('trading_chart', 'https://example.com/screenshot1.png', 'Monthly trading performance chart'),
+                ('portfolio', 'https://example.com/screenshot2.png', 'Current portfolio overview')
+            ]
+            for screenshot in screenshots:
+                cursor.execute('''
+                    INSERT INTO customer_screenshots (customer_id, screenshot_type, screenshot_url, description)
+                    VALUES (?, ?, ?, ?)
+                ''', (customer_id, screenshot[0], screenshot[1], screenshot[2]))
+        
+        # Create sample questionnaire responses
+        for customer_id in customer_ids[:2]:
+            responses = [
+                ('What is your risk tolerance?', 'Moderate', 'risk_assessment'),
+                ('How long do you plan to invest?', '5-10 years', 'risk_assessment'),
+                ('What is your investment experience?', 'Intermediate', 'risk_assessment')
+            ]
+            for response in responses:
+                cursor.execute('''
+                    INSERT INTO questionnaire_responses (customer_id, question, answer, questionnaire_type)
+                    VALUES (?, ?, ?, ?)
+                ''', (customer_id, response[0], response[1], response[2]))
+        
+        conn.commit()
+        conn.close()
+        logger.info("Sample data created successfully")
+        
+    except Exception as e:
+        logger.error(f"Error creating sample data: {str(e)}")
+        if 'conn' in locals():
+            conn.close()
 
 # Initialize database on startup
 init_database()
+create_sample_data()
 
 @app.route('/health')
 def health_check():
-    return jsonify({
-        'status': 'healthy',
-        'service': 'customer-service-api',
-        'timestamp': datetime.now().isoformat()
-    })
+    """Health check endpoint"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        cursor.execute('SELECT COUNT(*) FROM customers')
+        customer_count = cursor.fetchone()[0]
+        conn.close()
+        
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'customer_count': customer_count,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
 
 @app.route('/api/customers', methods=['GET'])
 def get_customers():
@@ -171,6 +264,34 @@ def get_customers():
     except Exception as e:
         logger.error(f"Error fetching customers: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/customers/search', methods=['GET'])
+def search_customers():
+    """Search customers by name, email, or unique_id"""
+    try:
+        search = request.args.get('search', '')
+        if not search:
+            return jsonify({'customers': []})
+        
+        conn = sqlite3.connect(DATABASE_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM customers 
+            WHERE unique_id LIKE ? OR name LIKE ? OR email LIKE ?
+            ORDER BY created_at DESC
+            LIMIT 100
+        ''', (f'%{search}%', f'%{search}%', f'%{search}%'))
+        
+        customers = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify({'customers': customers})
+        
+    except Exception as e:
+        logger.error(f"Error searching customers: {str(e)}")
+        return jsonify({'error': str(e), 'customers': []}), 500
 
 @app.route('/api/customers/<customer_id>', methods=['GET'])
 def get_customer_details(customer_id):
