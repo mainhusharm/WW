@@ -75,14 +75,20 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
     setDebugInfo(`Applying coupon: ${couponCode} for plan: ${selectedPlan.name} with price: $${selectedPlan.price}`);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '';
-      // In production, VITE_API_URL is '/api', so we need to call the backend service
-      const baseUrl = window.location.hostname === 'localhost' ? '' : 'https://ww-whoa.onrender.com';
-      const endpoint = `${baseUrl}${apiUrl}/payment/validate-coupon`;
-      console.log(`Calling API endpoint: ${endpoint}`);
-      setDebugInfo(prev => prev + `\nAPI endpoint: ${endpoint}`);
+      // Simple, clean API endpoint construction
+      let apiEndpoint;
+      if (window.location.hostname === 'localhost') {
+        // Local development
+        apiEndpoint = '/api/payment/validate-coupon';
+      } else {
+        // Production - call the backend directly
+        apiEndpoint = 'https://ww-whoa.onrender.com/api/payment/validate-coupon';
+      }
+
+      console.log(`Calling API endpoint: ${apiEndpoint}`);
+      setDebugInfo(prev => prev + `\nAPI endpoint: ${apiEndpoint}`);
       
-      const response = await fetch(endpoint, {
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,6 +101,11 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
       });
 
       console.log(`Coupon response status: ${response.status}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       console.log(`Coupon response data:`, data);
       setDebugInfo(prev => prev + `\nResponse status: ${response.status}\nResponse data: ${JSON.stringify(data)}`);

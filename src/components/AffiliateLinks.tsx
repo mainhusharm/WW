@@ -30,7 +30,14 @@ const AffiliateLinks: React.FC = () => {
     formData.append('screenshot', selectedFile);
 
     try {
-      const response = await fetch('/api/upload-screenshot', {
+      // Simple, clean API endpoint construction
+      let apiEndpoint;
+      if (window.location.hostname === 'localhost') {
+        apiEndpoint = '/api/upload-screenshot';
+      } else {
+        apiEndpoint = 'https://ww-whoa.onrender.com/api/upload-screenshot';
+      }
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         body: formData,
       });

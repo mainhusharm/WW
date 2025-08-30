@@ -14,7 +14,14 @@ const ContactSupport: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/support/contact', {
+      // Simple, clean API endpoint construction
+      let apiEndpoint;
+      if (window.location.hostname === 'localhost') {
+        apiEndpoint = '/api/support/contact';
+      } else {
+        apiEndpoint = 'https://ww-whoa.onrender.com/api/support/contact';
+      }
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

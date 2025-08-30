@@ -87,7 +87,14 @@ const SignIn = () => {
         }
       } else {
         // Try backend authentication
-        const response = await fetch('/api/auth/login', {
+        // Simple, clean API endpoint construction
+      let apiEndpoint;
+      if (window.location.hostname === 'localhost') {
+        apiEndpoint = '/api/auth/login';
+      } else {
+        apiEndpoint = 'https://ww-whoa.onrender.com/api/auth/login';
+      }
+      const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

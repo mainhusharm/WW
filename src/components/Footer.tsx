@@ -25,7 +25,14 @@ const Footer = () => {
                 onSubmit={async (e) => {
                   e.preventDefault();
                   const email = (e.target as any).email.value;
-                  await fetch('/api/subscribe', {
+                  // Simple, clean API endpoint construction
+        let apiEndpoint;
+        if (window.location.hostname === 'localhost') {
+          apiEndpoint = '/api/subscribe';
+        } else {
+          apiEndpoint = 'https://ww-whoa.onrender.com/api/subscribe';
+        }
+        await fetch(apiEndpoint, {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
