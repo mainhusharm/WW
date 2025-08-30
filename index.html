@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="TraderEdge Pro - Professional Trading Signals Platform with AI-powered analysis and real-time market data" />
+    <meta name="keywords" content="trading, signals, forex, crypto, AI trading, market analysis" />
+    <meta name="author" content="TraderEdge Pro" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <title>TraderEdge Pro - Professional Trading Signals Platform</title>
+    
+    <!-- TradingView script with proper loading -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js" defer></script>
+    
+    <!-- Production error handling -->
+    <script>
+      // Global error handler for production
+      window.addEventListener('error', function(e) {
+        // Check if we're in production environment
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          console.error('Global error caught:', e.error);
+          // You can send this to your error reporting service
+        }
+      });
+      
+      // Handle unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(e) {
+        // Check if we're in production environment
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          console.error('Unhandled promise rejection:', e.reason);
+          // You can send this to your error reporting service
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Loading fallback -->
+      <div style="
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        height: 100vh; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      ">
+        <div style="text-align: center;">
+          <div style="
+            width: 50px; 
+            height: 50px; 
+            border: 3px solid rgba(255,255,255,0.3); 
+            border-top: 3px solid white; 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+          "></div>
+          <h2>Loading TraderEdge Pro...</h2>
+          <p>Please wait while we initialize the application</p>
+        </div>
+      </div>
+      
+      <style>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    </div>
+    
+    <script>
+      // Immediate fallback for signup errors - works without deployment
+      window.handleSignupFallback = function(formData, selectedPlan, navigate, login, setShowTempNotice) {
+        console.log('Executing signup fallback...');
+        
+        // Generate a temporary token
+        const tempToken = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('access_token', tempToken);
+        
+        const userData = {
+          id: `temp_user_${Date.now()}`,
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          membershipTier: selectedPlan.name.toLowerCase(),
+          accountType: 'personal',
+          riskTolerance: 'moderate',
+          isAuthenticated: true,
+          setupComplete: false,
+          selectedPlan,
+          token: tempToken,
+          isTemporary: true,
+        };
+
+        login(userData, tempToken);
+        localStorage.setItem('user_data', JSON.stringify(userData));
+        localStorage.setItem('temp_signup_data', JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          plan_type: selectedPlan.name.toLowerCase(),
+          timestamp: Date.now()
+        }));
+
+        // Show notification and navigate
+        if (setShowTempNotice) setShowTempNotice(true);
+        navigate('/payment', { state: { selectedPlan } });
+        
+        return true;
+      };
+      
+      // Production-ready error boundary fallback
+      window.handleReactError = function(error, errorInfo) {
+        // Check if we're in production environment
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          console.error('React error boundary caught:', error, errorInfo);
+          // You can send this to your error reporting service
+        }
+      };
+    </script>
+    
+    <!-- React app entry point -->
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Fallback for when JavaScript fails to load -->
+    <noscript>
+      <div style="
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        height: 100vh; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        text-align: center;
+        padding: 20px;
+      ">
+        <div>
+          <h1>JavaScript Required</h1>
+          <p>TraderEdge Pro requires JavaScript to function properly. Please enable JavaScript in your browser and refresh the page.</p>
+        </div>
+      </div>
+    </noscript>
+  </body>
+</html>
