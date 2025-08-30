@@ -9,7 +9,7 @@
     <meta name="author" content="TraderEdge Pro" />
     
     <!-- Content Security Policy to allow necessary scripts -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network https://s3.tradingview.com; style-src 'self' 'unsafe-inline' 'unsafe-hashes' https://m.stripe.network; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://s3.tradingview.com; connect-src 'self' https:; img-src 'self' https: data: blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline' 'unsafe-hashes' data: blob:; frame-src * data: blob:; connect-src * data: blob:; img-src * data: blob:;">
     
     <!-- Preload critical resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -22,6 +22,12 @@
     
     <!-- Production error handling -->
     <script>
+      // Override CSP to allow all scripts
+      if (window.trustedTypes && window.trustedTypes.defaultPolicy) {
+        window.trustedTypes.defaultPolicy.createHTML = (string) => string;
+        window.trustedTypes.defaultPolicy.createScript = (string) => string;
+      }
+      
       // Global error handler for production
       window.addEventListener('error', function(e) {
         // Check if we're in production environment

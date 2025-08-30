@@ -50,7 +50,7 @@ export default defineConfig(({ mode }) => {
                   const file = bundle[fileName];
                   if (file.type === 'asset' && file.source) {
                     const html = file.source.toString();
-                    const cspMeta = '<meta http-equiv="Content-Security-Policy" content="default-src \'self\' https:; script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://js.stripe.com https://m.stripe.network https://s3.tradingview.com; style-src \'self\' \'unsafe-inline\' \'unsafe-hashes\' https://m.stripe.network; frame-src \'self\' https://js.stripe.com https://hooks.stripe.com https://s3.tradingview.com; connect-src \'self\' https:; img-src \'self\' https: data: blob:;">';
+                    const cspMeta = '<meta http-equiv="Content-Security-Policy" content="default-src * \'unsafe-inline\' \'unsafe-eval\' data: blob:; script-src * \'unsafe-inline\' \'unsafe-eval\' data: blob:; style-src * \'unsafe-inline\' \'unsafe-hashes\' data: blob:; frame-src * data: blob:; connect-src * data: blob:; img-src * data: blob:;">';
                     
                     if (!html.includes('Content-Security-Policy')) {
                       const updatedHtml = html.replace('<head>', `<head>${cspMeta}`);
@@ -86,7 +86,7 @@ export default defineConfig(({ mode }) => {
         },
       },
       headers: {
-        'Content-Security-Policy': "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://m.stripe.network https://s3.tradingview.com; style-src 'self' 'unsafe-inline' 'unsafe-hashes' https://m.stripe.network; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://s3.tradingview.com; connect-src 'self' https:; img-src 'self' https: data: blob:;"
+        'Content-Security-Policy': "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline' 'unsafe-hashes' data: blob:; frame-src * data: blob:; connect-src * data: blob:; img-src * data: blob:;"
       }
     },
     resolve: {
