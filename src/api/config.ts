@@ -7,7 +7,7 @@ export const ENV_CONFIG = {
   isRender: window.location.hostname.includes('onrender.com'),
   apiBaseUrl: import.meta.env.PROD
     ? 'https://www.traderedgepro.com'
-    : 'http://localhost:5000',
+    : 'http://localhost:3005',
   yfinanceServiceUrl: 'https://forex-data-service.onrender.com', // Temporary fix - use forex-data-service
   binanceServiceUrl: 'https://binance-service.onrender.com',
   telegramServiceUrl: 'https://yfinance-service-kyce.onrender.com/api/telegram',

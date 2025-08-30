@@ -35,7 +35,7 @@ const CustomerDatabase: React.FC = () => {
       const customerData = await errorHandler.handleCustomersApi(async () => {
         // Try customer service API directly
         try {
-          const response = await fetch('http://localhost:5000/api/customers', {
+          const response = await fetch('http://localhost:3005/api/customers', {
             headers: {
               'Content-Type': 'application/json',
               'x-auth-token': authToken
