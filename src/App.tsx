@@ -48,6 +48,7 @@ import AICoach from './components/AICoach';
 import Lightning from './components/Lightning';
 import Footer from './components/Footer';
 import DatabaseDashboard from './components/DatabaseDashboard';
+import CustomerServiceDashboard from './components/CustomerServiceDashboard';
 
 // Global Error Boundary for the entire app
 class GlobalErrorBoundary extends Component<
@@ -196,7 +197,7 @@ const AppContent = () => {
           path="/customer-service/dashboard"
           element={
             <CustomerServiceProtectedRoute>
-              <EnhancedCustomerServiceDashboard onLogout={handleAdminLogout} />
+              <CustomerServiceDashboard onLogout={handleAdminLogout} />
             </CustomerServiceProtectedRoute>
           }
         />
