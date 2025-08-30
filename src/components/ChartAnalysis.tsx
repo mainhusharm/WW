@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { TrendingUp, TrendingDown, Copy, Send, RefreshCw } from 'lucide-react';
+import realYfinanceService from '../services/realYfinanceService';
 
 interface Signal {
   id: string;
@@ -36,12 +37,27 @@ const ChartAnalysis: React.FC = () => {
 
   const fetchSignal = useCallback(async (asset: string, timeframe: string) => {
     try {
-      const response = await fetch(`https://yfinance-proxy.onrender.com/api/yfinance/chart/signal?asset=${asset}&timeframe=${timeframe}`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      // Get real price data for the asset
+      const priceData = await realYfinanceService.fetchRealPrice(asset);
+      if (priceData) {
+        // Create a basic signal based on real price data
+        const signal = {
+          id: Date.now().toString(),
+          symbol: asset,
+          direction: 'LONG' as const, // Default direction
+          entry: priceData.price,
+          stopLoss: priceData.price * 0.995, // 0.5% below entry
+          targets: {
+            target1: priceData.price * 1.01, // 1% above entry
+            target2: priceData.price * 1.02, // 2% above entry
+            target3: priceData.price * 1.03, // 3% above entry
+          },
+          timeframe: timeframe,
+          timestamp: priceData.timestamp
+        };
+        return signal;
       }
-      const data = await response.json();
-      return data;
+      return null;
     } catch (error) {
       console.error('Error fetching signal:', error);
       return null;
@@ -59,15 +75,36 @@ const ChartAnalysis: React.FC = () => {
     setAnalysisResult(null);
 
     try {
-      const response = await fetch(`https://yfinance-proxy.onrender.com/api/yfinance/chart/signal?asset=${asset}&timeframe=${timeframe}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      // Get real price data for the asset
+      const priceData = await realYfinanceService.fetchRealPrice(asset);
+      if (priceData) {
+        // Create analysis result based on real price data
+        const analysis = {
+          symbol: asset,
+          currentPrice: priceData.price,
+          timeframe: timeframe,
+          timestamp: priceData.timestamp,
+          provider: priceData.provider,
+          signal: {
+            id: Date.now().toString(),
+            symbol: asset,
+            direction: 'LONG' as const, // Default direction
+            entry: priceData.price,
+            stopLoss: priceData.price * 0.995, // 0.5% below entry
+            targets: {
+              target1: priceData.price * 1.01, // 1% above entry
+              target2: priceData.price * 1.02, // 2% above entry
+              target3: priceData.price * 1.03, // 3% above entry
+            },
+            timeframe: timeframe,
+            timestamp: priceData.timestamp
+          }
+        };
+        setAnalysisResult(analysis);
+        setError('');
+      } else {
+        setError('No real price data available for analysis');
       }
-      
-      const data = await response.json();
-      setAnalysisResult(data);
-      setError('');
     } catch (error: any) {
       setError(`Analysis failed: ${error.message}`);
       console.error('Analysis error:', error);
