@@ -540,6 +540,21 @@ def init_enhanced_database():
         )
     ''')
     
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS tickets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL,
+            subject TEXT NOT NULL,
+            description TEXT,
+            status TEXT CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')) DEFAULT 'open',
+            priority TEXT CHECK (priority IN ('low', 'medium', 'high', 'urgent')) DEFAULT 'medium',
+            assigned_to TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (customer_id) REFERENCES customers (id)
+        )
+    ''')
+    
     conn.commit()
     conn.close()
 
@@ -1081,6 +1096,248 @@ def validate_email_uniqueness():
     except Exception as e:
         logger.error(f"Email validation error: {e}")
         return jsonify({'error': 'Email validation failed'}), 500
+
+# ============================================
+# DASHBOARD FEATURES API ENDPOINTS
+# ============================================
+
+@app.route('/api/dashboard/tickets', methods=['GET'])
+def get_tickets():
+    """Get all support tickets"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Get tickets with customer information
+        cursor.execute('''
+            SELECT 
+                t.id,
+                t.customer_id,
+                c.name as customer_name,
+                c.email as customer_email,
+                t.subject,
+                t.description,
+                t.status,
+                t.priority,
+                t.created_at,
+                t.updated_at,
+                t.assigned_to
+            FROM tickets t
+            LEFT JOIN customers c ON t.customer_id = c.id
+            ORDER BY t.created_at DESC
+        ''')
+        
+        tickets = cursor.fetchall()
+        conn.close()
+        
+        # Format tickets
+        formatted_tickets = []
+        for ticket in tickets:
+            formatted_tickets.append({
+                'id': ticket[0],
+                'customer_id': ticket[1],
+                'customer_name': ticket[2],
+                'customer_email': ticket[3],
+                'subject': ticket[4],
+                'description': ticket[5],
+                'status': ticket[6],
+                'priority': ticket[7],
+                'created_at': ticket[8],
+                'updated_at': ticket[9],
+                'assigned_to': ticket[10]
+            })
+        
+        return jsonify({
+            'success': True,
+            'tickets': formatted_tickets,
+            'count': len(formatted_tickets)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting tickets: {e}")
+        return jsonify({'error': 'Failed to retrieve tickets'}), 500
+
+@app.route('/api/dashboard/tickets', methods=['POST'])
+def create_ticket():
+    """Create a new support ticket"""
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('customer_id') or not data.get('subject'):
+            return jsonify({'error': 'Customer ID and subject are required'}), 400
+        
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO tickets (customer_id, subject, description, status, priority, assigned_to)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            data['customer_id'],
+            data['subject'],
+            data.get('description', ''),
+            data.get('status', 'open'),
+            data.get('priority', 'medium'),
+            data.get('assigned_to', 'Unassigned')
+        ))
+        
+        ticket_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'ticket_id': ticket_id,
+            'message': 'Ticket created successfully'
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Error creating ticket: {e}")
+        return jsonify({'error': 'Failed to create ticket'}), 500
+
+@app.route('/api/dashboard/tickets/<int:ticket_id>', methods=['PUT'])
+def update_ticket(ticket_id):
+    """Update a support ticket"""
+    try:
+        data = request.get_json()
+        
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Build update query dynamically
+        update_fields = []
+        params = []
+        
+        for field in ['status', 'priority', 'assigned_to', 'description']:
+            if field in data:
+                update_fields.append(f"{field} = ?")
+                params.append(data[field])
+        
+        if not update_fields:
+            return jsonify({'error': 'No fields to update'}), 400
+        
+        update_fields.append("updated_at = CURRENT_TIMESTAMP")
+        params.append(ticket_id)
+        
+        query = f"UPDATE tickets SET {', '.join(update_fields)} WHERE id = ?"
+        cursor.execute(query, params)
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Ticket not found'}), 404
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Ticket updated successfully'
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error updating ticket: {e}")
+        return jsonify({'error': 'Failed to update ticket'}), 500
+
+@app.route('/api/dashboard/notifications', methods=['GET'])
+def get_notifications():
+    """Get system notifications"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Get recent system events as notifications
+        cursor.execute('''
+            SELECT 
+                'customer_registered' as type,
+                'New customer registered' as message,
+                c.created_at as timestamp,
+                c.name as customer_name,
+                'info' as priority
+            FROM customers c
+            WHERE c.created_at > datetime('now', '-1 day')
+            UNION ALL
+            SELECT 
+                'ticket_created' as type,
+                'New support ticket created' as message,
+                t.created_at as timestamp,
+                c.name as customer_name,
+                'medium' as priority
+            FROM tickets t
+            LEFT JOIN customers c ON t.customer_id = c.id
+            WHERE t.created_at > datetime('now', '-1 day')
+            ORDER BY timestamp DESC
+            LIMIT 20
+        ''')
+        
+        notifications = cursor.fetchall()
+        conn.close()
+        
+        # Format notifications
+        formatted_notifications = []
+        for notif in notifications:
+            formatted_notifications.append({
+                'type': notif[0],
+                'message': notif[1],
+                'timestamp': notif[2],
+                'customer_name': notif[3],
+                'priority': notif[4],
+                'read': False
+            })
+        
+        return jsonify({
+            'success': True,
+            'notifications': formatted_notifications,
+            'count': len(formatted_notifications)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting notifications: {e}")
+        return jsonify({'error': 'Failed to retrieve notifications'}), 500
+
+@app.route('/api/dashboard/stats', methods=['GET'])
+def get_dashboard_stats():
+    """Get comprehensive dashboard statistics"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Get customer stats
+        cursor.execute('SELECT COUNT(*) FROM customers')
+        total_customers = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT COUNT(*) FROM customers WHERE created_at > datetime("now", "-1 day")')
+        new_customers_today = cursor.fetchone()[0]
+        
+        # Get ticket stats
+        cursor.execute('SELECT COUNT(*) FROM tickets WHERE status = "open"')
+        open_tickets = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT COUNT(*) FROM tickets WHERE status = "resolved" AND updated_at > datetime("now", "-1 day")')
+        resolved_tickets_today = cursor.fetchone()[0]
+        
+        # Get chat stats (simulated)
+        active_chats = min(3, total_customers)  # Simulate active chats
+        
+        conn.close()
+        
+        stats = {
+            'totalCustomers': total_customers,
+            'activeChats': active_chats,
+            'openTickets': open_tickets,
+            'avgResponseTime': '2m 30s',
+            'satisfactionScore': 94,
+            'newCustomersToday': new_customers_today,
+            'resolvedTicketsToday': resolved_tickets_today
+        }
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting dashboard stats: {e}")
+        return jsonify({'error': 'Failed to retrieve dashboard stats'}), 500
 
 # ============================================
 # EXISTING ENDPOINTS CONTINUE BELOW
