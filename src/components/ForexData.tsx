@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import LivePriceFeed from './LivePriceFeed';
 import TradePerformance from './TradePerformance';
 import api from '../api';
-import yfinanceWorking from '../services/yfinanceWorking';
+import realYfinanceService from '../services/realYfinanceService';
 
 interface ForexBar {
   time: string;
@@ -198,11 +198,11 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
         async fetchYfinancePrice(symbol: string, timeframe: string) {
             try {
                 log(`📡 Fetching ${symbol} from yfinance...`, 'info');
-                const data = await yfinanceWorking.fetchHistoricalData(symbol, timeframe);
+                const data = await realYfinanceService.fetchRealHistoricalData(symbol, timeframe);
                 
-                if (data && data.history) {
-                    log(`✅ Successfully fetched ${data.history.length} historical bars for ${symbol} from yfinance`, 'success');
-                    return data;
+                if (data && data.length > 0) {
+                    log(`✅ Successfully fetched ${data.length} historical bars for ${symbol} from yfinance`, 'success');
+                    return { history: data };
                 }
                 
                 throw new Error(`No data returned for ${symbol}`);
@@ -216,7 +216,7 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
         async fetchLatestYfinancePrice(symbol: string) {
             try {
                 log(`📡 Fetching latest price for ${symbol} from yfinance...`, 'info');
-                const data = await yfinanceWorking.fetchLatestPrice(symbol);
+                const data = await realYfinanceService.fetchRealPrice(symbol);
                 
                 if (data && data.price) {
                     log(`✅ Yahoo Finance price for ${symbol}: ${data.price}`, 'success');
@@ -234,13 +234,15 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
         async fetchBulkYfinanceData(symbols: string[], timeframe: string) {
             try {
                 log(`📡 Fetching bulk data for ${symbols.length} symbols from yfinance...`, 'info');
-                const results = await yfinanceWorking.fetchBulkData(symbols, timeframe);
+                const results = await realYfinanceService.fetchBulkRealPrices(symbols);
                 
-                const successCount = Object.values(results).filter(history => history.length > 0).length;
-                const failedCount = symbols.length - successCount;
-                
-                log(`✅ Bulk fetch completed: ${successCount} successful, ${failedCount} failed`, 'success');
-                return results;
+                if (results.success && results.data.length > 0) {
+                    log(`✅ Bulk fetch completed: ${results.count} successful`, 'success');
+                    return results.data;
+                } else {
+                    log(`⚠️ Bulk fetch failed: no data available`, 'warning');
+                    return {};
+                }
                 
             } catch (error: any) {
                 log(`❌ Bulk fetch failed: ${error.message}`, 'error');
@@ -261,7 +263,7 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
                 }
             }
             
-            // Try Yahoo Finance API
+            // Try Yahoo Finance API - NO FALLBACK DATA
             try {
                 log(`📡 Fetching ${symbol} from Yahoo Finance...`, 'info');
                 const result = await this.fetchLatestYfinancePrice(symbol);
@@ -275,7 +277,7 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
                 log(`🟡 Yahoo Finance failed for ${symbol}: ${error.message}`, 'warning');
             }
             
-            // No fallback - return null if yfinance fails
+            // NO FALLBACK DATA - return null if yfinance fails
             log(`❌ No price data available for ${symbol}`, 'error');
             return null;
         }

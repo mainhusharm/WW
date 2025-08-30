@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { TrendingUp, TrendingDown, RefreshCw, Settings, X } from 'lucide-react';
 import { API_CONFIG } from '../api/config';
+import realYfinanceService, { RealPriceData } from '../services/realYfinanceService';
 
 interface LivePriceFeedProps {
   market: 'forex' | 'crypto' | 'stocks';
@@ -39,40 +40,27 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
         let results: any = {};
         
         if (market === 'forex') {
-          // Use yfinance-service for forex data
+          // Use real yfinance service for forex data - NO FALLBACK DATA
           try {
-            const response = await fetch(`${API_CONFIG.yfinanceBulkUrl}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                symbols: selectedSymbols,
-                timeframe: '1m'
-              })
-            });
+            const bulkData = await realYfinanceService.fetchBulkRealPrices(selectedSymbols);
             
-            if (response.ok) {
-              const data = await response.json();
-              if (data.data && Array.isArray(data.data)) {
-                for (const item of data.data) {
-                  if (item.symbol && item.price) {
-                    results[item.symbol] = { price: item.price };
-                  }
+            if (bulkData.success && bulkData.data.length > 0) {
+              for (const item of bulkData.data) {
+                if (item.symbol && item.price) {
+                  results[item.symbol] = { 
+                    price: item.price,
+                    provider: item.provider,
+                    timestamp: item.timestamp
+                  };
                 }
               }
-              console.log('✅ Forex data fetched from yfinance-service');
+              console.log(`✅ Real forex data fetched: ${bulkData.count} symbols successful`);
             } else {
-              throw new Error(`yfinance-service failed: ${response.status}`);
+              console.warn('No real forex data available');
             }
           } catch (yfinanceError) {
-            console.warn('yfinance-service failed, using mock data:', yfinanceError);
-            // Use mock data as fallback
-            for (const symbol of selectedSymbols) {
-              const mockPrice = Math.random() * 100 + 1;
-              results[symbol] = { price: mockPrice };
-            }
-            console.log('✅ Using mock data for forex due to service failure');
+            console.error('Real yfinance service failed:', yfinanceError);
+            // NO FALLBACK DATA - leave results empty
           }
         } else if (market === 'crypto') {
           // Use Binance API for crypto data
@@ -93,40 +81,27 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
           }
           console.log('✅ Crypto data fetched from Binance API');
         } else if (market === 'stocks') {
-          // Use yfinance-service for stocks data
+          // Use real yfinance service for stocks data - NO FALLBACK DATA
           try {
-            const response = await fetch(`${API_CONFIG.yfinanceBulkUrl}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                symbols: selectedSymbols,
-                timeframe: '1m'
-              })
-            });
+            const bulkData = await realYfinanceService.fetchBulkRealPrices(selectedSymbols);
             
-            if (response.ok) {
-              const data = await response.json();
-              if (data.data && Array.isArray(data.data)) {
-                for (const item of data.data) {
-                  if (item.symbol && item.price) {
-                    results[item.symbol] = { price: item.price };
-                  }
+            if (bulkData.success && bulkData.data.length > 0) {
+              for (const item of bulkData.data) {
+                if (item.symbol && item.price) {
+                  results[item.symbol] = { 
+                    price: item.price,
+                    provider: item.provider,
+                    timestamp: item.timestamp
+                  };
                 }
               }
-              console.log('✅ Stocks data fetched from yfinance-service');
+              console.log(`✅ Real stocks data fetched: ${bulkData.count} symbols successful`);
             } else {
-              throw new Error(`yfinance-service failed: ${response.status}`);
+              console.warn('No real stocks data available');
             }
           } catch (yfinanceError) {
-            console.warn('yfinance-service failed for stocks, using mock data:', yfinanceError);
-            // Generate fallback data for stocks
-            for (const symbol of selectedSymbols) {
-              const mockPrice = Math.random() * 100 + 1;
-              results[symbol] = { price: mockPrice };
-            }
-            console.log('✅ Using mock data for stocks due to service failure');
+            console.error('Real yfinance service failed for stocks:', yfinanceError);
+            // NO FALLBACK DATA - leave results empty
           }
         }
         
@@ -136,8 +111,7 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
       } catch (error: any) {
         console.error('Data fetching failed:', error);
         setError(`Failed to fetch prices: ${error.message}`);
-        // Generate fallback data
-        generateFallbackData();
+        // NO FALLBACK DATA - leave prices empty
       } finally {
         setLoading(false);
       }
@@ -151,8 +125,8 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
         if (results[symbol] && results[symbol].price && !isNaN(results[symbol].price)) {
           newPrices[symbol] = {
             price: parseFloat(results[symbol].price.toFixed(symbol.includes('JPY') ? 3 : 5)),
-            provider: market === 'forex' ? 'yfinance-service' : market === 'crypto' ? 'binance' : 'yfinance-service',
-            timestamp: new Date().toISOString()
+            provider: results[symbol].provider || 'unknown',
+            timestamp: results[symbol].timestamp || new Date().toISOString()
           };
           successCount++;
         }
@@ -163,55 +137,8 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
         setError(null);
       } else {
         setError('No valid price data received');
+        setPrices({}); // Clear prices if no valid data
       }
-    };
-
-    const generateFallbackData = () => {
-      const fallbackPrices: Record<string, PriceData> = {};
-      
-      for (const symbol of selectedSymbols) {
-        let basePrice = 1.0000;
-        
-        if (market === 'forex') {
-          // Generate realistic fallback prices for forex
-          const basePrices: { [key: string]: number } = {
-            'EUR/USD': 1.0850, 'GBP/USD': 1.2650, 'USD/JPY': 149.50,
-            'USD/CHF': 0.8750, 'AUD/USD': 0.6450, 'USD/CAD': 1.3650,
-            'NZD/USD': 0.5950, 'EUR/JPY': 162.25, 'GBP/JPY': 189.15,
-            'EUR/GBP': 0.8580, 'EUR/AUD': 1.6820, 'GBP/AUD': 1.9610,
-            'AUD/CAD': 0.8960, 'CAD/JPY': 109.50, 'CHF/JPY': 170.85,
-            'AUD/CHF': 0.7370, 'CAD/CHF': 0.6410, 'EUR/CHF': 1.2400,
-            'GBP/CHF': 1.4450, 'NZD/CAD': 0.4360, 'NZD/JPY': 89.00,
-            'AUD/NZD': 1.0840
-          };
-          basePrice = basePrices[symbol] || 1.0000;
-        } else if (market === 'crypto') {
-          // Generate realistic fallback prices for crypto
-          const basePrices: { [key: string]: number } = {
-            'BTC/USD': 43250.00, 'ETH/USD': 2650.00, 'BNB/USD': 315.50,
-            'ADA/USD': 0.485, 'SOL/USD': 98.75
-          };
-          basePrice = basePrices[symbol] || 100.00;
-        } else if (market === 'stocks') {
-          // Generate realistic fallback prices for stocks
-          const basePrices: { [key: string]: number } = {
-            'AAPL': 175.50, 'GOOGL': 142.25, 'MSFT': 338.75,
-            'AMZN': 145.80, 'TSLA': 245.90
-          };
-          basePrice = basePrices[symbol] || 100.00;
-        }
-        
-        const variation = (Math.random() - 0.5) * 0.01;
-        const price = basePrice * (1 + variation);
-        
-        fallbackPrices[symbol] = {
-          price: parseFloat(price.toFixed(symbol.includes('JPY') ? 3 : 5)),
-          provider: 'fallback',
-          timestamp: new Date().toISOString()
-        };
-      }
-      
-      setPrices(fallbackPrices);
     };
 
     fetchPrices();
