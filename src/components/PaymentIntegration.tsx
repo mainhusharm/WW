@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bitcoin, Check, Shield, Lock, AlertCircle, AlertTriangle, CheckCircle } from 'lucide-react';
+import { validateCoupon } from '../api';
 
 // Type declarations for window properties
 declare global {
@@ -71,33 +72,20 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
     }
 
     try {
-      const response = await fetch('/api/validate-coupon', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          coupon_code: couponCode,
-          plan_id: selectedPlan.name.toLowerCase(),
-          original_price: selectedPlan.price
-        }),
-      });
+      const response = await validateCoupon(couponCode);
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (data.valid) {
+      if (response.status === 200) {
         setCouponApplied(true);
-        setDiscountAmount(data.discount_amount);
+        setDiscountAmount(data.coupon.value);
         setError('');
-        console.log(`Coupon applied: ${couponCode}, Final price: $${data.final_price}`);
-      } else {
-        setError(data.error || 'Invalid coupon code');
-        setCouponApplied(false);
-        setDiscountAmount(0);
+        console.log(`Coupon applied: ${couponCode}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error applying coupon:', error);
-      setError('Failed to apply coupon. Please try again.');
+      setError(error.response?.data?.error || 'Failed to apply coupon. Please try again.');
+      setCouponApplied(false);
+      setDiscountAmount(0);
     }
   };
 
