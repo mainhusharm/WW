@@ -81,7 +81,8 @@ def create_app(config_object='journal.config.ProductionConfig'):
         allowed_origins = [
             'http://localhost:5173',  # Local development
             'https://main.d2at8owu9hshr.amplifyapp.com',  # Amplify domain
-            'https://traderedgepro.com'  # Production domain
+            'https://traderedgepro.com',  # Production domain
+            'https://frontend-01uh.onrender.com' # Frontend URL
         ]
         
         origin = request.headers.get('Origin')

@@ -51,6 +51,5 @@ interface ImageData {
 export const addTrade = (tradeData: TradeData) => apiClient.post('/add-trade', tradeData);
 export const uploadScreenshot = (imageData: ImageData) => apiClient.post('/upload-screenshot', imageData);
 export const exportTrades = (format = 'csv') => apiClient.get('/export', { params: { format }, responseType: 'blob' });
-export const validateCoupon = (couponCode: string) => apiClient.post('/validate-coupon', { coupon_code: couponCode });
 
 export default apiClient;

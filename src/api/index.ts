@@ -5,7 +5,7 @@ import { API_CONFIG } from './config';
 const api = axios.create({
   ...API_CONFIG,
   // Ensure we're using the correct base URL
-  baseURL: API_CONFIG.backendUrl,
+  baseURL: API_CONFIG.baseURL,
   // Add response type
   responseType: 'json',
 });
@@ -121,7 +121,5 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
-export const validateCoupon = (couponCode: string) => api.post('/journal/validate-coupon', { coupon_code: couponCode });
 
 export default api;
