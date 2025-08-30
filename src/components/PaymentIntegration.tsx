@@ -75,7 +75,12 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
     setDebugInfo(`Applying coupon: ${couponCode} for plan: ${selectedPlan.name} with price: $${selectedPlan.price}`);
 
     try {
-      const response = await fetch('/api/payment/validate-coupon', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const endpoint = `${apiUrl}/payment/validate-coupon`;
+      console.log(`Calling API endpoint: ${endpoint}`);
+      setDebugInfo(prev => prev + `\nAPI endpoint: ${endpoint}`);
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

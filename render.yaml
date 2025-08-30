@@ -52,7 +52,7 @@ services:
       --log-level=info 
       --access-logfile - 
       --error-logfile - 
-      app:app
+      wsgi:application
       
     envVars:
       - key: PYTHON_VERSION
@@ -68,7 +68,7 @@ services:
       - key: PYTHON_FULL_VERSION
         value: "3.11.0"
       - key: FLASK_APP
-        value: "app.py"
+        value: "wsgi.py"
       - key: FLASK_DEBUG
         value: "0"
       - key: DATABASE_URL
@@ -98,6 +98,10 @@ services:
       ./build-production.sh
       
       # Verify build output
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://trading-journal-backend.onrender.com/api/*
       ls -la dist/
       echo "Build completed successfully"
     startCommand: |
