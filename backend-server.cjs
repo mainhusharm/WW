@@ -256,11 +256,15 @@ app.post('/api/payments', async (req, res) => {
   try {
     const { userId, planName, originalPrice, discount, finalPrice, couponCode, paymentMethod } = req.body;
     
-    // Validate required fields
-    if (!userId || !planName || !originalPrice || !finalPrice || !paymentMethod) {
+    console.log('Payment request received:', { userId, planName, originalPrice, discount, finalPrice, couponCode, paymentMethod });
+    
+    // Validate required fields (allow 0 for free payments)
+    if (!userId || !planName || originalPrice === undefined || finalPrice === undefined || !paymentMethod) {
+      console.log('Payment validation failed:', { userId, planName, originalPrice, finalPrice, paymentMethod });
       return res.status(400).json({
         success: false,
-        error: 'Missing required payment fields'
+        error: 'Missing required payment fields',
+        details: { userId: !!userId, planName: !!planName, originalPrice, finalPrice, paymentMethod: !!paymentMethod }
       });
     }
 
