@@ -21,7 +21,8 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "backend": "node backend-server.js",
-    "backend:dev": "nodemon backend-server.js"
+    "backend:dev": "nodemon backend-server.js",
+    "backend:render": "node backend-server-render.js"
   },
   "dependencies": {
     "@heroicons/react": "^2.0.0",
