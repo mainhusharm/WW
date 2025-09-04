@@ -39,8 +39,8 @@ app.get('/setup-db', async (req, res) => {
   try {
     console.log('Setting up database tables...');
     
-    // Create User table if it doesn't exist
-    await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "User" (
+    // Create users table if it doesn't exist (matching Prisma schema)
+    await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "users" (
       "id" TEXT NOT NULL PRIMARY KEY,
       "email" TEXT NOT NULL UNIQUE,
       "password_hash" TEXT NOT NULL,
@@ -54,9 +54,9 @@ app.get('/setup-db', async (req, res) => {
     )`;
     
     // Create indexes one by one
-    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email")`;
-    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "User_status_idx" ON "User"("status")`;
-    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "User_createdAt_idx" ON "User"("created_at")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users"("email")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_status_idx" ON "users"("status")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_createdAt_idx" ON "users"("created_at")`;
     
     // Create updated_at function
     await prisma.$executeRaw`CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -68,11 +68,11 @@ app.get('/setup-db', async (req, res) => {
       $$ language 'plpgsql'`;
     
     // Drop existing trigger if it exists
-    await prisma.$executeRaw`DROP TRIGGER IF EXISTS update_user_updated_at ON "User"`;
+    await prisma.$executeRaw`DROP TRIGGER IF EXISTS update_users_updated_at ON "users"`;
     
     // Create trigger
-    await prisma.$executeRaw`CREATE TRIGGER update_user_updated_at
-      BEFORE UPDATE ON "User"
+    await prisma.$executeRaw`CREATE TRIGGER update_users_updated_at
+      BEFORE UPDATE ON "users"
       FOR EACH ROW
       EXECUTE FUNCTION update_updated_at_column()`;
     
