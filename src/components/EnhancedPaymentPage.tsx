@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Check, Lock, CreditCard, ArrowLeft, X, AlertTriangle, AlertCircle, Copy } from 'lucide-react';
+import { Check, Lock, CreditCard, ArrowLeft, X, AlertTriangle, AlertCircle, Copy, CheckCircle } from 'lucide-react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -245,6 +245,33 @@ export default function EnhancedPaymentPage() {
   const handlePaymentComplete = async () => {
     setError(null);
     
+    // Special handling for $0 payments (free coupons)
+    if (finalPrice === 0) {
+      console.log('Processing free payment (coupon applied)');
+      setPaymentProcessing(true);
+      setPaymentMessage('Processing free access...');
+      
+      // Simulate processing delay for UX
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Create payment data for free coupon
+      const paymentData = {
+        method: 'free_coupon',
+        amount: 0,
+        plan: selectedPlan.name,
+        paymentId: `FREE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        coupon_code: couponCode,
+        coupon_applied: true,
+        discount_amount: discount,
+        timestamp: new Date().toISOString(),
+      };
+      
+      // Process the free payment
+      await handlePaymentSuccess(paymentData);
+      return;
+    }
+    
+    // Regular payment flow for non-zero amounts
     switch (selectedPaymentMethod) {
       case 'paypal':
         setShowPaymentForm(true);
@@ -650,10 +677,18 @@ export default function EnhancedPaymentPage() {
             </div>
 
             {/* Redirection Message */}
-            {selectedPaymentMethod === 'paypal' && (
+            {selectedPaymentMethod === 'paypal' && finalPrice > 0 && (
               <div className="flex items-center text-white/70 text-sm mb-6">
                 <CreditCard className="w-4 h-4 mr-2" />
                 <span>You'll be redirected to PayPal to complete your payment</span>
+              </div>
+            )}
+            
+            {/* Free Access Message */}
+            {finalPrice === 0 && (
+              <div className="flex items-center text-green-400 text-sm mb-6">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                <span>Free access granted! No payment required.</span>
               </div>
             )}
 
@@ -972,7 +1007,7 @@ export default function EnhancedPaymentPage() {
                   {paymentProcessing ? paymentMessage : 'Processing Payment...'}
                 </div>
               ) : (
-                `Complete Payment - $${finalPrice.toFixed(2)}`
+                finalPrice === 0 ? 'Complete Free Access' : `Complete Payment - $${finalPrice.toFixed(2)}`
               )}
             </button>
           </div>
