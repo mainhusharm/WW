@@ -113,6 +113,35 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+// Test Prisma client with users table
+app.get('/test-prisma', async (req, res) => {
+  try {
+    // Try to query the users table using Prisma
+    const users = await prisma.user.findMany({
+      take: 1,
+      select: {
+        id: true,
+        email: true,
+        createdAt: true,
+      },
+    });
+    res.json({ 
+      success: true, 
+      message: 'Prisma client working with users table',
+      users: users,
+      count: users.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Prisma test error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // User registration endpoint
 app.post('/api/auth/register', async (req, res) => {
   try {
