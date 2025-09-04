@@ -7,12 +7,18 @@ interface User {
   fullName: string | null;
   selectedPlan: any;
   questionnaireData: any;
+  cryptoAssets: string[];
+  forexPairs: string[];
+  otherForexPair: string | null;
   screenshotUrl: string | null;
-  riskManagementPlan: string | null;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'REJECTED';
+  riskManagementPlan: any;
+  tradingPreferences: any;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'REJECTED' | 'ACTIVE';
+  planActivatedAt: string | null;
   createdAt: string;
   updatedAt: string;
   payments?: Payment[];
+  trades?: Trade[];
 }
 
 interface Payment {
@@ -26,6 +32,17 @@ interface Payment {
   paymentMethod: string;
   status: string;
   transactionId: string | null;
+  createdAt: string;
+}
+
+interface Trade {
+  id: string;
+  tradeNumber: number;
+  riskAmount: number;
+  profitTarget: number;
+  cumulativeProfit: number;
+  progressPercentage: number | null;
+  userId: string;
   createdAt: string;
 }
 

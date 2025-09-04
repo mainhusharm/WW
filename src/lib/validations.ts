@@ -19,6 +19,43 @@ export const SignupSchema = z.object({
   riskManagementPlan: z.string().optional(),
 });
 
+export const QuestionnaireSchema = z.object({
+  cryptoAssets: z.array(z.string()).optional(),
+  forexPairs: z.array(z.string()).optional(),
+  otherForexPair: z.string().optional(),
+  screenshotUrl: z.string().url().optional().or(z.literal('')),
+});
+
+export const TradingPreferencesSchema = z.object({
+  propFirm: z.string().optional(),
+  riskPerTrade: z.number().min(0.1).max(10).optional(),
+  riskRewardRatio: z.string().optional(),
+  tradesPerDay: z.string().optional(),
+  hasAccount: z.string().optional(),
+  tradingSession: z.string().optional(),
+});
+
+export const RiskManagementPlanSchema = z.object({
+  profitTarget: z.number().optional(),
+  tradesNeeded: z.number().optional(),
+  daysToPass: z.number().optional(),
+  winRateNeeded: z.number().optional(),
+  maxDrawdown: z.number().optional(),
+  positionSize: z.number().optional(),
+  successProbability: z.number().optional(),
+  firmName: z.string().optional(),
+  accountType: z.string().optional(),
+  accountSize: z.number().optional(),
+  riskPerTradePercentage: z.number().optional(),
+  riskRewardRatio: z.string().optional(),
+  riskAmount: z.number().optional(),
+  profitTargetPerTrade: z.number().optional(),
+  tradesPerDayRange: z.string().optional(),
+  sessionType: z.string().optional(),
+  maxDailyRiskAmount: z.number().optional(),
+  dailyTargetAmount: z.number().optional(),
+});
+
 export const StatusUpdateSchema = z.object({
   status: z.enum(['PENDING', 'PROCESSING', 'COMPLETED', 'REJECTED']),
 });
@@ -35,5 +72,8 @@ export const UserUpdateSchema = z.object({
 });
 
 export type SignupInput = z.infer<typeof SignupSchema>;
+export type QuestionnaireInput = z.infer<typeof QuestionnaireSchema>;
+export type TradingPreferencesInput = z.infer<typeof TradingPreferencesSchema>;
+export type RiskManagementPlanInput = z.infer<typeof RiskManagementPlanSchema>;
 export type StatusUpdateInput = z.infer<typeof StatusUpdateSchema>;
 export type UserUpdateInput = z.infer<typeof UserUpdateSchema>;

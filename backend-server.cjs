@@ -52,7 +52,7 @@ app.get('/setup-db', async (req, res) => {
     
     // Create Status enum type if it doesn't exist
     try {
-      await prisma.$executeRaw`CREATE TYPE "Status" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'REJECTED')`;
+      await prisma.$executeRaw`CREATE TYPE "Status" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'REJECTED', 'ACTIVE')`;
       console.log('Status enum created successfully');
     } catch (error) {
       if (error.message.includes('already exists')) {
@@ -71,9 +71,14 @@ app.get('/setup-db', async (req, res) => {
       "full_name" TEXT,
       "selected_plan" JSONB,
       "questionnaire_data" JSONB,
+      "crypto_assets" TEXT[],
+      "forex_pairs" TEXT[],
+      "other_forex_pair" TEXT,
       "screenshot_url" TEXT,
-      "risk_management_plan" TEXT,
+      "risk_management_plan" JSONB,
+      "trading_preferences" JSONB,
       "status" "Status" NOT NULL DEFAULT 'PENDING',
+      "plan_activated_at" TIMESTAMP(3),
       "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`;
@@ -95,6 +100,20 @@ app.get('/setup-db', async (req, res) => {
       FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
     )`;
     
+    // Create trades table if it doesn't exist
+    await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "trades" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "trade_number" INTEGER NOT NULL,
+      "risk_amount" DOUBLE PRECISION NOT NULL,
+      "profit_target" DOUBLE PRECISION NOT NULL,
+      "cumulative_profit" DOUBLE PRECISION NOT NULL,
+      "progress_percentage" DOUBLE PRECISION,
+      "user_id" TEXT NOT NULL,
+      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
+    )`;
+    
     // Create indexes one by one
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users"("email")`;
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_status_idx" ON "users"("status")`;
@@ -102,6 +121,8 @@ app.get('/setup-db', async (req, res) => {
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "payments_user_id_idx" ON "payments"("user_id")`;
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "payments_status_idx" ON "payments"("status")`;
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "payments_created_at_idx" ON "payments"("created_at")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "trades_user_id_idx" ON "trades"("user_id")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "trades_created_at_idx" ON "trades"("created_at")`;
     
     // Create updated_at function
     await prisma.$executeRaw`CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -121,16 +142,32 @@ app.get('/setup-db', async (req, res) => {
       FOR EACH ROW
       EXECUTE FUNCTION update_updated_at_column()`;
     
+    // Create trigger for payments table
+    await prisma.$executeRaw`DROP TRIGGER IF EXISTS update_payments_updated_at ON "payments"`;
+    await prisma.$executeRaw`CREATE TRIGGER update_payments_updated_at
+      BEFORE UPDATE ON "payments"
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column()`;
+    
+    // Create trigger for trades table
+    await prisma.$executeRaw`DROP TRIGGER IF EXISTS update_trades_updated_at ON "trades"`;
+    await prisma.$executeRaw`CREATE TRIGGER update_trades_updated_at
+      BEFORE UPDATE ON "trades"
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column()`;
+    
     console.log('Database setup completed successfully');
     res.json({
       success: true,
-      message: 'Database tables, indexes, and Status enum created successfully',
+      message: 'Database tables, indexes, Status enum, and triggers created successfully',
       timestamp: new Date().toISOString(),
       details: {
         statusEnum: 'Created or already exists',
         usersTable: 'Created or already exists',
+        paymentsTable: 'Created or already exists',
+        tradesTable: 'Created or already exists',
         indexes: 'Created or already exist',
-        trigger: 'Created or already exists'
+        triggers: 'Created or already exist'
       }
     });
   } catch (error) {
@@ -257,38 +294,60 @@ app.post('/api/payments', async (req, res) => {
       });
     }
 
-    // Create payment record
-    const payment = await prisma.payment.create({
-      data: {
-        userId,
-        planName,
-        originalPrice: parseFloat(originalPrice),
-        discount: parseFloat(discount || 0),
-        finalPrice: parseFloat(finalPrice),
-        couponCode: couponCode || null,
-        paymentMethod,
-        status: 'completed',
-        transactionId: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      },
-      select: {
-        id: true,
-        userId: true,
-        planName: true,
-        originalPrice: true,
-        discount: true,
-        finalPrice: true,
-        couponCode: true,
-        paymentMethod: true,
-        status: true,
-        transactionId: true,
-        createdAt: true
-      }
+    // Create payment record and activate user in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create payment record
+      const payment = await tx.payment.create({
+        data: {
+          userId,
+          planName,
+          originalPrice: parseFloat(originalPrice),
+          discount: parseFloat(discount || 0),
+          finalPrice: parseFloat(finalPrice),
+          couponCode: couponCode || null,
+          paymentMethod,
+          status: 'completed',
+          transactionId: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        },
+        select: {
+          id: true,
+          userId: true,
+          planName: true,
+          originalPrice: true,
+          discount: true,
+          finalPrice: true,
+          couponCode: true,
+          paymentMethod: true,
+          status: true,
+          transactionId: true,
+          createdAt: true
+        }
+      });
+
+      // Activate user
+      const user = await tx.user.update({
+        where: { id: userId },
+        data: {
+          status: 'ACTIVE',
+          planActivatedAt: new Date()
+        },
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          status: true,
+          planActivatedAt: true
+        }
+      });
+
+      return { payment, user };
     });
 
     res.json({
       success: true,
-      payment,
-      message: 'Payment recorded successfully'
+      payment: result.payment,
+      user: result.user,
+      message: 'Payment recorded and user activated successfully'
     });
 
   } catch (error) {
@@ -335,6 +394,43 @@ app.get('/api/payments/user/:userId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch user payments',
+      details: error.message
+    });
+  }
+});
+
+// Update user status to ACTIVE after payment
+app.patch('/api/users/:userId/activate', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        status: 'ACTIVE',
+        planActivatedAt: new Date()
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        status: true,
+        planActivatedAt: true,
+        updatedAt: true
+      }
+    });
+
+    res.json({
+      success: true,
+      user,
+      message: 'User activated successfully'
+    });
+
+  } catch (error) {
+    console.error('User activation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to activate user',
       details: error.message
     });
   }
