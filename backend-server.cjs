@@ -50,6 +50,13 @@ app.get('/setup-db', async (req, res) => {
   try {
     console.log('Setting up database tables...');
     
+    // Create Status enum type if it doesn't exist
+    await prisma.$executeRaw`DO $$ BEGIN
+      CREATE TYPE "Status" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'REJECTED');
+    EXCEPTION
+      WHEN duplicate_object THEN null;
+    END $$;`;
+    
     // Create users table if it doesn't exist (matching Prisma schema)
     await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "users" (
       "id" TEXT NOT NULL PRIMARY KEY,
@@ -59,7 +66,7 @@ app.get('/setup-db', async (req, res) => {
       "questionnaire_data" JSONB,
       "screenshot_url" TEXT,
       "risk_management_plan" TEXT,
-      "status" TEXT NOT NULL DEFAULT 'PENDING',
+      "status" "Status" NOT NULL DEFAULT 'PENDING',
       "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`;
