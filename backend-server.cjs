@@ -56,7 +56,7 @@ app.get('/setup-db', async (req, res) => {
     // Create indexes one by one
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users"("email")`;
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_status_idx" ON "users"("status")`;
-    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_createdAt_idx" ON "users"("created_at")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_created_at_idx" ON "users"("created_at")`;
     
     // Create updated_at function
     await prisma.$executeRaw`CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -228,13 +228,8 @@ app.get('/api/users', async (req, res) => {
   try {
     const { status, limit = 50 } = req.query;
     
-    const where = status ? 
-      { status: status } : 
-      { status: { in: ['PENDING', 'PROCESSING'] } };
-
+    // Simplified query without orderBy to test
     const users = await prisma.user.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
       take: parseInt(limit),
       select: {
         id: true,
@@ -259,7 +254,8 @@ app.get('/api/users', async (req, res) => {
     console.error('Error fetching users:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch users'
+      error: 'Failed to fetch users',
+      details: error.message
     });
   }
 });
