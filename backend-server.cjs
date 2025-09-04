@@ -376,23 +376,46 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
       return res.status(400).json({ error: 'Amount is required' });
     }
 
-    // For demo purposes, we'll create a mock PaymentIntent
-    // In production, you would use the real Stripe SDK with your secret key
-    console.log(`Creating Stripe PaymentIntent: amount=${amount}, currency=${currency}, metadata=`, metadata);
+    // Get Stripe secret key from environment
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.VITE_STRIPE_SECRET_KEY;
     
-    // Create a mock client secret that follows Stripe's format
-    const mockClientSecret = `pi_mock_${Date.now()}_secret_${Math.random().toString(36).substr(2, 9)}`;
+    if (!stripeSecretKey || stripeSecretKey === 'sk_test_your_stripe_secret_key_here' || stripeSecretKey === '') {
+      console.log('Stripe secret key not configured properly');
+      return res.status(503).json({ 
+        error: 'Stripe is not properly configured. Please add your Stripe secret key to the environment variables.',
+        code: 'STRIPE_NOT_CONFIGURED'
+      });
+    }
+
+    // Import Stripe dynamically
+    const stripe = require('stripe')(stripeSecretKey);
+    
+    console.log(`Creating real Stripe PaymentIntent: amount=${amount}, currency=${currency}, metadata=`, metadata);
+    
+    // Create real PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount, // Amount in cents
+      currency: currency,
+      metadata: metadata,
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
     
     res.json({
-      clientSecret: mockClientSecret,
+      clientSecret: paymentIntent.client_secret,
       amount: amount,
       currency: currency,
       metadata: metadata,
-      status: 'requires_payment_method'
+      status: paymentIntent.status
     });
   } catch (error) {
     console.error('Stripe PaymentIntent creation error:', error);
-    res.status(500).json({ error: 'Failed to create payment intent', details: error.message });
+    res.status(500).json({ 
+      error: 'Failed to create payment intent', 
+      details: error.message,
+      code: error.code || 'STRIPE_ERROR'
+    });
   }
 });
 

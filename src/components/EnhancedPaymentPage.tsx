@@ -266,14 +266,33 @@ export default function EnhancedPaymentPage() {
     setError(null);
 
     try {
-      // For demo purposes, just show the payment form
-      // In production, you would create a real PaymentIntent here
-      console.log('Initializing Stripe payment for demo');
-      
-      // Simulate a brief loading period
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setShowPaymentForm(true);
+      // Create real PaymentIntent
+      const response = await fetch('https://node-backend-g1mk.onrender.com/api/stripe/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: finalPrice * 100, // Convert to cents
+          currency: 'usd',
+          metadata: {
+            plan: selectedPlan.name,
+            coupon_code: couponCode || '',
+            coupon_applied: couponApplied ? 'true' : 'false',
+            discount_amount: discount || 0,
+            user_id: userData.id
+          }
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.clientSecret) {
+        setStripeClientSecret(data.clientSecret);
+        setShowPaymentForm(true);
+      } else {
+        setError(data.error || 'Failed to initialize Stripe payment');
+      }
     } catch (error) {
       console.error('Stripe initialization error:', error);
       setError('Failed to initialize Stripe payment. Please try again.');
@@ -714,110 +733,38 @@ export default function EnhancedPaymentPage() {
             )}
 
             {/* Stripe Payment Form */}
-            {showPaymentForm && selectedPaymentMethod === 'stripe' && (
+            {showPaymentForm && selectedPaymentMethod === 'stripe' && stripeClientSecret && (
               <div className="mb-6">
                 <h3 className="text-white font-semibold mb-4">Complete Credit Card Payment</h3>
-                
-                {/* Simple Stripe Form (bypassing Elements validation) */}
-                <div className="space-y-4">
-                  <div className="bg-white/5 rounded-lg p-4 mb-4">
-                    <h4 className="text-white font-semibold mb-2">Order Summary</h4>
-                    <div className="flex justify-between text-white/80 text-sm mb-1">
-                      <span>Plan:</span>
-                      <span>{selectedPlan.name}</span>
-                    </div>
-                    <div className="flex justify-between text-white/80 text-sm mb-1">
-                      <span>Amount:</span>
-                      <span className="text-blue-400 font-semibold">${finalPrice.toFixed(2)}</span>
-                    </div>
-                    {couponApplied && (
-                      <div className="mt-2 p-2 bg-green-600/20 border border-green-600 rounded text-green-400 text-sm">
-                        Coupon applied: {couponCode} - Saved ${discount.toFixed(2)}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-4">
-                    <div className="flex items-center space-x-2 text-yellow-300 mb-2">
-                      <AlertTriangle className="w-4 h-4" />
-                      <span className="font-medium text-sm">Demo Mode</span>
-                    </div>
-                    <p className="text-sm text-white/80">
-                      This is a demo Stripe payment. In production, this would integrate with real Stripe Elements.
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
-                        Card Number
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="1234 5678 9012 3456"
-                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium text-white/80 mb-2">
-                          Expiry Date
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="MM/YY"
-                          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-white/80 mb-2">
-                          CVC
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="123"
-                          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-2">
-                        Cardholder Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="John Doe"
-                        className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                  
-                  <p className="text-white/70 text-sm">
-                    This is a demo payment form. All transactions are secure and encrypted.
-                  </p>
-                  
-                  <button
-                    onClick={() => {
-                      // Simulate successful Stripe payment
-                      const paymentData = {
-                        method: 'stripe',
-                        amount: finalPrice,
-                        plan: selectedPlan.name,
-                        paymentId: 'stripe_demo_' + Date.now(),
-                        coupon_code: couponApplied ? couponCode : null,
-                        coupon_applied: couponApplied,
-                        discount_amount: discount,
-                        timestamp: new Date().toISOString(),
-                      };
-                      handlePaymentSuccess(paymentData);
-                    }}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors"
-                  >
-                    Pay ${finalPrice.toFixed(2)} now
-                  </button>
-                </div>
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret: stripeClientSecret,
+                    appearance: {
+                      theme: 'night',
+                      variables: {
+                        colorPrimary: '#3b82f6',
+                        colorBackground: '#1f2937',
+                        colorText: '#ffffff',
+                        colorDanger: '#ef4444',
+                        fontFamily: 'Inter, system-ui, sans-serif',
+                        spacingUnit: '4px',
+                        borderRadius: '8px',
+                      },
+                    },
+                  }}
+                >
+                  <StripeCheckoutForm
+                    clientSecret={stripeClientSecret}
+                    selectedPlan={selectedPlan}
+                    finalPrice={finalPrice}
+                    couponApplied={couponApplied}
+                    couponCode={couponCode}
+                    discount={discount}
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentError={handlePaymentError}
+                  />
+                </Elements>
               </div>
             )}
 
