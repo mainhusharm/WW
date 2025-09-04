@@ -240,6 +240,13 @@ export default function EnhancedPaymentPage() {
     setError(null);
 
     try {
+      // Check if Stripe is properly configured
+      if (!PAYMENT_CONFIG.stripe.publishableKey || PAYMENT_CONFIG.stripe.publishableKey === '') {
+        setError('Stripe is not properly configured. Please use PayPal for now.');
+        setLoading(false);
+        return;
+      }
+
       // Create PaymentIntent
       const response = await fetch('https://node-backend-g1mk.onrender.com/api/stripe/create-payment-intent', {
         method: 'POST',
@@ -261,15 +268,15 @@ export default function EnhancedPaymentPage() {
 
       const data = await response.json();
 
-      if (data.clientSecret) {
+      if (data.clientSecret && data.clientSecret.startsWith('pi_') && data.clientSecret.includes('_secret_')) {
         setStripeClientSecret(data.clientSecret);
         setShowPaymentForm(true);
       } else {
-        setError(data.error || 'Failed to initialize payment');
+        setError('Stripe payment is temporarily unavailable. Please use PayPal for now.');
       }
     } catch (error) {
       console.error('Stripe initialization error:', error);
-      setError('Failed to initialize payment. Please try again.');
+      setError('Stripe payment is temporarily unavailable. Please use PayPal for now.');
     } finally {
       setLoading(false);
     }
@@ -507,6 +514,7 @@ export default function EnhancedPaymentPage() {
                     <div>
                       <div className="text-white font-medium">Stripe</div>
                       <div className="text-white/70 text-sm">Pay with your credit card</div>
+                      <div className="text-yellow-400 text-xs mt-1">⚠️ Temporarily unavailable</div>
                     </div>
                   </div>
                   <div className="flex items-center">

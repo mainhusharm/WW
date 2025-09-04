@@ -376,17 +376,24 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
       return res.status(400).json({ error: 'Amount is required' });
     }
 
+    // Check if Stripe secret key is configured
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.VITE_STRIPE_SECRET_KEY;
+    
+    if (!stripeSecretKey || stripeSecretKey === '') {
+      console.log('Stripe secret key not configured, returning error');
+      return res.status(503).json({ 
+        error: 'Stripe payment is temporarily unavailable. Please use PayPal for now.',
+        code: 'STRIPE_NOT_CONFIGURED'
+      });
+    }
+
     // In a real implementation, you would use Stripe SDK here
-    // For now, we'll create a mock client secret
-    const clientSecret = `pi_mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // For now, we'll return an error since we don't have the secret key
+    console.log(`Stripe PaymentIntent requested: amount=${amount}, currency=${currency}, metadata=`, metadata);
     
-    console.log(`Creating Stripe PaymentIntent: amount=${amount}, currency=${currency}, metadata=`, metadata);
-    
-    res.json({
-      clientSecret,
-      amount,
-      currency,
-      metadata
+    res.status(503).json({ 
+      error: 'Stripe payment is temporarily unavailable. Please use PayPal for now.',
+      code: 'STRIPE_NOT_CONFIGURED'
     });
   } catch (error) {
     console.error('Stripe PaymentIntent creation error:', error);
