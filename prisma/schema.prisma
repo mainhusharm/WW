@@ -23,10 +23,36 @@ model User {
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
   
+  // Relations
+  payments             Payment[]
+  
   @@index([email])
   @@index([status])
   @@index([createdAt])
   @@map("users")
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  planName        String   @map("plan_name")
+  originalPrice   Float    @map("original_price")
+  discount        Float    @default(0)
+  finalPrice      Float    @map("final_price")
+  couponCode      String?  @map("coupon_code")
+  paymentMethod   String   @map("payment_method")
+  status          String   @default("pending")
+  transactionId   String?  @map("transaction_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("payments")
 }
 
 enum Status {

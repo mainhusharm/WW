@@ -12,6 +12,21 @@ interface User {
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'REJECTED';
   createdAt: string;
   updatedAt: string;
+  payments?: Payment[];
+}
+
+interface Payment {
+  id: string;
+  userId: string;
+  planName: string;
+  originalPrice: number;
+  discount: number;
+  finalPrice: number;
+  couponCode: string | null;
+  paymentMethod: string;
+  status: string;
+  transactionId: string | null;
+  createdAt: string;
 }
 
 interface UsersResponse {
@@ -46,6 +61,7 @@ export default function CustomerServiceDashboard() {
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [localStorageData, setLocalStorageData] = useState<any>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [userPayments, setUserPayments] = useState<Payment[]>([]);
 
   // Get API URL from environment variable
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -120,6 +136,22 @@ export default function CustomerServiceDashboard() {
       console.error('Error fetching user:', err);
     }
   }, []);
+
+  const fetchUserPayments = useCallback(async (userId: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/payments/user/${userId}`);
+      const data = await response.json();
+      
+      if (data.success && data.payments) {
+        setUserPayments(data.payments);
+      } else {
+        setUserPayments([]);
+      }
+    } catch (error) {
+      console.error('Error fetching user payments:', error);
+      setUserPayments([]);
+    }
+  }, [API_BASE]);
 
   // Update user status
   const updateUserStatus = async (userId: string, newStatus: string) => {

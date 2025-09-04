@@ -78,10 +78,30 @@ app.get('/setup-db', async (req, res) => {
       "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`;
     
+    // Create payments table if it doesn't exist
+    await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "payments" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "user_id" TEXT NOT NULL,
+      "plan_name" TEXT NOT NULL,
+      "original_price" DOUBLE PRECISION NOT NULL,
+      "discount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+      "final_price" DOUBLE PRECISION NOT NULL,
+      "coupon_code" TEXT,
+      "payment_method" TEXT NOT NULL,
+      "status" TEXT NOT NULL DEFAULT 'pending',
+      "transaction_id" TEXT,
+      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
+    )`;
+    
     // Create indexes one by one
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users"("email")`;
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_status_idx" ON "users"("status")`;
     await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "users_created_at_idx" ON "users"("created_at")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "payments_user_id_idx" ON "payments"("user_id")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "payments_status_idx" ON "payments"("status")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "payments_created_at_idx" ON "payments"("created_at")`;
     
     // Create updated_at function
     await prisma.$executeRaw`CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -169,6 +189,153 @@ app.get('/test-prisma', async (req, res) => {
       success: false,
       error: error.message,
       timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Coupon validation endpoint
+app.post('/api/validate-coupon', async (req, res) => {
+  try {
+    const { coupon_code, plan_id, original_price } = req.body;
+    
+    if (!coupon_code) {
+      return res.status(400).json({
+        valid: false,
+        error: 'Coupon code is required'
+      });
+    }
+
+    console.log(`Validating coupon: ${coupon_code} for plan: ${plan_id} with price: ${original_price}`);
+
+    // Handle the two available coupons
+    if (coupon_code === 'TRADERFREE') {
+      const discount_amount = original_price;
+      const final_price = 0.00;
+      console.log(`TRADERFREE coupon applied: discount=$${discount_amount}, final_price=$${final_price}`);
+      return res.json({
+        valid: true,
+        discount_amount: discount_amount,
+        final_price: final_price,
+        message: 'Free access coupon applied!'
+      });
+    } else if (coupon_code === 'INTERNAL_DEV_OVERRIDE_2024') {
+      const discount_amount = original_price - 0.10;
+      const final_price = 0.10;
+      console.log(`INTERNAL_DEV_OVERRIDE_2024 coupon applied: discount=$${discount_amount}, final_price=$${final_price}`);
+      return res.json({
+        valid: true,
+        discount_amount: discount_amount,
+        final_price: final_price,
+        message: 'Development override coupon applied!'
+      });
+    } else {
+      console.log(`Unknown coupon code: ${coupon_code}`);
+      return res.json({
+        valid: false,
+        error: 'Invalid coupon code'
+      });
+    }
+  } catch (error) {
+    console.error('Coupon validation error:', error);
+    res.status(500).json({
+      valid: false,
+      error: 'Coupon validation failed'
+    });
+  }
+});
+
+// Payment creation endpoint
+app.post('/api/payments', async (req, res) => {
+  try {
+    const { userId, planName, originalPrice, discount, finalPrice, couponCode, paymentMethod } = req.body;
+    
+    // Validate required fields
+    if (!userId || !planName || !originalPrice || !finalPrice || !paymentMethod) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required payment fields'
+      });
+    }
+
+    // Create payment record
+    const payment = await prisma.payment.create({
+      data: {
+        userId,
+        planName,
+        originalPrice: parseFloat(originalPrice),
+        discount: parseFloat(discount || 0),
+        finalPrice: parseFloat(finalPrice),
+        couponCode: couponCode || null,
+        paymentMethod,
+        status: 'completed',
+        transactionId: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      },
+      select: {
+        id: true,
+        userId: true,
+        planName: true,
+        originalPrice: true,
+        discount: true,
+        finalPrice: true,
+        couponCode: true,
+        paymentMethod: true,
+        status: true,
+        transactionId: true,
+        createdAt: true
+      }
+    });
+
+    res.json({
+      success: true,
+      payment,
+      message: 'Payment recorded successfully'
+    });
+
+  } catch (error) {
+    console.error('Payment creation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to record payment',
+      details: error.message
+    });
+  }
+});
+
+// Get user payments endpoint
+app.get('/api/payments/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const payments = await prisma.payment.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        userId: true,
+        planName: true,
+        originalPrice: true,
+        discount: true,
+        finalPrice: true,
+        couponCode: true,
+        paymentMethod: true,
+        status: true,
+        transactionId: true,
+        createdAt: true
+      }
+    });
+
+    res.json({
+      success: true,
+      payments,
+      count: payments.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching user payments:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch user payments',
+      details: error.message
     });
   }
 });

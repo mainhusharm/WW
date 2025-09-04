@@ -135,9 +135,19 @@ export default function EnhancedSignupForm() {
           status: data.user.status
         }));
 
-        // Redirect to dashboard after a short delay
+        // Redirect to payment page after a short delay
         setTimeout(() => {
-          navigate('/customer-service-dashboard');
+          navigate('/payment-enhanced', {
+            state: {
+              userData: {
+                id: data.user.id,
+                email: data.user.email,
+                fullName: data.user.fullName,
+                selectedPlan: selectedPlan,
+                status: data.user.status
+              }
+            }
+          });
         }, 2000);
       } else {
         setError(data.error || 'Failed to create account');
