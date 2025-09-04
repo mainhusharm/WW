@@ -631,6 +631,48 @@ def disconnect_signals():
         'total_subscribers': len(webhook_subscribers)
     })
 
+# Simple Authentication Endpoint (No Database Dependencies)
+@app.route('/api/auth/simple-login', methods=['POST', 'OPTIONS'])
+def simple_login():
+    """Simple login endpoint without database dependencies"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"msg": "No JSON data provided"}), 400
+        
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({"msg": "Email and password required"}), 400
+        
+        # Check against simple users
+        if email in SIMPLE_USERS:
+            user = SIMPLE_USERS[email]
+            
+            # Check password
+            if user['password_hash'] == hash_password(password):
+                # Create access token
+                access_token = create_access_token(user['id'])
+                
+                return jsonify({
+                    "access_token": access_token,
+                    "user": {
+                        "id": user['id'],
+                        "username": user['username'],
+                        "email": email,
+                        "plan_type": user['plan_type']
+                    }
+                }), 200
+        
+        return jsonify({"msg": "Invalid email or password"}), 401
+        
+    except Exception as e:
+        return jsonify({"msg": f"Server error: {str(e)}"}), 500
+
 # Authentication Endpoints
 @app.route('/api/auth/login', methods=['POST', 'OPTIONS'])
 def login():
