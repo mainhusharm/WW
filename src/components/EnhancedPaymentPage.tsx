@@ -248,6 +248,11 @@ export default function EnhancedPaymentPage() {
     // Special handling for $0 payments (free coupons)
     if (finalPrice === 0) {
       console.log('Processing free payment (coupon applied)');
+      console.log('User data:', userData);
+      console.log('Selected plan:', selectedPlan);
+      console.log('Coupon code:', couponCode);
+      console.log('Discount:', discount);
+      
       setPaymentProcessing(true);
       setPaymentMessage('Processing free access...');
       
@@ -265,6 +270,8 @@ export default function EnhancedPaymentPage() {
         discount_amount: discount,
         timestamp: new Date().toISOString(),
       };
+      
+      console.log('Free payment data:', paymentData);
       
       // Process the free payment
       await handlePaymentSuccess(paymentData);
@@ -334,25 +341,34 @@ export default function EnhancedPaymentPage() {
     setError(null);
 
     try {
+      // For free payments, use a default payment method if none selected
+      const paymentMethod = finalPrice === 0 ? 'free_coupon' : selectedPaymentMethod;
+      
+      const paymentRequestData = {
+        userId: userData.id,
+        planName: selectedPlan.name,
+        originalPrice: selectedPlan.price,
+        discount: discount,
+        finalPrice: finalPrice,
+        couponCode: couponApplied ? couponCode : null,
+        paymentMethod: paymentMethod,
+        transactionId: paymentData.paymentId || paymentData.transactionId
+      };
+      
+      console.log('Sending payment request:', paymentRequestData);
+      
       // Store payment data in database
       const response = await fetch('https://node-backend-g1mk.onrender.com/api/payments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userId: userData.id,
-          planName: selectedPlan.name,
-          originalPrice: selectedPlan.price,
-          discount: discount,
-          finalPrice: finalPrice,
-          couponCode: couponApplied ? couponCode : null,
-          paymentMethod: selectedPaymentMethod,
-          transactionId: paymentData.paymentId
-        }),
+        body: JSON.stringify(paymentRequestData),
       });
 
       const data = await response.json();
+      
+      console.log('Payment API response:', data);
 
       if (data.success) {
         // Payment stored successfully
@@ -371,13 +387,15 @@ export default function EnhancedPaymentPage() {
           }
         });
       } else {
-        setError(data.error || 'Failed to record payment');
+        console.error('Payment API error:', data);
+        setError(data.error || data.details || 'Failed to record payment');
       }
     } catch (error) {
       console.error('Payment storage error:', error);
       setError('Payment was successful but failed to record. Please contact support.');
     } finally {
       setLoading(false);
+      setPaymentProcessing(false);
     }
   };
 
