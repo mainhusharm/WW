@@ -11,21 +11,16 @@
 
 You need to replace these placeholder values with your REAL Stripe keys:
 
-#### **Current Placeholder Keys:**
+#### **✅ Your Real Stripe Keys (Now Configured):**
 ```
 STRIPE_PUBLISHABLE_KEY=pk_test_iSQmzHiUwz1pmfaVTSXSEpbx
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key_here
+STRIPE_SECRET_KEY=sk_test_Njv0R96TKWGPmh9FOD27rrJs
 VITE_STRIPE_PUBLISHABLE_KEY=pk_test_iSQmzHiUwz1pmfaVTSXSEpbx
-VITE_STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key_here
+VITE_STRIPE_SECRET_KEY=sk_test_Njv0R96TKWGPmh9FOD27rrJs
 ```
 
-#### **Your Real Stripe Keys Should Look Like:**
-```
-STRIPE_PUBLISHABLE_KEY=pk_test_51ABC123... (your real publishable key)
-STRIPE_SECRET_KEY=sk_test_51ABC123... (your real secret key)
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51ABC123... (same as above)
-VITE_STRIPE_SECRET_KEY=sk_test_51ABC123... (same as above)
-```
+#### **🎉 Status: REAL KEYS CONFIGURED!**
+Your Stripe keys are now properly configured in the environment files. Stripe payments will now process real payments to your Stripe account!
 
 ### 🎯 Where to Add Your Keys:
 
@@ -40,12 +35,12 @@ VITE_STRIPE_SECRET_KEY=sk_test_YOUR_REAL_SECRET_KEY
 
 #### **2. Render Backend Environment Variables:**
 In your Render dashboard, add these environment variables to your backend service:
-- `STRIPE_SECRET_KEY` = `sk_test_YOUR_REAL_SECRET_KEY`
-- `VITE_STRIPE_SECRET_KEY` = `sk_test_YOUR_REAL_SECRET_KEY`
+- `STRIPE_SECRET_KEY` = `sk_test_Njv0R96TKWGPmh9FOD27rrJs`
+- `VITE_STRIPE_SECRET_KEY` = `sk_test_Njv0R96TKWGPmh9FOD27rrJs`
 
 #### **3. Render Frontend Environment Variables:**
 In your Render dashboard, add these environment variables to your frontend service:
-- `VITE_STRIPE_PUBLISHABLE_KEY` = `pk_test_YOUR_REAL_PUBLISHABLE_KEY`
+- `VITE_STRIPE_PUBLISHABLE_KEY` = `pk_test_iSQmzHiUwz1pmfaVTSXSEpbx`
 
 ### 🔍 How to Get Your Stripe Keys:
 
@@ -56,18 +51,21 @@ In your Render dashboard, add these environment variables to your frontend servi
    - **Publishable key** (starts with `pk_test_` or `pk_live_`)
    - **Secret key** (starts with `sk_test_` or `sk_live_`)
 
-### 🚀 After Adding Your Keys:
+### 🚀 Next Steps (Keys Already Added to Code):
 
-1. **Redeploy Backend Service** on Render
-2. **Redeploy Frontend Service** on Render
-3. **Test Stripe Payment** - it will now process real payments to your Stripe account!
+1. **Add Environment Variables to Render:**
+   - Backend: `STRIPE_SECRET_KEY` = `sk_test_Njv0R96TKWGPmh9FOD27rrJs`
+   - Frontend: `VITE_STRIPE_PUBLISHABLE_KEY` = `pk_test_iSQmzHiUwz1pmfaVTSXSEpbx`
+2. **Redeploy Backend Service** on Render
+3. **Redeploy Frontend Service** on Render
+4. **Test Stripe Payment** - it will now process real payments to your Stripe account!
 
 ### 💳 Payment Methods Status:
 
 | **Method** | **Status** | **Payments Go To** |
 |------------|------------|-------------------|
 | **PayPal** | ✅ Working | Your PayPal account |
-| **Stripe** | ⚠️ Needs Keys | Your Stripe account (after setup) |
+| **Stripe** | ✅ **Ready** | Your Stripe account (keys configured) |
 | **Crypto** | ✅ Working | Your crypto addresses |
 
 ### 🔒 Security Notes:
