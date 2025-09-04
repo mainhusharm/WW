@@ -51,11 +51,17 @@ app.get('/setup-db', async (req, res) => {
     console.log('Setting up database tables...');
     
     // Create Status enum type if it doesn't exist
-    await prisma.$executeRaw`DO $$ BEGIN
-      CREATE TYPE "Status" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'REJECTED');
-    EXCEPTION
-      WHEN duplicate_object THEN null;
-    END $$;`;
+    try {
+      await prisma.$executeRaw`CREATE TYPE "Status" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'REJECTED')`;
+      console.log('Status enum created successfully');
+    } catch (error) {
+      if (error.message.includes('already exists')) {
+        console.log('Status enum already exists, skipping...');
+      } else {
+        console.error('Error creating Status enum:', error.message);
+        throw error;
+      }
+    }
     
     // Create users table if it doesn't exist (matching Prisma schema)
     await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "users" (
@@ -95,10 +101,16 @@ app.get('/setup-db', async (req, res) => {
       EXECUTE FUNCTION update_updated_at_column()`;
     
     console.log('Database setup completed successfully');
-    res.json({ 
-      success: true, 
-      message: 'Database tables and indexes created successfully',
-      timestamp: new Date().toISOString()
+    res.json({
+      success: true,
+      message: 'Database tables, indexes, and Status enum created successfully',
+      timestamp: new Date().toISOString(),
+      details: {
+        statusEnum: 'Created or already exists',
+        usersTable: 'Created or already exists',
+        indexes: 'Created or already exist',
+        trigger: 'Created or already exists'
+      }
     });
   } catch (error) {
     console.error('Database setup error:', error);
