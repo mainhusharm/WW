@@ -371,6 +371,47 @@ app.get('/api/payments/user/:userId', async (req, res) => {
   }
 });
 
+// Update user screenshot endpoint
+app.post('/api/users/:userId/screenshot', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { screenshotUrl } = req.body;
+    
+    if (!screenshotUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'Screenshot URL is required'
+      });
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { screenshotUrl },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        screenshotUrl: true,
+        updatedAt: true
+      }
+    });
+
+    res.json({
+      success: true,
+      user,
+      message: 'Screenshot updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Error updating user screenshot:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update screenshot',
+      details: error.message
+    });
+  }
+});
+
 // Stripe Payment Intent Creation
 app.post('/api/stripe/create-payment-intent', async (req, res) => {
   try {

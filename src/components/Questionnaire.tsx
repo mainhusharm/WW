@@ -131,6 +131,37 @@ const Questionnaire: React.FC = () => {
       } else {
         console.warn('Failed to save questionnaire to backend, continuing with local storage');
       }
+
+      // Store screenshot in database if available
+      if (screenshot && user?.id) {
+        try {
+          // Convert file to base64 for storage
+          const reader = new FileReader();
+          reader.onload = async () => {
+            const base64Data = reader.result as string;
+            
+            // Store screenshot in backend
+            const response = await fetch(`https://node-backend-g1mk.onrender.com/api/users/${user.id}/screenshot`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                screenshotUrl: base64Data
+              }),
+            });
+
+            if (response.ok) {
+              console.log('Screenshot stored in database successfully');
+            } else {
+              console.warn('Failed to store screenshot in database');
+            }
+          };
+          reader.readAsDataURL(screenshot);
+        } catch (error) {
+          console.warn('Error storing screenshot:', error);
+        }
+      }
     } catch (error) {
       console.warn('Backend not available, continuing with local storage:', error);
       // Continue without backend - this is expected in demo/offline mode
@@ -156,6 +187,13 @@ const Questionnaire: React.FC = () => {
       };
       localStorage.setItem('current_user', JSON.stringify(updatedUser));
       console.log('Updated user data with questionnaire answers:', updatedUser);
+    }
+
+    // Mark step 1 (questionnaire) as completed
+    const completedSteps = JSON.parse(localStorage.getItem('completed_steps') || '[]');
+    if (!completedSteps.includes(1)) {
+      completedSteps.push(1);
+      localStorage.setItem('completed_steps', JSON.stringify(completedSteps));
     }
 
     // Always navigate to risk management plan regardless of backend status

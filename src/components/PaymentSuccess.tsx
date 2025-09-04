@@ -22,6 +22,7 @@ const PaymentSuccess: React.FC = () => {
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   useEffect(() => {
     // Get payment details from localStorage or location state
@@ -43,6 +44,12 @@ const PaymentSuccess: React.FC = () => {
         cryptocurrency: cryptoData.crypto
       });
       setIsVerifying(true);
+    }
+
+    // Check completed steps from localStorage
+    const completedStepsData = localStorage.getItem('completed_steps');
+    if (completedStepsData) {
+      setCompletedSteps(JSON.parse(completedStepsData));
     }
   }, []);
 
@@ -122,11 +129,27 @@ const PaymentSuccess: React.FC = () => {
   };
 
   const handleSkipToStep = (stepNumber: number) => {
+    // Check if previous steps are completed
+    const isStepAccessible = stepNumber === 1 || completedSteps.includes(stepNumber - 1);
+    
+    if (!isStepAccessible) {
+      alert(`Please complete step ${stepNumber - 1} first before accessing step ${stepNumber}.`);
+      return;
+    }
+
     const route = nextSteps[stepNumber - 1]?.route;
     if (route) {
       setCurrentStep(stepNumber);
       navigate(route);
     }
+  };
+
+  const isStepCompleted = (stepNumber: number) => {
+    return completedSteps.includes(stepNumber);
+  };
+
+  const isStepAccessible = (stepNumber: number) => {
+    return stepNumber === 1 || completedSteps.includes(stepNumber - 1);
   };
 
   if (!paymentDetails) {
@@ -239,57 +262,84 @@ const PaymentSuccess: React.FC = () => {
           <h2 className="text-2xl font-semibold text-white mb-6">Next Steps</h2>
           
           <div className="space-y-6">
-            {nextSteps.map((step, index) => (
-              <div
-                key={step.step}
-                className={`flex items-center p-6 rounded-xl border-2 transition-all ${
-                  currentStep === step.step
-                    ? 'border-blue-500 bg-blue-500/10'
-                    : currentStep > step.step
-                    ? 'border-green-500 bg-green-500/10'
-                    : 'border-gray-600 bg-gray-700/50'
-                }`}
-              >
-                <div className="flex-shrink-0 mr-6">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
-                    currentStep > step.step
-                      ? 'bg-green-500 text-white'
-                      : currentStep === step.step
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-600 text-gray-300'
-                  }`}>
-                    {currentStep > step.step ? '✓' : step.icon}
+            {nextSteps.map((step, index) => {
+              const isCompleted = isStepCompleted(step.step);
+              const isAccessible = isStepAccessible(step.step);
+              const isCurrent = currentStep === step.step;
+              
+              return (
+                <div
+                  key={step.step}
+                  className={`flex items-center p-6 rounded-xl border-2 transition-all ${
+                    isCompleted
+                      ? 'border-green-500 bg-green-500/10'
+                      : isCurrent && isAccessible
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : isAccessible
+                      ? 'border-gray-600 bg-gray-700/50'
+                      : 'border-red-500/50 bg-red-500/5 opacity-60'
+                  }`}
+                >
+                  <div className="flex-shrink-0 mr-6">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
+                      isCompleted
+                        ? 'bg-green-500 text-white'
+                        : isCurrent && isAccessible
+                        ? 'bg-blue-500 text-white'
+                        : isAccessible
+                        ? 'bg-gray-600 text-gray-300'
+                        : 'bg-red-500/50 text-red-300'
+                    }`}>
+                      {isCompleted ? '✓' : !isAccessible ? '🔒' : step.icon}
+                    </div>
+                  </div>
+
+                  <div className="flex-grow">
+                    <h3 className={`text-lg font-semibold mb-2 ${
+                      isCompleted ? 'text-green-400' : isAccessible ? 'text-white' : 'text-gray-500'
+                    }`}>
+                      {step.title}
+                      {!isAccessible && <span className="text-red-400 ml-2">(Locked)</span>}
+                    </h3>
+                    <p className={`mb-2 ${isAccessible ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {step.description}
+                    </p>
+                    <p className={`text-sm ${isAccessible ? 'text-gray-500' : 'text-gray-600'}`}>
+                      Estimated time: {step.estimatedTime}
+                    </p>
+                  </div>
+
+                  <div className="flex-shrink-0">
+                    {isCompleted ? (
+                      <div className="text-green-400 font-semibold flex items-center">
+                        <span className="mr-2">✓</span>
+                        Completed
+                      </div>
+                    ) : isCurrent && isAccessible ? (
+                      <button
+                        onClick={handleNextStep}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center space-x-2"
+                      >
+                        <span>Start Now</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    ) : isAccessible ? (
+                      <button
+                        onClick={() => handleSkipToStep(step.step)}
+                        className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+                      >
+                        Skip to This
+                      </button>
+                    ) : (
+                      <div className="text-red-400 font-semibold flex items-center">
+                        <span className="mr-2">🔒</span>
+                        Locked
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div className="flex-grow">
-                  <h3 className="text-lg font-semibold text-white mb-2">{step.title}</h3>
-                  <p className="text-gray-400 mb-2">{step.description}</p>
-                  <p className="text-sm text-gray-500">Estimated time: {step.estimatedTime}</p>
-                </div>
-
-                <div className="flex-shrink-0">
-                  {currentStep === step.step ? (
-                    <button
-                      onClick={handleNextStep}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center space-x-2"
-                    >
-                      <span>Start Now</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  ) : currentStep < step.step ? (
-                    <button
-                      onClick={() => handleSkipToStep(step.step)}
-                      className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
-                    >
-                      Skip to This
-                    </button>
-                  ) : (
-                    <div className="text-green-400 font-semibold">Completed</div>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {!isVerifying && (

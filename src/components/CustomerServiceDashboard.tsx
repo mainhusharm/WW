@@ -411,6 +411,19 @@ export default function CustomerServiceDashboard() {
                       <p className="mt-1 text-sm text-gray-900 line-clamp-3">{selectedUser.riskManagementPlan}</p>
                   </div>
                   )}
+                  {selectedUser.screenshotUrl && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Account Screenshot</label>
+                      <div className="mt-2">
+                        <img 
+                          src={selectedUser.screenshotUrl} 
+                          alt="Account Screenshot" 
+                          className="max-w-full max-h-64 rounded-lg border border-gray-300 shadow-sm"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Uploaded for account verification</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                         </div>
             )}

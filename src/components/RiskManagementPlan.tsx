@@ -828,6 +828,13 @@ const generatePlan = (data: any) => {
                   try {
                     console.log('Attempting to navigate to dashboard...');
                     
+                    // Mark step 2 (risk management plan) as completed
+                    const completedSteps = JSON.parse(localStorage.getItem('completed_steps') || '[]');
+                    if (!completedSteps.includes(2)) {
+                      completedSteps.push(2);
+                      localStorage.setItem('completed_steps', JSON.stringify(completedSteps));
+                    }
+                    
                     // Save plan if needed
                     if (fromQuestionnaire && currentPlan) {
                       console.log('Saving plan before navigation...');
