@@ -40,44 +40,41 @@ app.get('/setup-db', async (req, res) => {
     console.log('Setting up database tables...');
     
     // Create User table if it doesn't exist
-    await prisma.$executeRaw`
-      CREATE TABLE IF NOT EXISTS "User" (
-        "id" TEXT NOT NULL PRIMARY KEY,
-        "email" TEXT NOT NULL UNIQUE,
-        "password_hash" TEXT NOT NULL,
-        "full_name" TEXT,
-        "questionnaire_data" JSONB,
-        "screenshot_url" TEXT,
-        "risk_management_plan" TEXT,
-        "status" TEXT NOT NULL DEFAULT 'PENDING',
-        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-    `;
+    await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "User" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "email" TEXT NOT NULL UNIQUE,
+      "password_hash" TEXT NOT NULL,
+      "full_name" TEXT,
+      "questionnaire_data" JSONB,
+      "screenshot_url" TEXT,
+      "risk_management_plan" TEXT,
+      "status" TEXT NOT NULL DEFAULT 'PENDING',
+      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`;
     
-    // Create indexes
-    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email");`;
-    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "User_status_idx" ON "User"("status");`;
-    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "User_createdAt_idx" ON "User"("created_at");`;
+    // Create indexes one by one
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "User_status_idx" ON "User"("status")`;
+    await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "User_createdAt_idx" ON "User"("created_at")`;
     
-    // Create updated_at trigger
-    await prisma.$executeRaw`
-      CREATE OR REPLACE FUNCTION update_updated_at_column()
+    // Create updated_at function
+    await prisma.$executeRaw`CREATE OR REPLACE FUNCTION update_updated_at_column()
       RETURNS TRIGGER AS $$
       BEGIN
         NEW.updated_at = CURRENT_TIMESTAMP;
         RETURN NEW;
       END;
-      $$ language 'plpgsql';
-    `;
+      $$ language 'plpgsql'`;
     
-    await prisma.$executeRaw`
-      DROP TRIGGER IF EXISTS update_user_updated_at ON "User";
-      CREATE TRIGGER update_user_updated_at
-        BEFORE UPDATE ON "User"
-        FOR EACH ROW
-        EXECUTE FUNCTION update_updated_at_column();
-    `;
+    // Drop existing trigger if it exists
+    await prisma.$executeRaw`DROP TRIGGER IF EXISTS update_user_updated_at ON "User"`;
+    
+    // Create trigger
+    await prisma.$executeRaw`CREATE TRIGGER update_user_updated_at
+      BEFORE UPDATE ON "User"
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column()`;
     
     console.log('Database setup completed successfully');
     res.json({ 
