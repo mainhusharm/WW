@@ -1,0 +1,76 @@
+.futuristic-form {
+  background: #0a0a1a; /* Deep blue/black */
+  border: 1px solid #00ffff; /* Cyan border */
+  border-radius: 10px;
+  padding: 2rem;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), 0 0 5px rgba(0, 255, 255, 0.5) inset;
+}
+
+.futuristic-form .PaymentElement {
+  margin-bottom: 1.5rem;
+}
+
+.futuristic-form .Label {
+  color: #00ffff !important;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.futuristic-form .Input {
+  background-color: rgba(0, 255, 255, 0.05) !important;
+  border: 1px solid rgba(0, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  border-radius: 5px !important;
+  padding: 12px !important;
+  transition: all 0.3s ease;
+}
+
+.futuristic-form .Input:focus {
+  border-color: #00ffff !important;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5) !important;
+  outline: none;
+}
+
+.pay-button {
+  width: 100%;
+  background: linear-gradient(45deg, #00ffff, #007bff);
+  color: #0a0a1a;
+  font-weight: bold;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 5px;
+  margin-top: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.pay-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pay-button:not(:disabled):hover {
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+  transform: translateY(-2px);
+}
+
+.form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.payment-instructions {
+  color: #00ffff;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.5px;
+}

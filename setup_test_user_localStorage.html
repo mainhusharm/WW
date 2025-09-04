@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Test User - localStorage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .credentials {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .code {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Test User Setup for TraderEdge Pro</h1>
+        
+        <div class="credentials">
+            <h3>📋 Test User Credentials</h3>
+            <p><strong>Email:</strong> testuser@example.com</p>
+            <p><strong>Password:</strong> TestPassword123!</p>
+            <p><strong>Plan:</strong> Premium</p>
+        </div>
+
+        <div id="status"></div>
+
+        <button onclick="setupTestUser()">🔧 Setup Test User in localStorage</button>
+        <button onclick="checkSetup()">🔍 Check Current Setup</button>
+        <button onclick="clearData()">🗑️ Clear Test Data</button>
+        <button onclick="goToLogin()">🔗 Go to Login Page</button>
+
+        <div id="instructions" style="display: none;">
+            <h3>📝 Next Steps:</h3>
+            <ol>
+                <li>Click "Go to Login Page" button above</li>
+                <li>Use the test credentials: <code>testuser@example.com</code> / <code>TestPassword123!</code></li>
+                <li>You should be able to login successfully</li>
+                <li>Navigate to the user dashboard</li>
+                <li>Check the Signals tab for test signals</li>
+            </ol>
+        </div>
+
+        <div id="currentData" style="display: none;">
+            <h3>📊 Current localStorage Data:</h3>
+            <div id="dataDisplay"></div>
+        </div>
+    </div>
+
+    <script>
+        function setupTestUser() {
+            try {
+                // Create user data that matches the frontend expectations
+                const userData = {
+                    "id": "test_user_123",
+                    "name": "Test User",
+                    "email": "testuser@example.com",
+                    "membershipTier": "premium",
+                    "accountType": "personal",
+                    "riskTolerance": "moderate",
+                    "isAuthenticated": true,
+                    "setupComplete": true,
+                    "token": "demo-token-test-user-123"
+                };
+
+                const pendingSignupData = {
+                    "firstName": "Test",
+                    "lastName": "User",
+                    "email": "testuser@example.com",
+                    "password": "TestPassword123!",
+                    "plan_type": "premium"
+                };
+
+                // Store in localStorage
+                localStorage.setItem('user_data', JSON.stringify(userData));
+                localStorage.setItem('pending_signup_data', JSON.stringify(pendingSignupData));
+
+                document.getElementById('status').innerHTML = `
+                    <div class="success">
+                        ✅ Test user setup completed successfully!<br>
+                        You can now login with: testuser@example.com / TestPassword123!
+                    </div>
+                `;
+
+                document.getElementById('instructions').style.display = 'block';
+
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div class="error">
+                        ❌ Error setting up test user: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function checkSetup() {
+            try {
+                const userData = localStorage.getItem('user_data');
+                const pendingData = localStorage.getItem('pending_signup_data');
+
+                let display = '<div class="code">';
+
+                if (userData) {
+                    display += '<strong>user_data:</strong><br>';
+                    display += JSON.stringify(JSON.parse(userData), null, 2) + '<br><br>';
+                } else {
+                    display += '<strong>user_data:</strong> Not found<br><br>';
+                }
+
+                if (pendingData) {
+                    display += '<strong>pending_signup_data:</strong><br>';
+                    display += JSON.stringify(JSON.parse(pendingData), null, 2);
+                } else {
+                    display += '<strong>pending_signup_data:</strong> Not found';
+                }
+
+                display += '</div>';
+
+                document.getElementById('dataDisplay').innerHTML = display;
+                document.getElementById('currentData').style.display = 'block';
+
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div class="error">
+                        ❌ Error checking setup: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function clearData() {
+            try {
+                localStorage.removeItem('user_data');
+                localStorage.removeItem('pending_signup_data');
+                
+                document.getElementById('status').innerHTML = `
+                    <div class="success">
+                        ✅ Test data cleared from localStorage
+                    </div>
+                `;
+
+                document.getElementById('currentData').style.display = 'none';
+                document.getElementById('instructions').style.display = 'none';
+
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div class="error">
+                        ❌ Error clearing data: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function goToLogin() {
+            window.open('https://frontend-zwwl.onrender.com/signin', '_blank');
+        }
+
+        // Check if test user is already set up
+        window.onload = function() {
+            const userData = localStorage.getItem('user_data');
+            if (userData) {
+                try {
+                    const parsed = JSON.parse(userData);
+                    if (parsed.email === 'testuser@example.com') {
+                        document.getElementById('status').innerHTML = `
+                            <div class="success">
+                                ✅ Test user is already set up!<br>
+                                You can login with: testuser@example.com / TestPassword123!
+                            </div>
+                        `;
+                        document.getElementById('instructions').style.display = 'block';
+                    }
+                } catch (e) {
+                    // Ignore parsing errors
+                }
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraderEdge Pro - Direct Access</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            margin: 10px 5px;
+            width: 100%;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .credentials {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 TraderEdge Pro - Direct Access</h1>
+        
+        <div class="success">
+            ✅ Bypass all authentication issues and go directly to the dashboard!
+        </div>
+        
+        <div class="credentials">
+            <h3>📋 Test User</h3>
+            <p><strong>Email:</strong> admin@test.com</p>
+            <p><strong>Password:</strong> admin123</p>
+        </div>
+        
+        <button onclick="directAccess()">🎯 Go Directly to Dashboard</button>
+        <button onclick="goToMainSite()">🌐 Go to Main Site</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function directAccess() {
+            // Create complete user session
+            const userData = {
+                id: "admin_user_123",
+                name: "Admin User",
+                email: "admin@test.com",
+                membershipTier: "premium",
+                accountType: "personal",
+                riskTolerance: "moderate",
+                isAuthenticated: true,
+                setupComplete: true,
+                token: "direct_access_token_123"
+            };
+            
+            // Store everything in localStorage
+            localStorage.setItem('current_user', JSON.stringify(userData));
+            localStorage.setItem('access_token', userData.token);
+            localStorage.setItem('user_data', JSON.stringify(userData));
+            localStorage.setItem('pending_signup_data', JSON.stringify({
+                firstName: "Admin",
+                lastName: "User",
+                email: "admin@test.com",
+                password: "admin123",
+                plan_type: "premium"
+            }));
+            
+            // Also store in sessionStorage
+            sessionStorage.setItem('session_token', userData.token);
+            sessionStorage.setItem('user_session', JSON.stringify(userData));
+            
+            document.getElementById('status').innerHTML = `
+                <div class="success">
+                    ✅ Direct access granted! Redirecting to dashboard...
+                </div>
+            `;
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = 'https://frontend-zwwl.onrender.com/dashboard';
+            }, 2000);
+        }
+        
+        function goToMainSite() {
+            window.location.href = 'https://frontend-zwwl.onrender.com/signin';
+        }
+    </script>
+</body>
+</html>
+        
