@@ -36,6 +36,8 @@ export default function EnhancedPaymentPage() {
   const [discount, setDiscount] = useState(0);
   const [finalPrice, setFinalPrice] = useState(0);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('paypal');
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState('');
 
   // Get user data from location state or sessionStorage
   const userData: UserData = location.state?.userData || JSON.parse(sessionStorage.getItem('userData') || '{}');
@@ -107,51 +109,100 @@ export default function EnhancedPaymentPage() {
 
   const handlePaymentComplete = async () => {
     setLoading(true);
+    setPaymentProcessing(true);
     setError(null);
 
     try {
-      // Store payment data in database
-      const response = await fetch('https://node-backend-g1mk.onrender.com/api/payments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userData.id,
-          planName: selectedPlan.name,
-          originalPrice: selectedPlan.price,
-          discount: discount,
-          finalPrice: finalPrice,
-          couponCode: couponApplied ? couponCode : null,
-          paymentMethod: selectedPaymentMethod
-        }),
-      });
+      // Simulate payment processing based on selected method
+      let paymentSuccess = false;
+      let currentPaymentMessage = '';
 
-      const data = await response.json();
+      switch (selectedPaymentMethod) {
+        case 'paypal':
+          // Simulate PayPal payment processing
+          currentPaymentMessage = 'Redirecting to PayPal...';
+          setPaymentMessage(currentPaymentMessage);
+          // In a real app, this would redirect to PayPal
+          // For demo purposes, we'll simulate a successful payment after a delay
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          currentPaymentMessage = 'Payment successful!';
+          setPaymentMessage(currentPaymentMessage);
+          paymentSuccess = true;
+          break;
+          
+        case 'stripe':
+          // Simulate Stripe payment processing
+          currentPaymentMessage = 'Processing credit card payment...';
+          setPaymentMessage(currentPaymentMessage);
+          // In a real app, this would use Stripe API
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          currentPaymentMessage = 'Payment successful!';
+          setPaymentMessage(currentPaymentMessage);
+          paymentSuccess = true;
+          break;
+          
+        case 'crypto':
+          // Simulate crypto payment processing
+          currentPaymentMessage = 'Processing cryptocurrency payment...';
+          setPaymentMessage(currentPaymentMessage);
+          // In a real app, this would handle crypto transactions
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          currentPaymentMessage = 'Payment successful!';
+          setPaymentMessage(currentPaymentMessage);
+          paymentSuccess = true;
+          break;
+          
+        default:
+          throw new Error('Invalid payment method selected');
+      }
 
-      if (data.success) {
-        // Payment stored successfully
-        const paymentData = {
-          ...data.payment,
-          userData,
-          selectedPlan
-        };
-
-        // Redirect to success page
-        navigate('/payment-success', {
-          state: {
-            paymentData,
-            userData
-          }
+      if (paymentSuccess) {
+        // Only store payment data in database after successful payment
+        const response = await fetch('https://node-backend-g1mk.onrender.com/api/payments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userData.id,
+            planName: selectedPlan.name,
+            originalPrice: selectedPlan.price,
+            discount: discount,
+            finalPrice: finalPrice,
+            couponCode: couponApplied ? couponCode : null,
+            paymentMethod: selectedPaymentMethod
+          }),
         });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Payment stored successfully
+          const paymentData = {
+            ...data.payment,
+            userData,
+            selectedPlan
+          };
+
+          // Redirect to success page
+          navigate('/payment-success', {
+            state: {
+              paymentData,
+              userData
+            }
+          });
+        } else {
+          setError(data.error || 'Failed to record payment');
+        }
       } else {
-        setError(data.error || 'Failed to process payment');
+        setError('Payment processing failed. Please try again.');
       }
     } catch (error) {
       console.error('Payment error:', error);
       setError('Payment failed. Please try again.');
     } finally {
       setLoading(false);
+      setPaymentProcessing(false);
     }
   };
 
@@ -387,6 +438,16 @@ export default function EnhancedPaymentPage() {
               </p>
             </div>
 
+            {/* Payment Processing Message */}
+            {paymentProcessing && (
+              <div className="bg-blue-500/20 border border-blue-500/30 text-blue-200 px-4 py-3 rounded-lg text-sm mb-6">
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-200 mr-2"></div>
+                  {paymentMessage}
+                </div>
+              </div>
+            )}
+
             {/* Error Message */}
             {error && (
               <div className="bg-red-500/20 border border-red-500/30 text-red-200 px-4 py-3 rounded-lg text-sm mb-6">
@@ -397,13 +458,13 @@ export default function EnhancedPaymentPage() {
             {/* Complete Payment Button */}
             <button
               onClick={handlePaymentComplete}
-              disabled={loading}
+              disabled={loading || paymentProcessing}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-4 rounded-lg font-semibold transition-colors flex items-center justify-center"
             >
-              {loading ? (
+              {loading || paymentProcessing ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Processing Payment...
+                  {paymentProcessing ? paymentMessage : 'Processing Payment...'}
                 </div>
               ) : (
                 `Complete Payment - $${finalPrice.toFixed(2)}`
