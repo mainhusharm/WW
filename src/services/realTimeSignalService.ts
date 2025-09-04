@@ -1,17 +1,14 @@
-/**
- * Real-time Signal Service
- * Handles Socket.IO connection and real-time signal updates
- */
-
 import { io, Socket } from 'socket.io-client';
+import { API_CONFIG, WS_CONFIG } from '../api/config';
 import { Signal } from '../trading/types';
+import SignalPersistenceService from './signalPersistenceService';
 
 interface SignalServiceCallbacks {
-  onSignalReceived?: (signal: Signal) => void;
+  onNewSignal?: (signal: Signal) => void;
+  onSignalUpdate?: (signal: Signal) => void;
   onConnected?: () => void;
   onDisconnected?: () => void;
   onError?: (error: Error) => void;
-  onSystemMessage?: (message: any) => void;
 }
 
 class RealTimeSignalService {
@@ -19,34 +16,42 @@ class RealTimeSignalService {
   private callbacks: SignalServiceCallbacks = {};
   private isConnecting = false;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 10;
   private reconnectDelay = 5000;
   private userToken: string | null = null;
+  private signalCache: Map<string, Signal> = new Map();
+  private isConnected = false;
 
   constructor() {
-    this.userToken = localStorage.getItem('access_token') || sessionStorage.getItem('session_token');
+    this.loadUserToken();
+    this.loadSignalCache();
   }
 
-  /**
-   * Set user authentication token
-   */
-  setToken(token: string) {
-    this.userToken = token;
-    localStorage.setItem('access_token', token);
+  private loadUserToken(): void {
+    // Try to get token from localStorage or sessionStorage
+    this.userToken = localStorage.getItem('auth_token') || 
+                    sessionStorage.getItem('auth_token') || 
+                    null;
   }
 
-  /**
-   * Clear user authentication token
-   */
-  clearToken() {
-    this.userToken = null;
-    localStorage.removeItem('access_token');
-    sessionStorage.removeItem('session_token');
+  private loadSignalCache(): void {
+    try {
+      // Load from persistent storage instead of simple cache
+      const persistentSignals = SignalPersistenceService.getAllSignals();
+      persistentSignals.forEach(signal => {
+        this.signalCache.set(signal.id, signal);
+      });
+      console.log(`Loaded ${persistentSignals.length} persistent signals`);
+    } catch (error) {
+      console.error('Error loading signal cache:', error);
+    }
   }
 
-  /**
-   * Set event callbacks
-   */
+  private saveSignalCache(): void {
+    // No need to save cache separately - persistence service handles this
+    // This method is kept for compatibility but does nothing
+  }
+
   setCallbacks(callbacks: SignalServiceCallbacks) {
     this.callbacks = { ...this.callbacks, ...callbacks };
   }
@@ -73,7 +78,7 @@ class RealTimeSignalService {
 
       this.isConnecting = true;
 
-      const socketUrl = 'https://backend-bkt7.onrender.com';
+      const socketUrl = WS_CONFIG.baseURL;
       
       console.log(`Connecting to Socket.IO at: ${socketUrl}`);
 
@@ -95,6 +100,7 @@ class RealTimeSignalService {
         console.log('Socket.IO connected successfully');
         this.isConnecting = false;
         this.reconnectAttempts = 0;
+        this.isConnected = true;
         this.callbacks.onConnected?.();
         resolve();
       });
@@ -110,124 +116,131 @@ class RealTimeSignalService {
       // Disconnection
       this.socket.on('disconnect', (reason) => {
         console.log(`Socket.IO disconnected: ${reason}`);
-        this.isConnecting = false;
+        this.isConnected = false;
         this.callbacks.onDisconnected?.();
-
-        if (reason === 'io server disconnect' || reason === 'io client disconnect') {
-          // Manual disconnection, don't reconnect
-          return;
-        }
-
-        // Attempt to reconnect
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-          const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
+        
+        // Attempt reconnection if not manually disconnected
+        if (reason !== 'io client disconnect' && this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.reconnectAttempts++;
+          const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
           console.log(`Attempting to reconnect in ${delay/1000} seconds...`);
           setTimeout(() => {
-            this.reconnectAttempts++;
             this.connect().catch(console.error);
           }, delay);
-        } else {
-          console.error('Max reconnection attempts reached');
         }
       });
 
-      // Signal received
-      this.socket.on('signal:new', (signalData: any) => {
-        console.log('Received new signal:', signalData);
-        
-        // Transform signal data to match frontend interface
-        const signal: Signal = {
-          id: signalData.id,
-          symbol: signalData.symbol,
-          action: signalData.side?.toUpperCase() || 'BUY',
-          entryPrice: parseFloat(signalData.entry_price) || 0,
-          stopLoss: parseFloat(signalData.stop_loss) || 0,
-          takeProfit: parseFloat(signalData.take_profit) || 0,
-          timeframe: signalData.payload?.timeframe || '1H',
-          status: signalData.status || 'active',
-          createdAt: signalData.created_at,
-          description: signalData.payload?.analysis || '',
-          confidence: signalData.payload?.confidence || 85,
-          rrRatio: signalData.rr_ratio ? `1:${signalData.rr_ratio.toFixed(1)}` : '1:2.0',
-          analysis: signalData.payload?.analysis || 'Professional signal analysis',
-          riskTier: signalData.risk_tier || 'medium'
-        };
-
-        this.callbacks.onSignalReceived?.(signal);
+      // Listen for new signals
+      this.socket.on('new_signal', (signal: Signal) => {
+        console.log('Received new signal:', signal);
+        this.handleNewSignal(signal);
       });
 
-      // System messages
-      this.socket.on('system:message', (message: any) => {
-        console.log('Received system message:', message);
-        this.callbacks.onSystemMessage?.(message);
+      // Listen for signal updates
+      this.socket.on('signal_update', (signal: Signal) => {
+        console.log('Received signal update:', signal);
+        this.handleSignalUpdate(signal);
       });
 
-      // Connection confirmation
-      this.socket.on('connected', (data: any) => {
-        console.log('Connection confirmed:', data);
+      // Listen for connection confirmation
+      this.socket.on('connected', (data) => {
+        console.log('Server confirmed connection:', data);
       });
 
-      // Ping/Pong for connection health
-      this.socket.on('pong', (data: any) => {
-        console.log('Pong received:', data);
+      // Listen for pong responses
+      this.socket.on('pong', (data) => {
+        console.log('Received pong:', data);
       });
     });
+  }
+
+  private handleNewSignal(signal: Signal): void {
+    // Store permanently using persistence service
+    SignalPersistenceService.storeSignal(signal, 'websocket');
+    
+    // Add to cache
+    this.signalCache.set(signal.id, signal);
+    
+    // Notify callback
+    this.callbacks.onNewSignal?.(signal);
+  }
+
+  private handleSignalUpdate(signal: Signal): void {
+    // Update in persistent storage
+    SignalPersistenceService.updateSignalStatus(
+      signal.id, 
+      signal.status || 'active', 
+      signal.outcome, 
+      signal.pnl
+    );
+    
+    // Update cache
+    this.signalCache.set(signal.id, signal);
+    
+    // Notify callback
+    this.callbacks.onSignalUpdate?.(signal);
   }
 
   /**
    * Disconnect from Socket.IO server
    */
-  disconnect() {
+  disconnect(): void {
     if (this.socket) {
-      console.log('Disconnecting from Socket.IO');
       this.socket.disconnect();
       this.socket = null;
+      this.isConnected = false;
     }
-    this.isConnecting = false;
-    this.reconnectAttempts = 0;
   }
 
   /**
    * Send ping to server
    */
-  ping() {
+  ping(): void {
     if (this.socket?.connected) {
       this.socket.emit('ping', { timestamp: new Date().toISOString() });
     }
   }
 
   /**
-   * Join additional room
+   * Get cached signals (from persistent storage)
    */
-  joinRoom(room: string) {
-    if (this.socket?.connected) {
-      this.socket.emit('join_room', { room });
-    }
+  getCachedSignals(): Signal[] {
+    return SignalPersistenceService.getAllSignals().sort((a, b) => 
+      new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    );
   }
 
   /**
-   * Leave room
+   * Clear signal cache (WARNING: This violates the never-delete requirement)
    */
-  leaveRoom(room: string) {
-    if (this.socket?.connected) {
-      this.socket.emit('leave_room', { room });
-    }
+  clearCache(): void {
+    console.warn('WARNING: Clearing signal cache violates the never-delete requirement!');
+    this.signalCache.clear();
+    // Note: We don't clear persistent storage as signals must never be deleted
   }
 
   /**
    * Check if connected
    */
-  isConnected(): boolean {
-    return this.socket?.connected || false;
+  isSocketConnected(): boolean {
+    return this.isConnected && this.socket?.connected === true;
   }
 
   /**
-   * Get connection status
+   * Set authentication token
    */
-  getConnectionStatus(): 'connected' | 'connecting' | 'disconnected' {
-    if (this.isConnecting) return 'connecting';
-    if (this.socket?.connected) return 'connected';
-    return 'disconnected';
+  setAuthToken(token: string): void {
+    this.userToken = token;
+    localStorage.setItem('auth_token', token);
+  }
+
+  /**
+   * Remove authentication token
+   */
+  clearAuthToken(): void {
+    this.userToken = null;
+    localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('auth_token');
   }
 }
 

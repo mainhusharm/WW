@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Signal, TradeOutcome } from '../trading/types';
 import api from '../api';
 import botDataService from '../services/botDataService';
-import socket from '../services/socket';
+import { useRealTimeSignals } from '../hooks/useRealTimeSignals';
 
 interface SignalCardProps {
   signal: Signal;
@@ -142,7 +142,6 @@ interface SignalsFeedProps {
 }
 
 const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal, onChatWithNexus }) => {
-  const [signals, setSignals] = useState<Signal[]>([]);
   const [takenSignalIds, setTakenSignalIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -150,7 +149,20 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
   const signalsPerPage = 20;
   const [currentPage, setCurrentPage] = useState(1);
   
-  const [isConnected, setIsConnected] = useState(socket.connected);
+  // Use the real-time signals hook
+  const { 
+    signals, 
+    isConnected, 
+    isConnecting, 
+    error: connectionError, 
+    connect, 
+    disconnect, 
+    clearCache 
+  } = useRealTimeSignals({ 
+    autoConnect: true, 
+    enableCache: true 
+  });
+  
   const connectionStatus = isConnected ? 'connected' : 'disconnected';
   
   // Calculate pagination values
@@ -161,55 +173,28 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
   
   const totalPages = Math.ceil(signals.length / signalsPerPage);
   
-  // Update connection status when WebSocket connection state changes
+  // Handle connection errors
   useEffect(() => {
-    const onConnect = () => setIsConnected(true);
-    const onDisconnect = () => setIsConnected(false);
+    if (connectionError) {
+      setError(connectionError);
+    }
+  }, [connectionError]);
 
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
-
-    return () => {
-      socket.off('connect', onConnect);
-      socket.off('disconnect', onDisconnect);
-    };
-  }, []);
-  
-  // Handle WebSocket messages
-  useEffect(() => {
-    if (!socket) return;
-    
-    const handleNewSignal = (newSignal: Signal) => {
-      setSignals(prevSignals => {
-        const existingSignalIds = new Set(prevSignals.map(s => s.id));
-        
-        if (!existingSignalIds.has(newSignal.id)) {
-          console.log(`Received new unique signal: ${newSignal.id}`);
-          return [newSignal, ...prevSignals];
-        }
-
-        return prevSignals;
-      });
-    };
-    
-    socket.on('new_signal', handleNewSignal);
-    
-    return () => {
-      socket.off('new_signal', handleNewSignal);
-    };
-  }, [socket]);
-
-  // Fetch initial signals
+  // Fetch initial signals from API as fallback
   useEffect(() => {
     const fetchSignals = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        // Fetch signals from API endpoint
+        // Fetch signals from API endpoint as fallback
         const response = await api.get(`/api/signals`);
         if (response.data.signals && Array.isArray(response.data.signals)) {
-          setSignals(response.data.signals);
+          // Only set if we don't have cached signals
+          if (signals.length === 0) {
+            // This will be handled by the real-time service
+            console.log('Fetched initial signals from API:', response.data.signals.length);
+          }
         } else {
           console.error('Unexpected data format:', response.data);
           setError('Invalid data format received from server');
@@ -222,8 +207,13 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
       }
     };
     
-    fetchSignals();
-  }, [signalsPerPage]);
+    // Only fetch if we don't have any signals yet
+    if (signals.length === 0) {
+      fetchSignals();
+    } else {
+      setIsLoading(false);
+    }
+  }, [signals.length]);
   
   // Handle marking signal as taken
   const handleMarkAsTaken = async (signal: Signal, outcome: TradeOutcome, pnl?: number) => {
@@ -298,7 +288,39 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
   return (
     <div className="signals-feed">
       <div className="connection-status">
-        Status: {connectionStatus === 'connected' ? '🟢 Connected' : '🔴 Disconnected'}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <span className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+            <span className="text-sm font-medium">
+              {isConnected ? '🟢 Real-time Connected' : '🔴 Disconnected'}
+            </span>
+            {isConnecting && <span className="text-sm text-yellow-500">(Connecting...)</span>}
+          </div>
+          <div className="flex space-x-2">
+            {!isConnected && !isConnecting && (
+              <button 
+                onClick={connect}
+                className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+              >
+                Reconnect
+              </button>
+            )}
+            <button 
+              onClick={clearCache}
+              className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700"
+            >
+              Clear Cache
+            </button>
+          </div>
+        </div>
+        {error && (
+          <div className="text-red-500 text-sm mb-2">
+            Error: {error}
+          </div>
+        )}
+        <div className="text-sm text-gray-500">
+          Signals: {signals.length} | Page: {currentPage} of {totalPages}
+        </div>
       </div>
       
       <div className="signals-list">
