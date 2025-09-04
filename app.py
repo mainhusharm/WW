@@ -35,9 +35,16 @@ def get_db_connection():
         return conn
     else:
         # PostgreSQL connection (for production)
-        import psycopg2
-        conn = psycopg2.connect(DATABASE_URL)
-        return conn
+        try:
+            import psycopg2
+            conn = psycopg2.connect(DATABASE_URL)
+            return conn
+        except ImportError:
+            # Fallback to SQLite if psycopg2 is not available
+            print("Warning: psycopg2 not available, falling back to SQLite")
+            conn = sqlite3.connect('trading_platform.db')
+            conn.row_factory = sqlite3.Row
+            return conn
 
 def hash_password(password):
     """Hash password using SHA-256"""
