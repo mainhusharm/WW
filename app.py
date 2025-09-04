@@ -12,12 +12,40 @@ from datetime import datetime, timedelta
 import random
 import threading
 import time
+import hashlib
+import sqlite3
+import os
 
 # Create Flask app
 app = Flask(__name__)
 
 # Initialize Socket.IO
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Database configuration
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///trading_platform.db')
+
+def get_db_connection():
+    """Get database connection"""
+    if DATABASE_URL.startswith('sqlite'):
+        # SQLite connection
+        db_path = DATABASE_URL.replace('sqlite:///', '')
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
+    else:
+        # PostgreSQL connection (for production)
+        import psycopg2
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+
+def hash_password(password):
+    """Hash password using SHA-256"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def create_access_token(user_id):
+    """Create a simple access token"""
+    return f"token_{user_id}_{uuid.uuid4().hex[:16]}"
 
 # Simple CORS configuration
 @app.after_request
@@ -585,6 +613,137 @@ def disconnect_signals():
         'message': 'Disconnected from real-time signals',
         'total_subscribers': len(webhook_subscribers)
     })
+
+# Authentication Endpoints
+@app.route('/api/auth/login', methods=['POST', 'OPTIONS'])
+def login():
+    """User login endpoint"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"msg": "No JSON data provided"}), 400
+        
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({"msg": "Email and password required"}), 400
+        
+        # Connect to database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Find user
+        cursor.execute("""
+            SELECT id, username, email, password_hash, plan_type 
+            FROM users WHERE email = ?
+        """, (email,))
+        
+        user = cursor.fetchone()
+        conn.close()
+        
+        if not user:
+            return jsonify({"msg": "Invalid email or password"}), 401
+        
+        # Check password
+        stored_hash = user['password_hash']
+        if stored_hash and stored_hash != hash_password(password):
+            return jsonify({"msg": "Invalid email or password"}), 401
+        
+        # Check plan type
+        if user['plan_type'] == 'free':
+            return jsonify({"msg": "Please upgrade your plan to login"}), 402
+        
+        # Create access token
+        access_token = create_access_token(user['id'])
+        
+        return jsonify({
+            "access_token": access_token,
+            "user": {
+                "id": user['id'],
+                "username": user['username'],
+                "email": user['email'],
+                "plan_type": user['plan_type']
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"msg": f"Server error: {str(e)}"}), 500
+
+@app.route('/api/auth/register', methods=['POST', 'OPTIONS'])
+def register():
+    """User registration endpoint"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"msg": "No JSON data provided"}), 400
+        
+        email = data.get('email')
+        password = data.get('password')
+        username = data.get('username', email.split('@')[0])  # Default username from email
+        
+        if not email or not password:
+            return jsonify({"msg": "Email and password required"}), 400
+        
+        # Connect to database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if user already exists
+        cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+        if cursor.fetchone():
+            conn.close()
+            return jsonify({"msg": "User already exists"}), 409
+        
+        # Create user
+        user_id = str(uuid.uuid4())
+        password_hash = hash_password(password)
+        
+        cursor.execute("""
+            INSERT INTO users (id, username, email, password_hash, plan_type, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (user_id, username, email, password_hash, 'premium', datetime.now().isoformat()))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            "msg": "User created successfully",
+            "user_id": user_id
+        }), 201
+        
+    except Exception as e:
+        return jsonify({"msg": f"Server error: {str(e)}"}), 500
+
+@app.route('/api/auth/validate', methods=['POST', 'OPTIONS'])
+def validate_token():
+    """Validate access token"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"msg": "No JSON data provided"}), 400
+        
+        token = data.get('access_token')
+        if not token:
+            return jsonify({"msg": "Access token required"}), 400
+        
+        # Simple token validation (in production, use JWT)
+        if token.startswith('token_'):
+            return jsonify({"valid": True}), 200
+        else:
+            return jsonify({"valid": False}), 401
+            
+    except Exception as e:
+        return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
 if __name__ == '__main__':
     print("🚀 Starting Real-Time Working Server with WebSocket support")
