@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Lock, CreditCard, ArrowLeft, X } from 'lucide-react';
+import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 interface SelectedPlan {
   name: string;
@@ -25,6 +28,102 @@ interface CouponResponse {
   error?: string;
 }
 
+// Payment Configuration
+const PAYMENT_CONFIG = {
+  stripe: {
+    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+    currency: 'USD',
+  },
+  paypal: {
+    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || '',
+    currency: 'USD',
+    environment: 'sandbox' as const, // Change to 'live' for production
+  },
+};
+
+// Initialize Stripe
+const stripePromise = loadStripe(PAYMENT_CONFIG.stripe.publishableKey);
+
+// Stripe Checkout Form Component
+const StripeCheckoutForm: React.FC<{
+  clientSecret: string;
+  selectedPlan: SelectedPlan;
+  finalPrice: number;
+  couponApplied: boolean;
+  couponCode: string;
+  discount: number;
+  onPaymentSuccess: (paymentData: any) => void;
+  onPaymentError: (error: string) => void;
+}> = ({ clientSecret, selectedPlan, finalPrice, couponApplied, couponCode, discount, onPaymentSuccess, onPaymentError }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/payment-success`,
+      },
+    });
+
+    if (error) {
+      onPaymentError(error.message || 'Payment failed');
+    } else {
+      // Payment succeeded
+      const paymentData = {
+        method: 'stripe',
+        amount: finalPrice,
+        plan: selectedPlan.name,
+        paymentId: 'stripe_payment_' + Date.now(),
+        coupon_code: couponCode,
+        coupon_applied: couponApplied,
+        discount_amount: discount,
+        timestamp: new Date().toISOString(),
+      };
+      onPaymentSuccess(paymentData);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-white/5 rounded-lg p-4 mb-4">
+        <h3 className="text-white font-semibold mb-2">Order Summary</h3>
+        <div className="flex justify-between text-white/80 text-sm mb-1">
+          <span>Plan:</span>
+          <span>{selectedPlan.name}</span>
+        </div>
+        <div className="flex justify-between text-white/80 text-sm mb-1">
+          <span>Amount:</span>
+          <span className="text-blue-400 font-semibold">${finalPrice.toFixed(2)}</span>
+        </div>
+        {couponApplied && (
+          <div className="mt-2 p-2 bg-green-600/20 border border-green-600 rounded text-green-400 text-sm">
+            Coupon applied: {couponCode} - Saved ${discount.toFixed(2)}
+          </div>
+        )}
+      </div>
+      
+      <PaymentElement />
+      <p className="text-white/70 text-sm">
+        Please enter your card details above. All transactions are secure and encrypted.
+      </p>
+      <button
+        type="submit"
+        disabled={!stripe}
+        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 rounded-lg font-semibold transition-colors"
+      >
+        Pay ${finalPrice.toFixed(2)} now
+      </button>
+    </form>
+  );
+};
+
 export default function EnhancedPaymentPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,6 +137,8 @@ export default function EnhancedPaymentPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('paypal');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState('');
+  const [stripeClientSecret, setStripeClientSecret] = useState('');
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   // Get user data from location state or sessionStorage
   const userData: UserData = location.state?.userData || JSON.parse(sessionStorage.getItem('userData') || '{}');
@@ -107,103 +208,130 @@ export default function EnhancedPaymentPage() {
     setError(null);
   };
 
+  // Handle payment method selection
+  const handlePaymentMethodSelect = (method: string) => {
+    setSelectedPaymentMethod(method);
+    setShowPaymentForm(false);
+    setError(null);
+  };
+
+  // Handle payment completion button click
   const handlePaymentComplete = async () => {
+    setError(null);
+    
+    switch (selectedPaymentMethod) {
+      case 'paypal':
+        setShowPaymentForm(true);
+        break;
+      case 'stripe':
+        await initializeStripePayment();
+        break;
+      case 'crypto':
+        setError('Cryptocurrency payments are not yet available. Please select PayPal or Stripe.');
+        break;
+      default:
+        setError('Please select a payment method');
+    }
+  };
+
+  // Initialize Stripe payment
+  const initializeStripePayment = async () => {
     setLoading(true);
-    setPaymentProcessing(true);
     setError(null);
 
     try {
-      // Simulate payment processing based on selected method
-      let paymentSuccess = false;
-      let currentPaymentMessage = '';
+      // Create PaymentIntent
+      const response = await fetch('https://node-backend-g1mk.onrender.com/api/stripe/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: finalPrice * 100, // Convert to cents
+          currency: 'usd',
+          metadata: {
+            plan: selectedPlan.name,
+            coupon_code: couponCode || '',
+            coupon_applied: couponApplied ? 'true' : 'false',
+            discount_amount: discount || 0,
+            user_id: userData.id
+          }
+        }),
+      });
 
-      switch (selectedPaymentMethod) {
-        case 'paypal':
-          // Simulate PayPal payment processing
-          currentPaymentMessage = 'Redirecting to PayPal...';
-          setPaymentMessage(currentPaymentMessage);
-          // In a real app, this would redirect to PayPal
-          // For demo purposes, we'll simulate a successful payment after a delay
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          currentPaymentMessage = 'Payment successful!';
-          setPaymentMessage(currentPaymentMessage);
-          paymentSuccess = true;
-          break;
-          
-        case 'stripe':
-          // Simulate Stripe payment processing
-          currentPaymentMessage = 'Processing credit card payment...';
-          setPaymentMessage(currentPaymentMessage);
-          // In a real app, this would use Stripe API
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          currentPaymentMessage = 'Payment successful!';
-          setPaymentMessage(currentPaymentMessage);
-          paymentSuccess = true;
-          break;
-          
-        case 'crypto':
-          // Simulate crypto payment processing
-          currentPaymentMessage = 'Processing cryptocurrency payment...';
-          setPaymentMessage(currentPaymentMessage);
-          // In a real app, this would handle crypto transactions
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          currentPaymentMessage = 'Payment successful!';
-          setPaymentMessage(currentPaymentMessage);
-          paymentSuccess = true;
-          break;
-          
-        default:
-          throw new Error('Invalid payment method selected');
-      }
+      const data = await response.json();
 
-      if (paymentSuccess) {
-        // Only store payment data in database after successful payment
-        const response = await fetch('https://node-backend-g1mk.onrender.com/api/payments', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: userData.id,
-            planName: selectedPlan.name,
-            originalPrice: selectedPlan.price,
-            discount: discount,
-            finalPrice: finalPrice,
-            couponCode: couponApplied ? couponCode : null,
-            paymentMethod: selectedPaymentMethod
-          }),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          // Payment stored successfully
-          const paymentData = {
-            ...data.payment,
-            userData,
-            selectedPlan
-          };
-
-          // Redirect to success page
-          navigate('/payment-success', {
-            state: {
-              paymentData,
-              userData
-            }
-          });
-        } else {
-          setError(data.error || 'Failed to record payment');
-        }
+      if (data.clientSecret) {
+        setStripeClientSecret(data.clientSecret);
+        setShowPaymentForm(true);
       } else {
-        setError('Payment processing failed. Please try again.');
+        setError(data.error || 'Failed to initialize payment');
       }
     } catch (error) {
-      console.error('Payment error:', error);
-      setError('Payment failed. Please try again.');
+      console.error('Stripe initialization error:', error);
+      setError('Failed to initialize payment. Please try again.');
     } finally {
       setLoading(false);
-      setPaymentProcessing(false);
     }
+  };
+
+  // Handle successful payment
+  const handlePaymentSuccess = async (paymentData: any) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Store payment data in database
+      const response = await fetch('https://node-backend-g1mk.onrender.com/api/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userData.id,
+          planName: selectedPlan.name,
+          originalPrice: selectedPlan.price,
+          discount: discount,
+          finalPrice: finalPrice,
+          couponCode: couponApplied ? couponCode : null,
+          paymentMethod: selectedPaymentMethod,
+          transactionId: paymentData.paymentId
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Payment stored successfully
+        const successData = {
+          ...data.payment,
+          userData,
+          selectedPlan,
+          paymentData
+        };
+
+        // Redirect to success page
+        navigate('/payment-success', {
+          state: {
+            paymentData: successData,
+            userData
+          }
+        });
+      } else {
+        setError(data.error || 'Failed to record payment');
+      }
+    } catch (error) {
+      console.error('Payment storage error:', error);
+      setError('Payment was successful but failed to record. Please contact support.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle payment error
+  const handlePaymentError = (errorMessage: string) => {
+    setError(errorMessage);
+    setShowPaymentForm(false);
   };
 
   const handleBackToSignup = () => {
@@ -341,7 +469,7 @@ export default function EnhancedPaymentPage() {
                     ? 'border-blue-500 bg-blue-500/20'
                     : 'border-white/20 hover:border-white/40'
                 }`}
-                onClick={() => setSelectedPaymentMethod('paypal')}
+                onClick={() => handlePaymentMethodSelect('paypal')}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -369,7 +497,7 @@ export default function EnhancedPaymentPage() {
                     ? 'border-blue-500 bg-blue-500/20'
                     : 'border-white/20 hover:border-white/40'
                 }`}
-                onClick={() => setSelectedPaymentMethod('stripe')}
+                onClick={() => handlePaymentMethodSelect('stripe')}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -397,7 +525,7 @@ export default function EnhancedPaymentPage() {
                     ? 'border-blue-500 bg-blue-500/20'
                     : 'border-white/20 hover:border-white/40'
                 }`}
-                onClick={() => setSelectedPaymentMethod('crypto')}
+                onClick={() => handlePaymentMethodSelect('crypto')}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -445,6 +573,96 @@ export default function EnhancedPaymentPage() {
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-200 mr-2"></div>
                   {paymentMessage}
                 </div>
+              </div>
+            )}
+
+            {/* PayPal Payment Form */}
+            {showPaymentForm && selectedPaymentMethod === 'paypal' && (
+              <div className="mb-6">
+                <h3 className="text-white font-semibold mb-4">Complete PayPal Payment</h3>
+                <PayPalScriptProvider options={{
+                  clientId: PAYMENT_CONFIG.paypal.clientId,
+                  currency: PAYMENT_CONFIG.paypal.currency,
+                  environment: PAYMENT_CONFIG.paypal.environment,
+                }}>
+                  <PayPalButtons
+                    style={{ layout: 'vertical' }}
+                    createOrder={(data, actions) => {
+                      return actions.order.create({
+                        purchase_units: [
+                          {
+                            description: `${selectedPlan.name} Plan${couponApplied ? ` (Coupon: ${couponCode})` : ''}`,
+                            amount: {
+                              value: finalPrice.toFixed(2),
+                            },
+                          },
+                        ],
+                      });
+                    }}
+                    onApprove={async (data, actions) => {
+                      try {
+                        const details = await actions.order?.capture();
+                        console.log('PayPal payment successful', details);
+
+                        const paymentData = {
+                          method: 'paypal',
+                          amount: finalPrice,
+                          plan: selectedPlan.name,
+                          paymentId: 'paypal_' + details?.id,
+                          coupon_code: couponCode,
+                          coupon_applied: couponApplied,
+                          discount_amount: discount,
+                          timestamp: new Date().toISOString(),
+                        };
+
+                        await handlePaymentSuccess(paymentData);
+                      } catch (err) {
+                        console.error('PayPal payment failed:', err);
+                        handlePaymentError('PayPal payment failed. Please try again.');
+                      }
+                    }}
+                    onError={(err) => {
+                      console.error('PayPal error:', err);
+                      handlePaymentError('An error occurred with PayPal. Please try again.');
+                    }}
+                  />
+                </PayPalScriptProvider>
+              </div>
+            )}
+
+            {/* Stripe Payment Form */}
+            {showPaymentForm && selectedPaymentMethod === 'stripe' && stripeClientSecret && (
+              <div className="mb-6">
+                <h3 className="text-white font-semibold mb-4">Complete Credit Card Payment</h3>
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret: stripeClientSecret,
+                    appearance: {
+                      theme: 'night',
+                      variables: {
+                        colorPrimary: '#3b82f6',
+                        colorBackground: '#1f2937',
+                        colorText: '#ffffff',
+                        colorDanger: '#ef4444',
+                        fontFamily: 'Inter, system-ui, sans-serif',
+                        spacingUnit: '4px',
+                        borderRadius: '8px',
+                      },
+                    },
+                  }}
+                >
+                  <StripeCheckoutForm
+                    clientSecret={stripeClientSecret}
+                    selectedPlan={selectedPlan}
+                    finalPrice={finalPrice}
+                    couponApplied={couponApplied}
+                    couponCode={couponCode}
+                    discount={discount}
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentError={handlePaymentError}
+                  />
+                </Elements>
               </div>
             )}
 

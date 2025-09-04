@@ -367,6 +367,33 @@ app.get('/api/payments/user/:userId', async (req, res) => {
   }
 });
 
+// Stripe Payment Intent Creation
+app.post('/api/stripe/create-payment-intent', async (req, res) => {
+  try {
+    const { amount, currency = 'usd', metadata = {} } = req.body;
+    
+    if (!amount) {
+      return res.status(400).json({ error: 'Amount is required' });
+    }
+
+    // In a real implementation, you would use Stripe SDK here
+    // For now, we'll create a mock client secret
+    const clientSecret = `pi_mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    console.log(`Creating Stripe PaymentIntent: amount=${amount}, currency=${currency}, metadata=`, metadata);
+    
+    res.json({
+      clientSecret,
+      amount,
+      currency,
+      metadata
+    });
+  } catch (error) {
+    console.error('Stripe PaymentIntent creation error:', error);
+    res.status(500).json({ error: 'Failed to create payment intent', details: error.message });
+  }
+});
+
 // Update user status to COMPLETED after payment
 app.patch('/api/users/:userId/activate', async (req, res) => {
   try {
