@@ -41,10 +41,12 @@ services:
   # Frontend Service
   - type: web
     name: trading-platform-frontend
-    env: static
+    env: node
     plan: starter
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
     envVars:
       - key: VITE_API_URL
         value: https://backend-bkt7.onrender.com
+      - key: NODE_ENV
+        value: production
