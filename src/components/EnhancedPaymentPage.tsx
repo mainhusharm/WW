@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Check, Lock, CreditCard, ArrowLeft, X } from 'lucide-react';
+import { Check, Lock, CreditCard, ArrowLeft, X, AlertTriangle, AlertCircle, Copy } from 'lucide-react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -139,6 +139,32 @@ export default function EnhancedPaymentPage() {
   const [paymentMessage, setPaymentMessage] = useState('');
   const [stripeClientSecret, setStripeClientSecret] = useState('');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showCryptoVerification, setShowCryptoVerification] = useState(false);
+  const [selectedCrypto, setSelectedCrypto] = useState('');
+  const [verificationData, setVerificationData] = useState({
+    transactionHash: '',
+    screenshot: null as File | null,
+    amount: '',
+    fromAddress: ''
+  });
+
+  // Cryptocurrency addresses
+  const cryptoAddresses = {
+    ETH: {
+      address: '0x461bBf1B66978fE97B1A2bcEc52FbaB6aEDDF256',
+      name: 'Ethereum (ETH)',
+      network: 'Ethereum Mainnet',
+      symbol: 'ETH',
+      explorer: 'https://etherscan.io/tx/'
+    },
+    SOL: {
+      address: 'GZGsfmqx6bAYdXiVQs3QYfPFPjyfQggaMtBp5qm5R7r3',
+      name: 'Solana (SOL)',
+      network: 'Solana Mainnet',
+      symbol: 'SOL',
+      explorer: 'https://solscan.io/tx/'
+    }
+  };
 
   // Get user data from location state or sessionStorage
   const userData: UserData = location.state?.userData || JSON.parse(sessionStorage.getItem('userData') || '{}');
@@ -227,7 +253,7 @@ export default function EnhancedPaymentPage() {
         await initializeStripePayment();
         break;
       case 'crypto':
-        setError('Cryptocurrency payments are not yet available. Please select PayPal or Stripe.');
+        setShowCryptoVerification(true);
         break;
       default:
         setError('Please select a payment method');
@@ -339,6 +365,82 @@ export default function EnhancedPaymentPage() {
   const handlePaymentError = (errorMessage: string) => {
     setError(errorMessage);
     setShowPaymentForm(false);
+  };
+
+  // Cryptocurrency utility functions
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // You could add a toast notification here
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  };
+
+  const handleCryptoSelection = (crypto: string) => {
+    setSelectedCrypto(crypto);
+    setVerificationData({
+      transactionHash: '',
+      screenshot: null,
+      amount: finalPrice.toString(),
+      fromAddress: ''
+    });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVerificationData(prev => ({ ...prev, screenshot: file }));
+    }
+  };
+
+  const handleVerificationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Simulate verification process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Store verification details
+      const cryptoVerificationData = {
+        crypto: selectedCrypto,
+        address: cryptoAddresses[selectedCrypto as keyof typeof cryptoAddresses].address,
+        transactionHash: verificationData.transactionHash,
+        amount: finalPrice,
+        fromAddress: verificationData.fromAddress,
+        screenshot: verificationData.screenshot?.name,
+        timestamp: new Date().toISOString(),
+        status: 'pending_verification',
+        coupon_code: couponApplied ? couponCode : null,
+        coupon_applied: couponApplied,
+        discount_amount: discount
+      };
+
+      // Store in localStorage for now (in real app, send to backend)
+      localStorage.setItem('crypto_verification', JSON.stringify(cryptoVerificationData));
+
+      // Create payment data for database storage
+      const paymentData = {
+        method: 'crypto',
+        amount: finalPrice,
+        plan: selectedPlan.name,
+        paymentId: 'crypto_' + verificationData.transactionHash,
+        coupon_code: couponApplied ? couponCode : null,
+        coupon_applied: couponApplied,
+        discount_amount: discount,
+        timestamp: new Date().toISOString(),
+        crypto_verification: cryptoVerificationData
+      };
+
+      await handlePaymentSuccess(paymentData);
+    } catch (error) {
+      console.error('Crypto verification error:', error);
+      setError('Failed to submit verification. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBackToSignup = () => {
@@ -671,6 +773,191 @@ export default function EnhancedPaymentPage() {
                     onPaymentError={handlePaymentError}
                   />
                 </Elements>
+              </div>
+            )}
+
+            {/* Cryptocurrency Verification Form */}
+            {showCryptoVerification && (
+              <div className="mb-6">
+                <div className="text-center mb-6">
+                  <div className="text-4xl mb-2">₿</div>
+                  <h3 className="text-white font-semibold text-lg mb-2">Cryptocurrency Payment</h3>
+                  <p className="text-white/70 text-sm">
+                    Send payment to one of our crypto addresses and verify your transaction
+                  </p>
+                </div>
+
+                {!selectedCrypto ? (
+                  <div className="space-y-4">
+                    <h4 className="text-white font-medium text-center mb-4">Select Cryptocurrency</h4>
+                    <div className="grid grid-cols-1 gap-4">
+                      {Object.entries(cryptoAddresses).map(([key, crypto]) => (
+                        <button
+                          key={key}
+                          onClick={() => handleCryptoSelection(key)}
+                          className="p-4 bg-white/5 hover:bg-white/10 rounded-lg border border-white/20 hover:border-blue-500 transition-all text-left"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                              <span className="text-white font-bold text-sm">{crypto.symbol}</span>
+                            </div>
+                            <div>
+                              <div className="text-white font-medium">{crypto.name}</div>
+                              <div className="text-white/60 text-sm">{crypto.network}</div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Payment Instructions */}
+                    <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4">
+                      <h4 className="text-blue-300 font-semibold mb-3">Payment Instructions</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-white/80 mb-2">
+                            Send {cryptoAddresses[selectedCrypto as keyof typeof cryptoAddresses].symbol} to this address:
+                          </label>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="text"
+                              value={cryptoAddresses[selectedCrypto as keyof typeof cryptoAddresses].address}
+                              readOnly
+                              className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white font-mono text-sm"
+                            />
+                            <button
+                              onClick={() => copyToClipboard(cryptoAddresses[selectedCrypto as keyof typeof cryptoAddresses].address)}
+                              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-1"
+                            >
+                              <Copy className="w-4 h-4" />
+                              <span>Copy</span>
+                            </button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-white/60">Amount:</span>
+                            <span className="text-white font-semibold ml-2">${finalPrice} USD equivalent</span>
+                          </div>
+                          <div>
+                            <span className="text-white/60">Network:</span>
+                            <span className="text-white font-semibold ml-2">
+                              {cryptoAddresses[selectedCrypto as keyof typeof cryptoAddresses].network}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Verification Form */}
+                    <form onSubmit={handleVerificationSubmit} className="space-y-4">
+                      <h4 className="text-white font-semibold">Verify Your Payment</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-white/80 mb-2">
+                            Transaction Hash *
+                          </label>
+                          <input
+                            type="text"
+                            value={verificationData.transactionHash}
+                            onChange={(e) => setVerificationData(prev => ({ ...prev, transactionHash: e.target.value }))}
+                            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter transaction hash"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-white/80 mb-2">
+                            Amount Sent (USD) *
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={verificationData.amount}
+                            onChange={(e) => setVerificationData(prev => ({ ...prev, amount: e.target.value }))}
+                            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                            placeholder={finalPrice.toString()}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-white/80 mb-2">
+                          Your Wallet Address (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={verificationData.fromAddress}
+                          onChange={(e) => setVerificationData(prev => ({ ...prev, fromAddress: e.target.value }))}
+                          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
+                          placeholder="Your sending wallet address"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-white/80 mb-2">
+                          Transaction Screenshot (Optional)
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileUpload}
+                          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-blue-600 file:text-white file:cursor-pointer file:text-sm"
+                        />
+                        {verificationData.screenshot && (
+                          <p className="text-sm text-green-400 mt-1">
+                            ✓ {verificationData.screenshot.name} uploaded
+                          </p>
+                        )}
+                        <p className="text-xs text-white/60 mt-1">Max file size: 5MB</p>
+                      </div>
+
+                      <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3">
+                        <div className="flex items-center space-x-2 text-yellow-300 mb-2">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span className="font-medium text-sm">Important Notes</span>
+                        </div>
+                        <ul className="text-sm text-white/80 space-y-1">
+                          <li>• Send the exact USD equivalent amount in {cryptoAddresses[selectedCrypto as keyof typeof cryptoAddresses].symbol}</li>
+                          <li>• Use the correct network ({cryptoAddresses[selectedCrypto as keyof typeof cryptoAddresses].network})</li>
+                          <li>• Verification may take 1-24 hours</li>
+                          <li>• You'll receive email confirmation once verified</li>
+                        </ul>
+                      </div>
+
+                      <div className="flex space-x-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCrypto('');
+                            setVerificationData({ transactionHash: '', screenshot: null, amount: finalPrice.toString(), fromAddress: '' });
+                          }}
+                          className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg font-medium transition-colors"
+                        >
+                          Back to Selection
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                        >
+                          {loading ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>Verifying...</span>
+                            </>
+                          ) : (
+                            <span>Submit for Verification</span>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
             )}
 
