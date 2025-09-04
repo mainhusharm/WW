@@ -229,7 +229,9 @@ app.post('/api/auth/register', async (req, res) => {
 
     res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Internal server error',
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
