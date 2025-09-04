@@ -473,7 +473,7 @@ app.post('/api/auth/register', async (req, res) => {
           email: data.email,
           passwordHash,
           fullName: data.fullName,
-          selectedPlan: data.selectedPlan,
+          // selectedPlan: data.selectedPlan, // Temporarily commented out until DB is updated
           questionnaireData: data.questionnaire,
           screenshotUrl: data.screenshot,
           riskManagementPlan: data.riskManagementPlan,
@@ -483,7 +483,7 @@ app.post('/api/auth/register', async (req, res) => {
           id: true,
           email: true,
           fullName: true,
-          selectedPlan: true,
+          // selectedPlan: true, // Temporarily commented out until DB is updated
           createdAt: true,
         },
       });
