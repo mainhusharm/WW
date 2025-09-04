@@ -34,6 +34,9 @@ export default function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Get API URL from environment variable
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
   
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -55,7 +58,7 @@ export default function SignupForm() {
     setSuccess(null);
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

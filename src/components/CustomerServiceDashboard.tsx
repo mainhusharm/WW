@@ -46,6 +46,9 @@ export default function CustomerServiceDashboard() {
   const [localStorageData, setLocalStorageData] = useState<any>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
+  // Get API URL from environment variable
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
   // Get current user from URL params or localStorage
   const currentUserId = searchParams.get('userId') || localStorage.getItem('userId');
   const isNewUser = searchParams.get('new') === 'true';
@@ -73,7 +76,7 @@ export default function CustomerServiceDashboard() {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/api/users');
+      const response = await fetch(`${API_BASE}/api/users`);
       const data: UsersResponse = await response.json();
 
       if (data.success && data.users) {
@@ -102,7 +105,7 @@ export default function CustomerServiceDashboard() {
   // Fetch specific user
   const fetchUser = useCallback(async (userId: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/users/${userId}`);
+      const response = await fetch(`${API_BASE}/api/users/${userId}`);
       const data: UserResponse = await response.json();
 
       if (data.success && data.user) {
@@ -121,7 +124,7 @@ export default function CustomerServiceDashboard() {
   const updateUserStatus = async (userId: string, newStatus: string) => {
     try {
       setUpdatingStatus(userId);
-      const response = await fetch(`http://localhost:3001/api/users/${userId}/status`, {
+      const response = await fetch(`${API_BASE}/api/users/${userId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
