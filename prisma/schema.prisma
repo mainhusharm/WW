@@ -15,30 +15,15 @@ model User {
   email                String   @unique
   passwordHash         String   @map("password_hash")
   fullName             String?  @map("full_name")
-  selectedPlan         Json?    @map("selected_plan")
-  
-  // Questionnaire Data (from questionnaire page)
   questionnaireData    Json?    @map("questionnaire_data")
-  cryptoAssets         String[] @map("crypto_assets")
-  forexPairs           String[] @map("forex_pairs")
-  otherForexPair       String?  @map("other_forex_pair")
   screenshotUrl        String?  @map("screenshot_url")
-  
-  // Risk Management Plan Data (from risk management page)
-  riskManagementPlan   Json?    @map("risk_management_plan")
-  
-  // Trading Preferences (from trading preferences page)
-  tradingPreferences   Json?    @map("trading_preferences")
-  
-  // Account Status
+  riskManagementPlan   String?  @map("risk_management_plan")
   status               Status   @default(PENDING)
-  planActivatedAt      DateTime? @map("plan_activated_at")
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
   
   // Relations
   payments             Payment[]
-  trades               Trade[]
   
   @@index([email])
   @@index([status])
@@ -69,29 +54,9 @@ model Payment {
   @@map("payments")
 }
 
-model Trade {
-  id                 String    @id @default(cuid())
-  tradeNumber        Int       @map("trade_number")
-  riskAmount         Float     @map("risk_amount")
-  profitTarget       Float     @map("profit_target")
-  cumulativeProfit   Float     @map("cumulative_profit")
-  progressPercentage Float?    @map("progress_percentage")
-  
-  userId             String    @map("user_id")
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-  
-  @@index([userId])
-  @@index([createdAt])
-  @@map("trades")
-}
-
 enum Status {
   PENDING
   PROCESSING
   COMPLETED
   REJECTED
-  ACTIVE
 }
