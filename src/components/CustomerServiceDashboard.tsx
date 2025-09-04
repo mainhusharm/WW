@@ -5,6 +5,7 @@ interface User {
   id: string;
   email: string;
   fullName: string | null;
+  selectedPlan: any;
   questionnaireData: any;
   screenshotUrl: string | null;
   riskManagementPlan: string | null;
@@ -330,11 +331,25 @@ export default function CustomerServiceDashboard() {
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedUser.status)}`}>
                       {selectedUser.status}
                     </span>
-                  </div>
+                      </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Registered</label>
                     <p className="mt-1 text-sm text-gray-900">{formatDate(selectedUser.createdAt)}</p>
                   </div>
+                  {selectedUser.selectedPlan && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Selected Plan</label>
+                      <div className="mt-1 p-3 bg-blue-50 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-blue-900">{selectedUser.selectedPlan.name}</span>
+                          <span className="text-sm text-blue-700">${selectedUser.selectedPlan.price}/{selectedUser.selectedPlan.period}</span>
+                        </div>
+                        {selectedUser.selectedPlan.description && (
+                          <p className="text-xs text-blue-600 mt-1">{selectedUser.selectedPlan.description}</p>
+                        )}
+                      </div>
+                  </div>
+                  )}
                   {selectedUser.questionnaireData && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Experience</label>

@@ -15,6 +15,7 @@ model User {
   email                String   @unique
   passwordHash         String   @map("password_hash")
   fullName             String?  @map("full_name")
+  selectedPlan         Json?    @map("selected_plan")
   questionnaireData    Json?    @map("questionnaire_data")
   screenshotUrl        String?  @map("screenshot_url")
   riskManagementPlan   String?  @map("risk_management_plan")

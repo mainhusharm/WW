@@ -131,12 +131,13 @@ const MembershipPlans: React.FC = () => {
   const handlePlanSelect = (plan: any) => {
     if (plan.isAffiliate) return;
     
-    navigate('/signup', {
+    navigate('/signup-enhanced', {
       state: { 
         selectedPlan: { 
           name: plan.name, 
           price: plan.price, 
-          period: plan.period 
+          period: plan.period,
+          description: plan.description
         } 
       }
     });

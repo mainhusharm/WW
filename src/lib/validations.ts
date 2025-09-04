@@ -4,6 +4,12 @@ export const SignupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   fullName: z.string().optional(),
+  selectedPlan: z.object({
+    name: z.string(),
+    price: z.number(),
+    period: z.string(),
+    description: z.string().optional(),
+  }).optional(),
   questionnaire: z.object({
     experience: z.string(),
     goals: z.string(),

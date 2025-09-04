@@ -69,6 +69,7 @@ app.get('/setup-db', async (req, res) => {
       "email" TEXT NOT NULL UNIQUE,
       "password_hash" TEXT NOT NULL,
       "full_name" TEXT,
+      "selected_plan" JSONB,
       "questionnaire_data" JSONB,
       "screenshot_url" TEXT,
       "risk_management_plan" TEXT,
@@ -209,6 +210,7 @@ app.post('/api/auth/register', async (req, res) => {
           email: data.email,
           passwordHash,
           fullName: data.fullName,
+          selectedPlan: data.selectedPlan,
           questionnaireData: data.questionnaire,
           screenshotUrl: data.screenshot,
           riskManagementPlan: data.riskManagementPlan,
@@ -218,6 +220,7 @@ app.post('/api/auth/register', async (req, res) => {
           id: true,
           email: true,
           fullName: true,
+          selectedPlan: true,
           createdAt: true,
         },
       });
