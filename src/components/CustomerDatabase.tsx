@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, User, Mail, Calendar, Activity, Filter, Download, RefreshCw, TrendingUp } from 'lucide-react';
 import { errorHandler } from '../services/errorHandler';
-import { makeCorsSafeRequest, makeRequestWithCorsProxy } from '../utils/apiClient';
+import { getUsers } from '../utils/simpleApiClient';
 
 interface Customer {
   id: string;
@@ -34,52 +34,15 @@ const CustomerDatabase: React.FC = () => {
       const authToken = localStorage.getItem('customerServiceToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2VudCI6eyJpZCI6IjY4YWMzZmUyMjRmMWY0OTlkZDE4OGU5MCJ9LCJpYXQiOjE3NTYxMTkwMTAsImV4cCI6MTc1NjEyMjYxMH0.kQVfzTXSjP557ubGCf7ifhwdI-ETcTdrIg2MgYoz04s';
       
       const customerData = await errorHandler.handleCustomersApi(async () => {
-        // Try customer service API with CORS handling
+        // Use simple API client that handles CORS
         try {
-          // First try direct request
-          const response = await makeCorsSafeRequest('/api/users', {
-            method: 'GET',
-            headers: {
-              'x-auth-token': authToken
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Fetched customers:', data);
-            return data;
-          }
-          
-          // If unauthorized, try to re-authenticate
-          if (response.status === 401) {
-            console.log('Authentication required, attempting to re-authenticate...');
-            // Here you would typically implement token refresh logic
-            throw new Error('Authentication required');
-          }
-          
-          throw new Error(`API request failed with status ${response.status}`);
+          console.log('Fetching users with simple API client...');
+          const data = await getUsers();
+          console.log('Fetched customers:', data);
+          return data;
         } catch (error) {
-          console.error('Direct API call failed, trying CORS proxy:', error);
-          // Try with CORS proxy as fallback
-          try {
-            const proxyResponse = await makeRequestWithCorsProxy('/api/users', {
-              method: 'GET',
-              headers: {
-                'x-auth-token': authToken
-              }
-            });
-            
-            if (proxyResponse.ok) {
-              const data = await proxyResponse.json();
-              console.log('Fetched customers via CORS proxy:', data);
-              return data;
-            } else {
-              throw new Error(`CORS proxy also failed! status: ${proxyResponse.status}`);
-            }
-          } catch (proxyError) {
-            console.error('CORS proxy also failed:', proxyError);
-            throw error; // Throw original error
-          }
+          console.error('Error fetching customers:', error);
+          throw error;
         }
       });
 

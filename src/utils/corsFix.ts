@@ -30,8 +30,8 @@ export const getApiBaseUrl = () => {
   
   // If we're in production and origin is not allowed, use a CORS proxy
   if (import.meta.env.PROD && !isOriginAllowed()) {
-    // Use a different approach - try to use the allowed origin
-    return 'https://node-backend-g1mk.onrender.com';
+    // Use a CORS proxy or different backend
+    return 'https://cors-proxy-trading.onrender.com';
   }
   
   // Default to the configured URL
@@ -76,4 +76,63 @@ export const getAlternativeApiUrl = () => {
   ];
   
   return alternatives[0]; // Use the first one for now
+};
+
+// Create a simple CORS proxy using a public service
+export const createCorsProxyUrl = (targetUrl: string) => {
+  // Use a public CORS proxy service
+  return `https://cors-anywhere.herokuapp.com/${targetUrl}`;
+};
+
+// Make request with CORS proxy
+export const makeRequestWithCorsProxy = async (url: string, options: RequestInit = {}) => {
+  const apiBaseUrl = getApiBaseUrl();
+  const fullUrl = url.startsWith('http') ? url : `${apiBaseUrl}${url}`;
+  
+  // Use CORS proxy
+  const proxyUrl = createCorsProxyUrl(fullUrl);
+  
+  const corsOptions: RequestInit = {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      ...options.headers,
+    },
+    mode: 'cors',
+    credentials: 'omit'
+  };
+  
+  try {
+    const response = await fetch(proxyUrl, corsOptions);
+    return response;
+  } catch (error) {
+    console.error('CORS proxy request failed:', error);
+    throw error;
+  }
+};
+
+// Simple solution: Use a different approach for CORS
+export const makeSimpleRequest = async (url: string, options: RequestInit = {}) => {
+  const apiBaseUrl = 'https://node-backend-g1mk.onrender.com';
+  const fullUrl = url.startsWith('http') ? url : `${apiBaseUrl}${url}`;
+  
+  // Try to make the request with minimal headers
+  const simpleOptions: RequestInit = {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    mode: 'no-cors' // This bypasses CORS but limits response access
+  };
+  
+  try {
+    const response = await fetch(fullUrl, simpleOptions);
+    return response;
+  } catch (error) {
+    console.error('Simple request failed:', error);
+    throw error;
+  }
 };
