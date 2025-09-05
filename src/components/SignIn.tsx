@@ -87,47 +87,67 @@ const SignIn = () => {
         }
       } else {
         // Try backend authentication
-        // Simple, clean API endpoint construction
-      let apiEndpoint;
-      if (window.location.hostname === 'localhost') {
-        apiEndpoint = '/api/auth/login';
-      } else {
-        apiEndpoint = 'https://backend-bkt7.onrender.com/api/auth/login';
-      }
-      const response = await fetch(apiEndpoint, {
+        // Try direct connection first
+      let apiEndpoint = 'https://backend-bkt7.onrender.com/api/auth/login';
+      let response;
+      let data;
+      
+      try {
+        response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ email, password }),
         });
+        
+        data = await response.json();
+      } catch (corsError) {
+        console.log('Direct connection failed, trying CORS proxy...', corsError);
+        
+        // Use CORS proxy as fallback
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiEndpoint)}`;
+        response = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+        
+        data = await response.json();
+      }
 
-        const data = await response.json();
-
-        if (response.ok) {
-          localStorage.setItem('access_token', data.access_token);
-          
-          // Decode JWT to get user info
-          const tokenPayload = JSON.parse(atob(data.access_token.split('.')[1]));
-          
-          const backendUserData = {
-            id: tokenPayload.sub || '',
-            name: tokenPayload.username || email,
-            email: email,
-            membershipTier: tokenPayload.plan_type || 'professional',
-            accountType: 'personal' as const,
-            riskTolerance: 'moderate' as const,
-            isAuthenticated: true,
-            setupComplete: true,
-            selectedPlan,
-            token: data.access_token
-          };
-          
-          login(backendUserData, data.access_token, rememberMe);
-          navigate('/dashboard');
-        } else {
+      if (response.ok) {
+        localStorage.setItem('access_token', data.access_token);
+        
+        // Decode JWT to get user info
+        const tokenPayload = JSON.parse(atob(data.access_token.split('.')[1]));
+        
+        const backendUserData = {
+          id: tokenPayload.sub || '',
+          name: tokenPayload.username || email,
+          email: email,
+          membershipTier: tokenPayload.plan_type || 'professional',
+          accountType: 'personal' as const,
+          riskTolerance: 'moderate' as const,
+          isAuthenticated: true,
+          setupComplete: true,
+          selectedPlan,
+          token: data.access_token
+        };
+        
+        login(backendUserData, data.access_token, rememberMe);
+        navigate('/dashboard');
+      } else {
+        if (response.status === 401) {
           setError('Invalid email or password. Please check your credentials or sign up first.');
+        } else if (response.status === 500) {
+          setError('Server error. Please try again later.');
+        } else {
+          setError('Login failed. Please try again.');
         }
+      }
       }
     } catch (error) {
       console.error('Login error:', error);

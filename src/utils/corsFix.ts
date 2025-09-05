@@ -1,138 +1,59 @@
 /**
- * CORS Fix Utility
- * Handles CORS issues by using different approaches
+ * Universal CORS Fix
+ * This module automatically fixes CORS issues across the entire application
  */
 
-// Check if we're in a browser environment
-const isBrowser = typeof window !== 'undefined';
+// Store original fetch function
+const originalFetch = window.fetch;
 
-// Get the current origin
-const getCurrentOrigin = () => {
-  if (!isBrowser) return '';
-  return window.location.origin;
-};
-
-// Check if the current origin is allowed by the backend
-const isOriginAllowed = () => {
-  const origin = getCurrentOrigin();
-  const allowedOrigins = [
-    'https://frontend-i6xs.onrender.com',
-    'https://trading-platform-frontend.onrender.com',
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ];
-  return allowedOrigins.includes(origin);
-};
-
-// Get the appropriate API base URL
-export const getApiBaseUrl = () => {
-  if (!isBrowser) return 'http://localhost:5000';
+// Override fetch to automatically handle CORS issues
+window.fetch = function(url: string | Request | URL, options: RequestInit = {}) {
+  // Convert URL to string if needed
+  const urlString = typeof url === 'string' ? url : url.toString();
   
-  // If we're in production and origin is not allowed, use a CORS proxy
-  if (import.meta.env.PROD && !isOriginAllowed()) {
-    // Use a CORS proxy or different backend
-    return 'https://cors-proxy-trading.onrender.com';
+  // Check if this is a request to any of our backends
+  if (urlString.includes('node-backend-g1mk.onrender.com') ||
+      urlString.includes('backend-bkt7.onrender.com') ||
+      urlString.includes('backend-8j0e.onrender.com')) {
+    
+    console.log('🔄 CORS Fix: Intercepting request to', urlString);
+    
+    // Use CORS proxy
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlString)}`;
+    console.log('🔄 CORS Fix: Using proxy', proxyUrl);
+    
+    return originalFetch(proxyUrl, options);
   }
   
-  // Default to the configured URL
-  return import.meta.env.PROD 
-    ? 'https://node-backend-g1mk.onrender.com'
-    : 'http://localhost:5000';
+  // For all other requests, use original fetch
+  return originalFetch(url, options);
 };
 
-// Make a CORS-safe request
-export const makeCorsSafeRequest = async (url: string, options: RequestInit = {}) => {
-  const apiBaseUrl = getApiBaseUrl();
-  const fullUrl = url.startsWith('http') ? url : `${apiBaseUrl}${url}`;
+// Store original XMLHttpRequest open method
+const originalXHROpen = XMLHttpRequest.prototype.open;
+
+// Override XMLHttpRequest for older code
+XMLHttpRequest.prototype.open = function(method: string, url: string | URL, ...args: any[]) {
+  const urlString = typeof url === 'string' ? url : url.toString();
   
-  // Add CORS headers
-  const corsOptions: RequestInit = {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...options.headers,
-    },
-    mode: 'cors',
-    credentials: 'omit'
-  };
-  
-  try {
-    const response = await fetch(fullUrl, corsOptions);
-    return response;
-  } catch (error) {
-    console.error('CORS request failed:', error);
-    throw error;
+  // Check if this is a request to any of our backends
+  if (urlString.includes('node-backend-g1mk.onrender.com') ||
+      urlString.includes('backend-bkt7.onrender.com') ||
+      urlString.includes('backend-8j0e.onrender.com')) {
+    
+    console.log('🔄 CORS Fix: Intercepting XHR request to', urlString);
+    
+    // Use CORS proxy
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlString)}`;
+    console.log('🔄 CORS Fix: Using XHR proxy', proxyUrl);
+    
+    return originalXHROpen.call(this, method, proxyUrl, ...args);
   }
+  
+  // For all other requests, use original open
+  return originalXHROpen.call(this, method, url, ...args);
 };
 
-// Alternative: Use a different backend URL that might have better CORS support
-export const getAlternativeApiUrl = () => {
-  // Try different backend URLs that might work
-  const alternatives = [
-    'https://node-backend-g1mk.onrender.com',
-    'https://backend-bkt7.onrender.com',
-    'https://trading-platform-api.onrender.com'
-  ];
-  
-  return alternatives[0]; // Use the first one for now
-};
+console.log('✅ CORS Fix: Applied universal CORS fix to all API calls');
 
-// Create a simple CORS proxy using a public service
-export const createCorsProxyUrl = (targetUrl: string) => {
-  // Use a public CORS proxy service
-  return `https://cors-anywhere.herokuapp.com/${targetUrl}`;
-};
-
-// Make request with CORS proxy
-export const makeRequestWithCorsProxy = async (url: string, options: RequestInit = {}) => {
-  const apiBaseUrl = getApiBaseUrl();
-  const fullUrl = url.startsWith('http') ? url : `${apiBaseUrl}${url}`;
-  
-  // Use CORS proxy
-  const proxyUrl = createCorsProxyUrl(fullUrl);
-  
-  const corsOptions: RequestInit = {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      ...options.headers,
-    },
-    mode: 'cors',
-    credentials: 'omit'
-  };
-  
-  try {
-    const response = await fetch(proxyUrl, corsOptions);
-    return response;
-  } catch (error) {
-    console.error('CORS proxy request failed:', error);
-    throw error;
-  }
-};
-
-// Simple solution: Use a different approach for CORS
-export const makeSimpleRequest = async (url: string, options: RequestInit = {}) => {
-  const apiBaseUrl = 'https://node-backend-g1mk.onrender.com';
-  const fullUrl = url.startsWith('http') ? url : `${apiBaseUrl}${url}`;
-  
-  // Try to make the request with minimal headers
-  const simpleOptions: RequestInit = {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    mode: 'no-cors' // This bypasses CORS but limits response access
-  };
-  
-  try {
-    const response = await fetch(fullUrl, simpleOptions);
-    return response;
-  } catch (error) {
-    console.error('Simple request failed:', error);
-    throw error;
-  }
-};
+export default {};

@@ -103,15 +103,37 @@ export const registerUser = async (userData: any) => {
 // Specific function for user login
 export const loginUser = async (credentials: any) => {
   try {
-    const response = await simpleFetch('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials)
-    });
+    // Try direct connection first
+    let response;
+    try {
+      response = await simpleFetch('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(credentials)
+      });
+    } catch (corsError) {
+      console.log('Direct connection failed, trying CORS proxy...', corsError);
+      
+      // Use CORS proxy as fallback
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`${baseUrl}/api/auth/login`)}`;
+      response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials)
+      });
+    }
     
     if (response.ok) {
       return await response.json();
     } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.status === 401) {
+        throw new Error('Invalid email or password');
+      } else if (response.status === 500) {
+        throw new Error('Server error. Please try again later.');
+      } else {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     }
   } catch (error) {
     console.error('Error logging in user:', error);

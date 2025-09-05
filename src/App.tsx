@@ -1,5 +1,7 @@
 import { useState, useEffect, Suspense, Component, ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+// Import CORS fix to apply it globally
+import './utils/corsFix';
 import LandingPage from './components/LandingPage';
 import Enhanced3DLandingPage from './components/Enhanced3DLandingPage';
 import SignUp from './components/SignUp';
