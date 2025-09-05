@@ -722,9 +722,17 @@ def login():
     if request.method == 'OPTIONS':
         return '', 200
     
+    # Debug logging
+    print(f"🔍 LOGIN REQUEST: {request.method} {request.url}")
+    print(f"🔍 Headers: {dict(request.headers)}")
+    print(f"🔍 Origin: {request.headers.get('Origin', 'None')}")
+    print(f"🔍 Referer: {request.headers.get('Referer', 'None')}")
+    
     try:
         data = request.get_json()
+        print(f"🔍 Request data: {data}")
         if not data:
+            print("❌ No JSON data provided")
             return jsonify({"msg": "No JSON data provided"}), 400
         
         email = data.get('email')
@@ -780,6 +788,9 @@ def login():
         
         # Create access token
         access_token = create_access_token(user_id)
+        
+        print(f"✅ LOGIN SUCCESS: {email} -> {user_id}")
+        print(f"✅ Token: {access_token[:20]}...")
         
         return jsonify({
             "access_token": access_token,
