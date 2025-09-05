@@ -26,10 +26,7 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: trading-platform-backend
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://node-backend-g1mk.onrender.com
       - key: NODE_ENV
         value: production
 

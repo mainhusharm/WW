@@ -81,7 +81,7 @@ export default function CustomerServiceDashboard() {
   const [userPayments, setUserPayments] = useState<Payment[]>([]);
 
   // Get API URL from environment variable
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://node-backend-g1mk.onrender.com';
 
   // Get current user from URL params or localStorage
   const currentUserId = searchParams.get('userId') || localStorage.getItem('userId');
