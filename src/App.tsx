@@ -5,7 +5,7 @@ import './utils/corsFix';
 import LandingPage from './components/LandingPage';
 import Enhanced3DLandingPage from './components/Enhanced3DLandingPage';
 import SignUp from './components/SignUp';
-import SignIn from './components/SignIn';
+import SignIn from './components/SignInFixed';
 import MembershipPlans from './components/MembershipPlans';
 import PaymentFlow from './components/PaymentFlow';
 import PayPalPayment from './components/PayPalPayment';

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { TrendingUp, ArrowLeft, Eye, EyeOff, AlertCircle, Mail, Lock } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
+import { mockLogin } from '../utils/mockAuth';
 import Header from './Header';
 
 const SignIn = () => {
@@ -87,7 +88,7 @@ const SignIn = () => {
         }
       } else {
         // Try backend authentication
-        let apiEndpoint = 'https://backend-bkt7.onrender.com/api/auth/login';
+        let apiEndpoint = 'https://simple-auth-backend.onrender.com/api/auth/login';
         let response;
         let data;
         
