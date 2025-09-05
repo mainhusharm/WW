@@ -10,6 +10,29 @@ const api = axios.create({
   responseType: 'json',
 });
 
+// Add a request interceptor to handle CORS
+api.interceptors.request.use(
+  (config) => {
+    // Add CORS headers to all requests
+    config.headers = {
+      ...config.headers,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    
+    // Add CORS mode
+    if (config.method === 'post' || config.method === 'put' || config.method === 'patch') {
+      config.headers['Access-Control-Request-Method'] = config.method.toUpperCase();
+      config.headers['Access-Control-Request-Headers'] = 'Content-Type, Authorization';
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Add a response interceptor for global error handling with better fallbacks
 api.interceptors.response.use(
   (response) => {
