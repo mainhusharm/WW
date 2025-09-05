@@ -1,163 +1,83 @@
 #!/usr/bin/env python3
 """
-Test Database Setup Script
-This script tests the PostgreSQL database setup and API functionality
+Test database setup locally
 """
 
 import os
-import sys
 import psycopg2
-from psycopg2.extras import RealDictCursor
-import requests
-import json
+import bcrypt
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-def test_database_connection():
-    """Test database connection"""
-    print("🔍 Testing database connection...")
-    
+def test_database_setup():
+    """Test the database setup locally"""
     try:
-        # Try to connect to database
-        conn = psycopg2.connect(
-            host="localhost",
-            database="trading_platform",
-            user="trading_user",
-            password="secure_password_123"
-        )
+        # Use a test database URL (you can change this to your actual database)
+        database_url = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/testdb')
         
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT version();")
-        version = cursor.fetchone()
-        print(f"✅ Database connected: {version['version']}")
+        print(f"🔗 Testing database connection: {database_url[:30]}...")
         
-        # Test tables
-        cursor.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public'
-            ORDER BY table_name;
+        # Connect to the database
+        conn = psycopg2.connect(database_url)
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cur = conn.cursor()
+        
+        print("✅ Connected to database successfully")
+        
+        # Check if users table exists
+        cur.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'users'
+            );
         """)
-        tables = cursor.fetchall()
-        print(f"📊 Tables found: {[table['table_name'] for table in tables]}")
         
+        table_exists = cur.fetchone()[0]
+        print(f"📊 Users table exists: {table_exists}")
+        
+        if table_exists:
+            # Check if test user exists
+            cur.execute("SELECT id, email, username FROM users WHERE email = %s", ('anchlshrma18@gmail.com',))
+            user = cur.fetchone()
+            
+            if user:
+                print(f"✅ Test user found: ID={user[0]}, Email={user[1]}, Username={user[2]}")
+            else:
+                print("❌ Test user not found")
+                
+                # Create test user
+                password = "Anchalsharma1806@"
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                
+                cur.execute("""
+                    INSERT INTO users (email, password_hash, username, plan_type)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (email) DO UPDATE SET
+                        password_hash = EXCLUDED.password_hash,
+                        username = EXCLUDED.username,
+                        plan_type = EXCLUDED.plan_type;
+                """, (
+                    'anchlshrma18@gmail.com',
+                    hashed_password,
+                    'anchal',
+                    'professional'
+                ))
+                
+                print("✅ Test user created")
+        else:
+            print("❌ Users table does not exist - database setup needed")
+            
+        cur.close()
         conn.close()
+        print("🎉 Database test completed!")
         return True
         
-    except Exception as e:
-        print(f"❌ Database connection failed: {e}")
+    except Exception as error:
+        print(f"❌ Database test failed: {error}")
         return False
 
-def test_api_endpoints():
-    """Test API endpoints"""
-    print("\n🔍 Testing API endpoints...")
-    
-    base_url = "http://localhost:5000"
-    
-    # Test health endpoint
-    try:
-        response = requests.get(f"{base_url}/health")
-        if response.status_code == 200:
-            print("✅ Health endpoint working")
-        else:
-            print(f"❌ Health endpoint failed: {response.status_code}")
-    except Exception as e:
-        print(f"❌ Health endpoint error: {e}")
-    
-    # Test users endpoint
-    try:
-        response = requests.get(f"{base_url}/api/users")
-        if response.status_code == 200:
-            data = response.json()
-            print(f"✅ Users endpoint working: {data.get('count', 0)} users found")
-        else:
-            print(f"❌ Users endpoint failed: {response.status_code}")
-    except Exception as e:
-        print(f"❌ Users endpoint error: {e}")
-
-def create_test_user():
-    """Create a test user"""
-    print("\n🔍 Creating test user...")
-    
-    base_url = "http://localhost:5000"
-    
-    test_user = {
-        "username": "testuser",
-        "email": "test@example.com",
-        "password": "password123",
-        "plan_type": "free"
-    }
-    
-    try:
-        response = requests.post(f"{base_url}/api/users", json=test_user)
-        if response.status_code == 201:
-            data = response.json()
-            print(f"✅ Test user created: {data.get('user_id')}")
-            return data.get('user_id')
-        else:
-            print(f"❌ Test user creation failed: {response.status_code}")
-            print(f"Response: {response.text}")
-    except Exception as e:
-        print(f"❌ Test user creation error: {e}")
-    
-    return None
-
-def test_questionnaire_update(user_id):
-    """Test questionnaire update"""
-    if not user_id:
-        return
-        
-    print(f"\n🔍 Testing questionnaire update for user {user_id}...")
-    
-    base_url = "http://localhost:5000"
-    
-    questionnaire_data = {
-        "account_type": "standard",
-        "prop_firm": "FTMO",
-        "account_size": 10000,
-        "trading_experience": "intermediate",
-        "risk_tolerance": "medium",
-        "trading_goals": "income generation",
-        "questionnaire_data": {
-            "has_trading_experience": True,
-            "preferred_assets": ["forex", "crypto"],
-            "risk_level": "medium"
-        }
-    }
-    
-    try:
-        response = requests.post(f"{base_url}/api/users/{user_id}/questionnaire", json=questionnaire_data)
-        if response.status_code == 200:
-            print("✅ Questionnaire updated successfully")
-        else:
-            print(f"❌ Questionnaire update failed: {response.status_code}")
-    except Exception as e:
-        print(f"❌ Questionnaire update error: {e}")
-
-def main():
-    """Main test function"""
-    print("🧪 Testing Trading Platform Database Setup")
-    print("=" * 50)
-    
-    # Test database connection
-    db_ok = test_database_connection()
-    
-    if not db_ok:
-        print("\n❌ Database tests failed. Please check your database setup.")
-        return
-    
-    # Test API endpoints
-    test_api_endpoints()
-    
-    # Create test user
-    user_id = create_test_user()
-    
-    # Test questionnaire update
-    test_questionnaire_update(user_id)
-    
-    print("\n🎉 Database setup test completed!")
-    print("\n📋 Next steps:")
-    print("1. Deploy to Render using the deployment guide")
-    print("2. Update frontend API URL")
-    print("3. Test the complete system")
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    success = test_database_setup()
+    if success:
+        print("✅ Database test completed successfully!")
+    else:
+        print("❌ Database test failed!")
