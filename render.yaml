@@ -21,7 +21,7 @@ services:
     name: trading-platform-api
     env: python3
     plan: starter
-    buildCommand: pip install -r requirements-render.txt && python3 create_database_tables.py
+    buildCommand: pip install -r requirements-render.txt && python3 setup_backend_database.py
     startCommand: gunicorn --worker-class eventlet -w 1 wsgi_socketio:application
     envVars:
       - key: DATABASE_URL
