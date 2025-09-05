@@ -39,18 +39,15 @@ const Login = () => {
 
     try {
       const response = await api.post('/api/auth/login', { email, password });
-      const { access_token } = response.data;
+      const { access_token, user: userData } = response.data;
       localStorage.setItem('token', access_token);
       
-      // You might want to fetch user profile here and set it in the context
-      const profileResponse = await api.get('/api/auth/profile');
-      const user = profileResponse.data;
-
+      // Use user data from login response instead of separate profile call
       setUser({
-        id: user.id,
-        name: user.username,
-        email: user.email,
-        membershipTier: user.plan_type,
+        id: userData.id,
+        name: userData.username,
+        email: userData.email,
+        membershipTier: userData.plan_type,
         isAuthenticated: true,
         accountType: 'personal', // default value
         riskTolerance: 'moderate', // default value
