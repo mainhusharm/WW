@@ -7,19 +7,64 @@ const { z } = require('zod');
 const app = express();
 const prisma = new PrismaClient();
 
-// Middleware
+// Enhanced CORS configuration for production
+const corsOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : [
+      'https://frontend-tkxf.onrender.com',
+      'https://frontend-i6xs.onrender.com',
+      'https://frontend-01uh.onrender.com',
+      'https://frontend-zwwl.onrender.com',
+      'https://www.traderedgepro.com',
+      'https://traderedgepro.com',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+      'http://localhost:3000'
+    ];
+
+// More permissive CORS for development and testing
 app.use(cors({
-  origin: [
-    'https://frontend-i6xs.onrender.com',
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:5175',
-    'http://localhost:3000'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in our allowed list
+    if (corsOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    
+    // For development, allow all onrender.com domains
+    if (origin.includes('onrender.com')) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept']
 }));
+
+// Add CORS preflight handler
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Origin, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '3600');
+  res.sendStatus(200);
+});
+
+// Add after_request handler for CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Origin, Accept');
+  next();
+});
+
 app.use(express.json());
 
 // Validation schemas
