@@ -24,7 +24,7 @@ class PriceDataService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.REACT_APP_API_URL || 'https://backend-bkt7.onrender.com';
+    this.baseUrl = process.env.REACT_APP_API_URL || 'https://backend-8j0e.onrender.com';
   }
 
   async getRealTimePrices(symbols: string[]): Promise<PriceData[]> {

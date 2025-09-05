@@ -292,7 +292,7 @@ const EnhancedUserSignalsFeed: React.FC<EnhancedUserSignalsFeedProps> = ({
   const signalsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
   
-  const socketUrl = 'https://backend-bkt7.onrender.com';
+  const socketUrl = 'https://backend-8j0e.onrender.com';
   const { socket, isConnected } = useWebSocket(socketUrl);
   
   // Get user's risk-reward preference

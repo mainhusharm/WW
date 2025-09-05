@@ -21,18 +21,18 @@ export const PAYMENT_CONFIG = {
     stripe: {
       createPaymentIntent: import.meta.env.PROD 
         ? 'https://www.traderedgepro.com/api/payment/stripe/create-payment-intent'
-        : 'https://backend-bkt7.onrender.com/api/payment/stripe/create-payment-intent',
+        : 'https://backend-8j0e.onrender.com/api/payment/stripe/create-payment-intent',
       confirmPayment: import.meta.env.PROD
         ? 'https://www.traderedgepro.com/api/payment/stripe/confirm-payment'
-        : 'https://backend-bkt7.onrender.com/api/payment/stripe/confirm-payment',
+        : 'https://backend-8j0e.onrender.com/api/payment/stripe/confirm-payment',
     },
     paypal: {
       createOrder: import.meta.env.PROD
         ? 'https://www.traderedgepro.com/api/payment/paypal/create-order'
-        : 'https://backend-bkt7.onrender.com/api/payment/paypal/create-order',
+        : 'https://backend-8j0e.onrender.com/api/payment/paypal/create-order',
       captureOrder: import.meta.env.PROD
         ? 'https://www.traderedgepro.com/api/payment/paypal/capture-order'
-        : 'https://backend-bkt7.onrender.com/api/payment/paypal/capture-order',
+        : 'https://backend-8j0e.onrender.com/api/payment/paypal/capture-order',
     }
   },
   

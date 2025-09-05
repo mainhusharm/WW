@@ -40,7 +40,7 @@ const PropFirmRules: React.FC<PropFirmRulesProps> = ({ dashboardData }) => {
   const fetchPropFirmRules = async (accountType: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`https://backend-bkt7.onrender.com/api/test/prop-firm-rules?accountType=${encodeURIComponent(accountType)}`);
+      const response = await fetch(`https://backend-8j0e.onrender.com/api/test/prop-firm-rules?accountType=${encodeURIComponent(accountType)}`);
       const data = await response.json();
       
       if (response.ok && data.success) {

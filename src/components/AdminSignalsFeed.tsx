@@ -130,7 +130,7 @@ const AdminSignalsFeed: React.FC = () => {
       setError(null);
       
       console.log('Fetching signals from admin dashboard...');
-      const response = await fetch('https://backend-bkt7.onrender.com/api/signals/admin');
+      const response = await fetch('https://backend-8j0e.onrender.com/api/signals/admin');
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

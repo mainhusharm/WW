@@ -69,7 +69,7 @@ class YFinanceWorkingService {
   // Method 1: Use deployed forex data service for accurate prices
   private async fetchWithForexDataService(symbol: string, timeframe: string): Promise<Response | null> {
     try {
-      const response = await fetch(`https://backend-bkt7.onrender.com/api/forex-data?pair=${encodeURIComponent(symbol)}&timeframe=${timeframe}`);
+      const response = await fetch(`https://backend-8j0e.onrender.com/api/forex-data?pair=${encodeURIComponent(symbol)}&timeframe=${timeframe}`);
       
       if (response.ok) {
         return response;
@@ -225,7 +225,7 @@ class YFinanceWorkingService {
 
     // Try deployed forex data service first for accurate prices
     try {
-      const response = await fetch(`https://backend-bkt7.onrender.com/api/forex-price?pair=${encodeURIComponent(symbol)}`);
+      const response = await fetch(`https://backend-8j0e.onrender.com/api/forex-price?pair=${encodeURIComponent(symbol)}`);
       if (response.ok) {
         const data = await response.json();
         
@@ -247,7 +247,7 @@ class YFinanceWorkingService {
   async fetchBulkData(symbols: string[], timeframe: string): Promise<{ [key: string]: any[] }> {
     try {
       // Use deployed forex data service for bulk fetch (most accurate)
-      const response = await fetch(`https://backend-bkt7.onrender.com/api/bulk-forex-price?pairs=${encodeURIComponent(symbols.join(','))}`);
+      const response = await fetch(`https://backend-8j0e.onrender.com/api/bulk-forex-price?pairs=${encodeURIComponent(symbols.join(','))}`);
       
       if (response.ok) {
         const results = await response.json();

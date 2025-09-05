@@ -23,7 +23,7 @@ const getRapidAPIForexNews = async (currency: string): Promise<ForexFactoryEvent
   try {
     // Use our backend API instead of direct RapidAPI
     const apiBaseUrl = import.meta.env.PROD 
-      ? 'https://backend-bkt7.onrender.com/api'
+      ? 'https://backend-8j0e.onrender.com/api'
       : 'http://localhost:3001/api';
     
     const response = await fetch(`${apiBaseUrl}/news/forex-factory?currency=${currency}`, {

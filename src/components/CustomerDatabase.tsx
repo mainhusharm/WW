@@ -36,7 +36,7 @@ const CustomerDatabase: React.FC = () => {
         // Try customer service API directly
         try {
           const apiBaseUrl = import.meta.env.PROD 
-        ? 'https://backend-bkt7.onrender.com/api'
+        ? 'https://backend-8j0e.onrender.com/api'
         : 'http://localhost:3001/api';
       
       const response = await fetch(`${apiBaseUrl}/test/customers`, {

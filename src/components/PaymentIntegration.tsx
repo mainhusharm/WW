@@ -82,7 +82,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
         apiEndpoint = '/api/validate-coupon';
       } else {
         // Production - call the backend directly
-        apiEndpoint = 'https://backend-bkt7.onrender.com/api/validate-coupon';
+        apiEndpoint = 'https://backend-8j0e.onrender.com/api/validate-coupon';
       }
 
       console.log(`Calling API endpoint: ${apiEndpoint}`);

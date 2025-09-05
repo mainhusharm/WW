@@ -142,7 +142,7 @@ class EnhancedSignalService {
 
       this.isConnecting = true;
 
-      const socketUrl = 'https://backend-bkt7.onrender.com';
+      const socketUrl = 'https://backend-8j0e.onrender.com';
       
       console.log(`🔌 Connecting to Socket.IO at: ${socketUrl}`);
 
@@ -389,10 +389,10 @@ class EnhancedSignalService {
       
       // Try multiple possible endpoints
       const endpoints = [
-        'https://backend-bkt7.onrender.com/api/signals',
-        'https://backend-bkt7.onrender.com/api/admin/signals',
-        'https://backend-bkt7.onrender.com/signals',
-        'https://backend-bkt7.onrender.com/api/get-signals'
+        'https://backend-8j0e.onrender.com/api/signals',
+        'https://backend-8j0e.onrender.com/api/admin/signals',
+        'https://backend-8j0e.onrender.com/signals',
+        'https://backend-8j0e.onrender.com/api/get-signals'
       ];
       
       let signals: any[] = [];

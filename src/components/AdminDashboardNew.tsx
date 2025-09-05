@@ -339,7 +339,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
       // Use the new admin signal creation endpoint
       try {
-        const response = await fetch('https://backend-bkt7.onrender.com/api/admin/create-signal', {
+        const response = await fetch('https://backend-8j0e.onrender.com/api/admin/create-signal', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
