@@ -190,7 +190,7 @@ export default function EnhancedPaymentPage() {
     setError(null);
 
     try {
-      const response = await fetch('https://node-backend-g1mk.onrender.com/api/validate-coupon', {
+      const response = await fetch('https://backend-bkt7.onrender.com/api/validate-coupon', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -301,7 +301,7 @@ export default function EnhancedPaymentPage() {
 
     try {
       // Create real PaymentIntent
-      const response = await fetch('https://node-backend-g1mk.onrender.com/api/stripe/create-payment-intent', {
+      const response = await fetch('https://backend-bkt7.onrender.com/api/stripe/create-payment-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -358,7 +358,7 @@ export default function EnhancedPaymentPage() {
       console.log('Sending payment request:', paymentRequestData);
       
       // Store payment data in database
-      const response = await fetch('https://node-backend-g1mk.onrender.com/api/payments', {
+      const response = await fetch('https://backend-bkt7.onrender.com/api/payments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

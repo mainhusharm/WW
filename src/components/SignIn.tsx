@@ -92,7 +92,7 @@ const SignIn = () => {
       if (window.location.hostname === 'localhost') {
         apiEndpoint = '/api/auth/login';
       } else {
-        apiEndpoint = 'https://backend-8j0e.onrender.com/api/auth/login';
+        apiEndpoint = 'https://backend-bkt7.onrender.com/api/auth/login';
       }
       const response = await fetch(apiEndpoint, {
           method: 'POST',
