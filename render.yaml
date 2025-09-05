@@ -47,6 +47,6 @@ services:
     startCommand: npm run start
     envVars:
       - key: VITE_API_URL
-        value: https://node-backend-g1mk.onrender.com
+        value: https://backend-bkt7.onrender.com
       - key: NODE_ENV
         value: production

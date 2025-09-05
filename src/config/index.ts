@@ -1,14 +1,14 @@
 export const config = {
   // API Configuration
   api: {
-    baseUrl: import.meta.env.VITE_API_URL || 'https://node-backend-g1mk.onrender.com',
+    baseUrl: import.meta.env.VITE_API_URL || 'https://backend-bkt7.onrender.com',
     timeout: 30000,
     retries: 3,
   },
 
   // Forex Service Configuration
   forex: {
-    baseUrl: import.meta.env.VITE_API_URL || 'https://node-backend-g1mk.onrender.com',
+    baseUrl: import.meta.env.VITE_API_URL || 'https://backend-bkt7.onrender.com',
     refreshInterval: 5000,
     maxSymbols: 20,
   },
