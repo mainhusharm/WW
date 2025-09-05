@@ -49,6 +49,45 @@ const SignInFixed = () => {
         // Set questionnaire as completed by default for mock users
         localStorage.setItem('questionnaire_completed', 'true');
         
+        // Initialize dashboard data for mock users
+        const mockDashboardData = {
+          userProfile: {
+            name: result.user.username,
+            email: result.user.email,
+            membershipTier: result.user.membershipTier,
+            accountType: 'personal',
+            riskTolerance: 'moderate',
+            setupComplete: true
+          },
+          tradingData: {
+            accountValue: 10000,
+            totalPnl: 0,
+            winRate: 0,
+            totalTrades: 0,
+            activeSignals: 0
+          },
+          questionnaireAnswers: {
+            hasAccount: 'yes',
+            propFirm: 'QuantTekel',
+            accountType: 'QuantTekel Instant',
+            experience: 'intermediate',
+            accountSize: 10000,
+            riskTolerance: 'moderate'
+          },
+          riskManagementPlan: {
+            maxRiskPerTrade: 2,
+            maxDailyLoss: 5,
+            maxOpenTrades: 3,
+            stopLossPercentage: 1.5,
+            takeProfitPercentage: 3
+          }
+        };
+        
+        // Store dashboard data
+        localStorage.setItem(`dashboard_data_${result.user.email}`, JSON.stringify(mockDashboardData));
+        localStorage.setItem('questionnaireAnswers', JSON.stringify(mockDashboardData.questionnaireAnswers));
+        localStorage.setItem('riskManagementPlan', JSON.stringify(mockDashboardData.riskManagementPlan));
+        
         // Navigate directly to dashboard
         navigate('/dashboard');
       } else {
