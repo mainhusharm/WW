@@ -46,13 +46,11 @@ const SignInFixed = () => {
         localStorage.setItem('current_user', JSON.stringify(result.user));
         login(result.user, result.access_token, rememberMe);
         
-        // Check if user needs to complete questionnaire
-        const questionnaireCompleted = localStorage.getItem('questionnaire_completed');
-        if (!questionnaireCompleted) {
-          navigate('/questionnaire');
-        } else {
-          navigate('/dashboard');
-        }
+        // Set questionnaire as completed by default for mock users
+        localStorage.setItem('questionnaire_completed', 'true');
+        
+        // Navigate directly to dashboard
+        navigate('/dashboard');
       } else {
         setError('Login failed. Please try again.');
       }

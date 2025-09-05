@@ -11,7 +11,11 @@ export const mockLogin = async (email: string, password: string) => {
     email: email,
     username: email.split('@')[0],
     plan_type: 'professional',
-    membershipTier: 'professional'
+    membershipTier: 'professional',
+    setupComplete: true,
+    accountType: 'personal',
+    riskTolerance: 'moderate',
+    isAuthenticated: true
   };
   
   const mockToken = btoa(JSON.stringify({
