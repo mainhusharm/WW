@@ -7,6 +7,38 @@ const { z } = require('zod');
 const app = express();
 const prisma = new PrismaClient();
 
+// Explicit CORS middleware - this will definitely work
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Allow specific origins
+  if (origin && (
+    origin.includes('frontend-tkxf.onrender.com') ||
+    origin.includes('frontend-i6xs.onrender.com') ||
+    origin.includes('frontend-01uh.onrender.com') ||
+    origin.includes('frontend-zwwl.onrender.com') ||
+    origin.includes('traderedgepro.com') ||
+    origin.includes('localhost')
+  )) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Origin, Accept');
+  res.header('Access-Control-Max-Age', '3600');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+  
+  next();
+});
+
 // Enhanced CORS configuration for production
 const corsOrigins = process.env.CORS_ORIGIN 
   ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
@@ -48,7 +80,22 @@ app.use(cors({
 
 // Add CORS preflight handler
 app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const origin = req.headers.origin;
+  
+  // Allow specific origins or all onrender.com domains
+  if (origin && (
+    origin.includes('frontend-tkxf.onrender.com') ||
+    origin.includes('frontend-i6xs.onrender.com') ||
+    origin.includes('frontend-01uh.onrender.com') ||
+    origin.includes('frontend-zwwl.onrender.com') ||
+    origin.includes('traderedgepro.com') ||
+    origin.includes('localhost')
+  )) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Origin, Accept');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -58,10 +105,26 @@ app.options('*', (req, res) => {
 
 // Add after_request handler for CORS
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const origin = req.headers.origin;
+  
+  // Allow specific origins or all onrender.com domains
+  if (origin && (
+    origin.includes('frontend-tkxf.onrender.com') ||
+    origin.includes('frontend-i6xs.onrender.com') ||
+    origin.includes('frontend-01uh.onrender.com') ||
+    origin.includes('frontend-zwwl.onrender.com') ||
+    origin.includes('traderedgepro.com') ||
+    origin.includes('localhost')
+  )) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Origin, Accept');
+  res.header('Access-Control-Max-Age', '3600');
   next();
 });
 
