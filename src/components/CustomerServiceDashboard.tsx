@@ -106,26 +106,56 @@ export default function CustomerServiceDashboard() {
     loadLocalStorageData();
   }, []);
 
-  // Fetch users from API
+  // Fetch users from API using CORS proxy
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/api/users`);
-      const data: UsersResponse = await response.json();
+      
+      // Try direct connection first
+      try {
+        const response = await fetch(`${API_BASE}/api/users`);
+        const data: UsersResponse = await response.json();
 
-      if (data.success && data.users) {
-        setUsers(data.users);
-        setError(null);
-        
-        // If we have a current user ID, find and select them
-        if (currentUserId) {
-          const currentUser = data.users.find(user => user.id === currentUserId);
-          if (currentUser) {
-            setSelectedUser(currentUser);
+        if (data.success && data.users) {
+          setUsers(data.users);
+          setError(null);
+          
+          // If we have a current user ID, find and select them
+          if (currentUserId) {
+            const currentUser = data.users.find(user => user.id === currentUserId);
+            if (currentUser) {
+              setSelectedUser(currentUser);
+            }
           }
+          return;
         }
-      } else {
-        setError(data.error || 'Failed to fetch users');
+      } catch (directError) {
+        console.log('Direct connection failed, trying CORS proxy...', directError);
+      }
+      
+      // Fallback to CORS proxy
+      try {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`${API_BASE}/api/users`)}`;
+        const response = await fetch(proxyUrl);
+        const data: UsersResponse = await response.json();
+
+        if (data.success && data.users) {
+          setUsers(data.users);
+          setError(null);
+          
+          // If we have a current user ID, find and select them
+          if (currentUserId) {
+            const currentUser = data.users.find(user => user.id === currentUserId);
+            if (currentUser) {
+              setSelectedUser(currentUser);
+            }
+          }
+        } else {
+          setError(data.error || 'Failed to fetch users');
+        }
+      } catch (proxyError) {
+        console.error('CORS proxy also failed:', proxyError);
+        setError('Network error while fetching users');
       }
     } catch (err) {
       console.error('Error fetching users:', err);
@@ -134,7 +164,7 @@ export default function CustomerServiceDashboard() {
       setLoading(false);
       setLastRefresh(new Date());
     }
-  }, [currentUserId]);
+  }, [currentUserId, API_BASE]);
 
   // Fetch specific user
   const fetchUser = useCallback(async (userId: string) => {
