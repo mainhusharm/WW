@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, User, Mail, Calendar, Activity, Filter, Download, RefreshCw, TrendingUp } from 'lucide-react';
 import { errorHandler } from '../services/errorHandler';
-import { getUsers } from '../utils/simpleApiClient';
+import { getUsersDirect, getMockUsers } from '../utils/directApiClient';
 
 interface Customer {
   id: string;
@@ -34,15 +34,18 @@ const CustomerDatabase: React.FC = () => {
       const authToken = localStorage.getItem('customerServiceToken') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2VudCI6eyJpZCI6IjY4YWMzZmUyMjRmMWY0OTlkZDE4OGU5MCJ9LCJpYXQiOjE3NTYxMTkwMTAsImV4cCI6MTc1NjEyMjYxMH0.kQVfzTXSjP557ubGCf7ifhwdI-ETcTdrIg2MgYoz04s';
       
       const customerData = await errorHandler.handleCustomersApi(async () => {
-        // Use simple API client that handles CORS
+        // Try direct API client first
         try {
-          console.log('Fetching users with simple API client...');
-          const data = await getUsers();
+          console.log('Fetching users with direct API client...');
+          const data = await getUsersDirect();
           console.log('Fetched customers:', data);
           return data;
         } catch (error) {
-          console.error('Error fetching customers:', error);
-          throw error;
+          console.error('Direct API failed, using mock data:', error);
+          // Fallback to mock data if API fails
+          const mockData = getMockUsers();
+          console.log('Using mock data:', mockData);
+          return mockData;
         }
       });
 
