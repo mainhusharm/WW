@@ -30,8 +30,8 @@ export const getApiBaseUrl = () => {
   
   // If we're in production and origin is not allowed, use a different approach
   if (import.meta.env.PROD && !isOriginAllowed()) {
-    // Use a CORS proxy or different backend
-    return 'https://cors-proxy-trading.onrender.com';
+    // Use working backend
+    return 'https://backend-bkt7.onrender.com';
   }
   
   // Default to the configured URL

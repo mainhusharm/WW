@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { BarChart, Users, RadioTower, Settings, LogOut, Cpu, Send } from 'lucide-react';
 import api from '../api';
+import { setupAdminMockData } from '../utils/adminMockData';
 import SettingsModal from './SettingsModal';
 import CryptoDashboard from './CryptoDashboard';
 import NewForexSignalGenerator from './NewForexSignalGenerator';
@@ -44,6 +45,11 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
   const [recentSignals, setRecentSignals] = useState<any[]>([]);
   const [kickstarterSubmissions, setKickstarterSubmissions] = useState<any[]>([]);
+
+  // Setup mock data to prevent CORS errors
+  useEffect(() => {
+    setupAdminMockData();
+  }, []);
 
   useEffect(() => {
     const fetchSubmissions = async () => {
