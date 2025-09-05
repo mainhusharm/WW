@@ -16,6 +16,7 @@ app = Flask(__name__)
 CORS(app, origins=[
     'https://frontend-tkxf.onrender.com',
     'https://frontend-i6xs.onrender.com',
+    'https://trading-platform-frontend.onrender.com',
     'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:5000'

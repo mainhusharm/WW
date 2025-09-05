@@ -7,7 +7,7 @@ export const ENV_CONFIG = {
   isAmplify: window.location.hostname.includes('amplifyapp.com'),
   isRender: window.location.hostname.includes('onrender.com'),
   apiBaseUrl: import.meta.env.PROD
-    ? 'https://node-backend-g1mk.onrender.com'
+    ? 'https://cors-proxy-trading.onrender.com'
     : 'http://localhost:5000',
   yfinanceServiceUrl: 'https://yfinance-service-kyce.onrender.com', // Use working yfinance service
   binanceServiceUrl: 'https://binance-service.onrender.com',
@@ -43,7 +43,7 @@ export const API_CONFIG = {
   binanceServiceUrl: 'https://binance-service.onrender.com',
 
   // Customer service
-  customerServiceUrl: import.meta.env.DEV ? 'http://localhost:3001' : 'https://node-backend-g1mk.onrender.com',
+  customerServiceUrl: import.meta.env.DEV ? 'http://localhost:3001' : 'https://cors-proxy-trading.onrender.com',
 
   // Telegram service
   telegramServiceUrl: 'https://yfinance-service-kyce.onrender.com/api/telegram',
@@ -82,8 +82,8 @@ export const API_ENDPOINTS = {
 // WebSocket configuration
 export const WS_CONFIG = {
   baseURL: import.meta.env.DEV
-    ? 'https://node-backend-g1mk.onrender.com'
-    : 'https://node-backend-g1mk.onrender.com',
+    ? 'https://cors-proxy-trading.onrender.com'
+    : 'https://cors-proxy-trading.onrender.com',
   reconnectInterval: 5000,
   maxReconnectAttempts: 10,
 };
