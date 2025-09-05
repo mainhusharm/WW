@@ -267,36 +267,36 @@ def generate_real_time_user_profile():
         }
     }
 
-# Background signal generation thread
-def background_signal_generation():
-    """Generate signals in the background every 2-5 minutes"""
-    while True:
-        try:
-            # Generate 1-3 new signals randomly
-            num_signals = random.randint(1, 3)
-            for _ in range(num_signals):
-                new_signal = signal_generator.generate_real_time_signal()
-                signals_storage.append(new_signal)
-                print(f"🤖 Generated real-time signal: {new_signal['pair']} {new_signal['direction']}")
-                
-                # Broadcast signal to webhook subscribers
-                broadcast_signal_to_webhooks(new_signal)
-            
-            # Keep only last 100 signals to prevent memory issues
-            if len(signals_storage) > 100:
-                signals_storage[:] = signals_storage[-100:]
-            
-            # Wait 2-5 minutes before next generation
-            wait_time = random.randint(120, 300)  # 2-5 minutes
-            time.sleep(wait_time)
-            
-        except Exception as e:
-            print(f"Error in background signal generation: {e}")
-            time.sleep(60)  # Wait 1 minute on error
+# Background signal generation DISABLED - Only admin-created signals
+# def background_signal_generation():
+#     """Generate signals in the background every 2-5 minutes"""
+#     while True:
+#         try:
+#             # Generate 1-3 new signals randomly
+#             num_signals = random.randint(1, 3)
+#             for _ in range(num_signals):
+#                 new_signal = signal_generator.generate_real_time_signal()
+#                 signals_storage.append(new_signal)
+#                 print(f"🤖 Generated real-time signal: {new_signal['pair']} {new_signal['direction']}")
+#                 
+#                 # Broadcast signal to webhook subscribers
+#                 broadcast_signal_to_webhooks(new_signal)
+#             
+#             # Keep only last 100 signals to prevent memory issues
+#             if len(signals_storage) > 100:
+#                 signals_storage[:] = signals_storage[-100:]
+#             
+#             # Wait 2-5 minutes before next generation
+#             wait_time = random.randint(120, 300)  # 2-5 minutes
+#             time.sleep(wait_time)
+#             
+#         except Exception as e:
+#             print(f"Error in background signal generation: {e}")
+#             time.sleep(60)  # Wait 1 minute on error
 
-# Start background signal generation
-signal_thread = threading.Thread(target=background_signal_generation, daemon=True)
-signal_thread.start()
+# Background signal generation DISABLED - Only real-time admin signals
+# signal_thread = threading.Thread(target=background_signal_generation, daemon=True)
+# signal_thread.start()
 
 # API Endpoints
 @app.route('/health', methods=['GET'])
@@ -631,6 +631,18 @@ def disconnect_signals():
         'total_subscribers': len(webhook_subscribers)
     })
 
+@app.route('/api/signals/clear', methods=['POST'])
+def clear_all_signals():
+    """Clear all signals from storage - start fresh"""
+    global signals_storage
+    signals_storage.clear()
+    print("🧹 Cleared all signals from storage - starting fresh")
+    return jsonify({
+        'success': True,
+        'message': 'All signals cleared - starting fresh with no prefilled data',
+        'signals_count': len(signals_storage)
+    }), 200
+
 # Direct Authentication Endpoint (Immediate Fix)
 @app.route('/auth/login', methods=['POST', 'OPTIONS'])
 def direct_login():
@@ -915,7 +927,7 @@ if __name__ == '__main__':
     print("✅ Authentication endpoints added")
     print("✅ Database support enabled")
     print("✅ No prefilled data - everything is real-time")
-    print("✅ Background signal generation started")
+    print("✅ Background signal generation DISABLED - Only admin signals")
     print("✅ Real-time data generation active")
     
     # For local development

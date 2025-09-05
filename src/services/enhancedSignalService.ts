@@ -31,11 +31,16 @@ class EnhancedSignalService {
   private signals: StoredSignal[] = [];
   private isInitialized = false;
   private pollingInterval: NodeJS.Timeout | null = null;
+  private ignoreExistingSignals = false;
 
   constructor() {
     this.userToken = localStorage.getItem('access_token') || sessionStorage.getItem('session_token');
     // Clear all existing signals to start fresh - only show new signals from admin dashboard
     this.clearAllSignals();
+    // Clear any localStorage signal data to prevent prefilled signals
+    this.clearAllLocalStorageSignals();
+    // Set a flag to ignore any existing signals from backend
+    this.ignoreExistingSignals = true;
   }
 
   /**
@@ -45,6 +50,31 @@ class EnhancedSignalService {
     this.signals = [];
     localStorage.removeItem('persistent_signals');
     console.log('🧹 Cleared all existing signals - starting fresh');
+  }
+
+  /**
+   * Clear all localStorage signal data to prevent prefilled signals
+   */
+  private clearAllLocalStorageSignals() {
+    const signalKeys = [
+      'admin_generated_signals',
+      'admin_signals', 
+      'telegram_messages',
+      'persistent_signals',
+      'signals',
+      'trading_signals',
+      'forex_signals',
+      'crypto_signals'
+    ];
+    
+    signalKeys.forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+        console.log(`🧹 Cleared localStorage key: ${key}`);
+      }
+    });
+    
+    console.log('🧹 Cleared all localStorage signal data - only real-time admin signals will be shown');
   }
 
   /**
@@ -142,7 +172,7 @@ class EnhancedSignalService {
 
       this.isConnecting = true;
 
-      const socketUrl = 'https://backend-8j0e.onrender.com';
+      const socketUrl = 'https://backend-bkt7.onrender.com';
       
       console.log(`🔌 Connecting to Socket.IO at: ${socketUrl}`);
 
@@ -215,6 +245,12 @@ class EnhancedSignalService {
       // Signal received from admin
       this.socket.on('new_signal', (signalData: any) => {
         console.log('📡 Received new signal from admin:', signalData);
+        
+        // Only process admin-generated signals
+        if (signalData.source !== 'admin_generated') {
+          console.log('⚠️ Ignoring non-admin signal:', signalData.source);
+          return;
+        }
         
         // Transform signal data to match frontend interface
         const signal: Signal = {
@@ -389,10 +425,9 @@ class EnhancedSignalService {
       
       // Try multiple possible endpoints
       const endpoints = [
-        'https://backend-8j0e.onrender.com/api/signals',
-        'https://backend-8j0e.onrender.com/api/admin/signals',
-        'https://backend-8j0e.onrender.com/signals',
-        'https://backend-8j0e.onrender.com/api/get-signals'
+        'https://backend-bkt7.onrender.com/api/signals',
+        'https://backend-bkt7.onrender.com/api/test/signals',
+        'https://backend-bkt7.onrender.com/signals'
       ];
       
       let signals: any[] = [];
@@ -417,6 +452,10 @@ class EnhancedSignalService {
               signals = data.signals;
               endpointUsed = endpoint;
               break;
+            } else if (data.data && Array.isArray(data.data)) {
+              signals = data.data;
+              endpointUsed = endpoint;
+              break;
             }
           }
         } catch (error) {
@@ -433,8 +472,20 @@ class EnhancedSignalService {
         let newSignalsCount = 0;
         
         signals.forEach(signal => {
-          // Only process signals generated from admin dashboard (admin_generated source)
+          // Only process admin-generated signals - no bot-generated or mock signals
+          // If ignoreExistingSignals is true, only process signals created after service start
           if (signal.source === 'admin_generated' && !existingSignalIds.has(signal.id)) {
+            // Check if we should ignore existing signals
+            if (this.ignoreExistingSignals) {
+              const signalTime = new Date(signal.created_at);
+              const serviceStartTime = new Date();
+              // Only process signals created after service start (within last 5 minutes)
+              const fiveMinutesAgo = new Date(serviceStartTime.getTime() - 5 * 60 * 1000);
+              if (signalTime < fiveMinutesAgo) {
+                console.log(`⚠️ Ignoring existing signal: ${signal.pair} (created before service start)`);
+                return;
+              }
+            }
             // Transform backend signal format to frontend format
             const transformedSignal: Signal = {
               id: signal.id,
@@ -444,8 +495,8 @@ class EnhancedSignalService {
               action: signal.direction === 'LONG' || signal.direction === 'BUY' ? 'BUY' : 'SELL',
               entry: signal.entry_price,
               entryPrice: parseFloat(signal.entry_price) || 0,
-              stopLoss: parseFloat(signal.stop_loss) || 0,
-              takeProfit: parseFloat(signal.take_profit) || 0,
+              stopLoss: signal.stop_loss,
+              takeProfit: signal.take_profit,
               timeframe: signal.timeframe || '1h',
               status: signal.status || 'active',
               createdAt: signal.created_at,
