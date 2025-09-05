@@ -38,12 +38,12 @@ const Login = () => {
     }
 
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/api/auth/login', { email, password });
       const { access_token } = response.data;
       localStorage.setItem('token', access_token);
       
       // You might want to fetch user profile here and set it in the context
-      const profileResponse = await api.get('/auth/profile');
+      const profileResponse = await api.get('/api/auth/profile');
       const user = profileResponse.data;
 
       setUser({

@@ -800,6 +800,36 @@ def register():
     except Exception as e:
         return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
+@app.route('/api/auth/profile', methods=['GET', 'OPTIONS'])
+def get_profile():
+    """Get user profile"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        # Get token from Authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({"msg": "Authorization token required"}), 401
+        
+        token = auth_header.split(' ')[1]
+        
+        # Simple token validation (in production, use JWT)
+        if not token.startswith('token_'):
+            return jsonify({"msg": "Invalid token"}), 401
+        
+        # For now, return the test user profile
+        # In production, you would decode the token and get user info
+        return jsonify({
+            "id": "user-123",
+            "username": "anchal",
+            "email": "anchlshrma18@gmail.com",
+            "plan_type": "premium"
+        }), 200
+            
+    except Exception as e:
+        return jsonify({"msg": f"Server error: {str(e)}"}), 500
+
 @app.route('/api/auth/validate', methods=['POST', 'OPTIONS'])
 def validate_token():
     """Validate access token"""
