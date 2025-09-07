@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Signal, TradeOutcome } from '../trading/types';
 import api from '../api';
-import botDataService from '../services/botDataService';
-import { useRealTimeSignals } from '../hooks/useRealTimeSignals';
 
 interface SignalCardProps {
   signal: Signal;

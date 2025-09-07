@@ -89,6 +89,33 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setSignal(prev => ({ ...prev, [name]: value }));
   };
 
+  const sendSignalToUsers = () => {
+    const signalForUser = {
+      id: Date.now(),
+      text: `${signal.currencyPair}\n${signal.direction} NOW\nEntry ${signal.entryPrice}\nStop Loss ${signal.stopLoss}\nTake Profit ${signal.takeProfit}\nConfidence ${signal.confidence}%\n\n${signal.analysis}`,
+      timestamp: new Date().toISOString(),
+      from: 'Admin Dashboard',
+      chat_id: 1,
+      message_id: Date.now(),
+      update_id: Date.now()
+    };
+    
+    // Store in localStorage for user dashboard to read
+    const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+    existingMessages.unshift(signalForUser);
+    localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+
+    // Dispatch event to notify user dashboard
+    window.dispatchEvent(new CustomEvent('newSignalSent', { 
+      detail: signalForUser 
+    }));
+
+    // Update recent signals
+    setRecentSignals(prev => [signalForUser, ...prev.slice(0, 9)]);
+    
+    alert('Signal sent to all users successfully!');
+  };
+
   const toggleIctConcept = (concept: string) => {
     setSignal((prev: any) => ({
       ...prev,
@@ -244,18 +271,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                     </div>
                     <div className="mt-4">
                       <button
-                        onClick={async () => {
-                          try {
-                            await api.post('/signals', signal);
-                            alert('Signal sent successfully!');
-                          } catch (error) {
-                            console.error('Error sending signal:', error);
-                            alert('Failed to send signal.');
-                          }
-                        }}
+                        onClick={sendSignalToUsers}
                         className="w-full py-3 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
                       >
-                        Send Signal
+                        Send Signal to Users
                       </button>
                     </div>
                   </div>

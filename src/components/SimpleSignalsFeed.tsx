@@ -214,24 +214,60 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   
   // No sample signals - only real signals from admin dashboard
 
-  // Fetch signals from backend - only real signals from admin
+  // Load signals from localStorage (from admin dashboard)
   useEffect(() => {
-    const fetchSignals = async () => {
+    const loadSignals = () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        console.log('Fetching signals from Render backend...');
+        // Load signals from localStorage (stored by admin dashboard)
+        const adminSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
         
-        // No backend API calls - signals will come from real-time system only
-        console.log('Signals will be delivered via real-time system when admin creates them');
+        if (adminSignals.length === 0) {
+          setSignals([]);
+          setConnectionStatus('disconnected');
+          return;
+        }
+
+        // Convert admin messages to Signal format
+        const convertedSignals: Signal[] = adminSignals.map((msg: any) => {
+          const lines = msg.text.split('\n');
+          const pair = lines[0] || 'UNKNOWN';
+          const direction = lines[1]?.includes('BUY') ? 'LONG' : lines[1]?.includes('SELL') ? 'SHORT' : 'LONG';
+          
+          // Extract prices from text
+          const entryMatch = msg.text.match(/Entry\s+([0-9.]+)/i);
+          const slMatch = msg.text.match(/Stop Loss\s+([0-9.]+)/i);
+          const tpMatch = msg.text.match(/Take Profit\s+([0-9.,\s]+)/i);
+          const confidenceMatch = msg.text.match(/Confidence\s+([0-9]+)%/i);
+          
+          const entryPrice = entryMatch ? parseFloat(entryMatch[1]) : 0;
+          const stopLoss = slMatch ? parseFloat(slMatch[1]) : 0;
+          const takeProfit = tpMatch ? parseFloat(tpMatch[1].split(',')[0]) : 0;
+          const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 0;
+          
+          return {
+            id: msg.id.toString(),
+            pair,
+            direction,
+            entryPrice,
+            stopLoss,
+            takeProfit,
+            confidence,
+            riskRewardRatio: '1:2',
+            timestamp: msg.timestamp,
+            description: msg.text.split('\n\n')[1] || 'Professional trading signal',
+            market: 'forex',
+            status: 'active'
+          };
+        });
         
-        // No prefilled data - empty state until admin creates signals
-        setSignals([]);
+        setSignals(convertedSignals);
         setConnectionStatus('connected');
         
       } catch (err) {
-        console.error('Error fetching signals:', err);
+        console.error('Error loading signals:', err);
         setError('No signals available. Signals will appear when admin creates them.');
         setSignals([]);
         setConnectionStatus('disconnected');
@@ -239,12 +275,25 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         setIsLoading(false);
       }
     };
+
+    loadSignals();
     
-    fetchSignals();
+    // Listen for new signals from admin
+    const handleNewSignal = () => {
+      loadSignals();
+    };
     
-    // Refresh signals every 30 seconds
-    const interval = setInterval(fetchSignals, 30000);
-    return () => clearInterval(interval);
+    window.addEventListener('newSignalSent', handleNewSignal);
+    window.addEventListener('newSignalGenerated', handleNewSignal);
+    
+    // Refresh signals every 5 seconds
+    const interval = setInterval(loadSignals, 5000);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('newSignalSent', handleNewSignal);
+      window.removeEventListener('newSignalGenerated', handleNewSignal);
+    };
   }, []);
   
   // Apply market filter

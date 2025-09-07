@@ -1181,7 +1181,7 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
         <div className="holo-main">
             <div className="container mx-auto">
               {activeTab === 'overview' && renderOverview()}
-              {activeTab === 'signals' && <EnhancedSignalsFeed 
+              {activeTab === 'signals' && <SimpleSignalsFeed 
                 onMarkAsTaken={handleMarkAsTaken}
                 onAddToJournal={(signal) => {
                   // Handle adding to journal

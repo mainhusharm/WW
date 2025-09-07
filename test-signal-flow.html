@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .signal-display {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #00ff88;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #28a745; }
+        .error { background: #dc3545; }
+        .info { background: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>Signal Flow Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Admin Dashboard Signal Creation</h2>
+        <p>This simulates creating a signal from the admin dashboard:</p>
+        <button onclick="createTestSignal()">Create Test Signal</button>
+        <button onclick="createForexSignal()">Create Forex Signal</button>
+        <button onclick="createCryptoSignal()">Create Crypto Signal</button>
+    </div>
+
+    <div class="test-section">
+        <h2>2. User Dashboard Signal Display</h2>
+        <p>This shows signals that would appear in the user dashboard:</p>
+        <button onclick="loadUserSignals()">Load User Signals</button>
+        <button onclick="clearSignals()">Clear All Signals</button>
+        <div id="userSignals"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Signal Storage Status</h2>
+        <div id="storageStatus"></div>
+        <button onclick="checkStorage()">Check Storage</button>
+    </div>
+
+    <script>
+        // Simulate admin dashboard signal creation
+        function createTestSignal() {
+            const signalForUser = {
+                id: Date.now(),
+                text: `EURUSD\nBUY NOW\nEntry 1.08500\nStop Loss 1.08300\nTake Profit 1.08700\nConfidence 85%\n\nStrong bullish momentum with order block respect and fair value gap formation.`,
+                timestamp: new Date().toISOString(),
+                from: 'Admin Dashboard',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Store in localStorage
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(signalForUser);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+
+            // Dispatch event
+            window.dispatchEvent(new CustomEvent('newSignalSent', { 
+                detail: signalForUser 
+            }));
+
+            showStatus('Test signal created successfully!', 'success');
+            checkStorage();
+        }
+
+        function createForexSignal() {
+            const signalForUser = {
+                id: Date.now(),
+                text: `GBPUSD\nSELL NOW\nEntry 1.26500\nStop Loss 1.26800\nTake Profit 1.26000\nConfidence 92%\n\nBearish order block rejection with liquidity sweep and change of character.`,
+                timestamp: new Date().toISOString(),
+                from: 'Forex Signal Generator',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(signalForUser);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+
+            window.dispatchEvent(new CustomEvent('newSignalGenerated', { 
+                detail: signalForUser 
+            }));
+
+            showStatus('Forex signal created successfully!', 'success');
+            checkStorage();
+        }
+
+        function createCryptoSignal() {
+            const signalForUser = {
+                id: Date.now(),
+                text: `BTCUSDT\nBUY NOW\nEntry 45000\nStop Loss 44000\nTake Profit 47000\nConfidence 88%\n\nSmart money concepts alignment with institutional order flow.`,
+                timestamp: new Date().toISOString(),
+                from: 'Crypto Signal Generator',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(signalForUser);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+
+            window.dispatchEvent(new CustomEvent('newSignalGenerated', { 
+                detail: signalForUser 
+            }));
+
+            showStatus('Crypto signal created successfully!', 'success');
+            checkStorage();
+        }
+
+        // Simulate user dashboard signal loading
+        function loadUserSignals() {
+            const adminSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const signalsContainer = document.getElementById('userSignals');
+            
+            if (adminSignals.length === 0) {
+                signalsContainer.innerHTML = '<div class="status error">No signals available</div>';
+                return;
+            }
+
+            const signalsHtml = adminSignals.map(signal => {
+                const lines = signal.text.split('\n');
+                const pair = lines[0] || 'UNKNOWN';
+                const direction = lines[1]?.includes('BUY') ? 'LONG' : lines[1]?.includes('SELL') ? 'SHORT' : 'LONG';
+                
+                const entryMatch = signal.text.match(/Entry\s+([0-9.]+)/i);
+                const slMatch = signal.text.match(/Stop Loss\s+([0-9.]+)/i);
+                const tpMatch = signal.text.match(/Take Profit\s+([0-9.]+)/i);
+                const confidenceMatch = signal.text.match(/Confidence\s+([0-9]+)%/i);
+                
+                const entryPrice = entryMatch ? entryMatch[1] : 'N/A';
+                const stopLoss = slMatch ? slMatch[1] : 'N/A';
+                const takeProfit = tpMatch ? tpMatch[1] : 'N/A';
+                const confidence = confidenceMatch ? confidenceMatch[1] : 'N/A';
+
+                return `
+                    <div class="signal-display">
+                        <h3>${pair} - ${direction}</h3>
+                        <p><strong>Entry:</strong> ${entryPrice} | <strong>Stop Loss:</strong> ${stopLoss} | <strong>Take Profit:</strong> ${takeProfit}</p>
+                        <p><strong>Confidence:</strong> ${confidence}% | <strong>From:</strong> ${signal.from}</p>
+                        <p><strong>Analysis:</strong> ${signal.text.split('\n\n')[1] || 'No analysis provided'}</p>
+                        <p><strong>Time:</strong> ${new Date(signal.timestamp).toLocaleString()}</p>
+                    </div>
+                `;
+            }).join('');
+
+            signalsContainer.innerHTML = signalsHtml;
+            showStatus(`Loaded ${adminSignals.length} signals`, 'info');
+        }
+
+        function clearSignals() {
+            localStorage.removeItem('telegram_messages');
+            document.getElementById('userSignals').innerHTML = '<div class="status info">All signals cleared</div>';
+            checkStorage();
+        }
+
+        function checkStorage() {
+            const adminSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const statusDiv = document.getElementById('storageStatus');
+            
+            statusDiv.innerHTML = `
+                <div class="status info">
+                    <strong>Storage Status:</strong><br>
+                    Signals in localStorage: ${adminSignals.length}<br>
+                    Last updated: ${adminSignals.length > 0 ? new Date(adminSignals[0].timestamp).toLocaleString() : 'Never'}
+                </div>
+            `;
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            document.body.appendChild(statusDiv);
+            
+            setTimeout(() => {
+                statusDiv.remove();
+            }, 3000);
+        }
+
+        // Listen for signal events
+        window.addEventListener('newSignalSent', (event) => {
+            console.log('New signal sent event received:', event.detail);
+            showStatus('Signal sent event received!', 'info');
+        });
+
+        window.addEventListener('newSignalGenerated', (event) => {
+            console.log('New signal generated event received:', event.detail);
+            showStatus('Signal generated event received!', 'info');
+        });
+
+        // Initialize
+        checkStorage();
+    </script>
+</body>
+</html>

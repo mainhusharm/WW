@@ -2,50 +2,12 @@ import React, { useEffect, useState } from 'react';
 import LivePriceFeed from './LivePriceFeed';
 import { getNextApiKey } from '../services/apiKeyManager';
 import TradePerformance from './TradePerformance';
-import api from '../api';
 
 const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: boolean, setIsBotRunning: (isRunning: boolean) => void }) => {
   const [activeTab, setActiveTab] = useState('signals');
   const [tradeHistory, setTradeHistory] = useState<any[]>([]);
   const [wins, setWins] = useState<any[]>([]);
   const [losses, setLosses] = useState<any[]>([]);
-  const [botStatus, setBotStatus] = useState<{ is_active: boolean; last_started?: string; last_stopped?: string }>({ is_active: false });
-
-  // Bot status management
-  const fetchBotStatus = async () => {
-    try {
-      const response = await api.get('/api/database/bot-status');
-      const cryptoBot = response.data.find((bot: any) => bot.bot_type === 'crypto');
-      if (cryptoBot) {
-        setBotStatus(cryptoBot);
-        setIsBotRunning(cryptoBot.is_active);
-      }
-    } catch (error) {
-      console.error('Error fetching bot status:', error);
-    }
-  };
-
-  const updateBotStatus = async (isActive: boolean) => {
-    try {
-      await api.post('/api/database/bot-status/crypto', { is_active: isActive });
-      setBotStatus(prev => ({ ...prev, is_active: isActive }));
-      setIsBotRunning(isActive);
-      
-      if (isActive) {
-        // Start the bot logic here
-        console.log('Crypto bot started');
-      } else {
-        // Stop the bot logic here
-        console.log('Crypto bot stopped');
-      }
-    } catch (error) {
-      console.error('Error updating bot status:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchBotStatus();
-  }, []);
 
   useEffect(() => {
     // --- DOM Elements ---
@@ -111,223 +73,37 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
         logsContainer.scrollTop = logsContainer.scrollHeight;
     }
 
-    // --- 24/7 Reliability System ---
-    class ReliabilityManager {
-        private healthCheckInterval: NodeJS.Timeout | null = null;
-        private reconnectAttempts: Map<string, number> = new Map();
-        private lastSuccessfulConnection: Map<string, number> = new Map();
-        private maxReconnectAttempts = 10;
-        private healthCheckFrequency = 30000; // 30 seconds
-        private connectionTimeout = 15000; // 15 seconds
-        private isSystemHealthy = true;
-
-        startHealthMonitoring() {
-            log('🔧 Starting optimized health monitoring system...', 'info');
-            // Increase health check frequency to reduce API calls
-            this.healthCheckFrequency = 120000; // 2 minutes instead of 30 seconds
-            this.healthCheckInterval = setInterval(() => {
-                this.performHealthCheck();
-            }, this.healthCheckFrequency);
-        }
-
-        stopHealthMonitoring() {
-            if (this.healthCheckInterval) {
-                clearInterval(this.healthCheckInterval);
-                this.healthCheckInterval = null;
-            }
-        }
-
-        async performHealthCheck() {
-            try {
-                // Check production services health using errorHandler
-                const binanceHealthy = await this.errorHandler.checkSpecificService('binance');
-                const yfinanceHealthy = await this.errorHandler.checkSpecificService('yfinance');
-                
-                // Skip system resources check to reduce overhead
-                this.isSystemHealthy = binanceHealthy && yfinanceHealthy;
-            } catch (error: any) {
-                // Silently handle health check failures
-                this.isSystemHealthy = false;
-            }
-        }
-
-        async checkServiceHealth(serviceName: string, healthUrl: string) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced timeout
-                
-                const response = await fetch(healthUrl, { 
-                    method: 'GET',
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (response.ok) {
-                    this.lastSuccessfulConnection.set(serviceName, Date.now());
-                    this.reconnectAttempts.set(serviceName, 0);
-                    return true;
-                } else {
-                    throw new Error(`Service ${serviceName} returned ${response.status}`);
-                }
-            } catch (error: any) {
-                // Silently handle health check failures to reduce console noise
-                return false;
-            }
-        }
-
-        async handleServiceFailure(serviceName: string) {
-            const attempts = this.reconnectAttempts.get(serviceName) || 0;
-            this.reconnectAttempts.set(serviceName, attempts + 1);
-
-            if (attempts < this.maxReconnectAttempts) {
-                const delay = Math.min(1000 * Math.pow(2, attempts), 30000); // Exponential backoff, max 30s
-                log(`🔄 Attempting to reconnect to ${serviceName} in ${delay/1000}s (attempt ${attempts + 1}/${this.maxReconnectAttempts})`, 'warning');
-                
-                setTimeout(() => {
-                    this.attemptServiceReconnection(serviceName);
-                }, delay);
-            } else {
-                log(`💀 ${serviceName} service failed after ${this.maxReconnectAttempts} attempts. Switching to fallback mode.`, 'error');
-                this.activateFailoverMode(serviceName);
-            }
-        }
-
-        async attemptServiceReconnection(serviceName: string) {
-            log(`🔌 Attempting to reconnect to ${serviceName} service...`, 'info');
-            
-            try {
-                if (serviceName === 'binance') {
-                    const binanceUrls = [
-                        'https://binance-service.onrender.com/health',
-                        'https://binance-service.onrender.com/health'
-                    ];
-                    for (const url of binanceUrls) {
-                        try {
-                            const response = await fetch(url);
-                            if (response.ok) {
-                                console.log(`✅ Binance service reconnected via ${url}`);
-                                return true;
-                            }
-                        } catch (error) {
-                            console.warn(`Failed to reconnect to binance service via ${url}:`, error);
-                            continue;
-                        }
-                    }
-                } else if (serviceName === 'forex' || serviceName === 'yfinance') {
-                    // Use yfinance-service for forex data
-                    const yfinanceUrls = [
-                        'https://yfinance-service-kyce.onrender.com/health',
-                        'https://yfinance-service-kyce.onrender.com/health'
-                    ];
-                    for (const url of yfinanceUrls) {
-                        try {
-                            const response = await fetch(url);
-                            if (response.ok) {
-                                console.log(`✅ YFinance service reconnected via ${url}`);
-                                return true;
-                            }
-                        } catch (error) {
-                            console.warn(`Failed to reconnect to yfinance service via ${url}:`, error);
-                            continue;
-                        }
-                    }
-                }
-                
-                return false;
-            } catch (error) {
-                console.error(`Error during reconnection attempt for ${serviceName}:`, error);
-                return false;
-            }
-        }
-
-        activateFailoverMode(serviceName: string) {
-            log(`🚨 Activating failover mode for ${serviceName}`, 'warning');
-            
-            if (serviceName === 'binance') {
-                // Implement Binance failover (could use alternative crypto APIs)
-                log('📡 Switching to alternative crypto data sources...', 'info');
-            } else if (serviceName === 'forex') {
-                // Implement forex failover
-                log('📡 Switching to alternative forex data sources...', 'info');
-            }
-        }
-
-        checkSystemResources() {
-            // Check memory usage, connection counts, etc.
-            const memoryUsage = (performance as any).memory?.usedJSHeapSize || 0;
-            const maxMemory = (performance as any).memory?.jsHeapSizeLimit || 100000000;
-            
-            if (memoryUsage > maxMemory * 0.9) {
-                log('⚠️ High memory usage detected. Consider restarting the system.', 'warning');
-                this.isSystemHealthy = false;
-            }
-        }
-
-        handleHealthCheckFailure() {
-            this.isSystemHealthy = false;
-            // Implement recovery procedures
-            log('🔧 Initiating system recovery procedures...', 'warning');
-        }
-
-        getSystemStatus() {
-            return {
-                isHealthy: this.isSystemHealthy,
-                lastChecks: Object.fromEntries(this.lastSuccessfulConnection),
-                reconnectAttempts: Object.fromEntries(this.reconnectAttempts)
-            };
-        }
-    }
-
-    const reliabilityManager = new ReliabilityManager();
-
     async function fetchWithRetry(url: string, options = {}, maxRetries = 2) {
         let lastError;
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000); // Reduced timeout
-                
-                const response = await fetch(url, { 
-                    ...options, 
-                    signal: controller.signal,
-                    headers: {
-                        'User-Agent': 'TradingBot/1.0',
-                        'Accept': 'application/json',
-                        ...((options as any).headers || {})
-                    }
-                });
-                
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                const response = await fetch(url, { ...options, signal: controller.signal });
                 clearTimeout(timeoutId);
-                
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
-                
                 const data = await response.json();
                 const errorMessage = data.error || data.Error || data['Error Message'] || data['Note'] || data['message'];
                 if (errorMessage) throw new Error(errorMessage);
-                
                 return data;
             } catch (error: any) {
                 lastError = error;
-                
+                log(`❌ Attempt ${attempt} failed: ${error.message}`, 'warning');
                 if (attempt < maxRetries) {
-                    const delay = 2000; // Fixed 2s delay instead of exponential backoff
-                    await new Promise(resolve => setTimeout(resolve, delay));
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
                 }
             }
         }
-        // Don't throw error, return null to trigger fallback
-        return null;
+        throw new Error(`All ${maxRetries} attempts failed. Last error: ${(lastError as any).message}`);
     }
 
-    function getCryptoPrecision(symbol: string) {
-        // Crypto precision is typically 2-8 decimal places
-        if (['BTCUSDT', 'ETHUSDT'].includes(symbol)) return 2;
-        if (['BNBUSDT', 'ADAUSDT', 'XRPUSDT', 'SOLUSDT', 'AVAXUSDT', 'LINKUSDT', 'LTCUSDT', 'AAVEUSDT'].includes(symbol)) return 4;
-        if (['DOTUSDT', 'DOGEUSDT', 'XLMUSDT', 'FILUSDT'].includes(symbol)) return 6;
-        return 4; // Default precision
+    function getPrecision(symbol: string) {
+        if (['USDJPY'].includes(symbol)) return 3;
+        if (['EURUSD', 'GBPUSD', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD'].includes(symbol)) return 5;
+        return 2;
     }
 
     // --- Data Engines ---
@@ -356,82 +132,19 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
         }
 
 
-        async fetchBinancePrice(symbol: string) {
-            // Try production Binance service first, then fallback to direct API
-            const urls = [
-                `https://binance-service.onrender.com/api/ticker/price?symbol=${symbol}`,
-                `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`
-            ];
-            
-            for (const url of urls) {
-                try {
-                    const data = await fetchWithRetry(url);
-                    if (data && data.price) {
-                        return { price: parseFloat(data.price), provider: 'Binance' };
-                    }
-                } catch (error) {
-                    continue; // Try next URL
-                }
+        async fetchYfinancePrice(symbol: string) {
+            const url = `http://localhost:3004/api/get-price`;
+            const body = { symbol, timeframe: '1m' }; // Use 1m for latest price
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            };
+            const data = await fetchWithRetry(url, options);
+            if (data && data.price) {
+                return { price: data.price, provider: 'yfinance' };
             }
-            
-            // Return mock data as fallback
-            log(`Using fallback data for ${symbol}`, 'warning');
-            return { 
-                price: this.generateMockCryptoPrice(symbol), 
-                provider: 'fallback' 
-            };
-        }
-
-        async fetchCryptoPrice(symbol: string) {
-            // Only use Binance API for crypto data
-            const urls = [
-                `https://binance-service.onrender.com/api/ticker/price?symbol=${symbol}`,
-                `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`
-            ];
-            
-            for (const url of urls) {
-                try {
-                    const data = await fetchWithRetry(url);
-                    if (data && data.price) {
-                        return { price: parseFloat(data.price), provider: 'Binance' };
-                    }
-                } catch (error) {
-                    continue; // Try next URL
-                }
-            }
-            
-            // Return mock data as fallback
-            log(`Using fallback data for ${symbol}`, 'warning');
-            return { 
-                price: this.generateMockCryptoPrice(symbol), 
-                provider: 'fallback' 
-            };
-        }
-
-
-
-        generateMockCryptoPrice(symbol: string) {
-            // Generate realistic mock prices for crypto
-            const basePrices: { [key: string]: number } = {
-                'BTCUSDT': 43250.00,
-                'ETHUSDT': 2650.00,
-                'ADAUSDT': 0.485,
-                'BNBUSDT': 315.50,
-                'XRPUSDT': 0.625,
-                'SOLUSDT': 98.75,
-                'DOTUSDT': 7.25,
-                'DOGEUSDT': 0.085,
-                'AVAXUSDT': 36.50,
-                'LINKUSDT': 14.85,
-                'LTCUSDT': 72.50,
-                'XLMUSDT': 0.125,
-                'FILUSDT': 5.85,
-                'AAVEUSDT': 95.50
-            };
-            
-            const basePrice = basePrices[symbol] || 100.00;
-            const variation = (Math.random() - 0.5) * 0.02; // ±1% variation for crypto
-            return basePrice * (1 + variation);
+            throw new Error(`Invalid price data from yfinance for ${symbol}`);
         }
 
         async getPrice(symbol: string) {
@@ -439,17 +152,24 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
             if (cached) return cached;
 
             try {
-                // CryptoDashboard only handles crypto data
-                if (!markets.crypto.symbols.includes(symbol)) {
-                    log(`⚠️ ${symbol} is not a crypto symbol, skipping...`, 'warning');
-                    return null;
+                let result;
+                const isCrypto = markets.crypto.symbols.includes(symbol);
+
+                if (isCrypto) {
+                    log(`📡 Routing ${symbol} to Binance...`, 'info');
+                    const cryptoData = await fetchCryptoData(symbol, '1m');
+                    if (cryptoData && cryptoData.length > 0) {
+                        result = { price: cryptoData[cryptoData.length - 1].close, provider: 'Binance' };
+                    } else {
+                        throw new Error('Failed to fetch crypto data');
+                    }
+                } else {
+                    log(`📡 Routing ${symbol} to yfinance...`, 'info');
+                    result = await this.fetchYfinancePrice(symbol);
                 }
 
-                log(`📡 Fetching ${symbol} from Binance service...`, 'info');
-                const result = await this.fetchCryptoPrice(symbol);
-
                 const priceData = {
-                    price: result.price.toFixed(getCryptoPrecision(symbol)),
+                    price: result.price.toFixed(getPrecision(symbol.replace('/', ''))),
                     provider: result.provider,
                     timestamp: new Date(),
                     isReal: true,
@@ -1360,43 +1080,42 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
                         signals.push(signal);
                     }
                     
-                    signals.forEach(async (signal) => {
+                    signals.forEach(signal => {
                         updateSMCStatistics(signal);
                         displayProfessionalSignal(signal);
                         log(`🎯 ${signal.signalType} signal for ${symbol} (R:R ${signal.riskReward}): Confidence: ${signal.confidence}%`, 'success');
                         
-                        try {
-                          await api.post('/trades', {
-                            pair: signal.symbol,
-                            type: signal.signalType,
-                            entry: signal.entryPrice,
-                            stopLoss: signal.stopLoss,
-                            takeProfit: [signal.takeProfit],
-                            id: signal.id,
-                          });
-                          
-                          // Use centralized signal service to relay to users
-                          try {
-                            const signalService = await import('../services/signalService');
-                            await signalService.default.addSignal({
-                              id: signal.id,
-                              pair: signal.symbol,
-                              direction: signal.signalType === 'BUY' ? 'LONG' : 'SHORT',
-                              entry: signal.entryPrice,
-                              stopLoss: signal.stopLoss,
-                              takeProfit: signal.takeProfit,
-                              confidence: signal.confidence,
-                              timestamp: signal.timestamp.toISOString(),
-                              status: 'active',
-                              market: 'crypto',
-                              timeframe: timeframe
-                            });
-                          } catch (error) {
-                            console.error('Error relaying crypto signal:', error);
-                          }
-                        } catch (error) {
-                          console.error('Error saving signal:', error);
-                          log(`❌ Error saving signal for ${signal.symbol}`, 'error');
+                        // Save signal to localStorage
+                        const existingSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+                        const signalKey = `${signal.symbol}-${signal.timeframe}-${signal.signalType}-${signal.entryPrice}-${signal.stopLoss}-${signal.takeProfit}`;
+                        const isDuplicate = existingSignals.some((s: any) => `${s.symbol}-${s.timeframe}-${s.signalType}-${s.entryPrice}-${s.stopLoss}-${s.takeProfit}` === signalKey);
+
+                        if (!isDuplicate) {
+                            const signalForStorage = {
+                                ...signal,
+                                timestamp: signal.timestamp.toISOString()
+                            };
+                            existingSignals.unshift(signalForStorage);
+                            localStorage.setItem('admin_generated_signals', JSON.stringify(existingSignals.slice(0, 100)));
+                            
+                            // Also store in telegram_messages format for user dashboard
+                            const signalForUser = {
+                                id: Date.now(),
+                                text: `${signal.symbol}\n${signal.signalType} NOW\nEntry ${signal.entryPrice}\nStop Loss ${signal.stopLoss}\nTake Profit ${signal.takeProfit}\nConfidence ${signal.confidence}%\n\n${signal.analysis}`,
+                                timestamp: signal.timestamp.toISOString(),
+                                from: 'Crypto Signal Generator',
+                                chat_id: 1,
+                                message_id: Date.now(),
+                                update_id: Date.now()
+                            };
+                            
+                            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+                            existingMessages.unshift(signalForUser);
+                            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+                            
+                            window.dispatchEvent(new CustomEvent('newSignalGenerated', { 
+                              detail: signalForStorage 
+                            }));
                         }
                     });
                     
@@ -1419,37 +1138,39 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
     async function startAnalysis(symbol: string, timeframe: string) {
         log(`Initializing analysis for ${symbol} (${timeframe})...`);
         
+        const isCrypto = markets.crypto.symbols.includes(symbol);
+        const fetchData = isCrypto ? () => fetchCryptoData(symbol, timeframe) : () => fetchForexData(symbol);
+        
         const analyze = async () => {
-            try {
-                const priceData = await dataEngine.getPrice(symbol);
-                if (priceData && priceData.price) {
-                    const signals = await performAdvancedSMCAnalysis(symbol, priceData, timeframe);
-                    
-                    if (signals) {
-                        signals.forEach(signal => {
-                            const signalKey = `${signal.symbol}-${signal.timeframe}-${signal.signalType}-${signal.entryPrice}-${signal.stopLoss}-${signal.takeProfit}`;
-                            if (!signalHistory.some(s => `${s.symbol}-${s.timeframe}-${s.signalType}-${s.entryPrice}-${s.stopLoss}-${s.takeProfit}` === signalKey)) {
-                                (signal as any).status = 'active';
-                                (signal as any).direction = signal.signalType === 'BUY' ? 'bullish' : 'bearish';
-                                signalHistory.push(signal);
-                                setTradeHistory(prev => {
-                                    const newHistory = [...prev, signal];
-                                    const uniqueHistory = Array.from(new Map(newHistory.map(item => [`${item.symbol}-${item.timeframe}-${item.signalType}-${item.entryPrice}-${item.stopLoss}-${item.takeProfit}`, item])).values());
-                                    return uniqueHistory;
-                                });
-                            }
-                        });
-                    }
-                    if (lastUpdateEl) lastUpdateEl.textContent = `Last Update: ${new Date().toLocaleTimeString()}`;
-                    updateMarketData();
+            const data = await fetchData();
+            if (data && data.length > 0) {
+                const lastPrice = data[data.length - 1].close;
+                const priceData = { price: lastPrice.toString() };
+                
+                const signals = await performAdvancedSMCAnalysis(symbol, priceData, timeframe);
+                
+                if (signals) {
+                    signals.forEach(signal => {
+                        const signalKey = `${signal.symbol}-${signal.timeframe}-${signal.signalType}-${signal.entryPrice}-${signal.stopLoss}-${signal.takeProfit}`;
+                        if (!signalHistory.some(s => `${s.symbol}-${s.timeframe}-${s.signalType}-${s.entryPrice}-${s.stopLoss}-${s.takeProfit}` === signalKey)) {
+                            (signal as any).status = 'active';
+                            (signal as any).direction = signal.signalType === 'BUY' ? 'bullish' : 'bearish';
+                            signalHistory.push(signal);
+                            setTradeHistory(prev => {
+                                const newHistory = [...prev, signal];
+                                const uniqueHistory = Array.from(new Map(newHistory.map(item => [`${item.symbol}-${item.timeframe}-${item.signalType}-${item.entryPrice}-${item.stopLoss}-${item.takeProfit}`, item])).values());
+                                return uniqueHistory;
+                            });
+                        }
+                    });
                 }
-            } catch (error: any) {
-                log(`❌ Analysis failed for ${symbol}: ${error.message}`, 'error');
+                if (lastUpdateEl) lastUpdateEl.textContent = `Last Update: ${new Date().toLocaleTimeString()}`;
+                updateMarketData();
             }
         };
 
         await analyze();
-        const intervalId = setInterval(analyze, 120000); // Reduced frequency to 2 minutes
+        const intervalId = setInterval(analyze, 60000);
         activeConnections.push({ symbol, timeframe, intervalId });
         updateMarketData();
     }
@@ -1572,12 +1293,7 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
 
     // --- Initialization ---
     populateSymbols();
-    
-    // Start 24/7 reliability monitoring
-    reliabilityManager.startHealthMonitoring();
-    
     log('SMC Pro Elite Bot initialized - Configure settings to start.');
-    log('🔧 24/7 Reliability system activated', 'success');
   }, []);
 
   return (
@@ -1730,54 +1446,6 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
               </select>
             </div>
             
-            {/* Bot Status Toggle */}
-            <div className="bot-status-toggle mb-4 p-4 bg-gray-800/60 rounded-lg border border-gray-700">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-lg font-semibold text-white">Bot Status Control</h4>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                  botStatus.is_active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-                }`}>
-                  {botStatus.is_active ? '🟢 ACTIVE' : '🔴 INACTIVE'}
-                </span>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => updateBotStatus(true)}
-                  disabled={botStatus.is_active}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    botStatus.is_active
-                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      : 'bg-green-600 hover:bg-green-700 text-white'
-                  }`}
-                >
-                  🚀 Start Bot
-                </button>
-                <button
-                  onClick={() => updateBotStatus(false)}
-                  disabled={!botStatus.is_active}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    !botStatus.is_active
-                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      : 'bg-red-600 hover:bg-red-700 text-white'
-                  }`}
-                >
-                  ⏹️ Stop Bot
-                </button>
-              </div>
-              
-              {botStatus.last_started && (
-                <p className="text-sm text-gray-400 mt-2">
-                  Started: {new Date(botStatus.last_started).toLocaleString()}
-                </p>
-              )}
-              {botStatus.last_stopped && (
-                <p className="text-sm text-gray-400 mt-2">
-                  Stopped: {new Date(botStatus.last_stopped).toLocaleString()}
-                </p>
-              )}
-            </div>
-
             <button className="btn btn-primary" onClick={() => (window as any).startBot()} id="startBtn">
               🚀 Start Real Data Analysis
             </button>
