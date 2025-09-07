@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Signal, TradeOutcome } from '../trading/types';
 import { useUser } from '../contexts/UserContext';
-import botDataService from '../services/botDataService';
 
 interface SimpleSignalCardProps {
   signal: Signal;
@@ -223,8 +222,10 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         
         // Load signals from localStorage (stored by admin dashboard)
         const adminSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+        console.log('Loaded admin signals from localStorage:', adminSignals);
         
         if (adminSignals.length === 0) {
+          console.log('No signals found in localStorage');
           setSignals([]);
           setConnectionStatus('disconnected');
           return;
@@ -232,6 +233,8 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
 
         // Convert admin messages to Signal format
         const convertedSignals: Signal[] = adminSignals.map((msg: any) => {
+          console.log('Converting signal:', msg); // Debug log
+          
           const lines = msg.text.split('\n');
           const pair = lines[0] || 'UNKNOWN';
           const direction = lines[1]?.includes('BUY') ? 'LONG' : lines[1]?.includes('SELL') ? 'SHORT' : 'LONG';
@@ -245,22 +248,28 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
           const entryPrice = entryMatch ? parseFloat(entryMatch[1]) : 0;
           const stopLoss = slMatch ? parseFloat(slMatch[1]) : 0;
           const takeProfit = tpMatch ? parseFloat(tpMatch[1].split(',')[0]) : 0;
-          const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 0;
+          const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 85;
           
-          return {
+          const signal = {
             id: msg.id.toString(),
             pair,
             direction,
+            entry: entryPrice.toString(),
             entryPrice,
-            stopLoss,
-            takeProfit,
+            stopLoss: stopLoss.toString(),
+            takeProfit: takeProfit.toString(),
             confidence,
             riskRewardRatio: '1:2',
             timestamp: msg.timestamp,
             description: msg.text.split('\n\n')[1] || 'Professional trading signal',
+            analysis: msg.text.split('\n\n')[1] || 'Professional trading signal',
             market: 'forex',
-            status: 'active'
+            status: 'active',
+            type: direction === 'LONG' ? 'buy' : 'sell'
           };
+          
+          console.log('Converted signal:', signal); // Debug log
+          return signal;
         });
         
         setSignals(convertedSignals);
@@ -321,11 +330,13 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   // Handle marking signal as taken
   const handleMarkAsTaken = async (signal: Signal, outcome: TradeOutcome, pnl?: number) => {
     try {
-      // Store signal in database for persistent history
+      // Store signal locally for now (avoid CORS issues)
       const signalResult = outcome === 'Target Hit' ? 'win' : 
                           outcome === 'Stop Loss Hit' ? 'loss' : 'skipped';
       
-      await botDataService.storeUserSignal({
+      // Store in localStorage instead of making API calls
+      const userSignalData = {
+        id: Date.now(),
         user_id: user?.id || 'current_user',
         pair: signal.pair,
         signal_type: signal.direction === 'LONG' ? 'buy' : 'sell',
@@ -338,8 +349,14 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         analysis: signal.analysis,
         ict_concepts: signal.ictConcepts,
         pnl: pnl,
-        notes: `Signal outcome: ${outcome}`
-      });
+        notes: `Signal outcome: ${outcome}`,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Store in localStorage
+      const existingUserSignals = JSON.parse(localStorage.getItem('user_signals') || '[]');
+      existingUserSignals.unshift(userSignalData);
+      localStorage.setItem('user_signals', JSON.stringify(existingUserSignals.slice(0, 100)));
       
       // Update local state
       onMarkAsTaken(signal, outcome, pnl);
@@ -349,9 +366,11 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
       setSignals(prev => prev.map(s => 
         s.id === signal.id ? { ...s, status: 'taken', outcome, pnl } : s
       ));
+      
+      console.log('Signal marked as taken and stored locally:', userSignalData);
     } catch (error) {
       console.error('Error marking signal as taken:', error);
-      // Still update local state even if backend fails
+      // Still update local state even if storage fails
       onMarkAsTaken(signal, outcome, pnl);
       setTakenSignalIds(prev => [...prev, signal.id]);
     }
@@ -404,6 +423,19 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         <p className="text-gray-400">New signals will appear here when generated by the admin dashboard.</p>
         <div className="mt-4 text-sm text-gray-500">
           Connection Status: {connectionStatus === 'connected' ? '🟢 Connected' : '🔴 Disconnected'}
+        </div>
+        <div className="mt-6">
+          <button 
+            onClick={() => {
+              console.log('Manual refresh clicked');
+              const adminSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+              console.log('Current localStorage signals:', adminSignals);
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+          >
+            🔄 Refresh Signals
+          </button>
         </div>
       </div>
     );
