@@ -1,0 +1,52 @@
+# Render Deployment Configuration
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: trading-platform-db
+    env: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.db
+    envVars:
+      - key: POSTGRES_DB
+        value: trading_platform
+      - key: POSTGRES_USER
+        value: trading_user
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+      - key: PGDATA
+        value: /var/lib/postgresql/data/pgdata
+
+  # Backend API Service
+  - type: web
+    name: trading-platform-api
+    env: python3
+    plan: starter
+    buildCommand: pip install -r requirements-render.txt && python3 setup_backend_database.py
+    startCommand: gunicorn --worker-class eventlet -w 1 wsgi_socketio:application
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: trading-platform-db
+          property: connectionString
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 10000
+
+  # Frontend Service
+  - type: web
+    name: trading-platform-frontend
+    env: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: VITE_API_URL
+        value: https://backend-bkt7.onrender.com
+      - key: NODE_ENV
+        value: production

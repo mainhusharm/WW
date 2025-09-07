@@ -1,0 +1,66 @@
+/* 3D Card Effects */
+.card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.5s;
+}
+
+.card-3d:hover {
+  transform: perspective(1000px) rotateY(10deg) rotateX(10deg) scale3d(1.05, 1.05, 1.05);
+}
+
+/* Lightning Border Animation */
+.lightning-border {
+  position: relative;
+  overflow: hidden;
+}
+
+.lightning-border::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent,
+    rgba(0, 123, 255, 0.5),
+    transparent 30%
+  );
+  animation: lightning 4s linear infinite;
+}
+
+@keyframes lightning {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Hero Section Effects */
+.hero-text-3d {
+  text-shadow: 0 0 5px rgba(0, 123, 255, 0.5), 0 0 10px rgba(0, 123, 255, 0.5), 0 0 15px rgba(0, 123, 255, 0.5);
+}
+
+/* Button Effects */
+.btn-3d {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-3d:active {
+  transform: translateY(0);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Glassmorphism Navbar */
+.navbar-glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}

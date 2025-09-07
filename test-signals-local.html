@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Signals - Local Backend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .signal-card {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .symbol {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .side {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .buy {
+            background: #10b981;
+            color: white;
+        }
+        .sell {
+            background: #ef4444;
+            color: white;
+        }
+        .risk-tier {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .low { background: #10b981; }
+        .medium { background: #f59e0b; }
+        .high { background: #ef4444; }
+        .signal-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .detail {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .detail-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .error {
+            background: #ef4444;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #10b981;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        select {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Real-time Signal System Test</h1>
+            <p>Testing local backend at <code>http://localhost:5000</code></p>
+        </div>
+
+        <div class="controls">
+            <button onclick="fetchSignals()">🔄 Refresh Signals</button>
+            <button onclick="fetchStats()">📊 Get Stats</button>
+            <select id="riskTier" onchange="fetchSignals()">
+                <option value="low">Low Risk</option>
+                <option value="medium" selected>Medium Risk</option>
+                <option value="high">High Risk</option>
+            </select>
+        </div>
+
+        <div id="stats" class="stats"></div>
+        <div id="signals"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        async function fetchSignals() {
+            const riskTier = document.getElementById('riskTier').value;
+            const signalsDiv = document.getElementById('signals');
+            
+            signalsDiv.innerHTML = '<div class="loading">🔄 Loading signals...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/user/signals?risk_tier=${riskTier}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySignals(data.signals);
+                } else {
+                    signalsDiv.innerHTML = `<div class="error">❌ Error: ${data.error || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                signalsDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function fetchStats() {
+            const riskTier = document.getElementById('riskTier').value;
+            const statsDiv = document.getElementById('stats');
+            
+            try {
+                const response = await fetch(`${API_BASE}/user/signals/stats?risk_tier=${riskTier}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayStats(data.stats);
+                } else {
+                    statsDiv.innerHTML = `<div class="error">❌ Error fetching stats: ${data.error || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                statsDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+        
+        function displayStats(stats) {
+            const statsDiv = document.getElementById('stats');
+            statsDiv.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total_signals}</div>
+                    <div class="stat-label">Total Signals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.delivered_signals}</div>
+                    <div class="stat-label">Delivered</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.recent_signals_7d}</div>
+                    <div class="stat-label">Recent (7d)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.user_risk_tier}</div>
+                    <div class="stat-label">Risk Tier</div>
+                </div>
+            `;
+        }
+        
+        function displaySignals(signals) {
+            const signalsDiv = document.getElementById('signals');
+            
+            if (signals.length === 0) {
+                signalsDiv.innerHTML = '<div class="loading">📭 No signals found for this risk tier</div>';
+                return;
+            }
+            
+            signalsDiv.innerHTML = signals.map(signal => `
+                <div class="signal-card">
+                    <div class="signal-header">
+                        <div class="symbol">${signal.symbol}</div>
+                        <div class="side ${signal.side.toLowerCase()}">${signal.side}</div>
+                        <div class="risk-tier ${signal.risk_tier}">${signal.risk_tier.toUpperCase()}</div>
+                    </div>
+                    
+                    <div class="signal-details">
+                        <div class="detail">
+                            <div class="detail-label">Entry Price</div>
+                            <div class="detail-value">$${signal.entry_price}</div>
+                        </div>
+                        <div class="detail">
+                            <div class="detail-label">Stop Loss</div>
+                            <div class="detail-value">$${signal.stop_loss}</div>
+                        </div>
+                        <div class="detail">
+                            <div class="detail-label">Take Profit</div>
+                            <div class="detail-value">$${signal.take_profit}</div>
+                        </div>
+                        <div class="detail">
+                            <div class="detail-label">Risk:Reward</div>
+                            <div class="detail-value">1:${signal.rr_ratio ? signal.rr_ratio.toFixed(1) : 'N/A'}</div>
+                        </div>
+                    </div>
+                    
+                    ${signal.payload.analysis ? `
+                        <div style="margin-top: 15px; padding: 10px; background: #333; border-radius: 4px;">
+                            <div style="font-size: 12px; color: #888; margin-bottom: 5px;">Analysis</div>
+                            <div>${signal.payload.analysis}</div>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="margin-top: 15px; font-size: 12px; color: #888;">
+                        Created: ${new Date(signal.created_at).toLocaleString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Load signals on page load
+        window.onload = function() {
+            fetchSignals();
+            fetchStats();
+        };
+        
+        // Add a note about no prefilled data
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.container');
+            const note = document.createElement('div');
+            note.style.cssText = 'background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 20px; margin-bottom: 20px; text-align: center;';
+            note.innerHTML = `
+                <h3 style="color: #10b981; margin: 0 0 10px 0;">🚀 Real-time Signal System</h3>
+                <p style="color: #9ca3af; margin: 0; font-size: 14px;">
+                    No prefilled data - signals will only appear when created by admin dashboard
+                </p>
+            `;
+            container.insertBefore(note, container.firstChild);
+        });
+    </script>
+</body>
+</html>

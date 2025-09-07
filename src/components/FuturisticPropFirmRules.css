@@ -1,0 +1,131 @@
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.prop-firm-rules-container {
+  background: linear-gradient(-45deg, #1a1a2e, #16213e, #0d0d1a, #16213e);
+  background-size: 400% 400%;
+  animation: gradient-animation 15s ease infinite;
+  padding: 2rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+}
+
+.prop-firm-rules-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.prop-firm-rules-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #00ffff;
+  text-shadow: 0 0 15px #00ffff;
+  margin-bottom: 0.5rem;
+}
+
+.prop-firm-rules-subtitle {
+  font-size: 1.1rem;
+  color: #a0a0a0;
+}
+
+.rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2), 0 0 20px rgba(0, 255, 255, 0.2);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), 0 0 30px rgba(0, 255, 255, 0.4);
+  }
+}
+
+.rule-card-futuristic {
+  background: rgba(0, 20, 40, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  animation: glow 2s infinite alternate;
+}
+
+.rule-card-futuristic:before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(0, 255, 255, 0.1), transparent 40%);
+  transform: rotate(0deg);
+  transition: transform 0.5s ease;
+}
+
+.rule-card-futuristic:hover:before {
+  transform: rotate(360deg);
+}
+
+.rule-card-futuristic:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2);
+}
+
+.rule-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.rule-card-icon {
+  margin-right: 1rem;
+  padding: 0.5rem;
+  border-radius: 50%;
+  background: rgba(0, 255, 255, 0.1);
+  animation: pulse 3s infinite;
+}
+
+.rule-card-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.rule-card-description {
+  font-size: 0.9rem;
+  color: #a0a0a0;
+  margin-bottom: 1rem;
+}
+
+.rule-card-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
