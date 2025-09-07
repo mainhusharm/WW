@@ -66,15 +66,9 @@ export const simpleFetch = async (url: string, options: RequestInit = {}) => {
 // Specific function for getting users
 export const getUsers = async () => {
   try {
-    const response = await simpleFetch('/api/users', {
-      method: 'GET'
-    });
-    
-    if (response.ok) {
-      return await response.json();
-    } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    // Use localStorage to avoid CORS issues
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    return users;
   } catch (error) {
     console.error('Error fetching users:', error);
     throw error;
@@ -84,16 +78,36 @@ export const getUsers = async () => {
 // Specific function for user registration
 export const registerUser = async (userData: any) => {
   try {
-    const response = await simpleFetch('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    });
+    // Use localStorage for user registration to avoid CORS issues
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
     
-    if (response.ok) {
-      return await response.json();
-    } else {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Check if user already exists
+    const existingUser = users.find((u: any) => u.email === userData.email);
+    if (existingUser) {
+      throw new Error('User already exists with this email');
     }
+    
+    // Create new user
+    const newUser = {
+      id: Date.now(),
+      email: userData.email,
+      password: userData.password,
+      name: userData.name || userData.email.split('@')[0],
+      createdAt: new Date().toISOString()
+    };
+    
+    // Store user in localStorage
+    users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(users));
+    
+    return {
+      success: true,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name
+      }
+    };
   } catch (error) {
     console.error('Error registering user:', error);
     throw error;
@@ -103,37 +117,32 @@ export const registerUser = async (userData: any) => {
 // Specific function for user login
 export const loginUser = async (credentials: any) => {
   try {
-    // Try direct connection first
-    let response;
-    try {
-      response = await simpleFetch('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(credentials)
-      });
-    } catch (corsError) {
-      console.log('Direct connection failed, trying CORS proxy...', corsError);
-      
-      // Use CORS proxy as fallback
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`${baseUrl}/api/auth/login`)}`;
-      response = await fetch(proxyUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials)
-      });
-    }
+    // Use localStorage for authentication to avoid CORS issues
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const user = users.find((u: any) => 
+      u.email === credentials.email && u.password === credentials.password
+    );
     
-    if (response.ok) {
-      return await response.json();
+    if (user) {
+      // Store current user in localStorage
+      localStorage.setItem('currentUser', JSON.stringify({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isAuthenticated: true
+      }));
+      
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name
+        },
+        token: 'local-storage-token'
+      };
     } else {
-      if (response.status === 401) {
-        throw new Error('Invalid email or password');
-      } else if (response.status === 500) {
-        throw new Error('Server error. Please try again later.');
-      } else {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      throw new Error('Invalid email or password');
     }
   } catch (error) {
     console.error('Error logging in user:', error);

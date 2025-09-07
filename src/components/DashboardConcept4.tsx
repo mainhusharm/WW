@@ -128,7 +128,6 @@ import AdminConnectedSignalsFeed from './AdminConnectedSignalsFeed';
 import DirectAdminSignalsFeed from './DirectAdminSignalsFeed';
 import RealAdminSignalsFeed from './RealAdminSignalsFeed';
 import NewSignalsFeed from './NewSignalsFeed';
-import PerformanceAnalytics from './PerformanceAnalytics';
 import TradingJournalDashboard from './TradingJournalDashboard';
 import MultiAccountTracker from './MultiAccountTracker';
 import NotificationCenter from './NotificationCenter';

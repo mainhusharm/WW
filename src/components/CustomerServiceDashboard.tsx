@@ -133,11 +133,10 @@ export default function CustomerServiceDashboard() {
         console.log('Direct connection failed, trying CORS proxy...', directError);
       }
       
-      // Fallback to CORS proxy
+      // Fallback to localStorage
       try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`${API_BASE}/api/users`)}`;
-        const response = await fetch(proxyUrl);
-        const data: UsersResponse = await response.json();
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const data: UsersResponse = { users };
 
         if (data.success && data.users) {
           setUsers(data.users);

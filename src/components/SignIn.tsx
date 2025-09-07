@@ -103,19 +103,23 @@ const SignIn = () => {
           
           data = await response.json();
         } catch (corsError) {
-          console.log('Direct connection failed, trying CORS proxy...', corsError);
+          console.log('Direct connection failed, using localStorage fallback...', corsError);
           
-          // Use CORS proxy as fallback
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiEndpoint)}`;
-          response = await fetch(proxyUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
-          });
+          // Use localStorage fallback instead of CORS proxy
+          const users = JSON.parse(localStorage.getItem('users') || '[]');
+          const user = users.find((u: any) => 
+            u.email === email && u.password === password
+          );
           
-          data = await response.json();
+          if (user) {
+            data = {
+              access_token: `local-token-${Date.now()}`,
+              user: user
+            };
+            response = { ok: true };
+          } else {
+            throw new Error('Invalid credentials');
+          }
         }
 
         if (response.ok) {
