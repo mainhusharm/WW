@@ -7,9 +7,6 @@ import {
 import { useUser } from '../contexts/UserContext';
 import AdminSignalsFeed from './AdminSignalsFeed';
 import NewPropFirmRules from './NewPropFirmRules';
-import PerformanceAnalytics from './PerformanceAnalytics';
-import MultiAccountTracker from './MultiAccountTracker';
-import NotificationCenter from './NotificationCenter';
 
 // Safe context hook with questionnaire data integration
 const useSafeTradingPlan = () => {
@@ -134,7 +131,6 @@ import MultiAccountTracker from './MultiAccountTracker';
 import NotificationCenter from './NotificationCenter';
 import AccountSettings from './AccountSettings';
 import PropFirmRules from './PropFirmRules';
-import NewPropFirmRules from './NewPropFirmRules';
 import RiskProtocol from './RiskProtocol';
 import LiveChatWidget from './LiveChatWidget';
 import { getAllTimezones, getMarketStatus } from '../services/timezoneService';
