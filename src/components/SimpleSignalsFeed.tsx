@@ -97,6 +97,25 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
         </div>
       </div>
       
+      {/* Lot Size Recommendation Banner */}
+      {lotSize > 0 && (
+        <div className="bg-gradient-to-r from-green-900/30 to-blue-900/30 rounded-lg p-4 mb-4 border border-green-500/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="text-2xl">📊</div>
+              <div>
+                <h4 className="text-green-300 font-bold text-lg">Recommended Lot Size</h4>
+                <p className="text-gray-300 text-sm">Based on your risk management plan</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-white">{lotSize.toFixed(2)}</div>
+              <div className="text-sm text-gray-400">Lots</div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Signal Details Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-gray-700/50 rounded-lg p-3">
@@ -127,26 +146,29 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
 
       {/* Lot Size and Risk Management Info */}
       {lotSize > 0 && (
-        <div className="bg-blue-900/30 rounded-lg p-4 mb-6 border border-blue-500/30">
-          <h4 className="text-blue-300 font-semibold mb-3 flex items-center">
-            📊 Risk Management
+        <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 rounded-lg p-6 mb-6 border border-blue-500/50">
+          <h4 className="text-blue-300 font-bold mb-4 flex items-center text-lg">
+            📊 Recommended Position Size
           </h4>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
+            <div className="bg-gray-800/50 rounded-lg p-3">
               <p className="text-gray-400 text-sm mb-1">Lot Size</p>
-              <p className="text-white font-bold text-lg">{lotSize}</p>
+              <p className="text-white font-bold text-xl">{lotSize.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">Based on your risk plan</p>
             </div>
-            <div>
+            <div className="bg-gray-800/50 rounded-lg p-3">
               <p className="text-gray-400 text-sm mb-1">Money at Risk</p>
-              <p className="text-yellow-400 font-bold text-lg">${dollarAmount.toFixed(2)}</p>
+              <p className="text-yellow-400 font-bold text-xl">${dollarAmount.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">Total risk amount</p>
             </div>
-            <div>
+            <div className="bg-gray-800/50 rounded-lg p-3">
               <p className="text-gray-400 text-sm mb-1">Units</p>
-              <p className="text-white font-bold text-lg">{(lotSize * 100000).toLocaleString()}</p>
+              <p className="text-white font-bold text-xl">{(lotSize * 100000).toLocaleString()}</p>
+              <p className="text-xs text-gray-500">Position size</p>
             </div>
-            <div>
+            <div className="bg-gray-800/50 rounded-lg p-3">
               <p className="text-gray-400 text-sm mb-1">Status</p>
-              <p className={`font-bold text-lg ${
+              <p className={`font-bold text-xl ${
                 tradeStatus === 'won' ? 'text-green-400' :
                 tradeStatus === 'lost' ? 'text-red-400' :
                 tradeStatus === 'breakeven' ? 'text-yellow-400' :
@@ -157,6 +179,20 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
                  tradeStatus === 'lost' ? 'Lost' :
                  tradeStatus === 'breakeven' ? 'Break Even' : 'Active'}
               </p>
+            </div>
+          </div>
+          
+          {/* Dollar Amount Details */}
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="bg-red-900/20 rounded-lg p-3 border border-red-500/30">
+              <p className="text-red-400 text-sm mb-1">Stop Loss Impact</p>
+              <p className="text-red-300 font-bold text-lg">-${stopLossDollar.toFixed(2)}</p>
+              <p className="text-xs text-red-400">If stop loss hits</p>
+            </div>
+            <div className="bg-green-900/20 rounded-lg p-3 border border-green-500/30">
+              <p className="text-green-400 text-sm mb-1">Take Profit Potential</p>
+              <p className="text-green-300 font-bold text-lg">+${takeProfitDollar.toFixed(2)}</p>
+              <p className="text-xs text-green-400">If target hits</p>
             </div>
           </div>
         </div>
@@ -292,6 +328,18 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected'>('connected');
   const [userRiskPlan, setUserRiskPlan] = useState<any>(null);
   const [accountPerformance, setAccountPerformance] = useState<any>(null);
+  
+  // Default risk plan for users without a comprehensive plan
+  const defaultRiskPlan = {
+    userProfile: {
+      accountEquity: 10000
+    },
+    riskParameters: {
+      baseTradeRiskPct: 2
+    }
+  };
+  
+  const riskPlan = userRiskPlan || defaultRiskPlan;
   
   // Get user's risk-reward preference
   const userRiskReward = user?.tradingData?.riskRewardRatio || '2';
@@ -442,7 +490,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   
   // Calculate lot size and dollar amounts for a signal
   const calculateSignalMetrics = (signal: Signal) => {
-    if (!userRiskPlan || !user?.email) {
+    if (!user?.email) {
       return {
         lotSize: 0,
         dollarAmount: 0,
@@ -467,16 +515,25 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         };
       }
 
-      // Get risk parameters from user's plan
-      const riskParams = lotSizeCalculator.getRiskParameters(userRiskPlan, symbol);
+      // Get risk parameters from user's plan using actual signal prices
+      const riskParams = lotSizeCalculator.getRiskParameters(riskPlan, symbol, entryPrice, stopLoss);
       
       // Calculate lot size and other parameters
       const calculation = lotSizeCalculator.calculateLotSize(riskParams);
       
-      // Calculate dollar amounts
-      const stopLossDollar = Math.abs(entryPrice - stopLoss) * calculation.lotSize * calculation.contractSize * calculation.pipValue;
+      // Calculate dollar amounts using proper pip calculation
+      const pipValue = calculation.pipValue;
+      const contractSize = calculation.contractSize;
+      const lotSize = calculation.lotSize;
+      
+      // Calculate pips for stop loss and take profit
+      const stopLossPips = Math.abs(entryPrice - stopLoss) / pipValue;
       const takeProfit = parseFloat(Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0');
-      const takeProfitDollar = takeProfit ? Math.abs(takeProfit - entryPrice) * calculation.lotSize * calculation.contractSize * calculation.pipValue : 0;
+      const takeProfitPips = takeProfit ? Math.abs(takeProfit - entryPrice) / pipValue : 0;
+      
+      // Calculate dollar amounts: Pips × Lot Size × Contract Size × Pip Value
+      const stopLossDollar = stopLossPips * lotSize * contractSize * pipValue;
+      const takeProfitDollar = takeProfitPips * lotSize * contractSize * pipValue;
       
       // Check if trade exists and get its status
       const existingTrade = trades.get(signal.id);
@@ -529,7 +586,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
     
     try {
       // Create trade from signal using the new trade management service
-      const trade = await tradeManagementService.createTradeFromSignal(signal, user.email, userRiskPlan);
+      const trade = await tradeManagementService.createTradeFromSignal(signal, user.email, riskPlan);
       
       // Determine trade status based on outcome
       let tradeStatus: 'won' | 'lost' | 'breakeven';

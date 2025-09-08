@@ -246,19 +246,25 @@ class LotSizeCalculator {
   }
 
   // Get risk management parameters from user's plan
-  getRiskParameters(userRiskPlan: any, symbol: string): RiskParameters {
+  getRiskParameters(userRiskPlan: any, symbol: string, entryPrice?: number, stopLoss?: number): RiskParameters {
     const accountBalance = userRiskPlan?.userProfile?.accountEquity || 10000;
     const riskPercentage = userRiskPlan?.riskParameters?.baseTradeRiskPct || 2;
-    const stopLossPips = 20; // Default stop loss in pips
     
-    // Get current price for the symbol (this would typically come from a price feed)
-    const entryPrice = this.getCurrentPrice(symbol);
+    // Calculate stop loss pips from actual signal data
+    let stopLossPips = 20; // Default fallback
+    if (entryPrice && stopLoss) {
+      const pipValue = this.getPipValue(symbol);
+      stopLossPips = Math.abs(entryPrice - stopLoss) / pipValue;
+    }
+    
+    // Use actual entry price from signal, fallback to mock price
+    const actualEntryPrice = entryPrice || this.getCurrentPrice(symbol);
     
     return {
       accountBalance,
       riskPercentage: parseFloat(riskPercentage.toString().replace('%', '')),
       stopLossPips,
-      entryPrice,
+      entryPrice: actualEntryPrice,
       symbol
     };
   }
