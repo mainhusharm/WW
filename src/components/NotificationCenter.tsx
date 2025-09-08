@@ -308,11 +308,6 @@ const NotificationCenter: React.FC = () => {
   };
 
 
-  const clearAllNotifications = () => {
-    setNotifications([]);
-  };
-
-
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'signal':
