@@ -2,14 +2,60 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, Sparkles, Zap, TrendingUp, ArrowRight } from 'lucide-react';
 import FuturisticBackground from './FuturisticBackground';
+import { useUser } from '../contexts/UserContext';
 
 const SuccessfulPaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useUser();
   const [countdown, setCountdown] = useState(10);
   const selectedPlan = location.state?.selectedPlan;
+  const paymentData = location.state?.paymentData;
 
   useEffect(() => {
+    // Set up user authentication after successful payment
+    const setupUserAfterPayment = () => {
+      // Get user data from localStorage or create a new user
+      const storedUser = localStorage.getItem('current_user');
+      let userData;
+      
+      if (storedUser) {
+        userData = JSON.parse(storedUser);
+      } else {
+        // Create a new user if none exists
+        userData = {
+          id: `user_${Date.now()}`,
+          email: `user_${Date.now()}@example.com`,
+          name: 'New User',
+          membershipTier: 'professional',
+          isAuthenticated: true,
+          setupComplete: false
+        };
+      }
+      
+      // Update user with payment information
+      const updatedUserData = {
+        ...userData,
+        membershipTier: selectedPlan?.name?.toLowerCase() || 'professional',
+        isAuthenticated: true,
+        setupComplete: false,
+        selectedPlan: selectedPlan,
+        paymentData: paymentData
+      };
+      
+      // Generate a demo token for authentication
+      const demoToken = `demo-token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Login the user
+      login(updatedUserData, demoToken, true);
+      
+      // Store user data
+      localStorage.setItem('current_user', JSON.stringify(updatedUserData));
+      localStorage.setItem('access_token', demoToken);
+    };
+    
+    setupUserAfterPayment();
+    
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -21,7 +67,7 @@ const SuccessfulPaymentPage = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate, selectedPlan]);
+  }, [navigate, selectedPlan, login, paymentData]);
 
   return (
     <div className="min-h-screen text-white flex items-center justify-center relative overflow-hidden bg-gray-950">

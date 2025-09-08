@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>localStorage Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+        .info { background: #2196F3; }
+        .warning { background: #ff9800; }
+        .signal {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .crypto { border-left-color: #FF9800; }
+        .forex { border-left-color: #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>localStorage Signal Check</h1>
+    
+    <div class="section">
+        <h2>Current localStorage Status</h2>
+        <button class="button" onclick="checkLocalStorage()">Check localStorage</button>
+        <button class="button" onclick="generateTestSignals()">Generate Test Signals</button>
+        <button class="button" onclick="clearAll()">Clear All</button>
+        <div id="status"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Signals Found</h2>
+        <div id="signals"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Admin Dashboard Links</h2>
+        <p>Test the admin dashboard crypto signal generator:</p>
+        <a href="http://localhost:5175/admin/dashboard" target="_blank" class="button">Open Admin Dashboard</a>
+        <a href="http://localhost:5175/dashboard/signals" target="_blank" class="button">Open User Dashboard</a>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const status = document.getElementById('status');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            status.appendChild(div);
+        }
+        
+        function checkLocalStorage() {
+            log('Checking localStorage for signals...', 'info');
+            
+            // Check telegram_messages
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            log(`telegram_messages: ${telegramMessages.length} signals`, telegramMessages.length > 0 ? 'success' : 'error');
+            
+            // Check admin_generated_signals
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            log(`admin_generated_signals: ${adminSignals.length} signals`, adminSignals.length > 0 ? 'success' : 'error');
+            
+            // Check other possible keys
+            const allKeys = Object.keys(localStorage);
+            log(`Total localStorage keys: ${allKeys.length}`, 'info');
+            
+            allKeys.forEach(key => {
+                if (key.includes('signal') || key.includes('telegram') || key.includes('admin')) {
+                    const value = localStorage.getItem(key);
+                    try {
+                        const parsed = JSON.parse(value);
+                        log(`${key}: ${Array.isArray(parsed) ? parsed.length : 'object'} items`, 'info');
+                    } catch {
+                        log(`${key}: ${value.length} characters`, 'info');
+                    }
+                }
+            });
+            
+            displaySignals();
+        }
+        
+        function generateTestSignals() {
+            log('Generating test signals...', 'info');
+            
+            // Generate crypto signal
+            const cryptoSignal = {
+                id: Date.now(),
+                text: `BTCUSDT\nBUY NOW\nEntry 45000\nStop Loss 44000\nTake Profit 47000\nConfidence 85%\n\nStrong bullish setup detected. Major swing Break of Structure confirms bullish momentum shift.`,
+                timestamp: new Date().toISOString(),
+                from: 'Crypto Signal Generator',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Generate forex signal
+            const forexSignal = {
+                id: Date.now() + 1,
+                text: `EUR/USD\nSELL NOW\nEntry 1.0850\nStop Loss 1.0900\nTake Profit 1.0750\nConfidence 78%\n\nStrong bearish setup detected. Major swing Break of Structure confirms bearish momentum shift.`,
+                timestamp: new Date().toISOString(),
+                from: 'Forex Signal Generator',
+                chat_id: 1,
+                message_id: Date.now() + 1,
+                update_id: Date.now() + 1
+            };
+            
+            // Store in localStorage
+            const existingSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingSignals.unshift(cryptoSignal, forexSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingSignals));
+            
+            log('Test signals generated and stored', 'success');
+            displaySignals();
+        }
+        
+        function displaySignals() {
+            const signalsDiv = document.getElementById('signals');
+            signalsDiv.innerHTML = '';
+            
+            const signals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            
+            if (signals.length === 0) {
+                signalsDiv.innerHTML = '<div class="status error">No signals found in localStorage</div>';
+                return;
+            }
+            
+            signals.forEach((signal, index) => {
+                const isCrypto = signal.text.includes('USDT') || signal.text.includes('BTC') || signal.text.includes('ETH');
+                const signalDiv = document.createElement('div');
+                signalDiv.className = `signal ${isCrypto ? 'crypto' : 'forex'}`;
+                
+                const lines = signal.text.split('\n');
+                const pair = lines[0] || 'UNKNOWN';
+                const direction = lines[1] || 'UNKNOWN';
+                
+                signalDiv.innerHTML = `
+                    <h4>${isCrypto ? '🪙 CRYPTO' : '💱 FOREX'} Signal #${index + 1}</h4>
+                    <p><strong>Pair:</strong> ${pair}</p>
+                    <p><strong>Direction:</strong> ${direction}</p>
+                    <p><strong>From:</strong> ${signal.from}</p>
+                    <p><strong>Timestamp:</strong> ${new Date(signal.timestamp).toLocaleString()}</p>
+                    <p><strong>Full Text:</strong></p>
+                    <pre style="background: #444; padding: 10px; border-radius: 4px; white-space: pre-wrap; font-size: 12px;">${signal.text}</pre>
+                `;
+                signalsDiv.appendChild(signalDiv);
+            });
+            
+            log(`Displaying ${signals.length} signals`, 'info');
+        }
+        
+        function clearAll() {
+            localStorage.removeItem('telegram_messages');
+            localStorage.removeItem('admin_generated_signals');
+            log('All signals cleared from localStorage', 'warning');
+            displaySignals();
+        }
+        
+        // Initialize
+        log('localStorage check page loaded', 'success');
+        checkLocalStorage();
+        
+        // Auto-refresh every 3 seconds
+        setInterval(() => {
+            checkLocalStorage();
+        }, 3000);
+    </script>
+</body>
+</html>

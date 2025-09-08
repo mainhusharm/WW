@@ -22,7 +22,6 @@ interface CryptoSignal {
 
 const CryptoSignalGenerator: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
-  const [isSignalGenerationActive, setIsSignalGenerationActive] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState('');
   const [selectedTimeframe, setSelectedTimeframe] = useState('');
   const [riskRewardRatio, setRiskRewardRatio] = useState(2.0);
@@ -41,7 +40,6 @@ const CryptoSignalGenerator: React.FC = () => {
     activeSignals: 0
   });
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const signalGenerationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const cryptoSymbols = [
     'BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'BNBUSDT', 'XRPUSDT', 'SOLUSDT', 'DOTUSDT',
@@ -787,66 +785,6 @@ const CryptoSignalGenerator: React.FC = () => {
     }
   };
 
-  const startSignalGeneration = () => {
-    if (isSignalGenerationActive) return;
-    
-    setIsSignalGenerationActive(true);
-    addLog('🚀 Started continuous signal generation to user dashboard', 'success');
-    
-    // Generate signals every 30 seconds
-    signalGenerationIntervalRef.current = setInterval(() => {
-      if (!isSignalGenerationActive) return;
-      
-      // Generate a random crypto signal
-      const symbols = ['BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'BNBUSDT', 'XRPUSDT'];
-      const directions = ['BUY', 'SELL'];
-      const symbol = symbols[Math.floor(Math.random() * symbols.length)];
-      const direction = directions[Math.floor(Math.random() * directions.length)];
-      
-      // Get current price (simulated)
-      const basePrice = Math.random() * 1000 + 100;
-      const entryPrice = basePrice;
-      const stopLoss = direction === 'BUY' ? basePrice * 0.98 : basePrice * 1.02;
-      const takeProfit = direction === 'BUY' ? basePrice * 1.04 : basePrice * 0.96;
-      
-      const signal: CryptoSignal = {
-        id: `crypto-${Date.now()}`,
-        symbol,
-        signalType: direction as 'BUY' | 'SELL',
-        confidence: Math.floor(Math.random() * 30) + 70, // 70-100%
-        entryPrice,
-        stopLoss,
-        takeProfit,
-        riskReward: '1:2',
-        confirmations: ['SMC Analysis', 'Order Block', 'Market Structure'],
-        timestamp: new Date(),
-        analysis: `${direction} signal for ${symbol} based on Smart Money Concepts analysis. Strong market structure break with order block confirmation.`,
-        sessionQuality: 'High',
-        timeframe: '15m',
-        status: 'active',
-        direction: direction === 'BUY' ? 'bullish' : 'bearish',
-        market: 'crypto'
-      };
-      
-      // Add to local signals
-      setSignals(prev => [signal, ...prev.slice(0, 9)]); // Keep last 10 signals
-      
-      // Send to users
-      sendSignalToUsers(signal);
-      
-    }, 30000); // Every 30 seconds
-  };
-
-  const stopSignalGeneration = () => {
-    if (!isSignalGenerationActive) return;
-    
-    setIsSignalGenerationActive(false);
-    if (signalGenerationIntervalRef.current) {
-      clearInterval(signalGenerationIntervalRef.current);
-      signalGenerationIntervalRef.current = null;
-    }
-    addLog('🛑 Stopped signal generation to user dashboard', 'warning');
-  };
 
   const performAdvancedSMCAnalysis = async (symbol: string, priceData: any, timeframe: string) => {
     try {
@@ -935,6 +873,7 @@ const CryptoSignalGenerator: React.FC = () => {
     addLog(`Monitoring: ${selectedSymbol} | ${selectedTimeframe}`, 'info');
     const symbols = selectedSymbol === 'ALL' ? cryptoSymbols : [selectedSymbol];
     const timeframesToAnalyze = selectedTimeframe === 'ALL' ? timeframes : [selectedTimeframe];
+    
     const runAnalysis = async () => {
       if (!isRunning) return;
       for (const symbol of symbols) {
@@ -961,9 +900,35 @@ const CryptoSignalGenerator: React.FC = () => {
         activeSymbols: symbols.length
       }));
     };
+    
     await runAnalysis();
     intervalRef.current = setInterval(runAnalysis, 60000);
   };
+
+  // Add window functions like forex data
+  useEffect(() => {
+    (window as any).startCryptoBot = () => {
+      if (!selectedSymbol || !selectedTimeframe) {
+        addLog('Please select a symbol and timeframe first.', 'error');
+        return;
+      }
+      startAnalysis();
+    };
+
+    (window as any).stopCryptoBot = () => {
+      stopAnalysis();
+    };
+
+    (window as any).refreshCryptoSystem = () => {
+      refreshSystem();
+    };
+
+    return () => {
+      delete (window as any).startCryptoBot;
+      delete (window as any).stopCryptoBot;
+      delete (window as any).refreshCryptoSystem;
+    };
+  }, [selectedSymbol, selectedTimeframe]);
 
   const stopAnalysis = () => {
     setIsRunning(false);
@@ -1091,70 +1056,33 @@ const CryptoSignalGenerator: React.FC = () => {
 
             <div className="space-y-2">
               <button
-                onClick={startAnalysis}
+                onClick={() => (window as any).startCryptoBot()}
                 disabled={isRunning}
                 className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:from-gray-600 disabled:to-gray-700 text-white py-3 rounded-lg font-semibold transition-all flex items-center justify-center space-x-2"
               >
                 <Play className="w-4 h-4" />
-                <span>Start Crypto Analysis</span>
+                <span>🚀 Start Crypto Analysis</span>
               </button>
               
               <button
-                onClick={stopAnalysis}
+                onClick={() => (window as any).stopCryptoBot()}
                 disabled={!isRunning}
                 className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-gray-600 disabled:to-gray-700 text-white py-3 rounded-lg font-semibold transition-all flex items-center justify-center space-x-2"
               >
                 <Pause className="w-4 h-4" />
-                <span>Stop Analysis</span>
+                <span>⏹️ Stop Analysis</span>
               </button>
               
               <button
-                onClick={refreshSystem}
+                onClick={() => (window as any).refreshCryptoSystem()}
                 className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-3 rounded-lg font-semibold transition-all flex items-center justify-center space-x-2"
               >
                 <RefreshCw className="w-4 h-4" />
-                <span>Refresh System</span>
+                <span>🔄 Refresh System</span>
               </button>
             </div>
           </div>
 
-          {/* Signal Generation Controls */}
-          <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-green-500/30 p-6">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-              <Zap className="w-5 h-5 mr-2 text-green-400" />
-              📡 Signal Generation to Users
-            </h3>
-            <div className="mb-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <div className={`w-3 h-3 rounded-full ${isSignalGenerationActive ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
-                <span className="text-gray-300">
-                  {isSignalGenerationActive ? 'Generating signals every 30 seconds' : 'Signal generation stopped'}
-                </span>
-              </div>
-              <p className="text-sm text-gray-400">
-                This will continuously send crypto signals to all users in the dashboard
-              </p>
-            </div>
-            <div className="space-y-2">
-              <button
-                onClick={startSignalGeneration}
-                disabled={isSignalGenerationActive}
-                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 text-white py-3 rounded-lg font-semibold transition-all flex items-center justify-center space-x-2"
-              >
-                <Play className="w-4 h-4" />
-                <span>🚀 Start Signal Generation</span>
-              </button>
-              
-              <button
-                onClick={stopSignalGeneration}
-                disabled={!isSignalGenerationActive}
-                className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-gray-600 disabled:to-gray-700 text-white py-3 rounded-lg font-semibold transition-all flex items-center justify-center space-x-2"
-              >
-                <Pause className="w-4 h-4" />
-                <span>🛑 Stop Signal Generation</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Market Statistics */}

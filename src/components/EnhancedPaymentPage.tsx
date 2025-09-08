@@ -683,6 +683,7 @@ export default function EnhancedPaymentPage() {
               </div>
             </div>
           </div>
+          </div>
 
           {/* Right Column: Futuristic Payment Method */}
           <div className="relative">

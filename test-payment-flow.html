@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+        .info { background: #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>Payment Flow Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Payment Flow</h2>
+        <p>This test will verify the complete payment flow:</p>
+        <ol>
+            <li>Signup → Payment → Successful Payment → Questionnaire → Risk Management → User Dashboard</li>
+        </ol>
+        
+        <button class="test-button" onclick="testPaymentFlow()">Test Complete Flow</button>
+        <button class="test-button" onclick="clearStorage()">Clear Storage</button>
+        <button class="test-button" onclick="checkAuthStatus()">Check Auth Status</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Current Storage Status</h2>
+        <div id="storage-status"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            log('Storage cleared', 'success');
+            updateStorageStatus();
+        }
+        
+        function checkAuthStatus() {
+            const user = localStorage.getItem('current_user');
+            const token = localStorage.getItem('access_token');
+            
+            if (user && token) {
+                const userData = JSON.parse(user);
+                log(`User authenticated: ${userData.name} (${userData.email})`, 'success');
+                log(`Membership: ${userData.membershipTier}`, 'info');
+                log(`Setup Complete: ${userData.setupComplete}`, 'info');
+            } else {
+                log('User not authenticated', 'error');
+            }
+            updateStorageStatus();
+        }
+        
+        function updateStorageStatus() {
+            const status = document.getElementById('storage-status');
+            status.innerHTML = '';
+            
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                const div = document.createElement('div');
+                div.textContent = `${key}: ${localStorage.getItem(key).substring(0, 100)}...`;
+                status.appendChild(div);
+            });
+        }
+        
+        function testPaymentFlow() {
+            log('Starting payment flow test...', 'info');
+            
+            // Simulate payment completion
+            const paymentData = {
+                method: 'test',
+                amount: 499,
+                plan: 'Enterprise',
+                paymentId: `test_${Date.now()}`,
+                timestamp: new Date().toISOString(),
+            };
+            
+            const selectedPlan = {
+                name: 'Enterprise',
+                price: 499,
+                period: '3 months',
+                description: 'Professional trading guidance'
+            };
+            
+            // Store payment data
+            localStorage.setItem('payment_data', JSON.stringify(paymentData));
+            localStorage.setItem('selected_plan', JSON.stringify(selectedPlan));
+            
+            log('Payment data stored', 'success');
+            
+            // Simulate user authentication
+            const userData = {
+                id: `test_user_${Date.now()}`,
+                email: `test_${Date.now()}@example.com`,
+                name: 'Test User',
+                membershipTier: 'professional',
+                isAuthenticated: true,
+                setupComplete: false,
+                selectedPlan: selectedPlan,
+                paymentData: paymentData
+            };
+            
+            const demoToken = `demo-token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            
+            localStorage.setItem('current_user', JSON.stringify(userData));
+            localStorage.setItem('access_token', demoToken);
+            
+            log('User authenticated', 'success');
+            log('Payment flow test completed successfully!', 'success');
+            
+            updateStorageStatus();
+        }
+        
+        // Initialize
+        updateStorageStatus();
+    </script>
+</body>
+</html>

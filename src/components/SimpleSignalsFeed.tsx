@@ -345,6 +345,13 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
           const takeProfit = tpMatch ? parseFloat(tpMatch[1].split(',')[0]) : 0;
           const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 85;
           
+          // Determine market type based on pair
+          const isCrypto = pair.includes('USDT') || pair.includes('BTC') || pair.includes('ETH') || 
+                         pair.includes('ADA') || pair.includes('BNB') || pair.includes('XRP') ||
+                         pair.includes('SOL') || pair.includes('DOT') || pair.includes('DOGE') ||
+                         pair.includes('AVAX') || pair.includes('LINK') || pair.includes('LTC') ||
+                         pair.includes('XLM') || pair.includes('FIL') || pair.includes('AAVE');
+          
           const signal = {
             id: msg.id.toString(),
             pair,
@@ -358,7 +365,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
             timestamp: msg.timestamp,
             description: msg.text.split('\n\n')[1] || 'Professional trading signal',
             analysis: msg.text.split('\n\n')[1] || 'Professional trading signal',
-            market: 'forex',
+            market: isCrypto ? 'crypto' : 'forex',
             status: 'active',
             type: direction === 'LONG' ? 'buy' : 'sell'
           };
