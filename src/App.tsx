@@ -54,7 +54,7 @@ import DatabaseDashboard from './components/DatabaseDashboard';
 import CustomerServiceDashboard from './components/CustomerServiceDashboard';
 import SignupForm from './components/SignupForm';
 import EnhancedSignupForm from './components/EnhancedSignupForm';
-import NewFuturisticPaymentPage from './components/NewFuturisticPaymentPage';
+import EnhancedPaymentPage from './components/EnhancedPaymentPage';
 import QuantumSupportHub from './components/QuantumSupportHub';
 
 // Global Error Boundary for the entire app
@@ -154,7 +154,7 @@ const AppContent = () => {
           <Route path="/signup" element={<SignUp />} />
         <Route path="/signup-prisma" element={<SignupForm />} />
         <Route path="/signup-enhanced" element={<EnhancedSignupForm />} />
-        <Route path="/payment-enhanced" element={<NewFuturisticPaymentPage />} />
+        <Route path="/payment-enhanced" element={<EnhancedPaymentPage />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/membership" element={<MembershipPlans />} />
         <Route path="/payment-flow" element={<ProtectedRoute><PaymentFlow /></ProtectedRoute>} />

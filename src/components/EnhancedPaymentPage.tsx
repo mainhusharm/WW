@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Check, Lock, CreditCard, ArrowLeft, X, AlertTriangle, AlertCircle, Copy, CheckCircle, Zap, Sparkles, Shield, Cpu, Globe, Coins, Star } from 'lucide-react';
+import { Check, Lock, CreditCard, ArrowLeft, X, AlertTriangle, AlertCircle, Copy, CheckCircle } from 'lucide-react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -28,14 +28,14 @@ interface CouponResponse {
   error?: string;
 }
 
-// Payment Configuration with fallbacks
+// Payment Configuration
 const PAYMENT_CONFIG = {
   stripe: {
-    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_iSQmzHiUwz1pmfaVTSXSEpbx',
+    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
     currency: 'USD',
   },
   paypal: {
-    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tQrIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW',
+    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || '',
     currency: 'USD',
     environment: 'sandbox' as const, // Change to 'live' for production
   },
@@ -190,7 +190,7 @@ export default function EnhancedPaymentPage() {
     setError(null);
 
     try {
-      const response = await fetch('https://backend-bkt7.onrender.com/api/validate-coupon', {
+      const response = await fetch('https://node-backend-g1mk.onrender.com/api/validate-coupon', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -301,7 +301,7 @@ export default function EnhancedPaymentPage() {
 
     try {
       // Create real PaymentIntent
-      const response = await fetch('https://backend-bkt7.onrender.com/api/stripe/create-payment-intent', {
+      const response = await fetch('https://node-backend-g1mk.onrender.com/api/stripe/create-payment-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -358,7 +358,7 @@ export default function EnhancedPaymentPage() {
       console.log('Sending payment request:', paymentRequestData);
       
       // Store payment data in database
-      const response = await fetch('https://backend-bkt7.onrender.com/api/payments', {
+      const response = await fetch('https://node-backend-g1mk.onrender.com/api/payments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -488,120 +488,63 @@ export default function EnhancedPaymentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* Futuristic Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-cyan-900"></div>
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
-      
-      {/* Animated Grid */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent animate-pulse"></div>
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-purple-500/10 to-transparent animate-pulse delay-1000"></div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-6xl">
+        {/* Back Button */}
+        <button
+          onClick={handleBackToSignup}
+          className="flex items-center text-white/70 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Signup
+        </button>
 
-      {/* Floating Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(30)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-cyan-400 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-7xl">
-          {/* Back Button */}
-          <button
-            onClick={handleBackToSignup}
-            className="flex items-center text-cyan-300/70 hover:text-cyan-300 mb-8 transition-all duration-300 group"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-            <span className="text-sm font-medium">Back to Signup</span>
-          </button>
-
-          {/* Futuristic Header */}
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center mb-6">
-              <Cpu className="w-12 h-12 text-cyan-400 mr-4 animate-pulse" />
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-300 via-purple-300 to-cyan-300 bg-clip-text text-transparent">
-                Complete Your Subscription
-              </h1>
-              <Sparkles className="w-12 h-12 text-purple-400 ml-4 animate-pulse" />
-            </div>
-            <p className="text-cyan-100 text-xl max-w-3xl mx-auto">
-              Get instant access to all premium features and start your trading journey
-            </p>
-          </div>
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Complete Your Subscription</h1>
+          <p className="text-blue-100 text-lg">Get instant access to all premium features and start your trading journey</p>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column: Futuristic Order Summary */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-cyan-500/20 rounded-2xl blur-xl"></div>
-            <div className="relative bg-black/40 backdrop-blur-sm rounded-2xl p-8 border border-cyan-400/30">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center">
-                <Cpu className="w-6 h-6 text-cyan-400 mr-3" />
-                <h2 className="text-2xl font-bold text-white">Order Summary</h2>
-              </div>
-              <button className="text-cyan-300 hover:text-cyan-200 text-sm font-medium transition-colors group">
-                <span className="group-hover:underline">Change</span>
-              </button>
+          {/* Left Column: Order Summary */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-white">Order Summary</h2>
+              <button className="text-blue-300 hover:text-blue-200 text-sm">Change</button>
             </div>
 
-            {/* Futuristic Subscription Details */}
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 rounded-xl blur-sm"></div>
-              <div className="relative bg-black/50 backdrop-blur-sm rounded-xl p-6 border border-purple-400/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Star className="w-5 h-5 text-yellow-400 mr-3" />
-                    <span className="text-white font-bold text-lg">{selectedPlan.name}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-cyan-300">${selectedPlan.price}</div>
-                    <div className="text-cyan-200 text-sm">/{selectedPlan.period}</div>
-                  </div>
-                </div>
+            {/* Subscription Details */}
+            <div className="bg-white/5 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <span className="text-white font-medium">{selectedPlan.name}</span>
+                <span className="text-white font-bold">${selectedPlan.price}/{selectedPlan.period}</span>
               </div>
             </div>
 
-            {/* Futuristic Coupon Code */}
-            <div className="mb-8">
-              <label className="block text-cyan-200 text-sm font-medium mb-3 flex items-center">
-                <Zap className="w-4 h-4 mr-2" />
-                Enter coupon code
-              </label>
-              <div className="flex gap-3">
-                <div className="flex-1 relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-xl blur-sm"></div>
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    placeholder="Enter coupon code"
-                    className="relative w-full px-4 py-3 bg-black/50 border border-cyan-400/30 rounded-xl text-white placeholder-cyan-300/50 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all duration-300"
-                    disabled={couponApplied}
-                  />
-                </div>
+            {/* Coupon Code */}
+            <div className="mb-6">
+              <label className="block text-white text-sm font-medium mb-2">Enter coupon code</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="Enter coupon code"
+                  className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={couponApplied}
+                />
                 {couponApplied ? (
                   <button
                     onClick={handleRemoveCoupon}
-                    className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 text-red-300 rounded-xl transition-all duration-300 hover:scale-105"
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 ) : (
                   <button
                     onClick={handleCouponApply}
                     disabled={loading}
-                    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 disabled:from-gray-500 disabled:to-gray-600 text-white rounded-xl transition-all duration-300 hover:scale-105 font-medium"
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors"
                   >
                     {loading ? 'Applying...' : 'Apply'}
                   </button>
@@ -616,112 +559,79 @@ export default function EnhancedPaymentPage() {
               )}
             </div>
 
-            {/* Futuristic Financial Breakdown */}
-            <div className="space-y-4 mb-8">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 rounded-xl blur-sm"></div>
-                <div className="relative bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-purple-400/20">
-                  <div className="flex justify-between text-cyan-200">
-                    <span className="font-medium">Subtotal</span>
-                    <span className="font-bold">${selectedPlan.price.toFixed(2)}</span>
-                  </div>
-                </div>
+            {/* Financial Breakdown */}
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between text-white">
+                <span>Subtotal</span>
+                <span>${selectedPlan.price.toFixed(2)}</span>
               </div>
               {discount > 0 && (
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl blur-sm"></div>
-                  <div className="relative bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-green-400/30">
-                    <div className="flex justify-between text-green-300">
-                      <span className="font-medium flex items-center">
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Discount
-                      </span>
-                      <span className="font-bold">-${discount.toFixed(2)}</span>
-                    </div>
-                  </div>
+                <div className="flex justify-between text-green-300">
+                  <span>Discount</span>
+                  <span>-${discount.toFixed(2)}</span>
                 </div>
               )}
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-xl blur-sm"></div>
-                <div className="relative bg-black/50 backdrop-blur-sm rounded-xl p-6 border border-cyan-400/40">
-                  <div className="flex justify-between text-white font-bold text-xl">
-                    <span className="flex items-center">
-                      <Star className="w-6 h-6 mr-2 text-yellow-400" />
-                      Total
-                    </span>
-                    <span className="text-cyan-300">${finalPrice.toFixed(2)}</span>
-                  </div>
+              <div className="border-t border-white/20 pt-3">
+                <div className="flex justify-between text-white font-bold text-lg">
+                  <span>Total</span>
+                  <span>${finalPrice.toFixed(2)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Futuristic What's Included */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-xl blur-sm"></div>
-              <div className="relative bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-cyan-400/20">
-                <div className="flex items-center mb-6">
-                  <Shield className="w-6 h-6 text-cyan-400 mr-3" />
-                  <h3 className="text-white font-bold text-lg">What's Included</h3>
-                </div>
-                <ul className="space-y-3">
-                  {[
-                    'Full access to all features',
-                    'Unlimited trading signals',
-                    'Custom trading plans',
-                    'Risk management tools',
-                    '24/7 customer support',
-                    'Advanced analytics dashboard'
-                  ].map((feature, index) => (
-                    <li key={index} className="flex items-center text-cyan-100 group">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-green-400 to-emerald-400 flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
-                        <Check className="w-4 h-4 text-black" />
-                      </div>
-                      <span className="text-sm font-medium">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+            {/* What's Included */}
+            <div>
+              <div className="flex items-center mb-4">
+                <Check className="w-5 h-5 text-blue-400 mr-2" />
+                <h3 className="text-white font-semibold">What's Included</h3>
               </div>
+              <ul className="space-y-2">
+                {[
+                  'Full access to all features',
+                  'Unlimited trading signals',
+                  'Custom trading plans',
+                  'Risk management tools',
+                  '24/7 customer support',
+                  'Advanced analytics dashboard'
+                ].map((feature, index) => (
+                  <li key={index} className="flex items-center text-white/80">
+                    <Check className="w-4 h-4 text-green-400 mr-2 flex-shrink-0" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
-          </div>
 
-          {/* Right Column: Futuristic Payment Method */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-cyan-500/20 to-purple-500/20 rounded-2xl blur-xl"></div>
-            <div className="relative bg-black/40 backdrop-blur-sm rounded-2xl p-8 border border-purple-400/30">
-              <div className="flex items-center mb-8">
-                <Globe className="w-6 h-6 text-purple-400 mr-3" />
-                <h2 className="text-2xl font-bold text-white">Payment Method</h2>
-              </div>
+          {/* Right Column: Payment Method */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+            <h2 className="text-xl font-semibold text-white mb-6">Payment Method</h2>
 
-            {/* Futuristic Payment Options */}
-            <div className="space-y-4 mb-8">
+            {/* Payment Options */}
+            <div className="space-y-4 mb-6">
               {/* PayPal */}
               <div
-                className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 group ${
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   selectedPaymentMethod === 'paypal'
-                    ? 'border-cyan-400 bg-cyan-500/20 shadow-lg shadow-cyan-500/20'
-                    : 'border-purple-400/30 hover:border-cyan-400/50 hover:bg-purple-500/10'
+                    ? 'border-blue-500 bg-blue-500/20'
+                    : 'border-white/20 hover:border-white/40'
                 }`}
                 onClick={() => handlePaymentMethodSelect('paypal')}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <span className="text-white font-bold text-sm">PP</span>
+                    <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-3">
+                      <span className="text-white font-bold text-xs">PP</span>
                     </div>
                     <div>
-                      <div className="text-white font-bold text-lg">PayPal</div>
-                      <div className="text-cyan-200 text-sm">Pay with your PayPal account</div>
+                      <div className="text-white font-medium">PayPal</div>
+                      <div className="text-white/70 text-sm">Pay with your PayPal account</div>
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-cyan-200 text-sm mr-3">No additional fees</span>
+                    <span className="text-white/70 text-sm mr-2">No additional fees</span>
                     {selectedPaymentMethod === 'paypal' && (
-                      <div className="w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center">
-                        <Check className="w-4 h-4 text-black" />
-                      </div>
+                      <Check className="w-5 h-5 text-blue-400" />
                     )}
                   </div>
                 </div>
@@ -729,30 +639,27 @@ export default function EnhancedPaymentPage() {
 
               {/* Stripe */}
               <div
-                className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 group ${
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   selectedPaymentMethod === 'stripe'
-                    ? 'border-purple-400 bg-purple-500/20 shadow-lg shadow-purple-500/20'
-                    : 'border-purple-400/30 hover:border-purple-400/50 hover:bg-purple-500/10'
+                    ? 'border-blue-500 bg-blue-500/20'
+                    : 'border-white/20 hover:border-white/40'
                 }`}
                 onClick={() => handlePaymentMethodSelect('stripe')}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <CreditCard className="w-5 h-5 text-white" />
+                    <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center mr-3">
+                      <CreditCard className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <div className="text-white font-bold text-lg">Stripe</div>
-                      <div className="text-purple-200 text-sm">Pay with your credit card</div>
+                      <div className="text-white font-medium">Stripe</div>
+                      <div className="text-white/70 text-sm">Pay with your credit card</div>
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-purple-200 text-sm mr-3">No additional fees</span>
+                    <span className="text-white/70 text-sm mr-2">No additional fees</span>
                     {selectedPaymentMethod === 'stripe' && (
-                      <div className="w-6 h-6 bg-purple-400 rounded-full flex items-center justify-center">
-                        <Check className="w-4 h-4 text-black" />
-                      </div>
+                      <Check className="w-5 h-5 text-blue-400" />
                     )}
                   </div>
                 </div>
@@ -760,74 +667,58 @@ export default function EnhancedPaymentPage() {
 
               {/* Cryptocurrency */}
               <div
-                className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 group ${
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   selectedPaymentMethod === 'crypto'
-                    ? 'border-orange-400 bg-orange-500/20 shadow-lg shadow-orange-500/20'
-                    : 'border-orange-400/30 hover:border-orange-400/50 hover:bg-orange-500/10'
+                    ? 'border-blue-500 bg-blue-500/20'
+                    : 'border-white/20 hover:border-white/40'
                 }`}
                 onClick={() => handlePaymentMethodSelect('crypto')}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-yellow-500/10 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <Coins className="w-5 h-5 text-white" />
+                    <div className="w-8 h-8 bg-orange-600 rounded flex items-center justify-center mr-3">
+                      <span className="text-white font-bold text-xs">₿</span>
                     </div>
                     <div>
-                      <div className="text-white font-bold text-lg">Cryptocurrency</div>
-                      <div className="text-orange-200 text-sm">Ethereum (ETH), Solana (SOL)</div>
+                      <div className="text-white font-medium">Cryptocurrency</div>
+                      <div className="text-white/70 text-sm">Ethereum (ETH), Solana (SOL)</div>
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-orange-200 text-sm mr-3">Manual verification required</span>
+                    <span className="text-white/70 text-sm mr-2">Manual verification required</span>
                     {selectedPaymentMethod === 'crypto' && (
-                      <div className="w-6 h-6 bg-orange-400 rounded-full flex items-center justify-center">
-                        <Check className="w-4 h-4 text-black" />
-                      </div>
+                      <Check className="w-5 h-5 text-blue-400" />
                     )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Futuristic Redirection Message */}
+            {/* Redirection Message */}
             {selectedPaymentMethod === 'paypal' && finalPrice > 0 && (
-              <div className="relative mb-6">
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-xl blur-sm"></div>
-                <div className="relative bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-cyan-400/30">
-                  <div className="flex items-center text-cyan-200 text-sm">
-                    <Globe className="w-5 h-5 mr-3 text-cyan-400" />
-                    <span>You'll be redirected to PayPal to complete your payment</span>
-                  </div>
-                </div>
+              <div className="flex items-center text-white/70 text-sm mb-6">
+                <CreditCard className="w-4 h-4 mr-2" />
+                <span>You'll be redirected to PayPal to complete your payment</span>
               </div>
             )}
             
-            {/* Futuristic Free Access Message */}
+            {/* Free Access Message */}
             {finalPrice === 0 && (
-              <div className="relative mb-6">
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl blur-sm"></div>
-                <div className="relative bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-green-400/30">
-                  <div className="flex items-center text-green-300 text-sm">
-                    <CheckCircle className="w-5 h-5 mr-3 text-green-400" />
-                    <span className="font-medium">Free access granted! No payment required.</span>
-                  </div>
-                </div>
+              <div className="flex items-center text-green-400 text-sm mb-6">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                <span>Free access granted! No payment required.</span>
               </div>
             )}
 
-            {/* Futuristic Secure Payment */}
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl blur-sm"></div>
-              <div className="relative bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-green-400/20">
-                <div className="flex items-center mb-3">
-                  <Shield className="w-6 h-6 text-green-400 mr-3" />
-                  <h3 className="text-white font-bold text-lg">Secure Payment</h3>
-                </div>
-                <p className="text-cyan-200 text-sm leading-relaxed">
-                  Your payment information is encrypted and secure. We use industry-standard SSL encryption and never store your payment details.
-                </p>
+            {/* Secure Payment */}
+            <div className="mb-6">
+              <div className="flex items-center mb-2">
+                <Lock className="w-4 h-4 text-green-400 mr-2" />
+                <h3 className="text-white font-semibold">Secure Payment</h3>
               </div>
+              <p className="text-white/70 text-sm">
+                Your payment information is encrypted and secure. We use industry-standard SSL encryption and never store your payment details.
+              </p>
             </div>
 
             {/* Payment Processing Message */}
@@ -1122,30 +1013,21 @@ export default function EnhancedPaymentPage() {
               </div>
             )}
 
-            {/* Futuristic Complete Payment Button */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-cyan-500/20 rounded-2xl blur-sm"></div>
-              <button
-                onClick={handlePaymentComplete}
-                disabled={loading || paymentProcessing}
-                className="relative w-full bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500 hover:from-cyan-400 hover:via-purple-400 hover:to-cyan-400 disabled:from-gray-500 disabled:via-gray-600 disabled:to-gray-500 text-white py-6 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center group hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/25"
-              >
-                {loading || paymentProcessing ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
-                    <span className="text-lg">{paymentProcessing ? paymentMessage : 'Processing Payment...'}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <Zap className="w-6 h-6 mr-3 group-hover:animate-pulse" />
-                    <span className="text-lg">
-                      {finalPrice === 0 ? 'Complete Free Access' : `Complete Payment - $${finalPrice.toFixed(2)}`}
-                    </span>
-                    <Sparkles className="w-6 h-6 ml-3 group-hover:animate-pulse" />
-                  </div>
-                )}
-              </button>
-            </div>
+            {/* Complete Payment Button */}
+            <button
+              onClick={handlePaymentComplete}
+              disabled={loading || paymentProcessing}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-4 rounded-lg font-semibold transition-colors flex items-center justify-center"
+            >
+              {loading || paymentProcessing ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  {paymentProcessing ? paymentMessage : 'Processing Payment...'}
+                </div>
+              ) : (
+                finalPrice === 0 ? 'Complete Free Access' : `Complete Payment - $${finalPrice.toFixed(2)}`
+              )}
+            </button>
           </div>
         </div>
       </div>
