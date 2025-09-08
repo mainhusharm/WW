@@ -2,7 +2,7 @@
 export const PAYMENT_CONFIG = {
   // Stripe Configuration
   stripe: {
-    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51OQmzHiUwz1pmfaVTSXSEpbx',
     secretKey: import.meta.env.VITE_STRIPE_SECRET_KEY || '', // Only used on backend
     currency: 'USD',
     apiVersion: '2023-10-16' as const,
@@ -10,7 +10,7 @@ export const PAYMENT_CONFIG = {
   
   // PayPal Configuration
   paypal: {
-    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || '',
+    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tQrIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW',
     secret: import.meta.env.VITE_PAYPAL_CLIENT_SECRET || '', // Only used on backend
     currency: 'USD',
     environment: 'sandbox' as const, // Change to 'live' for production

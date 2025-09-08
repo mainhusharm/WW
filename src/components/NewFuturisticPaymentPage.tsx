@@ -108,16 +108,21 @@ const StripePaymentForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
-      <button
-        type="submit"
-        disabled={!stripe || isProcessing || disabled}
-        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 disabled:from-gray-500 disabled:to-gray-600 text-white py-3 px-6 rounded-xl font-bold transition-all duration-300 disabled:cursor-not-allowed"
-      >
-        {isProcessing ? 'Processing...' : `Pay $${amount.toFixed(2)} with Stripe`}
-      </button>
-    </form>
+    <div className="space-y-4">
+      <div className="text-white text-sm mb-4">
+        Amount: ${amount.toFixed(2)}
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <PaymentElement />
+        <button
+          type="submit"
+          disabled={!stripe || isProcessing || disabled}
+          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 disabled:from-gray-500 disabled:to-gray-600 text-white py-3 px-6 rounded-xl font-bold transition-all duration-300 disabled:cursor-not-allowed"
+        >
+          {isProcessing ? 'Processing...' : `Pay $${amount.toFixed(2)} with Stripe`}
+        </button>
+      </form>
+    </div>
   );
 };
 
@@ -172,22 +177,27 @@ const PayPalPaymentForm = ({
   };
 
   if (isPending) {
-    return <div className="text-center py-4">Loading PayPal...</div>;
+    return <div className="text-center py-4 text-white">Loading PayPal...</div>;
   }
 
   return (
-    <PayPalButtons
-      createOrder={createOrder}
-      onApprove={onApprove}
-      onError={onPayPalError}
-      disabled={disabled}
-      style={{
-        layout: 'vertical',
-        color: 'blue',
-        shape: 'rect',
-        label: 'paypal',
-      }}
-    />
+    <div className="space-y-4">
+      <div className="text-white text-sm mb-4">
+        Amount: ${amount.toFixed(2)}
+      </div>
+      <PayPalButtons
+        createOrder={createOrder}
+        onApprove={onApprove}
+        onError={onPayPalError}
+        disabled={disabled}
+        style={{
+          layout: 'vertical',
+          color: 'blue',
+          shape: 'rect',
+          label: 'paypal',
+        }}
+      />
+    </div>
   );
 };
 
