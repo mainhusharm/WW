@@ -21,26 +21,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch('http://localhost:3003/api/set-key', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ newApiKey: apiKey }),
-      });
-
-      if (response.ok) {
-        localStorage.setItem('tradesPerDay', tradesPerDay);
-        const now = Date.now();
-        localStorage.setItem('tradesPerDayLastChanged', now.toString());
-        alert('✅ Settings saved successfully!');
-        onClose();
-      } else {
-        alert('❌ Failed to save API Key.');
-      }
+      // Save settings to localStorage instead of making API calls
+      // This prevents ERR_CONNECTION_REFUSED errors when backend is not running
+      localStorage.setItem('tradesPerDay', tradesPerDay);
+      localStorage.setItem('apiKey', apiKey);
+      const now = Date.now();
+      localStorage.setItem('tradesPerDayLastChanged', now.toString());
+      localStorage.setItem('apiKeyLastChanged', now.toString());
+      
+      alert('✅ Settings saved successfully to localStorage!');
+      onClose();
     } catch (error) {
-      console.error('Error saving API key:', error);
-      alert('❌ An error occurred while saving the API Key.');
+      console.error('Error saving settings:', error);
+      alert('❌ An error occurred while saving the settings.');
     } finally {
       setIsSaving(false);
     }

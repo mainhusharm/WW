@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Data Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status.success { background: #065f46; border: 1px solid #10b981; }
+        .status.error { background: #7f1d1d; border: 1px solid #ef4444; }
+        .status.warning { background: #78350f; border: 1px solid #f59e0b; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Crypto Data Fix Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="testCoinGeckoAPI()">Test CoinGecko API</button>
+        <button onclick="testCryptoPriceFeed()">Test Crypto Price Feed</button>
+        <button onclick="testCryptoBot()">Test Crypto Bot Data</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="status" class="status info">Ready to test...</div>
+        <div id="logs" class="log"></div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let statusDiv = document.getElementById('status');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function setStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        window.testCoinGeckoAPI = async function() {
+            setStatus('Testing CoinGecko API...', 'info');
+            log('🔄 Testing CoinGecko API (no CORS issues)...', 'info');
+            
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,cardano,solana&vs_currencies=usd');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ CoinGecko API successful!', 'success');
+                    
+                    Object.entries(data).forEach(([coin, priceData]) => {
+                        log(`  - ${coin}: $${priceData.usd}`, 'info');
+                    });
+                    
+                    setStatus('CoinGecko API working perfectly!', 'success');
+                } else {
+                    log(`❌ CoinGecko API failed: ${response.status}`, 'error');
+                    setStatus('CoinGecko API failed', 'error');
+                }
+            } catch (error) {
+                log(`❌ CoinGecko API error: ${error.message}`, 'error');
+                setStatus('CoinGecko API error', 'error');
+            }
+        };
+        
+        window.testCryptoPriceFeed = async function() {
+            setStatus('Testing Crypto Price Feed...', 'info');
+            log('🔄 Testing crypto price feed with new implementation...', 'info');
+            
+            const symbols = ['BTC/USD', 'ETH/USD', 'BNB/USD', 'ADA/USD', 'SOL/USD'];
+            const results = {};
+            
+            try {
+                // Test CoinGecko approach
+                log('Testing CoinGecko approach...', 'info');
+                const coinGeckoResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,cardano,solana&vs_currencies=usd');
+                
+                if (coinGeckoResponse.ok) {
+                    const coinGeckoData = await coinGeckoResponse.json();
+                    
+                    const symbolMap = {
+                        'BTC/USD': 'bitcoin',
+                        'ETH/USD': 'ethereum', 
+                        'BNB/USD': 'binancecoin',
+                        'ADA/USD': 'cardano',
+                        'SOL/USD': 'solana'
+                    };
+                    
+                    for (const symbol of symbols) {
+                        const coinId = symbolMap[symbol];
+                        if (coinId && coinGeckoData[coinId]?.usd) {
+                            results[symbol] = {
+                                price: coinGeckoData[coinId].usd,
+                                provider: 'CoinGecko',
+                                timestamp: new Date().toISOString()
+                            };
+                        }
+                    }
+                    
+                    log(`✅ CoinGecko approach successful: ${Object.keys(results).length}/${symbols.length} symbols`, 'success');
+                    
+                    Object.entries(results).forEach(([symbol, data]) => {
+                        log(`  - ${symbol}: $${data.price} (${data.provider})`, 'info');
+                    });
+                    
+                    setStatus(`Crypto Price Feed working: ${Object.keys(results).length}/${symbols.length} symbols`, 'success');
+                } else {
+                    log('❌ CoinGecko approach failed, testing CORS proxy fallback...', 'warning');
+                    setStatus('Testing CORS proxy fallback...', 'warning');
+                    
+                    // Test CORS proxy fallback with heavy rate limiting
+                    for (let i = 0; i < symbols.length; i++) {
+                        const symbol = symbols[i];
+                        try {
+                            const baseSymbol = symbol.split('/')[0];
+                            const binanceSymbol = baseSymbol + 'USDT';
+                            
+                            const proxies = [
+                                'https://api.allorigins.win/raw?url=',
+                                'https://corsproxy.io/?',
+                                'https://thingproxy.freeboard.io/fetch/'
+                            ];
+                            
+                            const proxyUrl = proxies[i % proxies.length] + encodeURIComponent(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`);
+                            
+                            log(`Testing ${symbol} with proxy ${i % proxies.length + 1}...`, 'info');
+                            
+                            const response = await fetch(proxyUrl);
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                const priceData = data.contents ? JSON.parse(data.contents) : data;
+                                
+                                if (priceData.price) {
+                                    results[symbol] = {
+                                        price: parseFloat(priceData.price),
+                                        provider: 'Binance',
+                                        timestamp: new Date().toISOString()
+                                    };
+                                    log(`✅ ${symbol}: $${priceData.price}`, 'success');
+                                }
+                            }
+                        } catch (error) {
+                            log(`❌ ${symbol} failed: ${error.message}`, 'error');
+                        }
+                        
+                        // Heavy delay between requests
+                        if (i < symbols.length - 1) {
+                            log('Waiting 2 seconds before next request...', 'info');
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                    }
+                    
+                    setStatus(`CORS proxy fallback: ${Object.keys(results).length}/${symbols.length} symbols`, 
+                        Object.keys(results).length > 0 ? 'success' : 'error');
+                }
+            } catch (error) {
+                log(`❌ Crypto price feed test failed: ${error.message}`, 'error');
+                setStatus('Crypto price feed test failed', 'error');
+            }
+        };
+        
+        window.testCryptoBot = async function() {
+            setStatus('Testing Crypto Bot Data Fetching...', 'info');
+            log('🔄 Testing crypto bot data fetching with new rate limiting...', 'info');
+            
+            const symbols = ['BTCUSDT', 'ETHUSDT', 'ADAUSDT'];
+            const results = {};
+            
+            try {
+                for (let i = 0; i < symbols.length; i++) {
+                    const symbol = symbols[i];
+                    log(`Testing ${symbol} data fetch...`, 'info');
+                    
+                    try {
+                        const proxies = [
+                            'https://api.allorigins.win/raw?url=',
+                            'https://corsproxy.io/?',
+                            'https://thingproxy.freeboard.io/fetch/'
+                        ];
+                        
+                        const proxyIndex = Math.floor(Math.random() * proxies.length);
+                        const proxyUrl = proxies[proxyIndex] + encodeURIComponent(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1m&limit=10`);
+                        
+                        const response = await fetch(proxyUrl);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const klinesData = data.contents ? JSON.parse(data.contents) : data;
+                            
+                            if (klinesData && klinesData.length > 0) {
+                                results[symbol] = {
+                                    bars: klinesData.length,
+                                    lastPrice: parseFloat(klinesData[klinesData.length - 1][4]),
+                                    provider: 'Binance'
+                                };
+                                log(`✅ ${symbol}: ${klinesData.length} bars, last price: $${results[symbol].lastPrice}`, 'success');
+                            }
+                        } else {
+                            log(`❌ ${symbol} failed: HTTP ${response.status}`, 'error');
+                        }
+                    } catch (error) {
+                        log(`❌ ${symbol} error: ${error.message}`, 'error');
+                    }
+                    
+                    // 3 second delay between requests
+                    if (i < symbols.length - 1) {
+                        log('Waiting 3 seconds before next request...', 'info');
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                    }
+                }
+                
+                const successCount = Object.keys(results).length;
+                setStatus(`Crypto Bot Data: ${successCount}/${symbols.length} symbols successful`, 
+                    successCount > 0 ? 'success' : 'error');
+                
+                if (successCount > 0) {
+                    log('✅ Crypto bot data fetching is working!', 'success');
+                } else {
+                    log('❌ Crypto bot data fetching failed', 'error');
+                }
+            } catch (error) {
+                log(`❌ Crypto bot test failed: ${error.message}`, 'error');
+                setStatus('Crypto bot test failed', 'error');
+            }
+        };
+        
+        window.clearLogs = function() {
+            logContainer.innerHTML = '';
+            setStatus('Logs cleared', 'info');
+            log('Logs cleared', 'info');
+        };
+        
+        // Auto-run initial test
+        log('🚀 Crypto Data Fix Test initialized', 'info');
+        log('This test verifies the fixes for ERR_INSUFFICIENT_RESOURCES errors', 'info');
+        log('Click the buttons above to test different functionalities', 'info');
+    </script>
+</body>
+</html>

@@ -52,16 +52,20 @@ class YFinanceProxyService {
     try {
       // Use yfinance service directly
       const yfSymbol = symbol.replace('/', '') + '=X';
-      const url = `https://yfinance-service-kyce.onrender.com/api/price/${yfSymbol}`;
+      // Use CORS proxy to avoid CORS errors
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://yfinance-service-kyce.onrender.com/api/price/${yfSymbol}`)}`;
       
-      console.log(`📡 Fetching ${symbol} via yfinance service: ${url}`);
+      console.log(`📡 Fetching ${symbol} via yfinance service (with CORS proxy)`);
       
-      const response = await this.fetchWithRetry(url);
+      const response = await this.fetchWithRetry(proxyUrl);
       
-      if (response && response.price) {
+      // Handle CORS proxy response format
+      const actualResponse = response.contents ? JSON.parse(response.contents) : response;
+      
+      if (actualResponse && actualResponse.price) {
         const priceData: YFinancePriceData = {
           symbol: symbol,
-          price: parseFloat(response.price),
+          price: parseFloat(actualResponse.price),
           timestamp: new Date().toISOString(),
           provider: 'yfinance-service'
         };

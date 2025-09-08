@@ -694,6 +694,63 @@
         let activeSessions = [];
         let currentSessionId = null;
         let messageHistory = {};
+        
+        // Check for signal data from localStorage
+        function checkForSignalData() {
+            const signalData = localStorage.getItem('nexus_chat_signal');
+            if (signalData) {
+                try {
+                    const signal = JSON.parse(signalData);
+                    // Create a session automatically from the signal
+                    createSessionFromSignal(signal);
+                    // Clear the signal data after using it
+                    localStorage.removeItem('nexus_chat_signal');
+                } catch (e) {
+                    console.error('Error parsing signal data:', e);
+                }
+            }
+        }
+        
+        // Create session from signal data
+        function createSessionFromSignal(signal) {
+            const sessionId = 'signal_' + Date.now();
+            const session = {
+                id: sessionId,
+                symbol: signal.symbol || 'Unknown',
+                type: signal.direction || 'BUY',
+                entryPrice: signal.entryPrice || '0',
+                stopLoss: signal.stopLoss || '0',
+                takeProfit: signal.takeProfit || '0',
+                confidence: signal.confidence || '0',
+                analysis: signal.analysis || '',
+                timestamp: new Date().toISOString()
+            };
+            
+            activeSessions.unshift(session);
+            currentSessionId = sessionId;
+            
+            // Initialize message history for this session
+            messageHistory[sessionId] = [];
+            
+            // Add initial AI message about the signal
+            const initialMessage = `I see you've shared a ${signal.direction} signal for ${signal.symbol} at ${signal.entryPrice}. 
+
+Signal Details:
+- Entry: ${signal.entryPrice}
+- Stop Loss: ${signal.stopLoss}
+- Take Profit: ${signal.takeProfit}
+- Confidence: ${signal.confidence}%
+
+Analysis: ${signal.analysis}
+
+How can I help you with this trade? Would you like me to analyze the risk-reward ratio, suggest position sizing, or discuss market conditions?`;
+            
+            addAIMessage(initialMessage, sessionId);
+            
+            // Update UI
+            renderSessions();
+            renderMessages();
+        }
 
 
         // Initialize particles
@@ -1003,6 +1060,9 @@ Please try asking your question again, and I'll do my best to provide specific g
         // Initialize
         window.onload = function() {
             createParticles();
+            
+            // Check for signal data from localStorage
+            checkForSignalData();
             
             // Update metrics periodically
             setInterval(() => {

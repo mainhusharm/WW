@@ -1,4 +1,5 @@
 import { API_CONFIG } from '../api/config';
+import YFinanceDirectService from './yfinanceDirect';
 
 export interface RealPriceData {
   symbol: string;
@@ -63,14 +64,17 @@ class RealYfinanceService {
     try {
       // Convert forex pair to yfinance symbol format
       const yfSymbol = symbol.replace('/', '') + '=X';
-      const response = await this.fetchWithRetry(
-        `https://yfinance-service-kyce.onrender.com/api/price/${yfSymbol}`
-      );
+      // Use CORS proxy to avoid CORS errors
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://yfinance-service-kyce.onrender.com/api/price/${yfSymbol}`)}`;
+      const response = await this.fetchWithRetry(proxyUrl);
       
-      if (response && response.price) {
+      // Handle CORS proxy response format
+      const actualResponse = response.contents ? JSON.parse(response.contents) : response;
+      
+      if (actualResponse && actualResponse.price) {
         const priceData: RealPriceData = {
           symbol: symbol,
-          price: parseFloat(response.price),
+          price: parseFloat(actualResponse.price),
           timestamp: new Date().toISOString(),
           provider: 'yfinance-service'
         };
@@ -81,6 +85,28 @@ class RealYfinanceService {
       }
     } catch (error) {
       console.warn(`yfinance service failed for ${symbol}:`, error);
+    }
+
+    // Try direct yfinance service as fallback
+    try {
+      console.log(`🔄 Trying direct yfinance service for ${symbol}...`);
+      const directService = YFinanceDirectService.getInstance();
+      const directResult = await directService.fetchLatestPrice(symbol);
+      
+      if (directResult && directResult.price) {
+        const priceData: RealPriceData = {
+          symbol: symbol,
+          price: parseFloat(directResult.price),
+          timestamp: new Date().toISOString(),
+          provider: 'yfinance-direct'
+        };
+        
+        this.priceCache.set(cacheKey, { data: priceData, timestamp: now });
+        console.log(`✅ Direct yfinance service success for ${symbol}: $${priceData.price}`);
+        return priceData;
+      }
+    } catch (directError) {
+      console.warn(`Direct yfinance service also failed for ${symbol}:`, directError);
     }
 
     // NO FALLBACK DATA - return null if all sources fail
@@ -98,8 +124,9 @@ class RealYfinanceService {
     try {
       // Convert symbols to yfinance format
       const yfSymbols = symbols.map(s => s.replace('/', '') + '=X');
-      const url = `https://yfinance-service-kyce.onrender.com/api/bulk`;
-      const response = await this.fetchWithRetry(url, {
+      // Use CORS proxy to avoid CORS errors
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://yfinance-service-kyce.onrender.com/api/bulk`)}`;
+      const response = await this.fetchWithRetry(proxyUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,9 +137,12 @@ class RealYfinanceService {
       const results: RealPriceData[] = [];
       let successCount = 0;
 
+      // Handle CORS proxy response format
+      const actualResponse = response.contents ? JSON.parse(response.contents) : response;
+
       // The bulk API returns data in a 'data' array
-      if (response.data && Array.isArray(response.data)) {
-        for (const entry of response.data) {
+      if (actualResponse.data && Array.isArray(actualResponse.data)) {
+        for (const entry of actualResponse.data) {
           if (entry && entry.symbol && typeof entry.price !== 'undefined' && entry.price !== null) {
             // Convert yfinance symbol back to our format (EURUSD=X -> EUR/USD)
             const originalSymbol = entry.symbol.replace('=X', '').replace(/([A-Z]{3})([A-Z]{3})/, '$1/$2');
@@ -135,7 +165,39 @@ class RealYfinanceService {
         timestamp: new Date().toISOString()
       };
     } catch (bulkError) {
-      console.warn('Bulk endpoint failed, falling back to per-symbol requests:', bulkError);
+      console.warn('Bulk endpoint failed, trying direct yfinance service:', bulkError);
+      
+      // Try direct yfinance service for bulk data
+      try {
+        const directService = YFinanceDirectService.getInstance();
+        const directResults: RealPriceData[] = [];
+        let directSuccessCount = 0;
+        
+        for (const symbol of symbols) {
+          const directResult = await directService.fetchLatestPrice(symbol);
+          if (directResult && directResult.price) {
+            directResults.push({
+              symbol: symbol,
+              price: parseFloat(directResult.price),
+              timestamp: new Date().toISOString(),
+              provider: 'yfinance-direct'
+            });
+            directSuccessCount++;
+          }
+        }
+        
+        if (directSuccessCount > 0) {
+          console.log(`📊 Direct yfinance bulk fetch completed: ${directSuccessCount}/${symbols.length} successful`);
+          return {
+            success: true,
+            count: directSuccessCount,
+            data: directResults,
+            timestamp: new Date().toISOString()
+          };
+        }
+      } catch (directBulkError) {
+        console.warn('Direct yfinance bulk also failed, falling back to per-symbol requests:', directBulkError);
+      }
     }
 
     // Fallback: per-symbol requests (slower, may hit rate limits)

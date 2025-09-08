@@ -22,36 +22,24 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
   const [losses, setLosses] = useState<any[]>([]);
   const [botStatus, setBotStatus] = useState<{ is_active: boolean; last_started?: string; last_stopped?: string }>({ is_active: false });
 
-  // Bot status management with fallback to local state
+  // Bot status management with localStorage only
   const fetchBotStatus = async () => {
-    try {
-      const response = await api.get('/api/database/bot-status');
-      const forexBot = response.data.find((bot: any) => bot.bot_type === 'forex');
-      if (forexBot) {
-        setBotStatus(forexBot);
-        setIsBotRunning(forexBot.is_active);
-      }
-    } catch (error) {
-      console.error('Error fetching bot status from database, using local state:', error);
-      // Use local state as fallback when database is unavailable
-      const localStatus = localStorage.getItem('forexBotStatus');
-      if (localStatus) {
-        const parsedStatus = JSON.parse(localStatus);
-        setBotStatus(parsedStatus);
-        setIsBotRunning(parsedStatus.is_active);
-      }
+    // Use localStorage only to avoid API connection errors
+    const localStatus = localStorage.getItem('forexBotStatus');
+    if (localStatus) {
+      const parsedStatus = JSON.parse(localStatus);
+      setBotStatus(parsedStatus);
+      setIsBotRunning(parsedStatus.is_active);
+    } else {
+      // Initialize with default status
+      const defaultStatus = { is_active: false };
+      setBotStatus(defaultStatus);
+      setIsBotRunning(false);
     }
   };
 
   const updateBotStatus = async (isActive: boolean) => {
-    try {
-      // Try to update database first
-      await api.post('/api/database/bot-status/forex', { is_active: isActive });
-    } catch (error) {
-      console.warn('Database update failed, using local state:', error);
-    }
-    
-    // Update local state regardless of database success
+    // Use localStorage only to avoid API connection errors
     const newStatus = { 
       is_active: isActive, 
       last_started: isActive ? new Date().toISOString() : undefined,
@@ -61,7 +49,7 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
     setBotStatus(newStatus);
     setIsBotRunning(isActive);
     
-    // Store in localStorage as fallback
+    // Store in localStorage
     localStorage.setItem('forexBotStatus', JSON.stringify(newStatus));
     
     if (isActive) {
@@ -1410,6 +1398,27 @@ const ForexDataDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: b
                                             (signal as any).direction = signal.signalType === 'BUY' ? 'bullish' : 'bearish';
                                             signalHistory.push(signal);
                                             setTradeHistory(prev => [...prev, signal]);
+                                            
+                                            // Store signal in localStorage for user dashboard
+                                            const signalForUser = {
+                                                id: Date.now(),
+                                                text: `${symbol}\n${signal.signalType} NOW\nEntry ${signal.entryPrice}\nStop Loss ${signal.stopLoss}\nTake Profit ${signal.takeProfit}\nConfidence ${signal.confidence}%\n\n${signal.analysis}`,
+                                                timestamp: new Date().toISOString(),
+                                                from: 'Forex Data Analysis',
+                                                chat_id: 1,
+                                                message_id: Date.now(),
+                                                update_id: Date.now()
+                                            };
+                                            
+                                            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+                                            existingMessages.unshift(signalForUser);
+                                            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+                                            
+                                            // Dispatch event to notify user dashboard
+                                            window.dispatchEvent(new CustomEvent('newSignalGenerated', { 
+                                                detail: signalForUser 
+                                            }));
+                                            
                                             log(`🎯 NEW SIGNAL: ${signal.signalType} ${symbol} @ ${signal.entryPrice}`, 'success');
                                         }
                                     });

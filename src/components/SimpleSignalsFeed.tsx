@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Signal, TradeOutcome } from '../trading/types';
 import { useUser } from '../contexts/UserContext';
+import TradeManager from '../services/tradeManager';
 
 interface SimpleSignalCardProps {
   signal: Signal;
@@ -9,6 +10,11 @@ interface SimpleSignalCardProps {
   onAddToJournal: (signal: Signal) => void;
   onChatWithNexus: (signal: Signal) => void;
   userRiskReward?: string;
+  tradeStatus?: 'active' | 'won' | 'lost' | 'breakeven';
+  lotSize?: number;
+  dollarAmount?: number;
+  stopLossDollar?: number;
+  takeProfitDollar?: number;
 }
 
 const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({ 
@@ -17,7 +23,12 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
   onMarkAsTaken, 
   onAddToJournal, 
   onChatWithNexus,
-  userRiskReward 
+  userRiskReward,
+  tradeStatus = 'active',
+  lotSize = 0,
+  dollarAmount = 0,
+  stopLossDollar = 0,
+  takeProfitDollar = 0
 }) => {
   const formatTakeProfit = (tp: any) => {
     if (Array.isArray(tp)) {
@@ -42,12 +53,25 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
   const riskReward = calculateRiskReward();
   const matchesUserPreference = userRiskReward ? parseFloat(riskReward) >= parseFloat(userRiskReward) : true;
 
+  // Determine card styling based on trade status
+  const getCardStyling = () => {
+    if (tradeStatus === 'won') {
+      return 'border-green-500/50 bg-green-900/20 opacity-75';
+    } else if (tradeStatus === 'lost') {
+      return 'border-red-500/50 bg-red-900/20 opacity-75';
+    } else if (tradeStatus === 'breakeven') {
+      return 'border-yellow-500/50 bg-yellow-900/20 opacity-75';
+    } else if (isTaken) {
+      return 'border-green-500/50 bg-green-900/20';
+    } else if (signal.is_recommended) {
+      return 'border-yellow-500/50 bg-yellow-900/10';
+    } else {
+      return 'border-gray-600/50 hover:border-blue-500/50';
+    }
+  };
+
   return (
-    <div className={`signal-card bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm p-6 rounded-2xl border-2 mb-6 transition-all duration-300 hover:scale-[1.02] ${
-      isTaken ? 'border-green-500/50 bg-green-900/20' : 
-      signal.is_recommended ? 'border-yellow-500/50 bg-yellow-900/10' :
-      'border-gray-600/50 hover:border-blue-500/50'
-    }`}>
+    <div className={`signal-card bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm p-6 rounded-2xl border-2 mb-6 transition-all duration-300 hover:scale-[1.02] ${getCardStyling()}`}>
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center space-x-3">
@@ -80,10 +104,16 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
         <div className="bg-gray-700/50 rounded-lg p-3">
           <p className="text-gray-400 text-sm mb-1">Stop Loss</p>
           <p className="text-red-400 font-bold text-lg">{signal.stopLoss}</p>
+          {stopLossDollar > 0 && (
+            <p className="text-red-300 text-xs">${stopLossDollar.toFixed(2)}</p>
+          )}
         </div>
         <div className="bg-gray-700/50 rounded-lg p-3">
           <p className="text-gray-400 text-sm mb-1">Take Profit</p>
           <p className="text-green-400 font-bold text-lg">{formatTakeProfit(signal.takeProfit)}</p>
+          {takeProfitDollar > 0 && (
+            <p className="text-green-300 text-xs">${takeProfitDollar.toFixed(2)}</p>
+          )}
         </div>
         <div className="bg-gray-700/50 rounded-lg p-3">
           <p className="text-gray-400 text-sm mb-1">Risk:Reward</p>
@@ -92,6 +122,43 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Lot Size and Risk Management Info */}
+      {lotSize > 0 && (
+        <div className="bg-blue-900/30 rounded-lg p-4 mb-6 border border-blue-500/30">
+          <h4 className="text-blue-300 font-semibold mb-3 flex items-center">
+            📊 Risk Management
+          </h4>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <p className="text-gray-400 text-sm mb-1">Lot Size</p>
+              <p className="text-white font-bold text-lg">{lotSize}</p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-sm mb-1">Money at Risk</p>
+              <p className="text-yellow-400 font-bold text-lg">${dollarAmount.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-sm mb-1">Units</p>
+              <p className="text-white font-bold text-lg">{(lotSize * 100000).toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-sm mb-1">Status</p>
+              <p className={`font-bold text-lg ${
+                tradeStatus === 'won' ? 'text-green-400' :
+                tradeStatus === 'lost' ? 'text-red-400' :
+                tradeStatus === 'breakeven' ? 'text-yellow-400' :
+                'text-blue-400'
+              }`}>
+                {tradeStatus === 'active' ? 'Active' : 
+                 tradeStatus === 'won' ? 'Won' :
+                 tradeStatus === 'lost' ? 'Lost' :
+                 tradeStatus === 'breakeven' ? 'Break Even' : 'Active'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Market Info */}
       <div className="flex items-center space-x-4 mb-4">
@@ -131,7 +198,7 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
       
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
-        {!isTaken && (
+        {tradeStatus === 'active' ? (
           <>
             <button 
               onClick={() => onMarkAsTaken(signal, 'Target Hit')}
@@ -152,6 +219,18 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
               ⚖️ Break Even
             </button>
           </>
+        ) : (
+          <div className={`font-semibold flex items-center px-4 py-2 rounded-lg ${
+            tradeStatus === 'won' ? 'text-green-400 bg-green-900/30' :
+            tradeStatus === 'lost' ? 'text-red-400 bg-red-900/30' :
+            tradeStatus === 'breakeven' ? 'text-yellow-400 bg-yellow-900/30' :
+            'text-gray-400 bg-gray-900/30'
+          }`}>
+            {tradeStatus === 'won' ? '✅ Trade Won' :
+             tradeStatus === 'lost' ? '❌ Trade Lost' :
+             tradeStatus === 'breakeven' ? '⚖️ Break Even' :
+             '✅ Trade Completed'}
+          </div>
         )}
         <button 
           onClick={() => onAddToJournal(signal)}
@@ -199,6 +278,8 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [marketFilter, setMarketFilter] = useState('all');
+  const [trades, setTrades] = useState<Map<string, any>>(new Map());
+  const tradeManager = TradeManager.getInstance();
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -206,12 +287,26 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
     forex: 0,
     crypto: 0
   });
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected'>('connected');
   
   // Get user's risk-reward preference
   const userRiskReward = user?.tradingData?.riskRewardRatio || '2';
   
   // No sample signals - only real signals from admin dashboard
+
+  // Load trades from TradeManager
+  useEffect(() => {
+    const loadTrades = () => {
+      const allTrades = tradeManager.getAllTrades();
+      const tradesMap = new Map();
+      allTrades.forEach(trade => {
+        tradesMap.set(trade.signalId, trade);
+      });
+      setTrades(tradesMap);
+    };
+    
+    loadTrades();
+  }, []);
 
   // Load signals from localStorage (from admin dashboard)
   useEffect(() => {
@@ -330,49 +425,49 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   // Handle marking signal as taken
   const handleMarkAsTaken = async (signal: Signal, outcome: TradeOutcome, pnl?: number) => {
     try {
-      // Store signal locally for now (avoid CORS issues)
-      const signalResult = outcome === 'Target Hit' ? 'win' : 
-                          outcome === 'Stop Loss Hit' ? 'loss' : 'skipped';
+      // Get or create trade
+      let trade = tradeManager.getTradeBySignalId(signal.id);
+      if (!trade) {
+        // Create new trade if it doesn't exist
+        trade = tradeManager.createTrade(signal);
+      }
       
-      // Store in localStorage instead of making API calls
-      const userSignalData = {
-        id: Date.now(),
-        user_id: user?.id || 'current_user',
-        pair: signal.pair,
-        signal_type: signal.direction === 'LONG' ? 'buy' : 'sell',
-        result: signalResult,
-        confidence_pct: signal.confidence,
-        is_recommended: signal.is_recommended,
-        entry_price: typeof signal.entry === 'string' ? parseFloat(signal.entry) : signal.entryPrice,
-        stop_loss: signal.stopLoss,
-        take_profit: Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit,
-        analysis: signal.analysis,
-        ict_concepts: signal.ictConcepts,
-        pnl: pnl,
-        notes: `Signal outcome: ${outcome}`,
-        timestamp: new Date().toISOString()
-      };
+      // Determine trade status based on outcome
+      let tradeStatus: 'won' | 'lost' | 'breakeven';
+      switch (outcome) {
+        case 'Target Hit':
+          tradeStatus = 'won';
+          break;
+        case 'Stop Loss Hit':
+          tradeStatus = 'lost';
+          break;
+        case 'Breakeven':
+          tradeStatus = 'breakeven';
+          break;
+        default:
+          tradeStatus = 'won'; // Default to won for other outcomes
+      }
       
-      // Store in localStorage
-      const existingUserSignals = JSON.parse(localStorage.getItem('user_signals') || '[]');
-      existingUserSignals.unshift(userSignalData);
-      localStorage.setItem('user_signals', JSON.stringify(existingUserSignals.slice(0, 100)));
+      // Update trade status
+      tradeManager.updateTradeStatus(trade.id, tradeStatus, pnl);
       
-      // Update local state
-      onMarkAsTaken(signal, outcome, pnl);
+      // Update local trades state
+      const allTrades = tradeManager.getAllTrades();
+      const tradesMap = new Map();
+      allTrades.forEach(t => {
+        tradesMap.set(t.signalId, t);
+      });
+      setTrades(tradesMap);
+      
+      // Update taken signal IDs
       setTakenSignalIds(prev => [...prev, signal.id]);
       
-      // Update signal status locally
-      setSignals(prev => prev.map(s => 
-        s.id === signal.id ? { ...s, status: 'taken', outcome, pnl } : s
-      ));
+      // Call parent callback
+      onMarkAsTaken(signal, outcome, pnl);
       
-      console.log('Signal marked as taken and stored locally:', userSignalData);
+      console.log('Trade status updated:', tradeStatus, 'Trade ID:', trade.id);
     } catch (error) {
-      console.error('Error marking signal as taken:', error);
-      // Still update local state even if storage fails
-      onMarkAsTaken(signal, outcome, pnl);
-      setTakenSignalIds(prev => [...prev, signal.id]);
+      console.error('Error updating trade status:', error);
     }
   };
   
@@ -506,17 +601,25 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
       
       {/* Signals List */}
       <div className="signals-list">
-        {filteredSignals.map(signal => (
-          <SimpleSignalCard
-            key={signal.id}
-            signal={signal}
-            isTaken={takenSignalIds.includes(signal.id)}
-            onMarkAsTaken={handleMarkAsTaken}
-            onAddToJournal={handleAddToJournal}
-            onChatWithNexus={handleChatWithNexus}
-            userRiskReward={userRiskReward}
-          />
-        ))}
+        {filteredSignals.map(signal => {
+          const trade = trades.get(signal.id);
+          return (
+            <SimpleSignalCard
+              key={signal.id}
+              signal={signal}
+              isTaken={takenSignalIds.includes(signal.id)}
+              onMarkAsTaken={handleMarkAsTaken}
+              onAddToJournal={handleAddToJournal}
+              onChatWithNexus={handleChatWithNexus}
+              userRiskReward={userRiskReward}
+              tradeStatus={trade?.status || 'active'}
+              lotSize={trade?.lotSize || 0}
+              dollarAmount={trade?.dollarAmount || 0}
+              stopLossDollar={trade?.stopLossDollar || 0}
+              takeProfitDollar={trade?.takeProfitDollar || 0}
+            />
+          );
+        })}
       </div>
     </div>
   );

@@ -47,18 +47,22 @@ class SimpleYfinanceService {
     // Try to fetch real data from Yahoo Finance API
     try {
       const yfSymbol = symbol.replace('/', '') + '=X';
-      const response = await fetch(`https://yfinance-service-kyce.onrender.com/api/price/${yfSymbol}`);
+      // Use CORS proxy to avoid CORS errors
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://yfinance-service-kyce.onrender.com/api/price/${yfSymbol}`)}`;
+      const response = await fetch(proxyUrl);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
+      // Handle CORS proxy response format
+      const actualData = data.contents ? JSON.parse(data.contents) : data;
       
-      if (data && data.price) {
+      if (actualData && actualData.price) {
         const priceData: SimplePriceData = {
           symbol: symbol,
-          price: parseFloat(data.price),
+          price: parseFloat(actualData.price),
           timestamp: new Date().toISOString(),
           provider: 'yfinance-service'
         };

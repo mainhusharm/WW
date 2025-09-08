@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TrendingUp, TrendingDown, RefreshCw, Settings, X } from 'lucide-react';
 import { API_CONFIG } from '../api/config';
 import realYfinanceService, { RealPriceData } from '../services/realYfinanceService';
@@ -21,11 +21,11 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
 
   const symbols = {
     forex: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD', 'EUR/JPY', 'GBP/JPY', 'EUR/GBP', 'EUR/AUD', 'GBP/AUD', 'AUD/CAD', 'CAD/JPY', 'CHF/JPY', 'AUD/CHF', 'CAD/CHF', 'EUR/CHF', 'GBP/CHF', 'NZD/CAD', 'NZD/JPY', 'AUD/NZD'],
-    crypto: ['BTC/USD', 'ETH/USD', 'BNB/USD', 'ADA/USD', 'SOL/USD'],
+    crypto: ['BTC/USD', 'ETH/USD', 'BNB/USD', 'ADA/USD', 'XRP/USD', 'SOL/USD', 'DOT/USD', 'DOGE/USD', 'AVAX/USD', 'LINK/USD', 'LTC/USD', 'XLM/USD', 'FIL/USD', 'AAVE/USD'],
     stocks: ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA']
   };
 
-  const selectedSymbols = symbols[market];
+  const selectedSymbols = useMemo(() => symbols[market], [market]);
 
   useEffect(() => {
     const fetchPrices = async () => {
@@ -63,58 +63,98 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
             // NO FALLBACK DATA - leave results empty
           }
         } else if (market === 'crypto') {
-          // Use Binance API for crypto data with rate limiting and fallback
+          // Use alternative data sources for crypto to avoid CORS proxy overload
           const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
           
           // Try to get cached data first
           const cachedData = JSON.parse(localStorage.getItem('crypto_prices') || '{}');
           const cacheAge = JSON.parse(localStorage.getItem('crypto_prices_timestamp') || '0');
-          const isCacheValid = Date.now() - cacheAge < 60000; // 1 minute cache
+          const isCacheValid = Date.now() - cacheAge < 300000; // 5 minute cache (increased)
           
           if (isCacheValid && Object.keys(cachedData).length > 0) {
             console.log('✅ Using cached crypto data');
             results = cachedData;
           } else {
-            // Fetch fresh data with rate limiting
-            for (let i = 0; i < selectedSymbols.length; i++) {
-              const symbol = selectedSymbols[i];
-              try {
-                // Convert symbol format (e.g., BTC/USD -> BTCUSDT)
-                const baseSymbol = symbol.split('/')[0];
-                const binanceSymbol = baseSymbol + 'USDT';
-                // Use CORS proxy to avoid CORS errors
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`)}`;
-                const response = await fetch(proxyUrl);
+            // Use CoinGecko API as primary source (no CORS issues)
+            try {
+              console.log('🔄 Fetching crypto data from CoinGecko API...');
+              const coinGeckoResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,cardano,ripple,solana,polkadot,dogecoin,avalanche-2,chainlink,litecoin,stellar,filecoin,aave&vs_currencies=usd');
+              
+              if (coinGeckoResponse.ok) {
+                const coinGeckoData = await coinGeckoResponse.json();
                 
-                if (response.ok) {
-                  const data = await response.json();
-                  // Handle CORS proxy response format
-                  const priceData = data.contents ? JSON.parse(data.contents) : data;
-                  if (priceData.price) {
-                    results[symbol] = { 
-                      price: parseFloat(priceData.price),
-                      provider: 'Binance',
+                // Map CoinGecko data to our symbols
+                const symbolMap: { [key: string]: string } = {
+                  'BTC/USD': 'bitcoin',
+                  'ETH/USD': 'ethereum', 
+                  'BNB/USD': 'binancecoin',
+                  'ADA/USD': 'cardano',
+                  'XRP/USD': 'ripple',
+                  'SOL/USD': 'solana',
+                  'DOT/USD': 'polkadot',
+                  'DOGE/USD': 'dogecoin',
+                  'AVAX/USD': 'avalanche-2',
+                  'LINK/USD': 'chainlink',
+                  'LTC/USD': 'litecoin',
+                  'XLM/USD': 'stellar',
+                  'FIL/USD': 'filecoin',
+                  'AAVE/USD': 'aave'
+                };
+                
+                for (const symbol of selectedSymbols) {
+                  const coinId = symbolMap[symbol];
+                  if (coinId && coinGeckoData[coinId]?.usd) {
+                    results[symbol] = {
+                      price: coinGeckoData[coinId].usd,
+                      provider: 'CoinGecko',
                       timestamp: new Date().toISOString()
                     };
                   }
-                } else if (response.status === 429) {
-                  // Rate limit exceeded, wait longer
-                  console.warn(`Rate limit exceeded for ${symbol}, waiting 2 seconds...`);
-                  await delay(2000);
-                  continue;
                 }
-              } catch (error) {
-                console.warn(`Failed to fetch ${symbol} from Binance:`, error);
-                // If it's a resource error, wait before continuing
-                if (error.message?.includes('ERR_INSUFFICIENT_RESOURCES')) {
-                  console.warn(`Resource error for ${symbol}, waiting 1 second...`);
-                  await delay(1000);
-                }
+                
+                console.log(`✅ CoinGecko data fetched: ${Object.keys(results).length} symbols`);
               }
+            } catch (coinGeckoError) {
+              console.warn('CoinGecko API failed, trying Binance with heavy rate limiting:', coinGeckoError);
               
-              // Add delay between requests to avoid rate limiting
-              if (i < selectedSymbols.length - 1) {
-                await delay(300); // 300ms delay between requests
+              // Fallback to Binance with very heavy rate limiting
+              for (let i = 0; i < selectedSymbols.length; i++) {
+                const symbol = selectedSymbols[i];
+                try {
+                  // Convert symbol format (e.g., BTC/USD -> BTCUSDT)
+                  const baseSymbol = symbol.split('/')[0];
+                  const binanceSymbol = baseSymbol + 'USDT';
+                  
+                  // Use multiple CORS proxies to distribute load
+                  const proxies = [
+                    'https://api.allorigins.win/raw?url=',
+                    'https://corsproxy.io/?',
+                    'https://thingproxy.freeboard.io/fetch/'
+                  ];
+                  
+                  const proxyUrl = proxies[i % proxies.length] + encodeURIComponent(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`);
+                  const response = await fetch(proxyUrl);
+                  
+                  if (response.ok) {
+                    const data = await response.json();
+                    // Handle CORS proxy response format
+                    const priceData = data.contents ? JSON.parse(data.contents) : data;
+                    if (priceData.price) {
+                      results[symbol] = { 
+                        price: parseFloat(priceData.price),
+                        provider: 'Binance',
+                        timestamp: new Date().toISOString()
+                      };
+                    }
+                  }
+                } catch (error) {
+                  console.warn(`Failed to fetch ${symbol}:`, error);
+                }
+                
+                // Heavy delay between requests to avoid overwhelming proxies
+                if (i < selectedSymbols.length - 1) {
+                  await delay(2000); // 2 second delay between requests
+                }
               }
             }
             
@@ -124,7 +164,7 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
               localStorage.setItem('crypto_prices_timestamp', JSON.stringify(Date.now()));
             }
             
-            console.log('✅ Crypto data fetched from Binance API');
+            console.log('✅ Crypto data fetch completed');
           }
         } else if (market === 'stocks') {
           // Use real yfinance service for stocks data - NO FALLBACK DATA

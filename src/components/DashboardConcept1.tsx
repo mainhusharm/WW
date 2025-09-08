@@ -1184,12 +1184,112 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
               {activeTab === 'signals' && <SimpleSignalsFeed 
                 onMarkAsTaken={handleMarkAsTaken}
                 onAddToJournal={(signal) => {
-                  // Handle adding to journal
-                  console.log('Adding signal to journal:', signal);
+                  // Extract signal data from the text field if individual fields are not available
+                  let signalSymbol = signal.pair || signal.symbol || signal.currencyPair || 'Unknown';
+                  let signalDirection = signal.direction || signal.signalType || 'BUY';
+                  let signalEntry = signal.entryPrice || signal.entry || '0';
+                  let signalStopLoss = signal.stopLoss || '0';
+                  let signalTakeProfit = Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0';
+                  let signalAnalysis = signal.analysis || signal.text || '';
+                  
+                  // If data is in text format, parse it
+                  if (signal.text && !signal.entryPrice) {
+                    const textLines = signal.text.split('\n');
+                    for (const line of textLines) {
+                      if (line.includes('Entry')) {
+                        const match = line.match(/Entry\s+([\d.]+)/);
+                        if (match) signalEntry = match[1];
+                      } else if (line.includes('Stop Loss')) {
+                        const match = line.match(/Stop Loss\s+([\d.]+)/);
+                        if (match) signalStopLoss = match[1];
+                      } else if (line.includes('Take Profit')) {
+                        const match = line.match(/Take Profit\s+([\d.]+)/);
+                        if (match) signalTakeProfit = match[1];
+                      } else if (line.includes('Confidence')) {
+                        const match = line.match(/Confidence\s+(\d+)%/);
+                        if (match) signalAnalysis += ` (Confidence: ${match[1]}%)`;
+                      } else if (line.includes('NOW')) {
+                        const match = line.match(/(\w+)\s+NOW/);
+                        if (match) signalDirection = match[1];
+                      }
+                    }
+                    
+                    // Extract symbol from first line if not already set
+                    if (signalSymbol === 'Unknown' && textLines[0]) {
+                      signalSymbol = textLines[0].replace(/\s+(BUY|SELL)\s+NOW.*/, '');
+                    }
+                  }
+                  
+                  setNewJournalEntry({
+                    date: new Date().toISOString().split('T')[0],
+                    symbol: signalSymbol,
+                    direction: signalDirection.toUpperCase(),
+                    entryPrice: signalEntry.toString(),
+                    exitPrice: '',
+                    quantity: '',
+                    pnl: '',
+                    notes: `Signal Analysis: ${signalAnalysis}`,
+                    tags: ['signal-generated']
+                  });
+                  
+                  // Navigate to journal tab
+                  setActiveTab('journal');
                 }}
                 onChatWithNexus={(signal) => {
-                  // Handle chat with Nexus
-                  console.log('Chat with Nexus for signal:', signal);
+                  // Extract signal data from the text field if individual fields are not available
+                  let signalSymbol = signal.pair || signal.symbol || signal.currencyPair || 'Unknown';
+                  let signalDirection = signal.direction || signal.signalType || 'BUY';
+                  let signalEntry = signal.entryPrice || signal.entry || '0';
+                  let signalStopLoss = signal.stopLoss || '0';
+                  let signalTakeProfit = Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0';
+                  let signalConfidence = signal.confidence || '0';
+                  let signalAnalysis = signal.analysis || signal.text || '';
+                  
+                  // If data is in text format, parse it
+                  if (signal.text && !signal.entryPrice) {
+                    const textLines = signal.text.split('\n');
+                    for (const line of textLines) {
+                      if (line.includes('Entry')) {
+                        const match = line.match(/Entry\s+([\d.]+)/);
+                        if (match) signalEntry = match[1];
+                      } else if (line.includes('Stop Loss')) {
+                        const match = line.match(/Stop Loss\s+([\d.]+)/);
+                        if (match) signalStopLoss = match[1];
+                      } else if (line.includes('Take Profit')) {
+                        const match = line.match(/Take Profit\s+([\d.]+)/);
+                        if (match) signalTakeProfit = match[1];
+                      } else if (line.includes('Confidence')) {
+                        const match = line.match(/Confidence\s+(\d+)%/);
+                        if (match) signalConfidence = match[1];
+                      } else if (line.includes('NOW')) {
+                        const match = line.match(/(\w+)\s+NOW/);
+                        if (match) signalDirection = match[1];
+                      }
+                    }
+                    
+                    // Extract symbol from first line if not already set
+                    if (signalSymbol === 'Unknown' && textLines[0]) {
+                      signalSymbol = textLines[0].replace(/\s+(BUY|SELL)\s+NOW.*/, '');
+                    }
+                  }
+                  
+                  // Store signal data for AI Coach
+                  const signalData = {
+                    symbol: signalSymbol,
+                    direction: signalDirection,
+                    entryPrice: signalEntry,
+                    stopLoss: signalStopLoss,
+                    takeProfit: signalTakeProfit,
+                    confidence: signalConfidence,
+                    analysis: signalAnalysis,
+                    timestamp: new Date().toISOString()
+                  };
+                  
+                  // Store signal data in localStorage for AI Coach to access
+                  localStorage.setItem('nexus_chat_signal', JSON.stringify(signalData));
+                  
+                  // Navigate to AI Coach tab
+                  setActiveTab('ai-coach');
                 }}
               />}
               {activeTab === 'analytics' && <PerformanceAnalytics tradingState={{ 

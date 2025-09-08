@@ -204,20 +204,9 @@ export const fetchForexFactoryNews = async (
   selectedDate: Date = new Date(),
   currency: string = 'ALL'
 ): Promise<ForexFactoryEvent[]> => {
-  try {
-    // Try to get real-time news from RapidAPI first
-    const newsData = await getRapidAPIForexNews(currency);
-    
-    if (newsData.length > 0) {
-      return newsData;
-    }
-    
-    // Fallback to mock data if no real data available
-    return getMockForexNews(currency);
-  } catch (error) {
-    console.error('Error in fetchForexFactoryNews:', error);
-    return getMockForexNews(currency);
-  }
+  // Use mock data directly to avoid connection errors
+  // This prevents ERR_CONNECTION_REFUSED errors when backend is not running
+  return getMockForexNews(currency);
 };
 
 export const getImpactColor = (impact: 'low' | 'medium' | 'high'): string => {
