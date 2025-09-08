@@ -25,10 +25,7 @@ services:
     startCommand: gunicorn --worker-class eventlet -w 1 wsgi_socketio:application
     envVars:
       - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: trading-platform-db
-          property: connectionString
+        value: postgresql://trading_platform_db_njpj_user:tojdQxxj9hFRoKJkZS9y6i4kziBtvXCV@dpg-d2v9i7er433s73f0878g-a.oregon-postgres.render.com/trading_platform_db_njpj
       - key: ENCRYPTION_KEY
         generateValue: true
       - key: SECRET_KEY
@@ -47,6 +44,6 @@ services:
     startCommand: npm run start
     envVars:
       - key: VITE_API_URL
-        value: https://backend-bkt7.onrender.com
+        value: https://backend-d4fm.onrender.com
       - key: NODE_ENV
         value: production

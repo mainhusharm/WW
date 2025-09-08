@@ -21,7 +21,7 @@ class ProductionApiClient {
 
   constructor() {
     // Use direct API calls in production instead of CORS proxies
-    this.baseUrl = 'https://backend-bkt7.onrender.com';
+    this.baseUrl = 'https://backend-d4fm.onrender.com';
     this.timeout = 10000; // 10 seconds
   }
 
