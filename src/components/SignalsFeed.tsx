@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Signal, TradeOutcome } from '../trading/types';
-import api from '../api';
+import { useRealTimeSignals } from '../hooks/useRealTimeSignals';
 
 interface SignalCardProps {
   signal: Signal;
@@ -185,17 +185,46 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
         setIsLoading(true);
         setError(null);
         
-        // Fetch signals from API endpoint as fallback
-        const response = await api.get(`/api/signals`);
-        if (response.data.signals && Array.isArray(response.data.signals)) {
-          // Only set if we don't have cached signals
-          if (signals.length === 0) {
-            // This will be handled by the real-time service
-            console.log('Fetched initial signals from API:', response.data.signals.length);
-          }
+        // Load signals from localStorage instead of API
+        const adminSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+        if (adminSignals.length > 0) {
+          // Convert admin messages to Signal format
+          const convertedSignals: Signal[] = adminSignals.map((msg: any) => {
+            const lines = msg.text.split('\n');
+            const pair = lines[0] || 'UNKNOWN';
+            const direction = lines[1]?.includes('BUY') ? 'LONG' : lines[1]?.includes('SELL') ? 'SHORT' : 'LONG';
+            
+            const entryMatch = msg.text.match(/Entry\s+([0-9.]+)/i);
+            const slMatch = msg.text.match(/Stop Loss\s+([0-9.]+)/i);
+            const tpMatch = msg.text.match(/Take Profit\s+([0-9.,\s]+)/i);
+            const confidenceMatch = msg.text.match(/Confidence\s+([0-9]+)%/i);
+            
+            const entryPrice = entryMatch ? parseFloat(entryMatch[1]) : 0;
+            const stopLoss = slMatch ? parseFloat(slMatch[1]) : 0;
+            const takeProfit = tpMatch ? parseFloat(tpMatch[1].split(',')[0]) : 0;
+            const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 85;
+            
+            return {
+              id: msg.id.toString(),
+              pair,
+              direction,
+              entry: entryPrice.toString(),
+              entryPrice,
+              stopLoss: stopLoss.toString(),
+              takeProfit: takeProfit.toString(),
+              confidence,
+              riskRewardRatio: '1:2',
+              timestamp: msg.timestamp,
+              description: msg.text.split('\n\n')[1] || 'Professional trading signal',
+              analysis: msg.text.split('\n\n')[1] || 'Professional trading signal',
+              market: 'forex',
+              status: 'active',
+              type: direction === 'LONG' ? 'buy' : 'sell'
+            };
+          });
+          setSignals(convertedSignals);
         } else {
-          console.error('Unexpected data format:', response.data);
-          setError('Invalid data format received from server');
+          console.log('No signals found in localStorage');
         }
       } catch (err) {
         console.error('Error fetching signals:', err);
@@ -236,13 +265,19 @@ const SignalsFeed: React.FC<SignalsFeedProps> = ({ onMarkAsTaken, onAddToJournal
         notes: `Signal outcome: ${outcome}`
       });
       
-      // Mark signal as taken in backend
-      await api.post('/api/signals/mark-taken', {
+      // Store signal outcome in localStorage instead of API call
+      const userSignalData = {
+        id: Date.now(),
         signalId: signal.id,
         outcome,
         pnl,
-        userId: 'current_user' // This should come from user context
-      });
+        userId: 'current_user',
+        timestamp: new Date().toISOString()
+      };
+      
+      const existingUserSignals = JSON.parse(localStorage.getItem('user_signals') || '[]');
+      existingUserSignals.unshift(userSignalData);
+      localStorage.setItem('user_signals', JSON.stringify(existingUserSignals.slice(0, 100)));
       
       // Update local state
       onMarkAsTaken(signal, outcome, pnl);

@@ -243,7 +243,7 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
                 minPrimaryConfirmations: 1,
                 minTotalConfirmations: 4,
                 minConfidenceScore: 60,
-                minHistoryBars: 25,
+                minHistoryBars: 10,
                 cooldownPeriod: 300000
             };
         }
@@ -890,7 +890,10 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
     const smcEngine = new ProfessionalSMCEngine();
 
     // --- Data Fetching ---
-    async function fetchBinanceData(symbol: string, interval: string, limit = 200) {
+    let lastApiCall = 0;
+    const API_DELAY = 500; // 500ms delay between API calls
+    
+    async function fetchBinanceData(symbol: string, interval: string, limit = 500) {
         const intervalMap: { [key: string]: string } = { '1m': '1m', '3m': '3m', '5m': '5m', '15m': '15m', '30m': '30m', '1h': '1h', '4h': '4h', '1d': '1d' };
         const binanceInterval = intervalMap[interval];
         if (!binanceInterval) {
@@ -898,16 +901,32 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
             return null;
         }
         
-        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${binanceInterval}&limit=${limit}`;
+        // Rate limiting
+        const now = Date.now();
+        const timeSinceLastCall = now - lastApiCall;
+        if (timeSinceLastCall < API_DELAY) {
+            await new Promise(resolve => setTimeout(resolve, API_DELAY - timeSinceLastCall));
+        }
+        lastApiCall = Date.now();
+        
+        // Use CORS proxy to avoid CORS errors
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${binanceInterval}&limit=${limit}`)}`;
         
         try {
-            const response = await fetch(url);
+            const response = await fetch(proxyUrl);
             if (!response.ok) {
+                if (response.status === 429) {
+                    log(`Rate limit exceeded for ${symbol}, waiting 2 seconds...`, 'warning');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    return null;
+                }
                 const errorData = await response.json();
                 throw new Error(`Binance API error ${response.status}: ${errorData.msg || 'Unknown error'}`);
             }
             const data = await response.json();
-            const mappedData = data.map((d: any[]) => ({
+            // Handle CORS proxy response format
+            const klinesData = data.contents ? JSON.parse(data.contents) : data;
+            const mappedData = klinesData.map((d: any[]) => ({
                 time: d[0] / 1000,
                 open: parseFloat(d[1]),
                 high: parseFloat(d[2]),
@@ -920,12 +939,17 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
             }
             return mappedData;
         } catch (error: any) {
-            log(`Error fetching Binance data for ${symbol}: ${error.message}`, 'error');
+            if (error.message?.includes('ERR_INSUFFICIENT_RESOURCES')) {
+                log(`Resource error for ${symbol}, waiting 1 second...`, 'warning');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } else {
+                log(`Error fetching Binance data for ${symbol}: ${error.message}`, 'error');
+            }
             return null;
         }
     }
 
-    async function fetchCryptoData(symbol: string, interval: string, limit = 200) {
+    async function fetchCryptoData(symbol: string, interval: string, limit = 500) {
         return fetchBinanceData(symbol, interval, limit);
     }
 
@@ -1170,7 +1194,7 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
         };
 
         await analyze();
-        const intervalId = setInterval(analyze, 60000);
+        const intervalId = setInterval(analyze, 120000); // Increased from 60s to 120s (2 minutes)
         activeConnections.push({ symbol, timeframe, intervalId });
         updateMarketData();
     }
@@ -1260,7 +1284,7 @@ const CryptoDashboard = ({ isBotRunning, setIsBotRunning }: { isBotRunning: bool
             });
         });
         
-        activeConnections.push({ symbol: 'MONITOR', timeframe: '1s', intervalId: setInterval(monitorActiveSignals, 1000) });
+        activeConnections.push({ symbol: 'MONITOR', timeframe: '5s', intervalId: setInterval(monitorActiveSignals, 5000) }); // Increased from 1s to 5s
     };
 
     (window as any).stopBot = () => {

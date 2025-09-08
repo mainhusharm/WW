@@ -63,23 +63,69 @@ const LivePriceFeed: React.FC<LivePriceFeedProps> = ({ market }) => {
             // NO FALLBACK DATA - leave results empty
           }
         } else if (market === 'crypto') {
-          // Use Binance API for crypto data
-          for (const symbol of selectedSymbols) {
-            try {
-              // Convert symbol format (e.g., BTC/USD -> BTCUSDT)
-              const binanceSymbol = symbol.replace('/', '') + 'USDT';
-              const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`);
-              if (response.ok) {
-                const data = await response.json();
-                if (data.price) {
-                  results[symbol] = { price: parseFloat(data.price) };
+          // Use Binance API for crypto data with rate limiting and fallback
+          const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+          
+          // Try to get cached data first
+          const cachedData = JSON.parse(localStorage.getItem('crypto_prices') || '{}');
+          const cacheAge = JSON.parse(localStorage.getItem('crypto_prices_timestamp') || '0');
+          const isCacheValid = Date.now() - cacheAge < 60000; // 1 minute cache
+          
+          if (isCacheValid && Object.keys(cachedData).length > 0) {
+            console.log('✅ Using cached crypto data');
+            results = cachedData;
+          } else {
+            // Fetch fresh data with rate limiting
+            for (let i = 0; i < selectedSymbols.length; i++) {
+              const symbol = selectedSymbols[i];
+              try {
+                // Convert symbol format (e.g., BTC/USD -> BTCUSDT)
+                const baseSymbol = symbol.split('/')[0];
+                const binanceSymbol = baseSymbol + 'USDT';
+                // Use CORS proxy to avoid CORS errors
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`)}`;
+                const response = await fetch(proxyUrl);
+                
+                if (response.ok) {
+                  const data = await response.json();
+                  // Handle CORS proxy response format
+                  const priceData = data.contents ? JSON.parse(data.contents) : data;
+                  if (priceData.price) {
+                    results[symbol] = { 
+                      price: parseFloat(priceData.price),
+                      provider: 'Binance',
+                      timestamp: new Date().toISOString()
+                    };
+                  }
+                } else if (response.status === 429) {
+                  // Rate limit exceeded, wait longer
+                  console.warn(`Rate limit exceeded for ${symbol}, waiting 2 seconds...`);
+                  await delay(2000);
+                  continue;
+                }
+              } catch (error) {
+                console.warn(`Failed to fetch ${symbol} from Binance:`, error);
+                // If it's a resource error, wait before continuing
+                if (error.message?.includes('ERR_INSUFFICIENT_RESOURCES')) {
+                  console.warn(`Resource error for ${symbol}, waiting 1 second...`);
+                  await delay(1000);
                 }
               }
-            } catch (error) {
-              console.warn(`Failed to fetch ${symbol} from Binance:`, error);
+              
+              // Add delay between requests to avoid rate limiting
+              if (i < selectedSymbols.length - 1) {
+                await delay(300); // 300ms delay between requests
+              }
             }
+            
+            // Cache the results
+            if (Object.keys(results).length > 0) {
+              localStorage.setItem('crypto_prices', JSON.stringify(results));
+              localStorage.setItem('crypto_prices_timestamp', JSON.stringify(Date.now()));
+            }
+            
+            console.log('✅ Crypto data fetched from Binance API');
           }
-          console.log('✅ Crypto data fetched from Binance API');
         } else if (market === 'stocks') {
           // Use real yfinance service for stocks data - NO FALLBACK DATA
           try {
