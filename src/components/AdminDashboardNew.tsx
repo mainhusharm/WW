@@ -18,7 +18,8 @@ import {
   Bot,
   Cpu,
   Database,
-  Server
+  Server,
+  MessageSquare
 } from 'lucide-react';
 import { useSignalDistribution } from './SignalDistributionService';
 import { notificationService } from '../services/notificationService';
@@ -30,6 +31,7 @@ import FuturisticBackground from './FuturisticBackground';
 import FuturisticCursor from './FuturisticCursor';
 import CryptoSignalGenerator from './CryptoSignalGenerator';
 import ForexSignalGenerator from './ForexSignalGenerator';
+import AdminSupportDashboard from './AdminSupportDashboard';
 
 interface User {
   id: string;
@@ -594,6 +596,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             >
               User Verification
             </button>
+            <button
+              onClick={() => setActiveTab('support-management')}
+              className={`py-2 px-4 text-lg font-medium transition-all duration-300 ${activeTab === 'support-management' ? 'text-cyan-300 border-b-2 border-cyan-300' : 'text-gray-400 hover:text-white'}`}
+            >
+              <MessageSquare className="w-5 h-5 inline mr-2" />
+              Support Management
+            </button>
           </div>
 
         {activeTab === 'dashboard' && (
@@ -983,6 +992,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               )}
             </div>
           </div>
+        )}
+        {activeTab === 'support-management' && (
+          <AdminSupportDashboard />
         )}
         </div>
       </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TradingState, TradeOutcome, Signal, Trade, PerformanceMetrics } from '../trading/types';
 import { 
-  Layers, Zap, Shield, PieChart, BookOpen, GitBranch, Target, Cpu, Bell, Settings, LogOut, DollarSign, Activity, Award 
+  Layers, Zap, Shield, PieChart, BookOpen, GitBranch, Target, Cpu, Bell, Settings, LogOut, DollarSign, Activity, Award, MessageSquare 
 } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import { useTradingPlan } from '../contexts/TradingPlanContext';
@@ -27,6 +27,7 @@ import AccountSettings from './AccountSettings';
 import PropFirmRules from './PropFirmRules';
 import RiskProtocol from './RiskProtocol';
 import LiveChatWidget from './LiveChatWidget';
+import UserSupportDashboard from './UserSupportDashboard';
 import { getAllTimezones, getMarketStatus } from '../services/timezoneService';
 import { getImpactColor, getImpactIcon, formatEventTime } from '../services/forexFactoryService';
 
@@ -1022,6 +1023,7 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
     { id: 'risk-protocol', label: 'Risk Protocol', icon: <Target className="w-5 h-5" /> },
     { id: 'ai-coach', label: 'AI Coach', icon: <Cpu className="w-5 h-5" /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="w-5 h-5" /> },
+    { id: 'support', label: 'Support', icon: <MessageSquare className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
   ];
 
@@ -1477,6 +1479,7 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
               {activeTab === 'risk-protocol' && <RiskManagementPlan />}
               {activeTab === 'ai-coach' && <iframe ref={aiCoachRef} src="/AICoach.html" title="AI Coach" style={{ width: '100%', height: 'calc(100vh - 120px)', border: 'none', borderRadius: '1rem' }} />}
               {activeTab === 'notifications' && <NotificationCenter />}
+              {activeTab === 'support' && <UserSupportDashboard />}
               {activeTab === 'settings' && renderSettings()}
             </div>
         </div>
