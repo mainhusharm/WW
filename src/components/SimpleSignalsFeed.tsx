@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Signal, TradeOutcome } from '../trading/types';
 import { useUser } from '../contexts/UserContext';
 import TradeManager from '../services/tradeManager';
+import { lotSizeCalculator } from '../services/lotSizeCalculator';
+import { tradeManagementService, Trade } from '../services/tradeManagementService';
 
 interface SimpleSignalCardProps {
   signal: Signal;
@@ -288,25 +290,56 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
     crypto: 0
   });
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected'>('connected');
+  const [userRiskPlan, setUserRiskPlan] = useState<any>(null);
+  const [accountPerformance, setAccountPerformance] = useState<any>(null);
   
   // Get user's risk-reward preference
   const userRiskReward = user?.tradingData?.riskRewardRatio || '2';
   
   // No sample signals - only real signals from admin dashboard
 
+  // Load user risk plan and account performance
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (user?.email) {
+        try {
+          // Load user's risk management plan
+          const riskPlan = localStorage.getItem('comprehensive_plan');
+          if (riskPlan) {
+            setUserRiskPlan(JSON.parse(riskPlan));
+          }
+          
+          // Load account performance
+          const performance = await tradeManagementService.getAccountPerformance(user.email);
+          setAccountPerformance(performance);
+        } catch (error) {
+          console.error('Error loading user data:', error);
+        }
+      }
+    };
+    
+    loadUserData();
+  }, [user?.email]);
+
   // Load trades from TradeManager
   useEffect(() => {
-    const loadTrades = () => {
-      const allTrades = tradeManager.getAllTrades();
-      const tradesMap = new Map();
-      allTrades.forEach(trade => {
-        tradesMap.set(trade.signalId, trade);
-      });
-      setTrades(tradesMap);
+    const loadTrades = async () => {
+      if (user?.email) {
+        try {
+          const allTrades = await tradeManagementService.getTrades(user.email);
+          const tradesMap = new Map();
+          allTrades.forEach(trade => {
+            tradesMap.set(trade.signalId, trade);
+          });
+          setTrades(tradesMap);
+        } catch (error) {
+          console.error('Error loading trades:', error);
+        }
+      }
     };
     
     loadTrades();
-  }, []);
+  }, [user?.email]);
 
   // Load signals from localStorage (from admin dashboard)
   useEffect(() => {
@@ -407,6 +440,67 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
     };
   }, []);
   
+  // Calculate lot size and dollar amounts for a signal
+  const calculateSignalMetrics = (signal: Signal) => {
+    if (!userRiskPlan || !user?.email) {
+      return {
+        lotSize: 0,
+        dollarAmount: 0,
+        stopLossDollar: 0,
+        takeProfitDollar: 0,
+        tradeStatus: 'active' as const
+      };
+    }
+
+    try {
+      const symbol = signal.pair || signal.symbol || 'EURUSD';
+      const entryPrice = parseFloat(signal.entry || signal.entryPrice || '0');
+      const stopLoss = parseFloat(signal.stopLoss || '0');
+      
+      if (!entryPrice || !stopLoss) {
+        return {
+          lotSize: 0,
+          dollarAmount: 0,
+          stopLossDollar: 0,
+          takeProfitDollar: 0,
+          tradeStatus: 'active' as const
+        };
+      }
+
+      // Get risk parameters from user's plan
+      const riskParams = lotSizeCalculator.getRiskParameters(userRiskPlan, symbol);
+      
+      // Calculate lot size and other parameters
+      const calculation = lotSizeCalculator.calculateLotSize(riskParams);
+      
+      // Calculate dollar amounts
+      const stopLossDollar = Math.abs(entryPrice - stopLoss) * calculation.lotSize * calculation.contractSize * calculation.pipValue;
+      const takeProfit = parseFloat(Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0');
+      const takeProfitDollar = takeProfit ? Math.abs(takeProfit - entryPrice) * calculation.lotSize * calculation.contractSize * calculation.pipValue : 0;
+      
+      // Check if trade exists and get its status
+      const existingTrade = trades.get(signal.id);
+      const tradeStatus = existingTrade?.status || 'active';
+      
+      return {
+        lotSize: calculation.lotSize,
+        dollarAmount: calculation.moneyAtRisk,
+        stopLossDollar: Math.round(stopLossDollar * 100) / 100,
+        takeProfitDollar: Math.round(takeProfitDollar * 100) / 100,
+        tradeStatus: tradeStatus as 'active' | 'won' | 'lost' | 'breakeven'
+      };
+    } catch (error) {
+      console.error('Error calculating signal metrics:', error);
+      return {
+        lotSize: 0,
+        dollarAmount: 0,
+        stopLossDollar: 0,
+        takeProfitDollar: 0,
+        tradeStatus: 'active' as const
+      };
+    }
+  };
+
   // Apply market filter
   const filteredSignals = marketFilter === 'all' 
     ? signals 
@@ -431,40 +525,48 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   
   // Handle marking signal as taken
   const handleMarkAsTaken = async (signal: Signal, outcome: TradeOutcome, pnl?: number) => {
+    if (!user?.email) return;
+    
     try {
-      // Get or create trade
-      let trade = tradeManager.getTradeBySignalId(signal.id);
-      if (!trade) {
-        // Create new trade if it doesn't exist
-        trade = tradeManager.createTrade(signal);
-      }
+      // Create trade from signal using the new trade management service
+      const trade = await tradeManagementService.createTradeFromSignal(signal, user.email, userRiskPlan);
       
       // Determine trade status based on outcome
       let tradeStatus: 'won' | 'lost' | 'breakeven';
+      let exitPrice = 0;
+      
       switch (outcome) {
         case 'Target Hit':
           tradeStatus = 'won';
+          exitPrice = parseFloat(Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0');
           break;
         case 'Stop Loss Hit':
           tradeStatus = 'lost';
+          exitPrice = parseFloat(signal.stopLoss || '0');
           break;
         case 'Breakeven':
           tradeStatus = 'breakeven';
+          exitPrice = parseFloat(signal.entry || signal.entryPrice || '0');
           break;
         default:
           tradeStatus = 'won'; // Default to won for other outcomes
+          exitPrice = parseFloat(Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0');
       }
       
       // Update trade status
-      tradeManager.updateTradeStatus(trade.id, tradeStatus, pnl);
+      await tradeManagementService.updateTradeStatus(trade.id, tradeStatus, exitPrice, user.email);
       
-      // Update local trades state
-      const allTrades = tradeManager.getAllTrades();
+      // Reload trades and account performance
+      const allTrades = await tradeManagementService.getTrades(user.email);
       const tradesMap = new Map();
       allTrades.forEach(t => {
         tradesMap.set(t.signalId, t);
       });
       setTrades(tradesMap);
+      
+      // Update account performance
+      const performance = await tradeManagementService.getAccountPerformance(user.email);
+      setAccountPerformance(performance);
       
       // Update taken signal IDs
       setTakenSignalIds(prev => [...prev, signal.id]);
@@ -588,6 +690,35 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
           </div>
         </div>
         
+        {/* Account Performance */}
+        {accountPerformance && (
+          <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg p-6 mb-6 border border-blue-500/30">
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+              📊 Account Performance
+            </h3>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-white">${accountPerformance.accountBalance.toLocaleString()}</div>
+                <div className="text-sm text-gray-400">Account Balance</div>
+              </div>
+              <div className="text-center">
+                <div className={`text-2xl font-bold ${accountPerformance.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  ${accountPerformance.totalPnL.toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-400">Total P&L</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-400">{accountPerformance.winRate.toFixed(1)}%</div>
+                <div className="text-sm text-gray-400">Win Rate</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-400">{accountPerformance.totalTrades}</div>
+                <div className="text-sm text-gray-400">Total Trades</div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Market Filter */}
         <div className="flex space-x-2">
           {['all', 'forex', 'crypto'].map((market) => (
@@ -610,6 +741,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
       <div className="signals-list">
         {filteredSignals.map(signal => {
           const trade = trades.get(signal.id);
+          const metrics = calculateSignalMetrics(signal);
           return (
             <SimpleSignalCard
               key={signal.id}
@@ -619,11 +751,11 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
               onAddToJournal={handleAddToJournal}
               onChatWithNexus={handleChatWithNexus}
               userRiskReward={userRiskReward}
-              tradeStatus={trade?.status || 'active'}
-              lotSize={trade?.lotSize || 0}
-              dollarAmount={trade?.dollarAmount || 0}
-              stopLossDollar={trade?.stopLossDollar || 0}
-              takeProfitDollar={trade?.takeProfitDollar || 0}
+              tradeStatus={metrics.tradeStatus}
+              lotSize={metrics.lotSize}
+              dollarAmount={metrics.dollarAmount}
+              stopLossDollar={metrics.stopLossDollar}
+              takeProfitDollar={metrics.takeProfitDollar}
             />
           );
         })}
