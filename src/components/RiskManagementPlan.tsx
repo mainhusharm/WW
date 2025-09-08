@@ -4,6 +4,7 @@ import { useUser } from '../contexts/UserContext';
 import { Shield, Target, TrendingUp, AlertTriangle, Zap, Brain, Activity, DollarSign, BarChart3, Clock, CheckCircle } from 'lucide-react';
 import api from '../api';
 import { logActivity } from '../api/activity';
+import { userFlowService } from '../services/userFlowService';
 
 const RiskManagementPlan: React.FC = () => {
   const location = useLocation();
@@ -833,6 +834,12 @@ const generatePlan = (data: any) => {
                     if (!completedSteps.includes(2)) {
                       completedSteps.push(2);
                       localStorage.setItem('completed_steps', JSON.stringify(completedSteps));
+                    }
+                    
+                    // Mark risk management step as completed in user flow
+                    if (user?.email) {
+                      await userFlowService.markStepCompleted(user.email, 'risk_management');
+                      localStorage.setItem(`risk_management_completed_${user.email}`, 'true');
                     }
                     
                     // Save plan if needed

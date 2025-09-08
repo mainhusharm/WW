@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, Sparkles, Zap, TrendingUp, ArrowRight } from 'lucide-react';
 import FuturisticBackground from './FuturisticBackground';
 import { useUser } from '../contexts/UserContext';
+import { userFlowService } from '../services/userFlowService';
 
 const SuccessfulPaymentPage = () => {
   const navigate = useNavigate();
@@ -52,6 +53,18 @@ const SuccessfulPaymentPage = () => {
       // Store user data
       localStorage.setItem('current_user', JSON.stringify(updatedUserData));
       localStorage.setItem('access_token', demoToken);
+      
+      // Mark payment step as completed
+      if (updatedUserData.email) {
+        userFlowService.markStepCompleted(updatedUserData.email, 'payment');
+        localStorage.setItem(`payment_success_${updatedUserData.email}`, 'true');
+        localStorage.setItem('payment_success_data', JSON.stringify({
+          email: updatedUserData.email,
+          plan: selectedPlan,
+          paymentData: paymentData,
+          timestamp: new Date().toISOString()
+        }));
+      }
     };
     
     setupUserAfterPayment();

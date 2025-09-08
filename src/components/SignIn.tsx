@@ -4,6 +4,7 @@ import { TrendingUp, ArrowLeft, Eye, EyeOff, AlertCircle, Mail, Lock } from 'luc
 import { useUser } from '../contexts/UserContext';
 import { mockLogin } from '../utils/mockAuth';
 import Header from './Header';
+import { userFlowService } from '../services/userFlowService';
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
@@ -38,6 +39,19 @@ const SignIn = () => {
     }
 
     try {
+      // First validate user flow status
+      const flowValidation = await userFlowService.validateSignIn(email);
+      if (!flowValidation.canSignIn) {
+        setError(flowValidation.error || 'Please complete all required steps before signing in.');
+        if (flowValidation.redirectTo) {
+          setTimeout(() => {
+            navigate(flowValidation.redirectTo!);
+          }, 2000);
+        }
+        setIsLoading(false);
+        return;
+      }
+
       // First check if user exists in localStorage (from signup)
       const storedUserData = localStorage.getItem('user_data');
       const pendingSignupData = localStorage.getItem('pending_signup_data');

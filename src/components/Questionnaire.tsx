@@ -6,6 +6,7 @@ import { useUser } from '../contexts/UserContext';
 import { propFirms } from '../data/propFirms';
 import api from '../api';
 import { logActivity } from '../api/activity';
+import { userFlowService } from '../services/userFlowService';
 
 interface QuestionnaireAnswers {
   tradesPerDay: string;
@@ -116,6 +117,12 @@ const Questionnaire: React.FC = () => {
 
     // Mark questionnaire as completed
     localStorage.setItem('questionnaire_completed', 'true');
+    
+    // Mark questionnaire step as completed in user flow
+    if (user?.email) {
+      await userFlowService.markStepCompleted(user.email, 'questionnaire');
+      localStorage.setItem(`questionnaire_completed_${user.email}`, 'true');
+    }
 
     try {
       // Save questionnaire answers to backend using centralized service

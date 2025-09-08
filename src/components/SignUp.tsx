@@ -5,6 +5,7 @@ import { useUser } from '../contexts/UserContext';
 import Header from './Header';
 import TemporaryAccountNotice from './TemporaryAccountNotice';
 import api from '../api';
+import { userFlowService } from '../services/userFlowService';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -80,6 +81,14 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
+      // Check if account already exists with complete flow
+      const accountExists = await userFlowService.checkAccountExists(formData.email);
+      if (accountExists) {
+        setError('An account with this email already exists and has completed the signup process. Please sign in instead.');
+        setIsLoading(false);
+        return;
+      }
+
       // Register with unified customer service (saves to both users and customers tables)
       const response = await api.post('/auth/register', {
         firstName: formData.firstName,
@@ -117,6 +126,13 @@ const SignUp = () => {
       navigate('/payment-flow', { state: { selectedPlan } });
     } catch (err: any) {
       console.error('Backend signup failed, using fallback:', err);
+      
+      // Check for duplicate account error
+      if (err.response?.status === 409 || err.message?.includes('already exists')) {
+        setError('An account with this email already exists. Please sign in instead.');
+        setIsLoading(false);
+        return;
+      }
       
       // Create temporary account for immediate access to payment flow
       const tempToken = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
