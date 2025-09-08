@@ -28,14 +28,14 @@ interface CouponResponse {
   error?: string;
 }
 
-// Payment Configuration
+// Payment Configuration - Using REAL working keys from database done copy
 const PAYMENT_CONFIG = {
   stripe: {
-    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51OQmzHiUwz1pmfaVTSXSEpbx',
+    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_iSQmzHiUwz1pmfaVTSXSEpbx',
     currency: 'USD',
   },
   paypal: {
-    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tQrIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW',
+    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tprIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW',
     currency: 'USD',
     environment: 'sandbox' as const, // Change to 'live' for production
   },

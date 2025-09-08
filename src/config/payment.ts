@@ -2,16 +2,16 @@
 export const PAYMENT_CONFIG = {
   // Stripe Configuration
   stripe: {
-    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51OQmzHiUwz1pmfaVTSXSEpbx',
-    secretKey: import.meta.env.VITE_STRIPE_SECRET_KEY || '', // Only used on backend
+    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_iSQmzHiUwz1pmfaVTSXSEpbx',
+    secretKey: import.meta.env.VITE_STRIPE_SECRET_KEY || 'sk_test_Njv0R96TKWGPmh9FOD27rrJs', // Only used on backend
     currency: 'USD',
     apiVersion: '2023-10-16' as const,
   },
   
   // PayPal Configuration
   paypal: {
-    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tQrIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW',
-    secret: import.meta.env.VITE_PAYPAL_CLIENT_SECRET || '', // Only used on backend
+    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tprIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW',
+    secret: import.meta.env.VITE_PAYPAL_CLIENT_SECRET || 'EK3TSSwjQny6zybyX5Svwokawg9dhq1MdJd_AzpRanhaGrxLx0P6eqpWKewkVzINe2vpVRZFz4u9g-qr', // Only used on backend
     currency: 'USD',
     environment: 'sandbox' as const, // Change to 'live' for production
   },
