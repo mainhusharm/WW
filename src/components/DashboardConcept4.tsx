@@ -30,6 +30,7 @@ import LiveChatWidget from './LiveChatWidget';
 import UserSupportDashboard from './UserSupportDashboard';
 import ApiKeySetup from './ApiKeySetup';
 import AICoach from './AICoach';
+import TestAICoach from './TestAICoach';
 import { getAllTimezones, getMarketStatus } from '../services/timezoneService';
 import { getUserApiKey } from '../utils/apiKeyTest';
 import { getImpactColor, getImpactIcon, formatEventTime } from '../services/forexFactoryService';
@@ -1678,7 +1679,7 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
               {activeTab === 'accounts' && hasMultiAccountAccess && <MultiAccountTracker />}
               {activeTab === 'rules' && <NewPropFirmRules />}
               {activeTab === 'risk-protocol' && <RiskManagementPlan />}
-              {activeTab === 'ai-coach' && <AICoach />}
+              {activeTab === 'ai-coach' && <TestAICoach />}
               {activeTab === 'notifications' && <NotificationCenter />}
               {activeTab === 'support' && <UserSupportDashboard />}
               {activeTab === 'settings' && renderSettings()}
