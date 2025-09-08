@@ -57,43 +57,120 @@ const NotificationCenter: React.FC = () => {
     if (savedSettings) {
       setSettings(JSON.parse(savedSettings));
     }
+  }, []);
 
+  // Set up real-time notification listeners
+  useEffect(() => {
+    const cleanup = setupRealTimeNotifications();
+    return cleanup;
+  }, [settings]);
 
-    // Add some sample notifications for demo
-    if (!savedNotifications) {
-      const sampleNotifications: Notification[] = [
-        {
-          id: '1',
+  // Set up real-time notification system
+  const setupRealTimeNotifications = () => {
+    // Listen for new signals
+    const handleNewSignal = (event: CustomEvent) => {
+      const signal = event.detail;
+      if (settings.signalAlerts) {
+        addNotification({
+          id: `signal_${Date.now()}`,
           type: 'signal',
           title: 'New Trading Signal',
-          message: 'EURUSD BUY signal posted with 92% confidence',
-          timestamp: new Date(Date.now() - 300000), // 5 minutes ago
+          message: `${signal.pair || signal.symbol} ${signal.signalType || 'SIGNAL'} posted with ${signal.confidence || 'high'} confidence`,
+          timestamp: new Date(),
           read: false,
           priority: 'high'
-        },
-        {
-          id: '2',
+        });
+      }
+    };
+
+    // Listen for account updates
+    const handleAccountUpdate = (event: CustomEvent) => {
+      const update = event.detail;
+      if (settings.accountUpdates) {
+        addNotification({
+          id: `account_${Date.now()}`,
+          type: 'account',
+          title: 'Account Update',
+          message: update.message || 'Your account has been updated',
+          timestamp: new Date(),
+          read: false,
+          priority: 'medium'
+        });
+      }
+    };
+
+    // Listen for risk warnings
+    const handleRiskWarning = (event: CustomEvent) => {
+      const warning = event.detail;
+      if (settings.ruleBreachAlerts) {
+        addNotification({
+          id: `risk_${Date.now()}`,
           type: 'rule_breach',
           title: 'Risk Warning',
-          message: 'Daily loss approaching 80% of limit (4% of 5%)',
-          timestamp: new Date(Date.now() - 1800000), // 30 minutes ago
+          message: warning.message || 'Risk limit approaching',
+          timestamp: new Date(),
           read: false,
           priority: 'critical',
           actionRequired: true
-        },
-        {
-          id: '3',
-          type: 'account',
-          title: 'Account Update',
-          message: 'Your account balance has been updated to $108,450',
-          timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-          read: true,
-          priority: 'medium'
-        }
-      ];
-      setNotifications(sampleNotifications);
-    }
-  }, []);
+        });
+      }
+    };
+
+    // Listen for market news
+    const handleMarketNews = (event: CustomEvent) => {
+      const news = event.detail;
+      if (settings.marketNews) {
+        addNotification({
+          id: `news_${Date.now()}`,
+          type: 'news',
+          title: 'Market News',
+          message: news.title || 'Important market update',
+          timestamp: new Date(),
+          read: false,
+          priority: 'low'
+        });
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('newSignalGenerated', handleNewSignal as EventListener);
+    window.addEventListener('newSignalSent', handleNewSignal as EventListener);
+    window.addEventListener('accountUpdate', handleAccountUpdate as EventListener);
+    window.addEventListener('riskWarning', handleRiskWarning as EventListener);
+    window.addEventListener('marketNews', handleMarketNews as EventListener);
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener('newSignalGenerated', handleNewSignal as EventListener);
+      window.removeEventListener('newSignalSent', handleNewSignal as EventListener);
+      window.removeEventListener('accountUpdate', handleAccountUpdate as EventListener);
+      window.removeEventListener('riskWarning', handleRiskWarning as EventListener);
+      window.removeEventListener('marketNews', handleMarketNews as EventListener);
+    };
+  };
+
+  // Add a new notification
+  const addNotification = (notification: Notification) => {
+    setNotifications(prev => [notification, ...prev].slice(0, 50)); // Keep only last 50 notifications
+  };
+
+  // Clear all notifications
+  const clearAllNotifications = () => {
+    setNotifications([]);
+  };
+
+  // Test real-time notifications (for development)
+  const testNotification = () => {
+    addNotification({
+      id: `test_${Date.now()}`,
+      type: 'signal',
+      title: 'Test Notification',
+      message: 'This is a test notification to verify real-time functionality',
+      timestamp: new Date(),
+      read: false,
+      priority: 'medium'
+    });
+  };
 
 
   // Save notifications and settings to localStorage
@@ -458,6 +535,12 @@ const NotificationCenter: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-2">
+            <button
+              onClick={testNotification}
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium px-3 py-1 bg-blue-500/20 rounded-md"
+            >
+              Test
+            </button>
             <button
               onClick={() => setShowSettings(true)}
               className="text-gray-400 hover:text-white transition-colors p-2"
