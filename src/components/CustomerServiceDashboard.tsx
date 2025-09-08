@@ -1,17 +1,49 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+interface QuestionnaireData {
+  tradesPerDay: string;
+  tradingSession: string;
+  cryptoAssets: string[];
+  forexAssets: string[];
+  hasAccount: 'yes' | 'no';
+  accountEquity: number | string;
+  propFirm: string;
+  accountType: string;
+  accountSize: number | string;
+  riskPercentage: number;
+  riskRewardRatio: string;
+  accountScreenshot?: string;
+  tradingExperience?: string;
+  riskTolerance?: string;
+  tradingGoals?: string;
+  updatedAt?: string;
+}
+
+interface RiskManagementPlan {
+  riskPerTrade: number;
+  dailyLossLimit: number;
+  maxLoss: number;
+  profitTarget: number;
+  tradesToPass: number;
+  riskAmount: number;
+  profitAmount: number;
+  consecutiveLossesLimit: number;
+  propFirmRules?: any;
+  generatedAt?: string;
+}
+
 interface User {
   id: string;
   email: string;
   fullName: string | null;
   selectedPlan: any;
-  questionnaireData: any;
+  questionnaireData: QuestionnaireData | null;
   cryptoAssets: string[];
   forexPairs: string[];
   otherForexPair: string | null;
   screenshotUrl: string | null;
-  riskManagementPlan: any;
+  riskManagementPlan: RiskManagementPlan | null;
   tradingPreferences: any;
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'REJECTED' | 'ACTIVE';
   planActivatedAt: string | null;
@@ -97,8 +129,16 @@ export default function CustomerServiceDashboard() {
         userFullName: localStorage.getItem('userFullName'),
         registrationTime: localStorage.getItem('registrationTime'),
         questionnaireData: localStorage.getItem('questionnaireData'),
+        questionnaireAnswers: localStorage.getItem('questionnaireAnswers'),
         riskManagementPlan: localStorage.getItem('riskManagementPlan'),
+        riskSettings: localStorage.getItem('riskSettings'),
         screenshotUrl: localStorage.getItem('screenshotUrl'),
+        accountScreenshot: localStorage.getItem('accountScreenshot'),
+        tradingPreferences: localStorage.getItem('tradingPreferences'),
+        propFirmRules: localStorage.getItem('propFirmRules'),
+        userProfile: localStorage.getItem('userProfile'),
+        customerData: localStorage.getItem('customerData'),
+        enhancedCustomerData: localStorage.getItem('enhancedCustomerData'),
       };
       setLocalStorageData(data);
     };
@@ -437,30 +477,38 @@ export default function CustomerServiceDashboard() {
               <div className="bg-white shadow rounded-lg">
                 <div className="px-6 py-4 border-b border-gray-200">
                   <h2 className="text-lg font-medium text-gray-900">User Details</h2>
-                        </div>
-                <div className="p-6 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedUser.fullName || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
+                </div>
+                <div className="p-6 space-y-6">
+                  {/* Basic Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Basic Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Name</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedUser.fullName || 'Not provided'}</p>
                       </div>
                       <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedUser.status)}`}>
-                      {selectedUser.status}
-                    </span>
+                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
                       </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Registered</label>
-                    <p className="mt-1 text-sm text-gray-900">{formatDate(selectedUser.createdAt)}</p>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Status</label>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedUser.status)}`}>
+                          {selectedUser.status}
+                        </span>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Registered</label>
+                        <p className="mt-1 text-sm text-gray-900">{formatDate(selectedUser.createdAt)}</p>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Selected Plan */}
                   {selectedUser.selectedPlan && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Selected Plan</label>
-                      <div className="mt-1 p-3 bg-blue-50 rounded-lg">
+                    <div className="space-y-4">
+                      <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Selected Plan</h3>
+                      <div className="p-3 bg-blue-50 rounded-lg">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-blue-900">{selectedUser.selectedPlan.name}</span>
                           <span className="text-sm text-blue-700">${selectedUser.selectedPlan.price}/{selectedUser.selectedPlan.period}</span>
@@ -469,35 +517,177 @@ export default function CustomerServiceDashboard() {
                           <p className="text-xs text-blue-600 mt-1">{selectedUser.selectedPlan.description}</p>
                         )}
                       </div>
-                  </div>
-                  )}
-                  {selectedUser.questionnaireData && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Experience</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.experience || 'Not provided'}</p>
                     </div>
                   )}
-                  {selectedUser.riskManagementPlan && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Risk Management</label>
-                      <p className="mt-1 text-sm text-gray-900 line-clamp-3">{selectedUser.riskManagementPlan}</p>
-                  </div>
+
+                  {/* Questionnaire Data */}
+                  {selectedUser.questionnaireData && (
+                    <div className="space-y-4">
+                      <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Questionnaire Responses</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Trades Per Day</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradesPerDay || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Trading Session</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradingSession || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Has Trading Account</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.hasAccount || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Account Equity</label>
+                          <p className="mt-1 text-sm text-gray-900">${selectedUser.questionnaireData.accountEquity || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Prop Firm</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.propFirm || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Account Type</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.accountType || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Account Size</label>
+                          <p className="mt-1 text-sm text-gray-900">${selectedUser.questionnaireData.accountSize || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Risk Percentage</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.riskPercentage || 'Not specified'}%</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Risk-Reward Ratio</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.riskRewardRatio || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Trading Experience</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradingExperience || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Risk Tolerance</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.riskTolerance || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Trading Goals</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradingGoals || 'Not specified'}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Crypto Assets */}
+                      {selectedUser.questionnaireData.cryptoAssets && selectedUser.questionnaireData.cryptoAssets.length > 0 && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Crypto Assets</label>
+                          <div className="mt-1 flex flex-wrap gap-2">
+                            {selectedUser.questionnaireData.cryptoAssets.map((asset: string, index: number) => (
+                              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {asset}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Forex Assets */}
+                      {selectedUser.questionnaireData.forexAssets && selectedUser.questionnaireData.forexAssets.length > 0 && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Forex Assets</label>
+                          <div className="mt-1 flex flex-wrap gap-2">
+                            {selectedUser.questionnaireData.forexAssets.map((asset: string, index: number) => (
+                              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {asset}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
-                  {selectedUser.screenshotUrl && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Account Screenshot</label>
-                      <div className="mt-2">
-                        <img 
-                          src={selectedUser.screenshotUrl} 
-                          alt="Account Screenshot" 
-                          className="max-w-full max-h-64 rounded-lg border border-gray-300 shadow-sm"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Uploaded for account verification</p>
+
+                  {/* Risk Management Plan */}
+                  {selectedUser.riskManagementPlan && (
+                    <div className="space-y-4">
+                      <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Risk Management Plan</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Risk Per Trade</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.riskPerTrade || 'Not specified'}%</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Daily Loss Limit</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.dailyLossLimit || 'Not specified'}%</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Maximum Loss</label>
+                          <p className="mt-1 text-sm text-gray-900">${selectedUser.riskManagementPlan.maxLoss || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Profit Target</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.profitTarget || 'Not specified'}%</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Trades to Pass</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.tradesToPass || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Risk Amount</label>
+                          <p className="mt-1 text-sm text-gray-900">${selectedUser.riskManagementPlan.riskAmount || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Profit Amount</label>
+                          <p className="mt-1 text-sm text-gray-900">${selectedUser.riskManagementPlan.profitAmount || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Consecutive Losses Limit</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.consecutiveLossesLimit || 'Not specified'}</p>
+                        </div>
+                      </div>
+                      {selectedUser.riskManagementPlan.generatedAt && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Generated At</label>
+                          <p className="mt-1 text-sm text-gray-900">{formatDate(selectedUser.riskManagementPlan.generatedAt)}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Screenshots */}
+                  {(selectedUser.screenshotUrl || selectedUser.questionnaireData?.accountScreenshot) && (
+                    <div className="space-y-4">
+                      <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Account Screenshots</h3>
+                      <div className="space-y-4">
+                        {selectedUser.screenshotUrl && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Profile Screenshot</label>
+                            <div className="mt-2">
+                              <img 
+                                src={selectedUser.screenshotUrl} 
+                                alt="Profile Screenshot" 
+                                className="max-w-full max-h-64 rounded-lg border border-gray-300 shadow-sm"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">Uploaded for profile verification</p>
+                            </div>
+                          </div>
+                        )}
+                        {selectedUser.questionnaireData?.accountScreenshot && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Account Screenshot</label>
+                            <div className="mt-2">
+                              <img 
+                                src={selectedUser.questionnaireData.accountScreenshot} 
+                                alt="Account Screenshot" 
+                                className="max-w-full max-h-64 rounded-lg border border-gray-300 shadow-sm"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">Uploaded for account verification</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
-                        </div>
+              </div>
             )}
 
             {/* localStorage Data */}
@@ -505,34 +695,174 @@ export default function CustomerServiceDashboard() {
               <div className="bg-white shadow rounded-lg">
                 <div className="px-6 py-4 border-b border-gray-200">
                   <h2 className="text-lg font-medium text-gray-900">localStorage Data</h2>
+                </div>
+                <div className="p-6 space-y-6">
+                  {/* Basic localStorage Info */}
+                  <div className="space-y-4">
+                    <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Basic Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">User ID</label>
+                        <p className="mt-1 text-sm text-gray-900 font-mono">{localStorageData.userId || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <p className="mt-1 text-sm text-gray-900">{localStorageData.userEmail || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                        <p className="mt-1 text-sm text-gray-900">{localStorageData.userFullName || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Registration Time</label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {localStorageData.registrationTime ? formatDate(localStorageData.registrationTime) : 'Not set'}
+                        </p>
+                      </div>
                     </div>
-                <div className="p-6 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">User ID</label>
-                    <p className="mt-1 text-sm text-gray-900 font-mono">{localStorageData.userId || 'Not set'}</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="mt-1 text-sm text-gray-900">{localStorageData.userEmail || 'Not set'}</p>
-                    </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                    <p className="mt-1 text-sm text-gray-900">{localStorageData.userFullName || 'Not set'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Registration Time</label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {localStorageData.registrationTime ? formatDate(localStorageData.registrationTime) : 'Not set'}
-                    </p>
-                  </div>
-                  {localStorageData.questionnaireData && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Questionnaire Data</label>
-                      <pre className="mt-1 text-xs text-gray-900 bg-gray-100 p-2 rounded overflow-auto max-h-32">
-                        {JSON.stringify(JSON.parse(localStorageData.questionnaireData), null, 2)}
-                      </pre>
+
+                  {/* Questionnaire Data from localStorage */}
+                  {(localStorageData.questionnaireData || localStorageData.questionnaireAnswers) && (
+                    <div className="space-y-4">
+                      <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Questionnaire Data (localStorage)</h3>
+                      <div className="space-y-3">
+                        {localStorageData.questionnaireData && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Questionnaire Data</label>
+                            <pre className="mt-1 text-xs text-gray-900 bg-gray-100 p-3 rounded overflow-auto max-h-40 border">
+                              {JSON.stringify(JSON.parse(localStorageData.questionnaireData), null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                        {localStorageData.questionnaireAnswers && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Questionnaire Answers</label>
+                            <pre className="mt-1 text-xs text-gray-900 bg-gray-100 p-3 rounded overflow-auto max-h-40 border">
+                              {JSON.stringify(JSON.parse(localStorageData.questionnaireAnswers), null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
+
+                  {/* Risk Management Data from localStorage */}
+                  {(localStorageData.riskManagementPlan || localStorageData.riskSettings) && (
+                    <div className="space-y-4">
+                      <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Risk Management Data (localStorage)</h3>
+                      <div className="space-y-3">
+                        {localStorageData.riskManagementPlan && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Risk Management Plan</label>
+                            <pre className="mt-1 text-xs text-gray-900 bg-gray-100 p-3 rounded overflow-auto max-h-40 border">
+                              {JSON.stringify(JSON.parse(localStorageData.riskManagementPlan), null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                        {localStorageData.riskSettings && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Risk Settings</label>
+                            <pre className="mt-1 text-xs text-gray-900 bg-gray-100 p-3 rounded overflow-auto max-h-40 border">
+                              {JSON.stringify(JSON.parse(localStorageData.riskSettings), null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Screenshots from localStorage */}
+                  {(localStorageData.screenshotUrl || localStorageData.accountScreenshot) && (
+                    <div className="space-y-4">
+                      <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Screenshots (localStorage)</h3>
+                      <div className="space-y-3">
+                        {localStorageData.screenshotUrl && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Profile Screenshot URL</label>
+                            <p className="mt-1 text-sm text-gray-900 break-all">{localStorageData.screenshotUrl}</p>
+                            <div className="mt-2">
+                              <img 
+                                src={localStorageData.screenshotUrl} 
+                                alt="Profile Screenshot" 
+                                className="max-w-full max-h-32 rounded-lg border border-gray-300 shadow-sm"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        {localStorageData.accountScreenshot && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Account Screenshot URL</label>
+                            <p className="mt-1 text-sm text-gray-900 break-all">{localStorageData.accountScreenshot}</p>
+                            <div className="mt-2">
+                              <img 
+                                src={localStorageData.accountScreenshot} 
+                                alt="Account Screenshot" 
+                                className="max-w-full max-h-32 rounded-lg border border-gray-300 shadow-sm"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Additional localStorage Data */}
+                  {(localStorageData.tradingPreferences || localStorageData.propFirmRules || localStorageData.userProfile || localStorageData.customerData || localStorageData.enhancedCustomerData) && (
+                    <div className="space-y-4">
+                      <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Additional Data (localStorage)</h3>
+                      <div className="space-y-3">
+                        {localStorageData.tradingPreferences && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Trading Preferences</label>
+                            <pre className="mt-1 text-xs text-gray-900 bg-gray-100 p-3 rounded overflow-auto max-h-32 border">
+                              {JSON.stringify(JSON.parse(localStorageData.tradingPreferences), null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                        {localStorageData.propFirmRules && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Prop Firm Rules</label>
+                            <pre className="mt-1 text-xs text-gray-900 bg-gray-100 p-3 rounded overflow-auto max-h-32 border">
+                              {JSON.stringify(JSON.parse(localStorageData.propFirmRules), null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                        {localStorageData.userProfile && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">User Profile</label>
+                            <pre className="mt-1 text-xs text-gray-900 bg-gray-100 p-3 rounded overflow-auto max-h-32 border">
+                              {JSON.stringify(JSON.parse(localStorageData.userProfile), null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                        {localStorageData.customerData && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Customer Data</label>
+                            <pre className="mt-1 text-xs text-gray-900 bg-gray-100 p-3 rounded overflow-auto max-h-32 border">
+                              {JSON.stringify(JSON.parse(localStorageData.customerData), null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                        {localStorageData.enhancedCustomerData && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Enhanced Customer Data</label>
+                            <pre className="mt-1 text-xs text-gray-900 bg-gray-100 p-3 rounded overflow-auto max-h-32 border">
+                              {JSON.stringify(JSON.parse(localStorageData.enhancedCustomerData), null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Clear localStorage Button */}
                   <div className="pt-4 border-t">
                     <button
                       onClick={() => {
@@ -547,7 +877,7 @@ export default function CustomerServiceDashboard() {
                   </div>
                 </div>
               </div>
-          )}
+            )}
           </div>
         </div>
       </div>
