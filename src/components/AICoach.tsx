@@ -39,6 +39,9 @@ const AICoach: React.FC = () => {
     }
   }, [user]);
 
+  // Force show setup screen for testing - remove this line after testing
+  setUserApiKey('');
+
   useEffect(() => {
     // Generate session ID for this conversation
     setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
