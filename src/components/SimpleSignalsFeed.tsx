@@ -73,12 +73,12 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
   };
 
   return (
-    <div className={`signal-card bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm p-6 rounded-2xl border-2 mb-6 transition-all duration-300 hover:scale-[1.02] ${getCardStyling()}`}>
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4">
+    <div className={`signal-card bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm p-4 rounded-xl border-2 mb-4 transition-all duration-300 hover:scale-[1.01] ${getCardStyling()}`}>
+      {/* Header with Lot Size */}
+      <div className="flex justify-between items-start mb-3">
         <div className="flex items-center space-x-3">
-          <h3 className="text-2xl font-bold text-white">{signal.pair}</h3>
-          <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+          <h3 className="text-xl font-bold text-white">{signal.pair}</h3>
+          <div className={`px-2 py-1 rounded-full text-xs font-semibold ${
             signal.direction?.toLowerCase() === 'long' || signal.type?.toLowerCase() === 'buy'
               ? 'bg-green-600/80 text-white' 
               : 'bg-red-600/80 text-white'
@@ -86,147 +86,99 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
             {signal.direction || signal.type?.toUpperCase()}
           </div>
           {signal.is_recommended && (
-            <span className="px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-sm font-bold rounded-full flex items-center shadow-lg">
+            <span className="px-2 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold rounded-full flex items-center">
               ⭐ Recommended
             </span>
           )}
         </div>
-        <div className="text-right">
-          <div className="text-sm text-gray-400">Confidence</div>
-          <div className="text-lg font-bold text-blue-400">{signal.confidence}%</div>
+        <div className="flex items-center space-x-4">
+          {lotSize > 0 && (
+            <div className="text-right">
+              <div className="text-xs text-gray-400">Lot Size</div>
+              <div className="text-lg font-bold text-green-400">{lotSize.toFixed(2)}</div>
+            </div>
+          )}
+          <div className="text-right">
+            <div className="text-xs text-gray-400">Confidence</div>
+            <div className="text-lg font-bold text-blue-400">{signal.confidence}%</div>
+          </div>
         </div>
       </div>
       
-      {/* Lot Size Recommendation Banner */}
-      {lotSize > 0 && (
-        <div className="bg-gradient-to-r from-green-900/30 to-blue-900/30 rounded-lg p-4 mb-4 border border-green-500/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="text-2xl">📊</div>
-              <div>
-                <h4 className="text-green-300 font-bold text-lg">Recommended Lot Size</h4>
-                <p className="text-gray-300 text-sm">Based on your risk management plan</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-white">{lotSize.toFixed(2)}</div>
-              <div className="text-sm text-gray-400">Lots</div>
-            </div>
-          </div>
+      {/* Main Signal Details - Compact Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-3">
+        <div className="bg-gray-700/50 rounded-lg p-2">
+          <p className="text-gray-400 text-xs mb-1">Entry Price</p>
+          <p className="text-white font-bold text-sm">{signal.entry || signal.entryPrice}</p>
         </div>
-      )}
-      
-      {/* Signal Details Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-700/50 rounded-lg p-3">
-          <p className="text-gray-400 text-sm mb-1">Entry Price</p>
-          <p className="text-white font-bold text-lg">{signal.entry || signal.entryPrice}</p>
-        </div>
-        <div className="bg-gray-700/50 rounded-lg p-3">
-          <p className="text-gray-400 text-sm mb-1">Stop Loss</p>
-          <p className="text-red-400 font-bold text-lg">{signal.stopLoss}</p>
+        <div className="bg-gray-700/50 rounded-lg p-2">
+          <p className="text-gray-400 text-xs mb-1">Stop Loss</p>
+          <p className="text-red-400 font-bold text-sm">{signal.stopLoss}</p>
           {stopLossDollar > 0 && (
-            <p className="text-red-300 text-xs">${stopLossDollar.toFixed(2)}</p>
+            <p className="text-red-300 text-xs">-${stopLossDollar.toFixed(2)}</p>
           )}
         </div>
-        <div className="bg-gray-700/50 rounded-lg p-3">
-          <p className="text-gray-400 text-sm mb-1">Take Profit</p>
-          <p className="text-green-400 font-bold text-lg">{formatTakeProfit(signal.takeProfit)}</p>
+        <div className="bg-gray-700/50 rounded-lg p-2">
+          <p className="text-gray-400 text-xs mb-1">Take Profit</p>
+          <p className="text-green-400 font-bold text-sm">{formatTakeProfit(signal.takeProfit)}</p>
           {takeProfitDollar > 0 && (
-            <p className="text-green-300 text-xs">${takeProfitDollar.toFixed(2)}</p>
+            <p className="text-green-300 text-xs">+${takeProfitDollar.toFixed(2)}</p>
           )}
         </div>
-        <div className="bg-gray-700/50 rounded-lg p-3">
-          <p className="text-gray-400 text-sm mb-1">Risk:Reward</p>
-          <p className={`font-bold text-lg ${matchesUserPreference ? 'text-green-400' : 'text-yellow-400'}`}>
+        <div className="bg-gray-700/50 rounded-lg p-2">
+          <p className="text-gray-400 text-xs mb-1">Risk:Reward</p>
+          <p className={`font-bold text-sm ${matchesUserPreference ? 'text-green-400' : 'text-yellow-400'}`}>
             1:{riskReward}
+          </p>
+        </div>
+        {lotSize > 0 && (
+          <div className="bg-gray-700/50 rounded-lg p-2">
+            <p className="text-gray-400 text-xs mb-1">Money at Risk</p>
+            <p className="text-yellow-400 font-bold text-sm">${dollarAmount.toFixed(2)}</p>
+          </div>
+        )}
+        <div className="bg-gray-700/50 rounded-lg p-2">
+          <p className="text-gray-400 text-xs mb-1">Status</p>
+          <p className={`font-bold text-sm ${
+            tradeStatus === 'won' ? 'text-green-400' :
+            tradeStatus === 'lost' ? 'text-red-400' :
+            tradeStatus === 'breakeven' ? 'text-yellow-400' :
+            'text-blue-400'
+          }`}>
+            {tradeStatus === 'active' ? 'Active' : 
+             tradeStatus === 'won' ? 'Won' :
+             tradeStatus === 'lost' ? 'Lost' :
+             tradeStatus === 'breakeven' ? 'Break Even' : 'Active'}
           </p>
         </div>
       </div>
 
-      {/* Lot Size and Risk Management Info */}
-      {lotSize > 0 && (
-        <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 rounded-lg p-6 mb-6 border border-blue-500/50">
-          <h4 className="text-blue-300 font-bold mb-4 flex items-center text-lg">
-            📊 Recommended Position Size
-          </h4>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gray-800/50 rounded-lg p-3">
-              <p className="text-gray-400 text-sm mb-1">Lot Size</p>
-              <p className="text-white font-bold text-xl">{lotSize.toFixed(2)}</p>
-              <p className="text-xs text-gray-500">Based on your risk plan</p>
-            </div>
-            <div className="bg-gray-800/50 rounded-lg p-3">
-              <p className="text-gray-400 text-sm mb-1">Money at Risk</p>
-              <p className="text-yellow-400 font-bold text-xl">${dollarAmount.toFixed(2)}</p>
-              <p className="text-xs text-gray-500">Total risk amount</p>
-            </div>
-            <div className="bg-gray-800/50 rounded-lg p-3">
-              <p className="text-gray-400 text-sm mb-1">Units</p>
-              <p className="text-white font-bold text-xl">{(lotSize * 100000).toLocaleString()}</p>
-              <p className="text-xs text-gray-500">Position size</p>
-            </div>
-            <div className="bg-gray-800/50 rounded-lg p-3">
-              <p className="text-gray-400 text-sm mb-1">Status</p>
-              <p className={`font-bold text-xl ${
-                tradeStatus === 'won' ? 'text-green-400' :
-                tradeStatus === 'lost' ? 'text-red-400' :
-                tradeStatus === 'breakeven' ? 'text-yellow-400' :
-                'text-blue-400'
-              }`}>
-                {tradeStatus === 'active' ? 'Active' : 
-                 tradeStatus === 'won' ? 'Won' :
-                 tradeStatus === 'lost' ? 'Lost' :
-                 tradeStatus === 'breakeven' ? 'Break Even' : 'Active'}
-              </p>
-            </div>
-          </div>
-          
-          {/* Dollar Amount Details */}
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <div className="bg-red-900/20 rounded-lg p-3 border border-red-500/30">
-              <p className="text-red-400 text-sm mb-1">Stop Loss Impact</p>
-              <p className="text-red-300 font-bold text-lg">-${stopLossDollar.toFixed(2)}</p>
-              <p className="text-xs text-red-400">If stop loss hits</p>
-            </div>
-            <div className="bg-green-900/20 rounded-lg p-3 border border-green-500/30">
-              <p className="text-green-400 text-sm mb-1">Take Profit Potential</p>
-              <p className="text-green-300 font-bold text-lg">+${takeProfitDollar.toFixed(2)}</p>
-              <p className="text-xs text-green-400">If target hits</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Market Info */}
-      <div className="flex items-center space-x-4 mb-4">
-        <span className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded text-xs font-semibold">
-          {signal.market?.toUpperCase() || 'FOREX'}
-        </span>
-        <span className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs font-semibold">
-          {signal.timeframe || '1H'}
-        </span>
-        {!matchesUserPreference && userRiskReward && (
-          <span className="px-2 py-1 bg-yellow-600/20 text-yellow-300 rounded text-xs font-semibold">
-            Below your {userRiskReward} R:R preference
+      {/* Market Info and Analysis - Compact */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center space-x-2">
+          <span className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded text-xs font-semibold">
+            {signal.market?.toUpperCase() || 'FOREX'}
           </span>
+          <span className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs font-semibold">
+            {signal.timeframe || '1H'}
+          </span>
+          {!matchesUserPreference && userRiskReward && (
+            <span className="px-2 py-1 bg-yellow-600/20 text-yellow-300 rounded text-xs font-semibold">
+              Below your {userRiskReward} R:R preference
+            </span>
+          )}
+        </div>
+        {signal.analysis && (
+          <p className="text-gray-300 text-xs max-w-md text-right">{signal.analysis}</p>
         )}
       </div>
 
-      {/* Analysis */}
-      {signal.analysis && (
-        <div className="mb-4 p-4 bg-gray-700/30 rounded-lg">
-          <p className="text-gray-300 text-sm leading-relaxed">{signal.analysis}</p>
-        </div>
-      )}
-
-      {/* ICT Concepts */}
+      {/* ICT Concepts - Compact */}
       {signal.ictConcepts && signal.ictConcepts.length > 0 && (
-        <div className="mb-6">
-          <p className="text-gray-400 text-sm mb-3 font-semibold">ICT Concepts</p>
-          <div className="flex flex-wrap gap-2">
+        <div className="mb-2">
+          <div className="flex flex-wrap gap-1">
             {signal.ictConcepts.map((concept: string, index: number) => (
-              <span key={index} className="px-3 py-1 bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-blue-300 rounded-full text-xs font-medium border border-blue-500/20">
+              <span key={index} className="px-2 py-1 bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-blue-300 rounded-full text-xs font-medium border border-blue-500/20">
                 {concept}
               </span>
             ))}
@@ -234,65 +186,65 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
         </div>
       )}
       
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3">
+      {/* Action Buttons - Compact */}
+      <div className="flex flex-wrap gap-2">
         {tradeStatus === 'active' ? (
           <>
             <button 
               onClick={() => onMarkAsTaken(signal, 'Target Hit')}
-              className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-green-500/25"
+              className="px-3 py-1.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded text-xs font-semibold transition-all duration-200"
             >
-              ✅ Mark as Won
+              ✅ Won
             </button>
             <button 
               onClick={() => onMarkAsTaken(signal, 'Stop Loss Hit')}
-              className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-red-500/25"
+              className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded text-xs font-semibold transition-all duration-200"
             >
-              ❌ Mark as Lost
+              ❌ Lost
             </button>
             <button 
               onClick={() => onMarkAsTaken(signal, 'Breakeven')}
-              className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-yellow-500/25"
+              className="px-3 py-1.5 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded text-xs font-semibold transition-all duration-200"
             >
-              ⚖️ Break Even
+              ⚖️ BE
             </button>
           </>
         ) : (
-          <div className={`font-semibold flex items-center px-4 py-2 rounded-lg ${
+          <div className={`font-semibold flex items-center px-3 py-1.5 rounded text-xs ${
             tradeStatus === 'won' ? 'text-green-400 bg-green-900/30' :
             tradeStatus === 'lost' ? 'text-red-400 bg-red-900/30' :
             tradeStatus === 'breakeven' ? 'text-yellow-400 bg-yellow-900/30' :
             'text-gray-400 bg-gray-900/30'
           }`}>
-            {tradeStatus === 'won' ? '✅ Trade Won' :
-             tradeStatus === 'lost' ? '❌ Trade Lost' :
-             tradeStatus === 'breakeven' ? '⚖️ Break Even' :
-             '✅ Trade Completed'}
+            {tradeStatus === 'won' ? '✅ Won' :
+             tradeStatus === 'lost' ? '❌ Lost' :
+             tradeStatus === 'breakeven' ? '⚖️ BE' :
+             '✅ Done'}
           </div>
         )}
         <button 
           onClick={() => onAddToJournal(signal)}
-          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
+          className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded text-xs font-semibold transition-all duration-200"
         >
-          📝 Add to Journal
+          📝 Journal
         </button>
         <button 
           onClick={() => onChatWithNexus(signal)}
-          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-purple-500/25"
+          className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded text-xs font-semibold transition-all duration-200"
         >
-          🤖 Chat with Nexus
+          🤖 Nexus
         </button>
       </div>
       
       {/* Status Indicator */}
       {isTaken && (
-        <div className="mt-4 p-3 bg-green-600/20 border border-green-500/30 rounded-lg text-green-300 text-sm font-medium">
+        <div className="mt-2 p-2 bg-green-600/20 border border-green-500/30 rounded text-green-300 text-xs font-medium">
           ✅ Signal taken and recorded
         </div>
       )}
       
       {/* Timestamp */}
-      <div className="mt-4 text-xs text-gray-500 text-center">
+      <div className="mt-2 text-xs text-gray-500 text-right">
         {signal.timestamp ? new Date(signal.timestamp).toLocaleString() : 'Just now'}
       </div>
     </div>
