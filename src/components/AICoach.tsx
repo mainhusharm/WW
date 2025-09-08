@@ -40,7 +40,7 @@ const AICoach: React.FC = () => {
   }, [user]);
 
   // Force show setup screen for testing - remove this line after testing
-  setUserApiKey('');
+  // setUserApiKey('');
 
   useEffect(() => {
     // Generate session ID for this conversation

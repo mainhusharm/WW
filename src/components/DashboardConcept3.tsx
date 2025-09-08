@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TradingState, TradeOutcome, Signal, Trade, PerformanceMetrics } from '../trading/types';
 import { 
@@ -28,6 +28,7 @@ import PropFirmRules from './PropFirmRules';
 import RiskProtocol from './RiskProtocol';
 import LiveChatWidget from './LiveChatWidget';
 import UserSupportDashboard from './UserSupportDashboard';
+import AICoach from './AICoach';
 import { getAllTimezones, getMarketStatus } from '../services/timezoneService';
 import { getImpactColor, getImpactIcon, formatEventTime } from '../services/forexFactoryService';
 
@@ -55,7 +56,6 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
     }
     return 'overview';
   });
-  const aiCoachRef = useRef<HTMLIFrameElement>(null);
   const [selectedAccount, setSelectedAccount] = useState('');
   const [marketStatus, setMarketStatus] = useState<any>(null);
   const [selectedTimezone, setSelectedTimezone] = useState(() => {
@@ -451,12 +451,7 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
 
   const handleChatWithNexus = (signal: Signal) => {
     handleTabClick('ai-coach');
-    setTimeout(() => {
-      if (aiCoachRef.current?.contentWindow) {
-        const signalData = { symbol: signal.pair, type: signal.direction, entryPrice: signal.entryPrice.toString() };
-        (aiCoachRef.current.contentWindow as any).receiveSignal(signalData);
-      }
-    }, 100);
+    // Note: Signal data can be passed to AICoach component if needed
   };
   
   const handleSettingsUpdate = (key: string, value: any) => {
@@ -1439,7 +1434,10 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
       `}</style>
       <div className="dashboard-concept3">
         <div className="sidebar">
-            <div className="logo">Trader Edge Pro</div>
+            <div className="logo">
+              Trader Edge Pro
+              <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>
+            </div>
             {hasMultiAccountAccess && <div className="p-4"><select value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)} className="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">{accounts.map((account: any) => <option key={account.id} value={account.id}>{account.account_name}</option>)}</select></div>}
             <nav className="flex-1 p-4 overflow-y-auto"><div className="space-y-3">{sidebarTabs.map((item) => <div key={item.id} className={`menu-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => handleTabClick(item.id)}>{item.icon} <span>{item.label}</span></div>)}</div></nav>
             <div className="p-4 border-t border-gray-800 flex items-center justify-around"><button onClick={onLogout} className="text-gray-400 hover:text-white"><LogOut className="w-6 h-6" /></button></div>
@@ -1477,7 +1475,7 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
               {activeTab === 'accounts' && hasMultiAccountAccess && <MultiAccountTracker />}
               {activeTab === 'rules' && <NewPropFirmRules />}
               {activeTab === 'risk-protocol' && <RiskManagementPlan />}
-              {activeTab === 'ai-coach' && <iframe ref={aiCoachRef} src="/AICoach.html" title="AI Coach" style={{ width: '100%', height: 'calc(100vh - 120px)', border: 'none', borderRadius: '1rem' }} />}
+              {activeTab === 'ai-coach' && <AICoach />}
               {activeTab === 'notifications' && <NotificationCenter />}
               {activeTab === 'support' && <UserSupportDashboard />}
               {activeTab === 'settings' && renderSettings()}

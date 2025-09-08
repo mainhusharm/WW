@@ -66,9 +66,9 @@ const FallbackLandingPage = () => {
 
   const stats = [
     { number: "2,847", label: "Funded Accounts", description: "Successfully cleared" },
-    { number: "86.7", label: "Success Rate", description: "Challenge completion" },
-    { number: "$47.2M", label: "Total Funding", description: "Combined account value" },
-    { number: "24/7", label: "Support", description: "Round-the-clock assistance" }
+    { number: "86.7%", label: "Success Rate", description: "Challenge completion" },
+    { number: "$47.2M", label: "Total Funded", description: "Across all prop firms" },
+    { number: "150+", label: "Prop Firms", description: "Supported platforms" }
   ];
 
   const testimonials = [

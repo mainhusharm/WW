@@ -105,10 +105,10 @@ const Enhanced3DLandingPage = () => {
   ];
 
   const stats = [
-    { number: "2,847", label: "Funded Accounts", description: "Successfully cleared" },
-    { number: "86.7", label: "Success Rate", description: "Challenge completion" },
-    { number: "12.8", label: "Total Funded", description: "Million USD" },
-    { number: "150", label: "Prop Firms", description: "Supported platforms" }
+    { number: "2847", label: "Funded Accounts", description: "Successfully cleared" },
+    { number: "86.7%", label: "Success Rate", description: "Challenge completion" },
+    { number: "47.2M", label: "Total Funded", description: "Million USD" },
+    { number: "150+", label: "Prop Firms", description: "Supported platforms" }
   ];
 
   const testimonials = [
@@ -472,7 +472,7 @@ const Enhanced3DLandingPage = () => {
             <div 
               className="relative bg-gray-800/60 backdrop-blur-sm rounded-3xl p-16 border border-gray-700/50 overflow-hidden"
               style={{
-                transform: `perspective(1000px) rotateX(${scrollY * 0.01}deg)`,
+                transform: `perspective(1000px) rotateX(${scrollY * 0.005}deg)`,
                 transformStyle: 'preserve-3d'
               }}
             >

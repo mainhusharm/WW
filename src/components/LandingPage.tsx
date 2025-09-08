@@ -22,10 +22,10 @@ import landingStatsService from '../services/landingStatsService';
 
 const LandingPage: React.FC = () => {
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
-  const [stats] = useState([
-    { number: "2,847", label: "Funded Accounts", description: "Successfully cleared" },  // Updated to correct number
-    { number: "86.7%", label: "Success Rate", description: "Challenge completion" },     // Updated to match
-    { number: "$47.2M", label: "Total Funded", description: "Across all prop firms" },   // Updated to match
+  const [stats, setStats] = useState([
+    { number: "2,847", label: "Funded Accounts", description: "Successfully cleared" },  // Default values
+    { number: "86.7%", label: "Success Rate", description: "Challenge completion" },     
+    { number: "$47.2M", label: "Total Funded", description: "Across all prop firms" },   
     { number: "150+", label: "Prop Firms", description: "Supported platforms" }
   ]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -48,7 +48,7 @@ const LandingPage: React.FC = () => {
         setIsLoadingStats(true);
         const landingStats = await landingStatsService.getLandingStats();
         const formattedStats = landingStatsService.formatStats(landingStats);
-        // setStats(formattedStats); // Commented out for now
+        setStats(formattedStats);
       } catch (error) {
         console.error('Error fetching landing stats:', error);
       } finally {

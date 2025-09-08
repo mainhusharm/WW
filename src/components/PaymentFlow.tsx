@@ -155,7 +155,10 @@ const PaymentFlow = () => {
             
             <div className="flex items-center space-x-2">
               <TrendingUp className="w-8 h-8 text-blue-400" />
-              <h1 className="text-2xl font-bold text-white">TraderEdge Pro</h1>
+              <h1 className="text-2xl font-bold text-white">
+                TraderEdge Pro
+                <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>
+              </h1>
             </div>
           </div>
 

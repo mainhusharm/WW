@@ -560,7 +560,10 @@ const MT5BotDashboard: React.FC = () => {
       {/* Sidebar */}
       <aside className="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
         <div className="p-6 border-b border-gray-700">
-          <h2 className="text-2xl font-bold text-white mb-2">TraderEdgePro</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            TraderEdgePro
+            <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>
+          </h2>
           <span className="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide">
             MT5 Bots
           </span>

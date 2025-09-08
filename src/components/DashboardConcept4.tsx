@@ -1641,7 +1641,10 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
         <div className="fluid-bg"></div>
         <div className="fluid-bg2"></div>
         <div className="sidebar">
-            <div className="logo">Trader Edge Pro</div>
+            <div className="logo">
+              Trader Edge Pro
+              <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>
+            </div>
             {hasMultiAccountAccess && <div className="p-4"><select value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)} className="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">{accounts.map((account: any) => <option key={account.id} value={account.id}>{account.account_name}</option>)}</select></div>}
             <nav className="flex-1 p-4 overflow-y-auto"><div className="space-y-3">{sidebarTabs.map((item) => <div key={item.id} className={`menu-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => handleTabClick(item.id)}>{item.icon} <span>{item.label}</span></div>)}</div></nav>
             <div className="p-4 border-t border-gray-800 flex items-center justify-around"><button onClick={onLogout} className="text-gray-400 hover:text-white"><LogOut className="w-6 h-6" /></button></div>
@@ -1679,7 +1682,7 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
               {activeTab === 'accounts' && hasMultiAccountAccess && <MultiAccountTracker />}
               {activeTab === 'rules' && <NewPropFirmRules />}
               {activeTab === 'risk-protocol' && <RiskManagementPlan />}
-              {activeTab === 'ai-coach' && <TestAICoach />}
+              {activeTab === 'ai-coach' && <AICoach />}
               {activeTab === 'notifications' && <NotificationCenter />}
               {activeTab === 'support' && <UserSupportDashboard />}
               {activeTab === 'settings' && renderSettings()}

@@ -22,6 +22,7 @@ const Header = () => {
             </div>
             <span className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
               TraderEdge Pro
+              <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>
             </span>
           </Link>
 

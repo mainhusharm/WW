@@ -94,34 +94,6 @@ const AnimatedTorus: React.FC<AnimatedGeometryProps> = ({ position, color, scale
   );
 };
 
-const TradingChart3D: React.FC<{ position: [number, number, number] }> = ({ position }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  
-  useSafeFrame((state) => {
-    if (groupRef.current && state?.clock) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.1;
-    }
-  });
-
-  return (
-    <group ref={groupRef} position={position}>
-      {/* Trading chart bars */}
-      {Array.from({ length: 10 }, (_, i) => (
-        <Box
-          key={i}
-          position={[i * 0.3 - 1.5, Math.random() * 2 - 1, 0]}
-          scale={[0.2, Math.random() * 2 + .5, 0.2]}
-        >
-          <meshStandardMaterial 
-            color={Math.random() > 0.5 ? '#00ff88' : '#ff4444'} 
-            metalness={0.7} 
-            roughness={0.3} 
-          />
-        </Box>
-      ))}
-    </group>
-  );
-};
 
 const ParticleField: React.FC = () => {
   const pointsRef = useRef<THREE.Points>(null);
@@ -230,8 +202,6 @@ const Scene3D: React.FC<Scene3DProps> = ({ scrollY, isVisible }) => {
           <AnimatedTorus position={[0, 0, -3]} color="#00ff88" scale={1.2} />
           <AnimatedTorus position={[-2, -2, -4]} color="#ffaa00" scale={0.8} />
           
-          {/* Trading Chart */}
-          <TradingChart3D position={[0, -1, 0]} />
           
           {/* Particle Field */}
           <ParticleField />

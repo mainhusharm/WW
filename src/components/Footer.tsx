@@ -10,7 +10,10 @@ const Footer = () => {
           <div className="md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <TrendingUp className="w-8 h-8 text-blue-400" />
-              <h3 className="text-xl font-bold text-white">TraderEdge Pro</h3>
+              <h3 className="text-xl font-bold text-white">
+                TraderEdge Pro
+                <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>
+              </h3>
             </div>
             <p className="text-gray-400 mb-4 leading-relaxed">
               Professional prop firm clearing service helping traders achieve funded account success through proven methodologies and expert guidance.

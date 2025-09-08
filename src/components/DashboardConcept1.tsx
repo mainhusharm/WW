@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TradingState, TradeOutcome, Signal, Trade, PerformanceMetrics } from '../trading/types';
 import { 
@@ -30,6 +30,7 @@ import LiveChatWidget from './LiveChatWidget';
 import ConsentForm from './ConsentForm';
 import UserScreenshotTab from './UserScreenshotTab';
 import UserSupportDashboard from './UserSupportDashboard';
+import AICoach from './AICoach';
 import { getAllTimezones, getMarketStatus } from '../services/timezoneService';
 import { fetchForexFactoryNews, getImpactColor, formatEventTime, ForexFactoryEvent } from '../services/forexFactoryService';
 import { useSafeEffect, useSafeInterval, useSafeTimeout } from '../hooks/useSafeEffect';
@@ -50,7 +51,6 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   const [dashboardData, setDashboardData] = useState(initialDashboardData);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const aiCoachRef = useRef<HTMLIFrameElement>(null);
 
   const [activeTab, setActiveTab] = useState(() => {
     // Restore active tab from localStorage if available
@@ -1214,7 +1214,10 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
       <div className="concept1">
         <div className="neural-grid"></div>
         <div className="holo-sidebar">
-            <div className="holo-logo">TraderEdgePro</div>
+            <div className="holo-logo">
+              TraderEdgePro
+              <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>
+            </div>
             <div className="p-4">
               <select 
                 value={selectedAccountId || ''} 
@@ -1367,7 +1370,7 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
               {activeTab === 'accounts' && hasMultiAccountAccess && <MultiAccountTracker />}
               {activeTab === 'rules' && <NewPropFirmRules />}
               {activeTab === 'risk-protocol' && <RiskManagementPlan />}
-              {activeTab === 'ai-coach' && <iframe ref={aiCoachRef} src="/AICoach.html" title="AI Coach" style={{ width: '100%', height: 'calc(100vh - 120px)', border: 'none', borderRadius: '1rem' }} />}
+              {activeTab === 'ai-coach' && <AICoach />}
               {activeTab === 'notifications' && <NotificationCenter />}
               {activeTab === 'support' && <UserSupportDashboard />}
               {activeTab === 'settings' && renderSettings()}

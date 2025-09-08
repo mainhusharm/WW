@@ -195,7 +195,10 @@ const SignUp = () => {
           
           <div className="flex items-center justify-center space-x-2 mb-6">
             <TrendingUp className="w-8 h-8 text-blue-400" />
-            <span className="text-2xl font-bold text-white">TraderEdge Pro</span>
+            <span className="text-2xl font-bold text-white">
+              TraderEdge Pro
+              <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>
+            </span>
           </div>
 
           <h2 className="text-3xl font-bold text-white mb-2">
