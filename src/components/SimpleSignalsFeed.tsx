@@ -153,32 +153,35 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
         </div>
       </div>
 
-      {/* Market Info and Analysis - Compact */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2">
-          <span className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded text-xs font-semibold">
-            {signal.market?.toUpperCase() || 'FOREX'}
+      {/* Market Info */}
+      <div className="flex items-center space-x-4 mb-4">
+        <span className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded text-xs font-semibold">
+          {signal.market?.toUpperCase() || 'FOREX'}
+        </span>
+        <span className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs font-semibold">
+          {signal.timeframe || '1H'}
+        </span>
+        {!matchesUserPreference && userRiskReward && (
+          <span className="px-2 py-1 bg-yellow-600/20 text-yellow-300 rounded text-xs font-semibold">
+            Below your {userRiskReward} R:R preference
           </span>
-          <span className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs font-semibold">
-            {signal.timeframe || '1H'}
-          </span>
-          {!matchesUserPreference && userRiskReward && (
-            <span className="px-2 py-1 bg-yellow-600/20 text-yellow-300 rounded text-xs font-semibold">
-              Below your {userRiskReward} R:R preference
-            </span>
-          )}
-        </div>
-        {signal.analysis && (
-          <p className="text-gray-300 text-xs max-w-md text-right">{signal.analysis}</p>
         )}
       </div>
 
-      {/* ICT Concepts - Compact */}
+      {/* Analysis */}
+      {signal.analysis && (
+        <div className="mb-4 p-4 bg-gray-700/30 rounded-lg">
+          <p className="text-gray-300 text-sm leading-relaxed">{signal.analysis}</p>
+        </div>
+      )}
+
+      {/* ICT Concepts */}
       {signal.ictConcepts && signal.ictConcepts.length > 0 && (
-        <div className="mb-2">
-          <div className="flex flex-wrap gap-1">
+        <div className="mb-6">
+          <p className="text-gray-400 text-sm mb-3 font-semibold">ICT Concepts</p>
+          <div className="flex flex-wrap gap-2">
             {signal.ictConcepts.map((concept: string, index: number) => (
-              <span key={index} className="px-2 py-1 bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-blue-300 rounded-full text-xs font-medium border border-blue-500/20">
+              <span key={index} className="px-3 py-1 bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-blue-300 rounded-full text-xs font-medium border border-blue-500/20">
                 {concept}
               </span>
             ))}
@@ -186,65 +189,65 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
         </div>
       )}
       
-      {/* Action Buttons - Compact */}
+      {/* Action Buttons */}
       <div className="flex flex-wrap gap-2">
         {tradeStatus === 'active' ? (
           <>
             <button 
               onClick={() => onMarkAsTaken(signal, 'Target Hit')}
-              className="px-3 py-1.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded text-xs font-semibold transition-all duration-200"
+              className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-green-500/25"
             >
-              ✅ Won
+              ✅ Mark as Won
             </button>
             <button 
               onClick={() => onMarkAsTaken(signal, 'Stop Loss Hit')}
-              className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded text-xs font-semibold transition-all duration-200"
+              className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-red-500/25"
             >
-              ❌ Lost
+              ❌ Mark as Lost
             </button>
             <button 
               onClick={() => onMarkAsTaken(signal, 'Breakeven')}
-              className="px-3 py-1.5 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded text-xs font-semibold transition-all duration-200"
+              className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-yellow-500/25"
             >
-              ⚖️ BE
+              ⚖️ Break Even
             </button>
           </>
         ) : (
-          <div className={`font-semibold flex items-center px-3 py-1.5 rounded text-xs ${
+          <div className={`font-semibold flex items-center px-4 py-2 rounded-lg ${
             tradeStatus === 'won' ? 'text-green-400 bg-green-900/30' :
             tradeStatus === 'lost' ? 'text-red-400 bg-red-900/30' :
             tradeStatus === 'breakeven' ? 'text-yellow-400 bg-yellow-900/30' :
             'text-gray-400 bg-gray-900/30'
           }`}>
-            {tradeStatus === 'won' ? '✅ Won' :
-             tradeStatus === 'lost' ? '❌ Lost' :
-             tradeStatus === 'breakeven' ? '⚖️ BE' :
-             '✅ Done'}
+            {tradeStatus === 'won' ? '✅ Trade Won' :
+             tradeStatus === 'lost' ? '❌ Trade Lost' :
+             tradeStatus === 'breakeven' ? '⚖️ Break Even' :
+             '✅ Trade Completed'}
           </div>
         )}
         <button 
           onClick={() => onAddToJournal(signal)}
-          className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded text-xs font-semibold transition-all duration-200"
+          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
         >
-          📝 Journal
+          📝 Add to Journal
         </button>
         <button 
           onClick={() => onChatWithNexus(signal)}
-          className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded text-xs font-semibold transition-all duration-200"
+          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-purple-500/25"
         >
-          🤖 Nexus
+          🤖 Chat with Nexus
         </button>
       </div>
       
       {/* Status Indicator */}
       {isTaken && (
-        <div className="mt-2 p-2 bg-green-600/20 border border-green-500/30 rounded text-green-300 text-xs font-medium">
+        <div className="mt-4 p-3 bg-green-600/20 border border-green-500/30 rounded-lg text-green-300 text-sm font-medium">
           ✅ Signal taken and recorded
         </div>
       )}
       
       {/* Timestamp */}
-      <div className="mt-2 text-xs text-gray-500 text-right">
+      <div className="mt-4 text-xs text-gray-500 text-center">
         {signal.timestamp ? new Date(signal.timestamp).toLocaleString() : 'Just now'}
       </div>
     </div>
