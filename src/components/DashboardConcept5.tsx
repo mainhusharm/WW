@@ -475,7 +475,9 @@ const DashboardConcept5: React.FC<DashboardConcept5Props> = ({ onLogout, trading
       </div>
 
       {/* Live Chat Widget */}
-      <LiveChatWidget />
+      <div style={{ display: 'none' }}>
+        <LiveChatWidget />
+      </div>
     </div>
   );
 };

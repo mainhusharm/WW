@@ -1371,7 +1371,9 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
             </div>
         </div>
       </div>
-      <LiveChatWidget userId={user?.id || user?.email} userName={user?.name || 'TraderEdgePro User'} />
+      <div style={{ display: 'none' }}>
+        <LiveChatWidget userId={user?.id || user?.email} userName={user?.name || 'TraderEdgePro User'} />
+      </div>
     </>
   );
 };
