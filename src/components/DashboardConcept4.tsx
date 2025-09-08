@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TradingState, TradeOutcome, Signal, Trade, PerformanceMetrics } from '../trading/types';
 import { 
@@ -29,6 +29,7 @@ import RiskProtocol from './RiskProtocol';
 import LiveChatWidget from './LiveChatWidget';
 import UserSupportDashboard from './UserSupportDashboard';
 import ApiKeySetup from './ApiKeySetup';
+import AICoach from './AICoach';
 import { getAllTimezones, getMarketStatus } from '../services/timezoneService';
 import { getUserApiKey } from '../utils/apiKeyTest';
 import { getImpactColor, getImpactIcon, formatEventTime } from '../services/forexFactoryService';
@@ -57,7 +58,6 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
     }
     return 'overview';
   });
-  const aiCoachRef = useRef<HTMLIFrameElement>(null);
   const [selectedAccount, setSelectedAccount] = useState('');
   const [marketStatus, setMarketStatus] = useState<any>(null);
   const [selectedTimezone, setSelectedTimezone] = useState(() => {
@@ -453,12 +453,7 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
 
   const handleChatWithNexus = (signal: Signal) => {
     handleTabClick('ai-coach');
-    setTimeout(() => {
-      if (aiCoachRef.current?.contentWindow) {
-        const signalData = { symbol: signal.pair, type: signal.direction, entryPrice: signal.entryPrice.toString() };
-        (aiCoachRef.current.contentWindow as any).receiveSignal(signalData);
-      }
-    }, 100);
+    // Note: Signal data can be passed to AICoach component if needed
   };
   
   const handleSettingsUpdate = (key: string, value: any) => {
@@ -1683,7 +1678,7 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
               {activeTab === 'accounts' && hasMultiAccountAccess && <MultiAccountTracker />}
               {activeTab === 'rules' && <NewPropFirmRules />}
               {activeTab === 'risk-protocol' && <RiskManagementPlan />}
-              {activeTab === 'ai-coach' && <iframe ref={aiCoachRef} src="/AICoach.html" title="AI Coach" style={{ width: '100%', height: 'calc(100vh - 120px)', border: 'none', borderRadius: '1rem' }} />}
+              {activeTab === 'ai-coach' && <AICoach />}
               {activeTab === 'notifications' && <NotificationCenter />}
               {activeTab === 'support' && <UserSupportDashboard />}
               {activeTab === 'settings' && renderSettings()}
