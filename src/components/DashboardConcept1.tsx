@@ -32,6 +32,7 @@ import UserScreenshotTab from './UserScreenshotTab';
 import { getAllTimezones, getMarketStatus } from '../services/timezoneService';
 import { fetchForexFactoryNews, getImpactColor, formatEventTime, ForexFactoryEvent } from '../services/forexFactoryService';
 import { useSafeEffect, useSafeInterval, useSafeTimeout } from '../hooks/useSafeEffect';
+import { journalService, JournalEntry } from '../services/journalService';
 
 interface DashboardConcept1Props {
   onLogout: () => void;
@@ -42,7 +43,7 @@ interface DashboardConcept1Props {
 
 const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, tradingState, dashboardData: initialDashboardData, handleMarkAsTaken }) => {
   const { user } = useUser();
-  const { tradingPlan, propFirm, accountConfig, loading: tradingPlanLoading } = useTradingPlan();
+  const { tradingPlan, propFirm, accountConfig, accounts, selectedAccountId, selectAccount, loading: tradingPlanLoading } = useTradingPlan();
   const { dashboardData: localStorageData, loading: localStorageLoading } = useDashboardData();
 
   const [dashboardData, setDashboardData] = useState(initialDashboardData);
@@ -275,13 +276,8 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   });
   
   const [activeSettingsTab, setActiveSettingsTab] = useState('risk');
-  const [journalEntries, setJournalEntries] = useState(() => {
-    if (typeof window !== 'undefined' && user?.email) {
-      const saved = localStorage.getItem(`journal_entries_${user.email}`);
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [journalLoading, setJournalLoading] = useState(true);
   
   const [newJournalEntry, setNewJournalEntry] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -295,15 +291,33 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
     tags: []
   });
   
+  // Load journal entries
+  useEffect(() => {
+    const loadJournalEntries = async () => {
+      if (user?.email) {
+        try {
+          setJournalLoading(true);
+          const entries = await journalService.getEntries(user.email);
+          setJournalEntries(entries);
+        } catch (error) {
+          console.error('Error loading journal entries:', error);
+        } finally {
+          setJournalLoading(false);
+        }
+      }
+    };
+
+    loadJournalEntries();
+  }, [user?.email]);
+
   // Save dashboard state for persistence
   useEffect(() => {
     if (user?.email) {
       localStorage.setItem(`dashboard_active_tab_${user.email}`, activeTab);
       localStorage.setItem(`dashboard_timezone_${user.email}`, selectedTimezone);
       localStorage.setItem(`user_settings_${user.email}`, JSON.stringify(userSettings));
-      localStorage.setItem(`journal_entries_${user.email}`, JSON.stringify(journalEntries));
     }
-  }, [activeTab, selectedTimezone, userSettings, journalEntries, user?.email]);
+  }, [activeTab, selectedTimezone, userSettings, user?.email]);
   const [userTrades, setUserTrades] = useState<Trade[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics>({
     totalPnl: 0,
@@ -511,32 +525,52 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
     }));
   };
   
-  const handleAddJournalEntry = () => {
-    if (!newJournalEntry.symbol || !newJournalEntry.entryPrice) return;
+  const handleAddJournalEntry = async () => {
+    if (!newJournalEntry.symbol || !newJournalEntry.entryPrice || !user?.email) return;
     
-    const entry = {
-      ...newJournalEntry,
+    const entry: JournalEntry = {
       id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      pnl: parseFloat(newJournalEntry.pnl) || 0
+      date: newJournalEntry.date,
+      symbol: newJournalEntry.symbol,
+      direction: newJournalEntry.direction as 'BUY' | 'SELL',
+      entryPrice: parseFloat(newJournalEntry.entryPrice),
+      exitPrice: parseFloat(newJournalEntry.exitPrice) || 0,
+      quantity: parseFloat(newJournalEntry.quantity) || 0,
+      pnl: parseFloat(newJournalEntry.pnl) || 0,
+      notes: newJournalEntry.notes,
+      tags: newJournalEntry.tags,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     
-    setJournalEntries((prev: any[]) => [entry, ...prev]);
-    setNewJournalEntry({
-      date: new Date().toISOString().split('T')[0],
-      symbol: '',
-      direction: 'BUY',
-      entryPrice: '',
-      exitPrice: '',
-      quantity: '',
-      pnl: '',
-      notes: '',
-      tags: []
-    });
+    try {
+      await journalService.saveEntry(entry, user.email);
+      setJournalEntries((prev) => [entry, ...prev]);
+      setNewJournalEntry({
+        date: new Date().toISOString().split('T')[0],
+        symbol: '',
+        direction: 'BUY',
+        entryPrice: '',
+        exitPrice: '',
+        quantity: '',
+        pnl: '',
+        notes: '',
+        tags: []
+      });
+    } catch (error) {
+      console.error('Error saving journal entry:', error);
+    }
   };
   
-  const handleDeleteJournalEntry = (id: string) => {
-    setJournalEntries((prev: any[]) => prev.filter((entry: any) => entry.id !== id));
+  const handleDeleteJournalEntry = async (id: string) => {
+    if (!user?.email) return;
+    
+    try {
+      await journalService.deleteEntry(id, user.email);
+      setJournalEntries((prev) => prev.filter((entry) => entry.id !== id));
+    } catch (error) {
+      console.error('Error deleting journal entry:', error);
+    }
   };
 
   const handleConsentAccept = () => {
@@ -982,7 +1016,12 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
         {/* Journal Entries */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-white">Recent Entries ({journalEntries.length})</h3>
-          {journalEntries.length === 0 ? (
+          {journalLoading ? (
+            <div className="text-center py-12 text-gray-400">
+              <div className="animate-spin w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p>Loading journal entries...</p>
+            </div>
+          ) : journalEntries.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
               <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p>No journal entries yet. Add your first trade above!</p>
@@ -1174,7 +1213,20 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
         <div className="neural-grid"></div>
         <div className="holo-sidebar">
             <div className="holo-logo">TraderEdgePro</div>
-            {hasMultiAccountAccess && <div className="p-4"><select value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)} className="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">{(dashboardData?.accounts || []).map((account: any) => <option key={account.id} value={account.id}>{account.account_name}</option>)}</select></div>}
+            <div className="p-4">
+              <select 
+                value={selectedAccountId || ''} 
+                onChange={(e) => selectAccount(e.target.value || null)} 
+                className="w-full bg-gray-800 text-white p-2 rounded border border-gray-600"
+              >
+                <option value="">Select Account</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.propFirm} - ${account.accountSize.toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
             <nav className="flex-1 p-4 overflow-y-auto"><div className="space-y-2">{sidebarTabs.map((item) => <div key={item.id} className={`holo-menu-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => handleTabClick(item.id)}>{item.icon} <span>{item.label}</span></div>)}</div></nav>
             <div className="p-4 border-t border-gray-800 flex items-center justify-around"><button onClick={onLogout} className="text-gray-400 hover:text-white"><LogOut className="w-6 h-6" /></button></div>
         </div>

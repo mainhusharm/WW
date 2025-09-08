@@ -17,6 +17,15 @@ const UserScreenshotTab: React.FC = () => {
         return;
       }
 
+      // First try to get from localStorage (from questionnaire)
+      const localStorageScreenshot = localStorage.getItem('screenshotUrl') || localStorage.getItem('accountScreenshot');
+      if (localStorageScreenshot) {
+        setScreenshotUrl(localStorageScreenshot);
+        setIsLoading(false);
+        return;
+      }
+
+      // If not in localStorage, try API
       try {
         const response = await axios.get(`/api/screenshot/${user.email}`, {
           headers: {
@@ -25,7 +34,18 @@ const UserScreenshotTab: React.FC = () => {
         });
         setScreenshotUrl(response.data.url);
       } catch (err) {
-        setError('Could not fetch screenshot.');
+        // If API fails, try to get from user data in localStorage
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+          const parsedUserData = JSON.parse(userData);
+          if (parsedUserData.screenshotUrl) {
+            setScreenshotUrl(parsedUserData.screenshotUrl);
+          } else {
+            setError('No screenshot found for this user.');
+          }
+        } else {
+          setError('Could not fetch screenshot.');
+        }
         console.error(err);
       } finally {
         setIsLoading(false);

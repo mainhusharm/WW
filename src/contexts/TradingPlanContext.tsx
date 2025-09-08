@@ -103,12 +103,16 @@ interface TradingPlanContextType {
   riskConfig: RiskConfig | null;
   tradingPlan: TradingPlan | null;
   accounts: PropFirmAccount[];
+  selectedAccountId: string | null;
+  selectedAccount: PropFirmAccount | null;
   loading: boolean;
   updatePropFirm: (firm: PropFirm) => void;
   updateAccountConfig: (config: AccountConfig) => void;
   updateRiskConfig: (config: RiskConfig) => void;
   updateTradingPlan: (plan: TradingPlan) => void;
   addAccount: (account: PropFirmAccount) => void;
+  selectAccount: (accountId: string | null) => void;
+  getSelectedAccount: () => PropFirmAccount | null;
   resetPlan: () => void;
 }
 
@@ -123,6 +127,7 @@ export const TradingPlanProvider = ({ children }: { children: ReactNode }) => {
   const [riskConfig, setRiskConfig] = useState<RiskConfig | null>(null);
   const [tradingPlan, setTradingPlan] = useState<TradingPlan | null>(null);
   const [accounts, setAccounts] = useState<PropFirmAccount[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -133,10 +138,24 @@ export const TradingPlanProvider = ({ children }: { children: ReactNode }) => {
         const savedTradingPlan = localStorage.getItem(`trading_plan_${user.email}`);
         const savedPropFirm = localStorage.getItem(`prop_firm_${user.email}`);
         const savedAccountConfig = localStorage.getItem(`account_config_${user.email}`);
+        const savedAccounts = localStorage.getItem(`accounts_${user.email}`);
+        const savedSelectedAccount = localStorage.getItem(`selected_account_${user.email}`);
         const savedRiskConfig = localStorage.getItem(`risk_config_${user.email}`);
         
         if (savedTradingPlan) {
           setTradingPlan(JSON.parse(savedTradingPlan));
+        }
+        
+        if (savedAccounts) {
+          const parsedAccounts = JSON.parse(savedAccounts).map((account: any) => ({
+            ...account,
+            lastUpdate: new Date(account.lastUpdate)
+          }));
+          setAccounts(parsedAccounts);
+        }
+        
+        if (savedSelectedAccount) {
+          setSelectedAccountId(savedSelectedAccount);
         }
         if (savedPropFirm) {
           setPropFirm(JSON.parse(savedPropFirm));
@@ -173,8 +192,30 @@ export const TradingPlanProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addAccount = useCallback((account: PropFirmAccount) => {
-    setAccounts(prev => [...prev, account]);
-  }, []);
+    setAccounts(prev => {
+      const newAccounts = [...prev, account];
+      if (user?.email) {
+        localStorage.setItem(`accounts_${user.email}`, JSON.stringify(newAccounts));
+      }
+      return newAccounts;
+    });
+  }, [user]);
+
+  const selectAccount = useCallback((accountId: string | null) => {
+    setSelectedAccountId(accountId);
+    if (user?.email) {
+      if (accountId) {
+        localStorage.setItem(`selected_account_${user.email}`, accountId);
+      } else {
+        localStorage.removeItem(`selected_account_${user.email}`);
+      }
+    }
+  }, [user]);
+
+  const getSelectedAccount = useCallback(() => {
+    if (!selectedAccountId) return null;
+    return accounts.find(account => account.id === selectedAccountId) || null;
+  }, [selectedAccountId, accounts]);
 
   const updatePropFirm = useCallback((firm: PropFirm) => {
     setPropFirm(firm);
@@ -220,7 +261,11 @@ export const TradingPlanProvider = ({ children }: { children: ReactNode }) => {
       updateRiskConfig,
       updateTradingPlan,
       accounts,
+      selectedAccountId,
+      selectedAccount: getSelectedAccount(),
       addAccount,
+      selectAccount,
+      getSelectedAccount,
       resetPlan
     }}>
       {children}

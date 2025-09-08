@@ -148,9 +148,72 @@ const MultiAccountTracker: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {accounts.map((account) => (
               <div key={account.id} className="account-card">
-                {/* Card content here */}
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">{account.propFirm}</h3>
+                    <p className="text-sm text-gray-400">${account.accountSize.toLocaleString()}</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(account.status)}`}>
+                      {account.status}
+                    </span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPhaseColor(account.phase)}`}>
+                      {account.phase}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Current Balance:</span>
+                    <span className="text-white font-semibold">${account.currentBalance.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Profit/Loss:</span>
+                    <span className={`font-semibold ${account.currentProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      ${account.currentProfit.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Drawdown:</span>
+                    <span className={`font-semibold ${account.currentDrawdown > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                      {account.currentDrawdown.toFixed(2)}%
+                    </span>
+                  </div>
+                  
+                  {account.phase !== 'Funded' && (
+                    <div className="mt-4">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-400">Progress to Target:</span>
+                        <span className="text-white">{calculateProgress(account.currentProfit, account.profitTarget).toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${calculateProgress(account.currentProfit, account.profitTarget)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between text-xs text-gray-500 mt-4">
+                    <span>Trading Days: {account.tradingDays}/{account.minTradingDays}</span>
+                    <span>Updated: {new Date(account.lastUpdate).toLocaleDateString()}</span>
+                  </div>
+                </div>
               </div>
             ))}
+            
+            {accounts.length === 0 && (
+              <div className="col-span-full text-center py-12">
+                <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-400 mb-2">No Accounts Added</h3>
+                <p className="text-gray-500 mb-6">Start by adding your first prop firm account to track your progress.</p>
+                <button onClick={() => setShowAddAccount(true)} className="action-btn">
+                  Add Your First Account
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
