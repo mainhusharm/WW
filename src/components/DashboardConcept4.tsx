@@ -5,117 +5,11 @@ import {
   Layers, Zap, Shield, PieChart, BookOpen, GitBranch, Target, Cpu, Bell, Settings, LogOut, DollarSign, Activity, Award 
 } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
+import { useTradingPlan } from '../contexts/TradingPlanContext';
+import { useDashboardData } from './DashboardDataReader';
 import AdminSignalsFeed from './AdminSignalsFeed';
 import NewPropFirmRules from './NewPropFirmRules';
 
-// Safe context hook with questionnaire data integration
-const useSafeTradingPlan = () => {
-  const [contextData, setContextData] = useState<any>(null);
-  
-  useEffect(() => {
-    try {
-      // Try to use TradingPlanContext if available
-      const TradingPlanContext = require('../contexts/TradingPlanContext');
-      if (TradingPlanContext && TradingPlanContext.useTradingPlan) {
-        const contextResult = TradingPlanContext.useTradingPlan();
-        setContextData(contextResult);
-        return;
-      }
-    } catch (error) {
-      // Context not available, use fallback
-    }
-    
-    // Fallback to questionnaire data
-    const questionnaireData = localStorage.getItem('questionnaireAnswers');
-    const riskPlanData = localStorage.getItem('riskManagementPlan');
-    
-    let parsedQuestionnaire = null;
-    let parsedRiskPlan = null;
-    
-    try {
-      parsedQuestionnaire = questionnaireData ? JSON.parse(questionnaireData) : null;
-      parsedRiskPlan = riskPlanData ? JSON.parse(riskPlanData) : null;
-    } catch (parseError) {
-      console.warn('Error parsing stored data, using defaults');
-    }
-    
-    const fallbackData = {
-      accounts: [],
-      accountConfig: null,
-      updateAccountConfig: () => {},
-      tradingPlan: {
-        userProfile: {
-          initialBalance: (parsedQuestionnaire?.hasAccount === 'yes' ? parsedQuestionnaire?.accountEquity : parsedQuestionnaire?.accountSize) || 100000,
-          accountEquity: parsedQuestionnaire?.accountEquity || parsedRiskPlan?.accountEquity || 100000,
-          tradesPerDay: parsedQuestionnaire?.tradesPerDay || parsedRiskPlan?.tradesPerDay || '1-2',
-          tradingSession: parsedQuestionnaire?.tradingSession || parsedRiskPlan?.tradingSession || 'any',
-          cryptoAssets: parsedQuestionnaire?.cryptoAssets || parsedRiskPlan?.cryptoAssets || [],
-          forexAssets: parsedQuestionnaire?.forexAssets || parsedRiskPlan?.forexAssets || [],
-          hasAccount: parsedQuestionnaire?.hasAccount || parsedRiskPlan?.hasAccount || 'no',
-          experience: 'intermediate',
-          propFirm: parsedQuestionnaire?.propFirm || parsedRiskPlan?.propFirm || 'Not Set',
-          accountType: parsedQuestionnaire?.accountType || parsedRiskPlan?.accountType || 'Not Set'
-        },
-        riskParameters: {
-          maxDailyRisk: parsedRiskPlan?.dailyRiskAmount || 5000,
-          maxDailyRiskPct: `${parsedQuestionnaire?.riskPercentage || 1}%`,
-          baseTradeRisk: parsedRiskPlan?.riskAmount || 1000,
-          baseTradeRiskPct: `${parsedQuestionnaire?.riskPercentage || 1}%`,
-          minRiskReward: `1:${parsedQuestionnaire?.riskRewardRatio || 2}`
-        },
-        trades: [],
-        propFirmCompliance: {
-          dailyLossLimit: '5%',
-          totalDrawdownLimit: '10%',
-          profitTarget: `${parsedRiskPlan?.profitTargetPercentage || 10}%`,
-          consistencyRule: 'enabled'
-        }
-      },
-      updateTradingPlan: () => {},
-      propFirm: parsedQuestionnaire?.propFirm || null,
-      updatePropFirm: () => {}
-    };
-    
-    setContextData(fallbackData);
-  }, []);
-  
-  return contextData || {
-    accounts: [],
-    accountConfig: null,
-    updateAccountConfig: () => {},
-    tradingPlan: {
-      userProfile: {
-        initialBalance: 100000,
-        accountEquity: 100000,
-        tradesPerDay: '1-2',
-        tradingSession: 'any',
-        cryptoAssets: [],
-        forexAssets: [],
-        hasAccount: 'no',
-        experience: 'intermediate',
-        propFirm: 'Not Set',
-        accountType: 'Not Set'
-      },
-      riskParameters: {
-        maxDailyRisk: 5000,
-        maxDailyRiskPct: '1%',
-        baseTradeRisk: 1000,
-        baseTradeRiskPct: '1%',
-        minRiskReward: '1:2'
-      },
-      trades: [],
-      propFirmCompliance: {
-        dailyLossLimit: '5%',
-        totalDrawdownLimit: '10%',
-        profitTarget: '10%',
-        consistencyRule: 'enabled'
-      }
-    },
-    updateTradingPlan: () => {},
-    propFirm: null,
-    updatePropFirm: () => {}
-  };
-};
 import SignalsFeed from './SignalsFeed';
 import EnhancedUserSignalsFeed from './EnhancedUserSignalsFeed';
 import WorkingSignalsFeed from './WorkingSignalsFeed';
@@ -134,7 +28,7 @@ import PropFirmRules from './PropFirmRules';
 import RiskProtocol from './RiskProtocol';
 import LiveChatWidget from './LiveChatWidget';
 import { getAllTimezones, getMarketStatus } from '../services/timezoneService';
-import { fetchForexFactoryNews, getImpactColor, getImpactIcon, formatEventTime, ForexFactoryEvent } from '../services/forexFactoryService';
+import { getImpactColor, getImpactIcon, formatEventTime } from '../services/forexFactoryService';
 
 interface DashboardConcept4Props {
   onLogout: () => void;
@@ -143,9 +37,13 @@ interface DashboardConcept4Props {
   handleMarkAsTaken: (signal: Signal, outcome: TradeOutcome, pnl?: number) => void;
 }
 
-const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, tradingState, dashboardData, handleMarkAsTaken }) => {
+const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, tradingState, dashboardData: initialDashboardData, handleMarkAsTaken }) => {
   const { user } = useUser();
-  const { accounts, accountConfig, tradingPlan } = useSafeTradingPlan();
+  const { tradingPlan, propFirm, accountConfig, accounts, selectedAccountId, selectAccount, loading: tradingPlanLoading } = useTradingPlan();
+  const { dashboardData: localStorageData, loading: localStorageLoading } = useDashboardData();
+
+  const [dashboardData, setDashboardData] = useState(initialDashboardData);
+  const [isLoading, setIsLoading] = useState(true);
   const { tab } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => {
@@ -168,10 +66,6 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
     return 'America/New_York';
   });
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [forexNews, setForexNews] = useState<ForexFactoryEvent[]>([]);
-  const [isLoadingNews, setIsLoadingNews] = useState(false);
-  const [selectedNewsDate, setSelectedNewsDate] = useState(new Date());
-  const [selectedCurrency, setSelectedCurrency] = useState('ALL');
   
   // Settings state
   const [userSettings, setUserSettings] = useState(() => {
@@ -219,7 +113,6 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
         // Notifications
         notifications: {
           signals: true,
-          news: true,
           trades: true,
           priceAlerts: true,
           email: true,
@@ -294,7 +187,6 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
       },
       notifications: {
         signals: true,
-        news: true,
         trades: true,
         priceAlerts: true,
         email: true,
@@ -481,7 +373,7 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
       riskAmount: signal.riskAmount || 0,
       rewardAmount: signal.rewardAmount || 0,
       status: 'closed',
-      entryTime: new Date(signal.timestamp),
+      entryTime: new Date(signal.timestamp || Date.now()),
       closeTime: new Date(),
       outcome,
       pnl: actualPnl,
@@ -541,35 +433,6 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
     return () => clearInterval(statusTimer);
   }, [selectedTimezone, currentTime]);
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadNewsData = async () => {
-      if (isLoadingNews) return;
-      setIsLoadingNews(true);
-      try {
-        const news = await fetchForexFactoryNews(selectedNewsDate, selectedCurrency);
-        if (isMounted) {
-          setForexNews(news);
-        }
-      } catch (error) {
-        // Silently handle errors - fallback data is already provided by the service
-        console.log('Using fallback news data due to API limitations');
-      } finally {
-        if (isMounted) setIsLoadingNews(false);
-      }
-    };
-    
-    // Load news data immediately when filters change
-    loadNewsData();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedNewsDate, selectedCurrency, selectedTimezone]);
-
-  const handleNewsDateChange = (e: React.ChangeEvent<HTMLInputElement>) => setSelectedNewsDate(new Date(e.target.value));
-  const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => setSelectedCurrency(e.target.value);
 
   useEffect(() => {
     if (tab) setActiveTab(tab);
@@ -1165,28 +1028,32 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
   ];
 
   // Calculate current equity from questionnaire data and performance
-  const initialBalance = tradingPlan?.userProfile?.initialBalance || 10000;
-  const currentEquity = initialBalance + performanceMetrics.totalPnl;
+  const questionnaireAnswers = JSON.parse(localStorage.getItem('questionnaireAnswers') || '{}');
+  const hasAccount = questionnaireAnswers.hasAccount === 'yes';
+  const initialBalance = hasAccount
+    ? parseFloat(questionnaireAnswers.accountEquity)
+    : parseFloat(questionnaireAnswers.accountSize) || dashboardData?.performance?.accountBalance || 10000;
+  const currentEquity = initialBalance + (tradingState?.performanceMetrics?.totalPnl || 0);
   
   const stats = [
     {
-      label: 'Account Balance',
+      label: hasAccount ? 'Account Equity' : 'Account Balance',
       value: `$${currentEquity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       icon: <DollarSign className="w-8 h-8" />,
     },
     {
       label: 'Win Rate',
-      value: `${performanceMetrics.winRate.toFixed(1)}%`,
+      value: `${(tradingState?.performanceMetrics?.winRate || 0).toFixed(1)}%`,
       icon: <Target className="w-8 h-8" />,
     },
     {
       label: 'Total Trades',
-      value: performanceMetrics.totalTrades,
+      value: tradingState?.performanceMetrics?.totalTrades || 0,
       icon: <Activity className="w-8 h-8" />,
     },
     {
       label: 'Total P&L',
-      value: `${performanceMetrics.totalPnl >= 0 ? '+' : ''}$${performanceMetrics.totalPnl.toFixed(2)}`,
+      value: `${(tradingState?.performanceMetrics?.totalPnl || 0) >= 0 ? '+' : ''}$${(tradingState?.performanceMetrics?.totalPnl || 0).toFixed(2)}`,
       icon: <Award className="w-8 h-8" />,
     },
   ];
@@ -1198,11 +1065,17 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
           <div>
             <h2 className="text-3xl font-bold text-white mb-2">Welcome, {user?.name}</h2>
             <p className="text-gray-400">Your {user?.membershipTier?.charAt(0).toUpperCase() + (user?.membershipTier?.slice(1) || '')} Dashboard</p>
+            <p className="text-gray-400">User ID: {dashboardData?.userProfile?.uniqueId || user?.uniqueId}</p>
             <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm max-w-4xl mx-auto">
-              <div className="bg-gray-800/50 rounded-lg p-3"><span className="text-gray-400">Prop Firm:</span><span className="text-white ml-2 font-semibold">{tradingPlan?.userProfile?.propFirm || 'Not Set'}</span></div>
-              <div className="bg-gray-800/50 rounded-lg p-3"><span className="text-gray-400">Account Type:</span><span className="text-white ml-2 font-semibold">{tradingPlan?.userProfile?.accountType || 'Not Set'}</span></div>
-              <div className="bg-gray-800/50 rounded-lg p-3"><span className="text-gray-400">{tradingPlan?.userProfile?.hasAccount === 'yes' ? 'Account Equity' : 'Account Size'}:</span><span className="text-white ml-2 font-semibold">{tradingPlan?.userProfile?.initialBalance ? `$${tradingPlan.userProfile.initialBalance.toLocaleString()}` : 'Not Set'}</span></div>
-              <div className="bg-gray-800/50 rounded-lg p-3"><span className="text-gray-400">Experience:</span><span className="text-white ml-2 font-semibold capitalize">{tradingPlan?.userProfile?.experience || 'Not Set'}</span></div>
+              <div className="bg-gray-800/50 rounded-lg p-3"><span className="text-gray-400">Prop Firm:</span><span className="text-white ml-2 font-semibold">{dashboardData?.userProfile?.propFirm || 'Not Set'}</span></div>
+              <div className="bg-gray-800/50 rounded-lg p-3"><span className="text-gray-400">Account Type:</span><span className="text-white ml-2 font-semibold">{dashboardData?.userProfile?.accountType || 'Not Set'}</span></div>
+              <div className="bg-gray-800/50 rounded-lg p-3">
+                <span className="text-gray-400">{hasAccount ? 'Account Equity:' : 'Account Size:'}</span>
+                <span className="text-white ml-2 font-semibold">
+                  {initialBalance ? `$${initialBalance.toLocaleString()}` : 'Not Set'}
+                </span>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-3"><span className="text-gray-400">Experience:</span><span className="text-white ml-2 font-semibold capitalize">{dashboardData?.userProfile?.experience || 'Not Set'}</span></div>
             </div>
           </div>
           <div className="text-right space-y-2">
@@ -1213,7 +1086,7 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
           </div>
         </div>
       </div>
-      <div className="holo-stats">{stats.map((stat, index) => <div key={index} className="holo-stat"><div className="holo-value">{stat.value}</div><div style={{color: 'rgba(255,255,255,0.5)', marginTop: '10px'}}>{stat.label}</div></div>)}</div>
+      <div className="holo-stats">{stats.map((stat, index) => <div key={index} className="fluid-kpi"><div className="fluid-kpi-header"><div className="fluid-kpi-title">{stat.label}</div><div className="fluid-kpi-badge">Live</div></div><div className="fluid-kpi-value">{stat.value}</div><div className="fluid-kpi-chart"><div className="fluid-kpi-chart-fill" style={{transform: `scaleY(${0.6 + (index * 0.1)})`}}></div></div></div>)}</div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 holo-card">
           <h3 className="text-xl font-semibold text-white mb-6">Recent Trades</h3>
@@ -1228,106 +1101,6 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
           {marketStatus && <div className="space-y-4"><div className="text-xs text-gray-400 mb-2">{marketStatus.localTime}</div><div className="flex items-center justify-between"><span className="text-gray-400">Forex Market</span><div className="flex items-center space-x-2"><div className={`w-2 h-2 rounded-full ${marketStatus.isOpen ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div><span className={`text-sm ${marketStatus.isOpen ? 'text-green-400' : 'text-red-400'}`}>{marketStatus.isOpen ? 'Open' : 'Closed'}</span></div></div><div className="flex items-center justify-between"><span className="text-gray-400">Current Session</span><span className="text-white text-sm">{marketStatus.currentSession}</span></div><div className="flex items-center justify-between"><span className="text-gray-400">Next Session</span><span className="text-white text-sm">{marketStatus.nextSession} ({marketStatus.timeUntilNext})</span></div></div>}
         </div>
         
-        {/* News Section */}
-        <div className="lg:col-span-3 holo-card">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white flex items-center">
-              <Activity className="w-6 h-6 mr-2 text-blue-400" />
-              News
-            </h3>
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={async () => {
-                  if (isLoadingNews) return;
-                  setIsLoadingNews(true);
-                  try {
-                    const news = await fetchForexFactoryNews(selectedNewsDate, selectedCurrency);
-                    setForexNews(news);
-                  } catch (error) {
-                    console.log('Using fallback news data for refresh');
-                  } finally {
-                    setIsLoadingNews(false);
-                  }
-                }}
-                disabled={isLoadingNews}
-                className={`bg-gray-800 text-white p-2 rounded border border-gray-600 text-sm transition-colors ${
-                  isLoadingNews ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'
-                }`}
-              >
-                {isLoadingNews ? 'Loading...' : 'Refresh'}
-              </button>
-              <select 
-                value={selectedCurrency} 
-                onChange={handleCurrencyChange}
-                className="bg-gray-800 text-white p-2 rounded border border-gray-600 text-sm"
-              >
-                <option value="ALL">All Currencies</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="JPY">JPY</option>
-                <option value="CAD">CAD</option>
-                <option value="AUD">AUD</option>
-                <option value="NZD">NZD</option>
-                <option value="CHF">CHF</option>
-              </select>
-              <input 
-                type="date" 
-                value={selectedNewsDate.toISOString().split('T')[0]} 
-                onChange={handleNewsDateChange}
-                className="bg-gray-800 text-white p-2 rounded border border-gray-600 text-sm"
-              />
-            </div>
-          </div>
-          
-          {isLoadingNews ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
-              <p className="text-gray-400">Loading news events...</p>
-            </div>
-          ) : (
-            <div className="space-y-1 max-h-96 overflow-y-auto space-scrollbar">
-              {forexNews.length === 0 ? (
-                <div className="text-center py-8">
-                  <Activity className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <div className="text-gray-400 text-lg font-medium mb-2">No news events for selected date</div>
-                  <p className="text-gray-500 text-sm">Try selecting a different date or currency</p>
-                </div>
-              ) : (
-                <table className="w-full text-sm text-left text-gray-400">
-                  <thead className="text-xs text-gray-400 uppercase bg-gray-900/50">
-                    <tr>
-                      <th scope="col" className="px-4 py-3 w-[10%]">Time</th>
-                      <th scope="col" className="px-4 py-3 w-[10%]">Currency</th>
-                      <th scope="col" className="px-4 py-3 w-[10%]">Impact</th>
-                      <th scope="col" className="px-4 py-3 w-[40%]">Event</th>
-                      <th scope="col" className="px-4 py-3 text-right w-[10%]">Actual</th>
-                      <th scope="col" className="px-4 py-3 text-right w-[10%]">Forecast</th>
-                      <th scope="col" className="px-4 py-3 text-right w-[10%]">Previous</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                  {forexNews.map((event) => (
-                    <tr key={event.id} className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors duration-300">
-                      <td className="px-4 py-3 font-medium text-white">{formatEventTime(event.time, selectedTimezone)}</td>
-                      <td className="px-4 py-3 font-medium text-white">{event.currency}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getImpactColor(event.impact)}`}>
-                          {event.impact.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-white">{event.event}</td>
-                      <td className="px-4 py-3 text-right font-medium text-white">{event.actual}</td>
-                      <td className="px-4 py-3 text-right">{event.forecast}</td>
-                      <td className="px-4 py-3 text-right">{event.previous}</td>
-                    </tr>
-                  ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
@@ -1336,20 +1109,51 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
     <>
       <style>{`
         .dashboard-concept4 { 
-          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%); 
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           width: 100%; 
           height: 100vh; 
           display: flex;
+          position: relative;
+          overflow: hidden;
+          border-radius: 32px;
+        }
+        .fluid-bg {
+          position: absolute;
+          top: -50%;
+          right: -50%;
+          width: 100%;
+          height: 100%;
+          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+          animation: morph 20s ease-in-out infinite;
+          z-index: 1;
+        }
+        .fluid-bg2 {
+          position: absolute;
+          bottom: -50%;
+          left: -50%;
+          width: 100%;
+          height: 100%;
+          background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+          animation: morph 20s ease-in-out infinite reverse;
+          z-index: 1;
+        }
+        @keyframes morph {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          25% { transform: translate(30%, 20%) scale(1.2); }
+          50% { transform: translate(-20%, 30%) scale(0.8); }
+          75% { transform: translate(20%, -30%) scale(1.1); }
         }
         .sidebar { 
           width: 280px; 
           height: 100%; 
-          background: rgba(30, 30, 50, 0.95); 
-          backdrop-filter: blur(10px); 
-          border-right: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(20px);
+          border-right: 1px solid rgba(255, 255, 255, 0.25);
           z-index: 100; 
           display: flex; 
           flex-direction: column;
+          position: relative;
+          border-radius: 32px 0 0 32px;
         }
         .holo-sidebar::after {
           content: '';
@@ -1500,30 +1304,21 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
           100% { transform: translateX(250px) translateY(125px) rotate(360deg); }
         }
         .holo-card { 
-          background: 
-            linear-gradient(135deg, 
-              rgba(15, 35, 45, 0.9), 
-              rgba(35, 15, 55, 0.85), 
-              rgba(25, 30, 40, 0.8)); 
-          border: 3px solid transparent;
-          border-image: linear-gradient(45deg, 
-            rgba(0, 255, 200, 0.7) 0%, 
-            rgba(255, 0, 150, 0.6) 25%, 
-            rgba(150, 255, 0, 0.7) 50%, 
-            rgba(200, 100, 255, 0.6) 75%, 
-            rgba(0, 255, 200, 0.7) 100%) 1;
-          border-radius: 20px; 
-          padding: 45px; 
-          margin-bottom: 45px; 
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: 24px; 
+          padding: 30px; 
+          margin-bottom: 30px; 
           position: relative; 
-          backdrop-filter: blur(20px) saturate(1.2) contrast(1.1);
-          box-shadow: 
-            0 20px 60px rgba(0, 255, 200, 0.2),
-            0 0 80px rgba(255, 0, 150, 0.15),
-            inset 0 2px 0 rgba(0, 255, 200, 0.15),
-            inset 0 -1px 0 rgba(255, 0, 150, 0.1);
-          animation: holo-card-float 14s ease-in-out infinite;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
           overflow: hidden;
+        }
+        .holo-card:hover {
+          background: rgba(255, 255, 255, 0.25);
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
         .holo-card::after {
           content: '';
@@ -1555,9 +1350,38 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
           0% { transform: translate(-30%, -30%) rotate(0deg); }
           100% { transform: translate(30%, 30%) rotate(360deg); }
         }
-        .holo-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; }
-        .holo-stat { text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), transparent); border-radius: 15px; border: 1px solid rgba(0, 255, 255, 0.2); }
-        .holo-value { font-size: 32px; font-weight: bold; background: linear-gradient(45deg, #00ffff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .holo-stats { 
+          display: grid; 
+          grid-template-columns: repeat(4, 1fr); 
+          gap: 20px; 
+          margin-bottom: 35px;
+          position: relative;
+          z-index: 10;
+        }
+        .holo-stat { 
+          text-align: center; 
+          padding: 25px; 
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: 24px;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+        }
+        .holo-stat:hover {
+          background: rgba(255, 255, 255, 0.25);
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .holo-value { 
+          font-size: 38px; 
+          font-weight: 700; 
+          color: #fff;
+          margin-bottom: 10px;
+          text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
         @keyframes holo-card-float { 
           0%, 100% { 
             transform: translateY(0) rotateX(0deg); 
@@ -1671,44 +1495,60 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
           }
         }
         .logo {
-          font-size: 24px;
+          font-size: 32px;
           font-weight: 700;
           text-align: center;
-          padding: 30px 20px;
-          color: #ffffff;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 40px 20px;
+          color: #fff;
+          text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+          position: relative;
+          z-index: 10;
         }
         .menu-item { 
           padding: 16px 24px; 
           cursor: pointer; 
-          transition: all 0.2s ease; 
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
           display: flex; 
           align-items: center; 
           gap: 12px;
-          color: #a0a0a0;
-          border-radius: 8px;
+          color: rgba(255, 255, 255, 0.8);
+          border-radius: 12px;
           margin: 4px 0;
+          position: relative;
+          overflow: hidden;
         }
         .menu-item.active {
-          color: #3b82f6;
-          background: rgba(59, 130, 246, 0.1);
+          color: #fff;
+          background: rgba(255, 255, 255, 0.25);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
         .menu-item:hover {
           color: #ffffff;
-          background: rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.2);
+          transform: translateY(-2px);
         }
         .main-content {
           flex: 1;
           padding: 40px;
           overflow-y: auto;
+          position: relative;
+          z-index: 10;
         }
         .card { 
-          background: rgba(40, 40, 60, 0.8); 
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px; 
-          padding: 24px; 
-          margin-bottom: 24px; 
-          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: 24px; 
+          padding: 30px; 
+          margin-bottom: 30px; 
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+        }
+        .card:hover {
+          background: rgba(255, 255, 255, 0.25);
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
         .value { 
           font-size: 32px; 
@@ -1716,8 +1556,75 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
           color: #3b82f6;
           font-family: 'Inter', sans-serif;
         }
+        
+        /* Fluid Gradient Specific Styles */
+        .fluid-kpi {
+          background: rgba(255,255,255,0.15);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.25);
+          border-radius: 24px;
+          padding: 25px;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+        }
+        .fluid-kpi:hover {
+          background: rgba(255,255,255,0.25);
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .fluid-kpi-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 15px;
+        }
+        .fluid-kpi-title {
+          font-size: 13px;
+          color: rgba(255,255,255,0.8);
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .fluid-kpi-badge {
+          padding: 4px 8px;
+          background: rgba(255,255,255,0.2);
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+        .fluid-kpi-value {
+          font-size: 38px;
+          font-weight: 700;
+          color: #fff;
+          margin-bottom: 10px;
+          text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .fluid-kpi-chart {
+          height: 40px;
+          background: rgba(255,255,255,0.1);
+          border-radius: 8px;
+          overflow: hidden;
+          position: relative;
+        }
+        .fluid-kpi-chart-fill {
+          position: absolute;
+          left: 0;
+          bottom: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.5));
+          transform: scaleY(0.7);
+          transform-origin: bottom;
+          animation: grow 2s ease-out;
+        }
+        @keyframes grow {
+          from { transform: scaleY(0); }
+          to { transform: scaleY(0.7); }
+        }
       `}</style>
       <div className="dashboard-concept4">
+        <div className="fluid-bg"></div>
+        <div className="fluid-bg2"></div>
         <div className="sidebar">
             <div className="logo">Trader Edge Pro</div>
             {hasMultiAccountAccess && <div className="p-4"><select value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)} className="w-full bg-gray-800 text-white p-2 rounded border border-gray-600">{accounts.map((account: any) => <option key={account.id} value={account.id}>{account.account_name}</option>)}</select></div>}
@@ -1742,7 +1649,7 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
                 trades: userTrades,
                 openPositions: [],
                 riskSettings: {
-                  riskPerTrade: parseFloat(tradingPlan?.riskParameters?.baseTradeRiskPct?.replace('%', '') || '1'),
+                  riskPerTrade: parseFloat(dashboardData?.riskParameters?.baseTradeRiskPct?.replace('%', '') || '1'),
                   dailyLossLimit: 5,
                   consecutiveLossesLimit: 3
                 },
@@ -1756,7 +1663,7 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
               {activeTab === 'journal' && renderJournal()}
               {activeTab === 'accounts' && hasMultiAccountAccess && <MultiAccountTracker />}
               {activeTab === 'rules' && <NewPropFirmRules />}
-              {activeTab === 'risk-protocol' && <RiskProtocol dashboardData={dashboardData} />}
+              {activeTab === 'risk-protocol' && <RiskManagementPlan />}
               {activeTab === 'ai-coach' && <iframe ref={aiCoachRef} src="/AICoach.html" title="AI Coach" style={{ width: '100%', height: 'calc(100vh - 120px)', border: 'none', borderRadius: '1rem' }} />}
               {activeTab === 'notifications' && <NotificationCenter />}
               {activeTab === 'settings' && renderSettings()}

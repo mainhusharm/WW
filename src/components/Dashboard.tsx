@@ -441,11 +441,10 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
           value={theme}
           className="bg-gray-800 text-white p-2 rounded border border-gray-600"
         >
-          <option value="concept1">Concept 1</option>
-          <option value="concept2">Concept 2</option>
-          <option value="concept3">Concept 3</option>
-          <option value="concept4">Concept 4</option>
-          <option value="concept5">Forex & Crypto</option>
+          <option value="concept1">Default</option>
+          <option value="concept2">Aurora Borealis</option>
+          <option value="concept3">Neomorphic Dark</option>
+          <option value="concept4">Fluid Gradient</option>
         </select>
       </div>
       {renderTheme()}

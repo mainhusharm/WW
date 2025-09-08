@@ -2,9 +2,9 @@ import React from 'react';
 
 const themes = [
   { id: 'concept1', name: 'Default' },
-  { id: 'concept2', name: 'Quantum Glass' },
-  { id: 'concept3', name: 'Cyberpunk Neon' },
-  { id: 'concept4', name: 'Organic Flow' },
+  { id: 'concept2', name: 'Aurora Borealis' },
+  { id: 'concept3', name: 'Neomorphic Dark' },
+  { id: 'concept4', name: 'Fluid Gradient' },
 ];
 
 const ThemeSwitcher = ({ onThemeChange }: { onThemeChange: (theme: string) => void }) => {
