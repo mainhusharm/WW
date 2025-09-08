@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Key } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import { useTradingPlan } from '../contexts/TradingPlanContext';
 import ApiKeySetup from './ApiKeySetup';
@@ -184,7 +185,45 @@ const AICoach: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-6">
         <div className="max-w-4xl mx-auto">
-          <ApiKeySetup onApiKeySet={handleApiKeySet} />
+          {/* Header */}
+          <div className="bg-gray-800/50 border-b border-gray-700 p-6 mb-6 rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  AI Trading Coach
+                </h1>
+                <p className="text-gray-400 mt-2">
+                  Your personalized AI assistant for trading strategies and market insights
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* API Key Setup */}
+          <div className="space-y-6">
+            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-6">
+              <h2 className="text-2xl font-bold text-blue-400 mb-4 flex items-center">
+                <Key className="w-6 h-6 mr-3" />
+                Setup Required
+              </h2>
+              <p className="text-gray-300 mb-6">
+                To use the AI Coach, you need to provide your own Google Gemini API key. This ensures reliable service for all users.
+              </p>
+              
+              <div className="bg-gray-800/50 rounded-lg p-4 mb-6">
+                <h3 className="text-lg font-semibold text-cyan-300 mb-3">Quick Setup Steps:</h3>
+                <ol className="text-sm text-gray-300 space-y-2 list-decimal list-inside">
+                  <li>Go to <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">Google AI Studio</a></li>
+                  <li>Sign in with your Google account</li>
+                  <li>Click "Create API Key"</li>
+                  <li>Copy the generated API key</li>
+                  <li>Paste it in the field below and click "Save & Validate"</li>
+                </ol>
+              </div>
+
+              <ApiKeySetup onApiKeySet={handleApiKeySet} />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -209,6 +248,13 @@ const AICoach: React.FC = () => {
                 <p className="text-sm text-gray-400">Session ID</p>
                 <p className="text-xs text-gray-500 font-mono">{sessionId}</p>
               </div>
+              <button
+                onClick={() => setUserApiKey('')}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <Key className="w-4 h-4" />
+                Change API Key
+              </button>
               <button
                 onClick={clearConversation}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"

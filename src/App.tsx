@@ -15,6 +15,8 @@ import SuccessfulPaymentPage from './components/SuccessfulPaymentPage';
 import MT5BotsPage from './components/MT5BotsPage';
 import MT5PaymentPage from './components/MT5PaymentPage';
 import MT5BotDashboard from './components/MT5BotDashboard';
+import MT5Signup from './components/MT5Signup';
+import MT5CustomerServiceDashboard from './components/MT5CustomerServiceDashboard';
 import Questionnaire from './components/Questionnaire';
 import PropFirmSelection from './components/PropFirmSelection';
 import AccountConfiguration from './components/AccountConfiguration';
@@ -161,8 +163,10 @@ const AppContent = () => {
         <Route path="/signin" element={<SignIn />} />
         <Route path="/membership" element={<MembershipPlans />} />
         <Route path="/mt5-bots" element={<MT5BotsPage />} />
+        <Route path="/mt5-signup" element={<MT5Signup />} />
         <Route path="/mt5-payment" element={<MT5PaymentPage />} />
         <Route path="/mt5-dashboard" element={<MT5BotDashboard />} />
+        <Route path="/mt5-customer-service" element={<MT5CustomerServiceDashboard />} />
         <Route path="/payment-flow" element={<ProtectedRoute><PaymentFlow /></ProtectedRoute>} />
         <Route path="/paypal-payment" element={<ProtectedRoute><PayPalPayment /></ProtectedRoute>} />
         <Route path="/stripe-payment" element={<ProtectedRoute><StripePayment /></ProtectedRoute>} />

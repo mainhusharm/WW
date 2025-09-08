@@ -148,8 +148,8 @@ const MT5BotsPage: React.FC = () => {
 
   const handlePlanSelect = (plan: any) => {
     setSelectedPlan(plan.name);
-    // Navigate to payment page with plan details
-    window.location.href = `/payment?plan=${plan.name}&price=${plan.price}`;
+    // Navigate to signup page with plan details
+    window.location.href = `/mt5-signup?plan=${plan.name}&price=${plan.price}`;
   };
 
   return (
