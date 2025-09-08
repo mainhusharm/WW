@@ -28,7 +28,9 @@ import PropFirmRules from './PropFirmRules';
 import RiskProtocol from './RiskProtocol';
 import LiveChatWidget from './LiveChatWidget';
 import UserSupportDashboard from './UserSupportDashboard';
+import ApiKeySetup from './ApiKeySetup';
 import { getAllTimezones, getMarketStatus } from '../services/timezoneService';
+import { getUserApiKey } from '../utils/apiKeyTest';
 import { getImpactColor, getImpactIcon, formatEventTime } from '../services/forexFactoryService';
 
 interface DashboardConcept4Props {
@@ -803,14 +805,29 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
         {activeSettingsTab === 'api' && (
           <div className="space-y-6">
             <h3 className="text-xl font-semibold text-white border-b border-cyan-400/30 pb-2">API & Integrations</h3>
+            
+            {/* AI Coach API Key Section */}
             <div className="space-y-4">
+              <h4 className="text-lg font-semibold text-cyan-300">AI Coach Configuration</h4>
+              <ApiKeySetup 
+                onApiKeySet={(apiKey) => {
+                  // The ApiKeySetup component handles localStorage storage
+                  console.log('API key set:', apiKey);
+                }}
+                currentApiKey={user?.email ? getUserApiKey(user.email) || '' : ''}
+              />
+            </div>
+
+            {/* Other API Settings */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold text-cyan-300">Other API Settings</h4>
               <div>
-                <label className="block text-cyan-300 text-sm font-medium mb-2">API Key</label>
+                <label className="block text-cyan-300 text-sm font-medium mb-2">Trading API Key</label>
                 <input
                   type="password"
                   value={userSettings.api?.apiKey || ''}
                   onChange={(e) => handleNestedSettingsUpdate('api', 'apiKey', e.target.value)}
-                  placeholder="Enter your API key"
+                  placeholder="Enter your trading API key"
                   className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
                 />
               </div>

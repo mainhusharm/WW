@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../contexts/UserContext';
 import { useTradingPlan } from '../contexts/TradingPlanContext';
+import ApiKeySetup from './ApiKeySetup';
+import { getUserApiKey } from '../utils/apiKeyTest';
 
 interface Message {
   id: string;
@@ -21,10 +23,20 @@ const AICoach: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
+  const [userApiKey, setUserApiKey] = useState<string>('');
 
   // Gemini API configuration
-  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
   const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+
+  useEffect(() => {
+    // Load user's API key from localStorage
+    if (user?.email) {
+      const savedKey = getUserApiKey(user.email);
+      if (savedKey) {
+        setUserApiKey(savedKey);
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     // Generate session ID for this conversation
@@ -53,7 +65,7 @@ const AICoach: React.FC = () => {
   };
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || !GEMINI_API_KEY) return;
+    if (!inputMessage.trim() || !userApiKey) return;
 
     const userMessage: Message = {
       id: `user_${Date.now()}`,
@@ -69,7 +81,7 @@ const AICoach: React.FC = () => {
     try {
       const startTime = Date.now();
       
-      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(`${GEMINI_API_URL}?key=${userApiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -164,20 +176,15 @@ const AICoach: React.FC = () => {
     setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   };
 
-  if (!GEMINI_API_KEY) {
+  const handleApiKeySet = (apiKey: string) => {
+    setUserApiKey(apiKey);
+  };
+
+  if (!userApiKey) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6 text-center">
-            <h2 className="text-2xl font-bold text-red-400 mb-4">⚠️ API Key Required</h2>
-            <p className="text-gray-300 mb-4">
-              The Gemini API key is not configured. Please add your API key to the environment variables.
-            </p>
-            <div className="bg-gray-800 rounded-lg p-4 text-left text-sm">
-              <p className="text-gray-400 mb-2">Required environment variable:</p>
-              <code className="text-green-400">VITE_GEMINI_API_KEY</code>
-            </div>
-          </div>
+          <ApiKeySetup onApiKeySet={handleApiKeySet} />
         </div>
       </div>
     );

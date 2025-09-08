@@ -20,6 +20,8 @@ import Header from './Header';
 import Scene3D from './3D/Scene3D';
 import ScrollAnimations from './3D/ScrollAnimations';
 import FallbackLandingPage from './FallbackLandingPage';
+import MT5BotPortal from './MT5BotPortal';
+import CombinedMembershipPlans from './CombinedMembershipPlans';
 
 const Enhanced3DLandingPage = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -302,6 +304,13 @@ const Enhanced3DLandingPage = () => {
           </div>
         </section>
 
+        {/* MT5 Bot Portal Section */}
+        <section className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-7xl mx-auto">
+            <MT5BotPortal />
+          </div>
+        </section>
+
         {/* Features Section with Enhanced 3D */}
         <section id="features" className="features-section py-20 px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-7xl mx-auto">
@@ -453,6 +462,9 @@ const Enhanced3DLandingPage = () => {
             </div>
           </div>
         </section>
+
+        {/* Combined Membership Plans */}
+        <CombinedMembershipPlans />
 
         {/* Final CTA with 3D Elements */}
         <section className="py-32 px-4 sm:px-6 lg:px-8 relative z-10">
