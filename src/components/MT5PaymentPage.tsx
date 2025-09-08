@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CreditCard, Shield, Undo, Headphones, CheckCircle, Copy, Search } from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import Header from './Header';
 import { PAYMENT_CONFIG } from '../config/payment';
+import MT5StripeCheckoutForm from './MT5StripeCheckoutForm';
+
+// Initialize Stripe
+const stripePromise = loadStripe(PAYMENT_CONFIG.stripe.publishableKey);
 
 const MT5PaymentPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -18,6 +24,11 @@ const MT5PaymentPage: React.FC = () => {
   const [cryptoSymbol, setCryptoSymbol] = useState('ETH');
   const [walletAddress, setWalletAddress] = useState('');
   const [txHash, setTxHash] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [finalPrice, setFinalPrice] = useState(0);
+  const [couponMessage, setCouponMessage] = useState('');
 
   // Cryptocurrency addresses (using the same as the main website)
   const cryptoAddresses = {
@@ -100,26 +111,58 @@ const MT5PaymentPage: React.FC = () => {
       setSelectedPlan(plans.pro);
       setIsLoading(false);
     }
-    
-    // Generate order ID
-    const orderId = `MT5-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-    
-    // Set crypto amounts (real prices)
-    const cryptoPrices = {
-      ETH: 2500,
-      SOL: 100
-    };
-    
-    const selectedCrypto = cryptoSymbol as keyof typeof cryptoPrices;
-    setCryptoAmount(planPrice / cryptoPrices[selectedCrypto]);
-    
-    // Set real wallet address
-    setWalletAddress(cryptoAddresses[cryptoSymbol as keyof typeof cryptoAddresses]?.address || '');
   }, [searchParams, cryptoSymbol]);
+
+  // Update crypto amount when selectedPlan or cryptoSymbol changes
+  useEffect(() => {
+    if (selectedPlan) {
+      const cryptoPrices = {
+        ETH: 2500,
+        SOL: 100
+      };
+      
+      const selectedCrypto = cryptoSymbol as keyof typeof cryptoPrices;
+      setCryptoAmount(finalPrice / cryptoPrices[selectedCrypto]);
+      
+      // Set real wallet address
+      setWalletAddress(cryptoAddresses[cryptoSymbol as keyof typeof cryptoAddresses]?.address || '');
+    }
+  }, [selectedPlan, cryptoSymbol, finalPrice]);
+
+  // Initialize final price when selectedPlan changes
+  useEffect(() => {
+    if (selectedPlan) {
+      setFinalPrice(selectedPlan.price);
+    }
+  }, [selectedPlan]);
 
   const switchPaymentMethod = (method: string) => {
     setPaymentMethod(method);
     setIsError(false);
+  };
+
+  const handleCouponApply = () => {
+    if (!couponCode.trim()) {
+      setCouponMessage('Please enter a coupon code');
+      return;
+    }
+
+    if (couponCode.toUpperCase() === 'BOTFREE') {
+      setCouponApplied(true);
+      setDiscountAmount(selectedPlan?.price || 0);
+      setFinalPrice(0);
+      setCouponMessage('Coupon applied! Your order is now FREE!');
+    } else {
+      setCouponMessage('Invalid coupon code');
+    }
+  };
+
+  const handleCouponRemove = () => {
+    setCouponApplied(false);
+    setDiscountAmount(0);
+    setFinalPrice(selectedPlan?.price || 0);
+    setCouponCode('');
+    setCouponMessage('');
   };
 
   const selectCrypto = (crypto: string) => {
@@ -146,6 +189,17 @@ const MT5PaymentPage: React.FC = () => {
     }
     
     setIsProcessing(true);
+    setIsError(false);
+    
+    // Handle free coupon checkout
+    if (couponApplied && finalPrice === 0) {
+      console.log('Processing free coupon checkout...');
+      setTimeout(() => {
+        setIsProcessing(false);
+        setIsSuccess(true);
+      }, 1500);
+      return;
+    }
     
     // Simulate payment verification
     setTimeout(() => {
@@ -154,50 +208,22 @@ const MT5PaymentPage: React.FC = () => {
     }, 3000);
   };
 
-  const handleStripePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    
-    try {
-      // Create payment intent using the existing payment configuration
-      const response = await fetch(PAYMENT_CONFIG.endpoints.stripe.createPaymentIntent, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: (selectedPlan?.price || 0) * 100, // Convert to cents
-          currency: PAYMENT_CONFIG.stripe.currency,
-          plan: selectedPlan?.name || 'MT5 Bot Development',
-          type: 'mt5_bot'
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Payment creation failed');
-      }
-
-      const { client_secret } = await response.json();
-      
-      // In a real implementation, you would use Stripe Elements here
-      // For now, we'll simulate success
-      setTimeout(() => {
-        setIsProcessing(false);
-        setIsSuccess(true);
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Payment error:', error);
-      setIsProcessing(false);
-      setIsError(true);
-      setErrorMessage('Payment processing failed. Please try again.');
-    }
-  };
 
   const handlePayPalPayment = async () => {
     setIsProcessing(true);
+    setIsError(false);
     
     try {
+      // Handle free coupon checkout
+      if (couponApplied && finalPrice === 0) {
+        console.log('Processing free coupon checkout...');
+        setTimeout(() => {
+          setIsProcessing(false);
+          setIsSuccess(true);
+        }, 1500);
+        return;
+      }
+
       // Create PayPal order using the existing payment configuration
       const response = await fetch(PAYMENT_CONFIG.endpoints.paypal.createOrder, {
         method: 'POST',
@@ -205,10 +231,13 @@ const MT5PaymentPage: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: selectedPlan?.price || 0,
+          amount: finalPrice,
           currency: PAYMENT_CONFIG.paypal.currency,
           plan: selectedPlan?.name || 'MT5 Bot Development',
-          type: 'mt5_bot'
+          type: 'mt5_bot',
+          coupon_code: couponCode || null,
+          original_price: selectedPlan?.price || 0,
+          discount_amount: discountAmount
         }),
       });
 
@@ -238,12 +267,47 @@ const MT5PaymentPage: React.FC = () => {
     const paymentRecord = {
       status: 'completed',
       plan: selectedPlan?.name || 'Pro',
-      amount: selectedPlan?.price || 599,
+      amount: finalPrice || selectedPlan?.price || 599,
       method: paymentMethod,
       orderId: `MT5-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      couponCode: couponCode || null,
+      discountAmount: discountAmount
     };
     localStorage.setItem('paymentRecord', JSON.stringify(paymentRecord));
+    localStorage.setItem('mt5_payment_record', JSON.stringify(paymentRecord));
+    
+    // Update existing MT5 user status to active
+    const existingUsers = JSON.parse(localStorage.getItem('mt5_users') || '[]');
+    const existingCustomers = JSON.parse(localStorage.getItem('mt5Customers') || '[]');
+    
+    // Find the most recent user (from signup)
+    const latestUser = existingUsers[existingUsers.length - 1];
+    const latestCustomer = existingCustomers[existingCustomers.length - 1];
+    
+    if (latestUser) {
+      latestUser.status = 'active';
+      latestUser.plan = selectedPlan?.name || 'Elite';
+      localStorage.setItem('mt5_users', JSON.stringify(existingUsers));
+      localStorage.setItem('currentUser', JSON.stringify(latestUser));
+    } else {
+      // Fallback: create a new user
+      const mt5User = {
+        id: `mt5_${Date.now()}`,
+        name: 'MT5 Bot User',
+        email: 'user@mt5bot.com',
+        plan: selectedPlan?.name || 'Elite',
+        status: 'active',
+        joinDate: new Date().toISOString()
+      };
+      localStorage.setItem('currentUser', JSON.stringify(mt5User));
+    }
+    
+    if (latestCustomer) {
+      latestCustomer.status = 'COMPLETED';
+      latestCustomer.selectedPlan = selectedPlan;
+      localStorage.setItem('mt5Customers', JSON.stringify(existingCustomers));
+    }
     
     // Redirect to MT5 dashboard
     navigate('/mt5-dashboard');
@@ -269,12 +333,23 @@ const MT5PaymentPage: React.FC = () => {
             <p><strong>Order ID:</strong> MT5-2024-001</p>
             <p><strong>Transaction ID:</strong> {txHash || 'STRIPE_TXN_123456'}</p>
           </div>
-          <button
-            onClick={goToDashboard}
-            className="bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-400 hover:to-cyan-400 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-purple-500/50 flex items-center justify-center mx-auto"
-          >
-            Access Dashboard
-          </button>
+          <div className="space-y-4">
+            <button
+              onClick={goToDashboard}
+              className="bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-400 hover:to-cyan-400 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-purple-500/50 flex items-center justify-center mx-auto"
+            >
+              Access Dashboard
+            </button>
+            <button
+              onClick={() => {
+                console.log('Manual navigation test');
+                navigate('/mt5-dashboard');
+              }}
+              className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300"
+            >
+              Test Navigation (Debug)
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -324,18 +399,62 @@ const MT5PaymentPage: React.FC = () => {
                 </div>
               )}
 
+              {/* Coupon Section */}
+              <div className="border-t border-gray-700 pt-6 mb-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Coupon Code</h3>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Enter coupon code"
+                    className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                    disabled={couponApplied}
+                  />
+                  {!couponApplied ? (
+                    <button
+                      onClick={handleCouponApply}
+                      className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                    >
+                      Apply
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleCouponRemove}
+                      className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                {couponMessage && (
+                  <p className={`text-sm mt-2 ${couponMessage.includes('applied') ? 'text-green-400' : 'text-red-400'}`}>
+                    {couponMessage}
+                  </p>
+                )}
+              </div>
+
               <div className="border-t border-gray-700 pt-6">
                 <div className="flex justify-between mb-2">
                   <span className="text-gray-400">Subtotal:</span>
                   <span className="text-white">${selectedPlan?.price || 0}</span>
                 </div>
+                {couponApplied && (
+                  <div className="flex justify-between mb-2 text-green-400">
+                    <span>Discount ({couponCode}):</span>
+                    <span>-${discountAmount}</span>
+                  </div>
+                )}
                 <div className="flex justify-between mb-2">
                   <span className="text-gray-400">Processing Fee:</span>
                   <span className="text-white">$0</span>
                 </div>
                 <div className="flex justify-between text-xl font-bold">
                   <span className="text-white">Total:</span>
-                  <span className="text-white">${selectedPlan?.price || 0}</span>
+                  <span className={`${finalPrice === 0 ? 'text-green-400' : 'text-white'}`}>
+                    ${finalPrice}
+                    {finalPrice === 0 && <span className="text-sm ml-2">(FREE!)</span>}
+                  </span>
                 </div>
               </div>
 
@@ -397,31 +516,75 @@ const MT5PaymentPage: React.FC = () => {
               {paymentMethod === 'stripe' && (
                 <div className="bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
                   <h3 className="text-xl font-bold text-white mb-4">Credit Card Payment</h3>
-                  <form onSubmit={handleStripePayment}>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Cardholder Name</label>
-                        <input
-                          type="text"
-                          className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
-                          placeholder="John Doe"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Card Information</label>
-                        <div className="bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white">
-                          <div className="text-gray-400">Stripe Elements would be integrated here</div>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-400 hover:to-cyan-400 text-white py-4 rounded-lg font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-purple-500/50 mt-6"
-                    >
-                      Pay ${selectedPlan?.price || 0}
-                    </button>
-                  </form>
+                  <Elements stripe={stripePromise}>
+                    <MT5StripeCheckoutForm
+                      selectedPlan={selectedPlan}
+                      finalPrice={finalPrice}
+                      couponCode={couponCode}
+                      discountAmount={discountAmount}
+                      onPaymentSuccess={() => {
+                        console.log('Payment success callback triggered');
+                        setIsSuccess(true);
+                        // Save payment record to localStorage
+                        const paymentRecord = {
+                          id: `MT5-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+                          plan: selectedPlan?.name || 'Elite',
+                          amount: finalPrice,
+                          method: 'stripe',
+                          status: 'completed',
+                          timestamp: new Date().toISOString(),
+                          couponCode: couponCode || null,
+                          discountAmount: discountAmount
+                        };
+                        localStorage.setItem('mt5_payment_record', JSON.stringify(paymentRecord));
+                        localStorage.setItem('paymentRecord', JSON.stringify(paymentRecord));
+                        
+                        // Update existing MT5 user status to active
+                        const existingUsers = JSON.parse(localStorage.getItem('mt5_users') || '[]');
+                        const existingCustomers = JSON.parse(localStorage.getItem('mt5Customers') || '[]');
+                        
+                        // Find the most recent user (from signup)
+                        const latestUser = existingUsers[existingUsers.length - 1];
+                        const latestCustomer = existingCustomers[existingCustomers.length - 1];
+                        
+                        if (latestUser) {
+                          latestUser.status = 'active';
+                          latestUser.plan = selectedPlan?.name || 'Elite';
+                          localStorage.setItem('mt5_users', JSON.stringify(existingUsers));
+                          localStorage.setItem('currentUser', JSON.stringify(latestUser));
+                        } else {
+                          // Fallback: create a new user
+                          const mt5User = {
+                            id: `mt5_${Date.now()}`,
+                            name: 'MT5 Bot User',
+                            email: 'user@mt5bot.com',
+                            plan: selectedPlan?.name || 'Elite',
+                            status: 'active',
+                            joinDate: new Date().toISOString()
+                          };
+                          localStorage.setItem('currentUser', JSON.stringify(mt5User));
+                        }
+                        
+                        if (latestCustomer) {
+                          latestCustomer.status = 'COMPLETED';
+                          latestCustomer.selectedPlan = selectedPlan;
+                          localStorage.setItem('mt5Customers', JSON.stringify(existingCustomers));
+                        }
+                        
+                        console.log('Payment record and user saved, navigating to dashboard in 2 seconds');
+                        setTimeout(() => {
+                          console.log('Navigating to /mt5-dashboard');
+                          navigate('/mt5-dashboard');
+                        }, 2000);
+                      }}
+                      onPaymentError={(error) => {
+                        setIsError(true);
+                        setErrorMessage(error);
+                      }}
+                      isProcessing={isProcessing}
+                      setIsProcessing={setIsProcessing}
+                    />
+                  </Elements>
                 </div>
               )}
 
@@ -434,7 +597,7 @@ const MT5PaymentPage: React.FC = () => {
                     onClick={handlePayPalPayment}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg font-bold text-lg transition-all duration-300"
                   >
-                    Pay with PayPal
+                    {finalPrice === 0 ? 'Complete Free Order' : `Pay $${finalPrice} with PayPal`}
                   </button>
                 </div>
               )}
@@ -465,7 +628,7 @@ const MT5PaymentPage: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <div className="text-white font-semibold">{cryptoAmount.toFixed(4)} ETH</div>
-                        <div className="text-gray-400 text-sm">${selectedPlan?.price || 0}</div>
+                        <div className="text-gray-400 text-sm">${finalPrice}</div>
                       </div>
                     </button>
                     
@@ -488,7 +651,7 @@ const MT5PaymentPage: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <div className="text-white font-semibold">{cryptoAmount.toFixed(2)} SOL</div>
-                        <div className="text-gray-400 text-sm">${selectedPlan?.price || 0}</div>
+                        <div className="text-gray-400 text-sm">${finalPrice}</div>
                       </div>
                     </button>
                   </div>
@@ -532,7 +695,7 @@ const MT5PaymentPage: React.FC = () => {
                     <div className="space-y-2">
                       <h5 className="font-semibold text-white">Payment Instructions:</h5>
                       <ol className="text-sm text-gray-400 space-y-1">
-                        <li>1. Send exactly <strong>{cryptoAmount.toFixed(cryptoSymbol === 'ETH' ? 4 : 2)} {cryptoSymbol}</strong> to the address above</li>
+                        <li>1. Send exactly <strong>{cryptoAmount.toFixed(cryptoSymbol === 'ETH' ? 4 : 2)} {cryptoSymbol}</strong> (${finalPrice}) to the address above</li>
                         <li>2. Include the transaction hash below</li>
                         <li>3. Wait for confirmation (usually 2-10 minutes)</li>
                         <li>4. Your order will be activated automatically</li>
@@ -572,7 +735,7 @@ const MT5PaymentPage: React.FC = () => {
                       className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-400 hover:to-cyan-400 text-white py-4 rounded-lg font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-purple-500/50 flex items-center justify-center"
                     >
                       <Search className="w-5 h-5 mr-2" />
-                      Verify Payment
+                      {finalPrice === 0 ? 'Complete Free Order' : 'Verify Payment'}
                     </button>
                   </div>
                 </div>

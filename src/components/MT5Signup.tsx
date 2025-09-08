@@ -87,6 +87,19 @@ const MT5Signup: React.FC = () => {
     setIsLoading(true);
     
     try {
+      // Check if email already exists in both databases (one email = one account)
+      const existingCustomers = JSON.parse(localStorage.getItem('mt5Customers') || '[]');
+      const existingUsers = JSON.parse(localStorage.getItem('mt5_users') || '[]');
+      
+      const existingCustomer = existingCustomers.find((customer: any) => customer.email === formData.email);
+      const existingUser = existingUsers.find((user: any) => user.email === formData.email);
+      
+      if (existingCustomer || existingUser) {
+        setErrors({ email: 'This email is already registered. Please use a different email or sign in instead.' });
+        setIsLoading(false);
+        return;
+      }
+
       // Create MT5 customer data
       const mt5Customer = {
         id: `mt5_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -107,9 +120,21 @@ const MT5Signup: React.FC = () => {
       };
       
       // Save to localStorage (in real app, this would be sent to server)
-      const existingCustomers = JSON.parse(localStorage.getItem('mt5Customers') || '[]');
       existingCustomers.push(mt5Customer);
       localStorage.setItem('mt5Customers', JSON.stringify(existingCustomers));
+      
+      // Also save to mt5_users for signin validation
+      const mt5Users = JSON.parse(localStorage.getItem('mt5_users') || '[]');
+      const mt5User = {
+        id: mt5Customer.id,
+        name: mt5Customer.fullName,
+        email: mt5Customer.email,
+        plan: selectedPlan?.name || 'Elite',
+        status: 'pending',
+        joinDate: new Date().toISOString()
+      };
+      mt5Users.push(mt5User);
+      localStorage.setItem('mt5_users', JSON.stringify(mt5Users));
       
       // Save current user for session
       localStorage.setItem('currentMT5User', JSON.stringify(mt5Customer));

@@ -201,7 +201,7 @@ const MT5BotsPage: React.FC = () => {
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </button>
                 <Link
-                  to="/signin"
+                  to="/mt5-signin"
                   className="border-2 border-gray-600 text-gray-300 hover:border-purple-500 hover:text-purple-400 px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 backdrop-blur-sm hover:bg-purple-500/5 flex items-center justify-center"
                 >
                   Login to Dashboard
@@ -422,7 +422,7 @@ const MT5BotsPage: React.FC = () => {
               <ArrowRight className="w-6 h-6 ml-2" />
             </button>
             <Link
-              to="/signin"
+              to="/mt5-signin"
               className="border-2 border-gray-600 text-gray-300 hover:border-purple-500 hover:text-purple-400 px-12 py-5 rounded-2xl font-bold text-xl transition-all duration-300 backdrop-blur-sm hover:bg-purple-500/5 flex items-center justify-center"
             >
               Login to Dashboard
