@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_CONFIG } from './config';
+import { isProduction, getSafeHeaders, logEnvironmentInfo } from '../utils/environmentUtils';
 
 // Create axios instance with production configuration
 const api = axios.create({
@@ -13,17 +14,27 @@ const api = axios.create({
 // Add a request interceptor to handle CORS
 api.interceptors.request.use(
   (config) => {
-    // Add CORS headers to all requests
-    config.headers = {
-      ...config.headers,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    // Log environment info in development
+    if (!isProduction()) {
+      logEnvironmentInfo();
+    }
     
-    // Add CORS mode
-    if (config.method === 'post' || config.method === 'put' || config.method === 'patch') {
-      config.headers['Access-Control-Request-Method'] = config.method.toUpperCase();
-      config.headers['Access-Control-Request-Headers'] = 'Content-Type, Authorization';
+    // Use safe headers for production
+    if (isProduction()) {
+      config.headers = getSafeHeaders(config.headers);
+    } else {
+      // Development headers
+      config.headers = {
+        ...config.headers,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      
+      // Add CORS mode for development
+      if (config.method === 'post' || config.method === 'put' || config.method === 'patch') {
+        config.headers['Access-Control-Request-Method'] = config.method.toUpperCase();
+        config.headers['Access-Control-Request-Headers'] = 'Content-Type, Authorization';
+      }
     }
     
     return config;

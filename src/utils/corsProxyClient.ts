@@ -7,10 +7,10 @@ const BACKEND_URL = 'https://node-backend-g1mk.onrender.com';
 
 // List of CORS proxy services (in order of preference)
 const CORS_PROXIES = [
-  'https://api.allorigins.win/raw?url=',
-  'https://cors-anywhere.herokuapp.com/',
   'https://corsproxy.io/?',
-  'https://thingproxy.freeboard.io/fetch/'
+  'https://thingproxy.freeboard.io/fetch/',
+  'https://api.allorigins.win/raw?url=',
+  'https://cors-anywhere.herokuapp.com/'
 ];
 
 /**
@@ -18,6 +18,14 @@ const CORS_PROXIES = [
  */
 export const corsProxyRequest = async (url: string, options: RequestInit = {}) => {
   const fullUrl = url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
+  
+  // Clean headers for CORS proxy compatibility
+  const cleanHeaders = { ...options.headers };
+  
+  // Remove problematic headers that CORS proxies don't support
+  delete cleanHeaders['Authorization'];
+  delete cleanHeaders['Access-Control-Request-Method'];
+  delete cleanHeaders['Access-Control-Request-Headers'];
   
   // Try each proxy in order
   for (const proxy of CORS_PROXIES) {
@@ -31,7 +39,7 @@ export const corsProxyRequest = async (url: string, options: RequestInit = {}) =
       const response = await fetch(proxyUrl, {
         ...options,
         headers: {
-          ...options.headers,
+          ...cleanHeaders,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         }
