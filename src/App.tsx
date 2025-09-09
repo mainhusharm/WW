@@ -63,6 +63,14 @@ import SignupForm from './components/SignupForm';
 import EnhancedSignupForm from './components/EnhancedSignupForm';
 import EnhancedPaymentPage from './components/EnhancedPaymentPage';
 import QuantumSupportHub from './components/QuantumSupportHub';
+import AICustomerCareEngineer from './components/AICustomerCareEngineer';
+import DynamicAICustomerCareEngineer from './components/DynamicAICustomerCareEngineer';
+import ProactiveMonitoringSystem from './components/ProactiveMonitoringSystem';
+import AIAssistantContact from './components/AIAssistantContact';
+import AIAssistantDashboard from './components/AIAssistantDashboard';
+import HelpAndContact from './components/HelpAndContact';
+import EmergencyMonitoringSystem from './components/EmergencyMonitoringSystem';
+import LiveEmergencyMonitoring from './components/LiveEmergencyMonitoring';
 
 // Global Error Boundary for the entire app
 class GlobalErrorBoundary extends Component<
@@ -219,6 +227,7 @@ const AppContent = () => {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact-support" element={<ContactSupport />} />
+        <Route path="/help-contact" element={<HelpAndContact />} />
         <Route path="/payment" element={<PaymentFlow />} />
         <Route path="/trade-mentor/:tradeId" element={<TradeMentor />} />
         <Route path="/customer-service" element={<CustomerServiceMpinLogin />} />
@@ -243,12 +252,20 @@ const AppContent = () => {
             }
           />
         <Route path="/ai-coach" element={<ProtectedRoute><AICoach /></ProtectedRoute>} />
+        <Route path="/ai-customer-care" element={<DynamicAICustomerCareEngineer />} />
+        <Route path="/proactive-monitoring" element={<ProactiveMonitoringSystem />} />
+        <Route path="/ai-assistant-dashboard" element={<AIAssistantDashboard />} />
+        <Route path="/emergency-monitoring" element={<EmergencyMonitoringSystem />} />
+        <Route path="/live-emergency-monitoring" element={<LiveEmergencyMonitoring />} />
         <Route path="/lightning" element={<Lightning><LandingPage /></Lightning>} />
         <Route path="/animation-test" element={<AnimationTest />} />
         </Routes>
       </Suspense>
       {/* Show footer on all pages except dashboards */}
       {!isDashboardRoute && <Footer />}
+      
+      {/* AI Assistant Contact - Available on all pages */}
+      <AIAssistantContact />
     </div>
   );
 }
