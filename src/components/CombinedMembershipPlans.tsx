@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Star, Zap, Crown, Shield, Bot, CheckCircle } from 'lucide-react';
+import { Check, Star, Zap, Crown, Shield, Bot, CheckCircle, Plus, ArrowDown, Search } from 'lucide-react';
 
 const CombinedMembershipPlans: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'trading' | 'mt5'>('trading');
@@ -13,6 +13,7 @@ const CombinedMembershipPlans: React.FC = () => {
       period: 'month',
       description: 'Buy funded account with our affiliate link',
       icon: <Shield className="w-8 h-8" />,
+      iconBg: 'bg-green-500',
       color: 'border-gray-600',
       bgColor: 'bg-gray-800',
       buttonColor: 'bg-gray-600 hover:bg-gray-700',
@@ -31,7 +32,8 @@ const CombinedMembershipPlans: React.FC = () => {
       price: 99,
       period: 'month',
       description: 'Essential features for serious traders',
-      icon: <Star className="w-8 h-8" />,
+      icon: <Plus className="w-8 h-8" />,
+      iconBg: 'bg-blue-500',
       color: 'border-blue-500',
       bgColor: 'bg-blue-500/10',
       buttonColor: 'bg-blue-600 hover:bg-blue-700',
@@ -51,7 +53,8 @@ const CombinedMembershipPlans: React.FC = () => {
       price: 199,
       period: 'month',
       description: 'Advanced features for professional traders',
-      icon: <Zap className="w-8 h-8" />,
+      icon: <ArrowDown className="w-8 h-8" />,
+      iconBg: 'bg-yellow-500',
       color: 'border-yellow-500',
       bgColor: 'bg-yellow-500/10',
       buttonColor: 'bg-yellow-600 hover:bg-yellow-700',
@@ -78,6 +81,7 @@ const CombinedMembershipPlans: React.FC = () => {
       period: '3 months',
       description: 'Ultimate solution for trading teams',
       icon: <Crown className="w-8 h-8" />,
+      iconBg: 'bg-purple-500',
       color: 'border-purple-500',
       bgColor: 'bg-purple-500/10',
       buttonColor: 'bg-purple-600 hover:bg-purple-700',
@@ -106,7 +110,8 @@ const CombinedMembershipPlans: React.FC = () => {
       price: 299,
       period: 'one-time',
       description: 'Basic strategy automation',
-      icon: <Bot className="w-8 h-8" />,
+      icon: <Search className="w-8 h-8" />,
+      iconBg: 'bg-orange-500',
       color: 'border-orange-500',
       bgColor: 'bg-orange-500/10',
       buttonColor: 'bg-orange-600 hover:bg-orange-700',
@@ -125,7 +130,8 @@ const CombinedMembershipPlans: React.FC = () => {
       price: 599,
       period: 'one-time',
       description: 'Advanced strategy automation',
-      icon: <CheckCircle className="w-8 h-8" />,
+      icon: <Plus className="w-8 h-8" />,
+      iconBg: 'bg-purple-500',
       color: 'border-purple-500',
       bgColor: 'bg-purple-500/10',
       buttonColor: 'bg-purple-600 hover:bg-purple-700',
@@ -147,7 +153,8 @@ const CombinedMembershipPlans: React.FC = () => {
       price: 1299,
       period: 'one-time',
       description: 'Full professional development',
-      icon: <Star className="w-8 h-8" />,
+      icon: <Crown className="w-8 h-8" />,
+      iconBg: 'bg-green-500',
       color: 'border-green-500',
       bgColor: 'bg-green-500/10',
       buttonColor: 'bg-green-600 hover:bg-green-700',
@@ -221,27 +228,29 @@ const CombinedMembershipPlans: React.FC = () => {
             {tradingPlans.map((plan, index) => (
               <div
                 key={index}
-                className={`hover-3d group relative bg-gray-800/60 backdrop-blur-sm rounded-3xl border-2 ${plan.color} p-8 transition-all duration-500 hover:border-cyan-500/50 hover:shadow-2xl hover:shadow-cyan-500/20 overflow-hidden ${
+                className={`group relative bg-transparent backdrop-blur-xl rounded-2xl border border-white/20 p-8 transition-all duration-500 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/30 overflow-hidden ${
                   plan.popular ? 'scale-105' : ''
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                      Most Popular
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
+                    <div className="bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                      MOST POPULAR
                     </div>
                   </div>
                 )}
 
                 <div className="text-center mb-8 relative z-10">
-                  <div className="text-blue-500 mb-4 flex justify-center">
-                    {plan.icon}
+                  <div className={`w-12 h-12 ${plan.iconBg} rounded-lg flex items-center justify-center mx-auto mb-4`}>
+                    <div className="text-white">
+                      {plan.icon}
+                    </div>
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
                   <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
                   <div className="mb-6">
                     {plan.price === 0 ? (
-                      <span className="text-3xl font-bold text-green-400">FREE</span>
+                      <span className="text-3xl font-bold text-white">FREE</span>
                     ) : (
                       <>
                         <span className="text-3xl font-bold text-white">${plan.price}</span>
@@ -254,7 +263,7 @@ const CombinedMembershipPlans: React.FC = () => {
                 <ul className="space-y-3 mb-6 relative z-10">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start space-x-3">
-                      <Check className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
                       <span className="text-gray-300 text-sm">{feature}</span>
                     </li>
                   ))}
@@ -288,26 +297,28 @@ const CombinedMembershipPlans: React.FC = () => {
             {mt5Plans.map((plan, index) => (
               <div
                 key={index}
-                className={`hover-3d group relative bg-gray-800/60 backdrop-blur-sm rounded-3xl border-2 ${plan.color} p-8 transition-all duration-500 hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/20 overflow-hidden ${
+                className={`group relative bg-transparent backdrop-blur-xl rounded-2xl border border-white/20 p-8 transition-all duration-500 hover:border-purple-400/50 hover:shadow-2xl hover:shadow-purple-500/30 overflow-hidden ${
                   plan.popular ? 'scale-105' : ''
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
+                    <div className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
                       MOST POPULAR
                     </div>
                   </div>
                 )}
                 
                 <div className="text-center mb-8">
-                  <div className="text-purple-400 mb-4 flex justify-center">
-                    {plan.icon}
+                  <div className={`w-12 h-12 ${plan.iconBg} rounded-lg flex items-center justify-center mx-auto mb-4`}>
+                    <div className="text-white">
+                      {plan.icon}
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                  <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
+                  <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+                  <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
                   <div className="mb-6">
-                    <span className="text-4xl font-bold text-white">${plan.price}</span>
+                    <span className="text-3xl font-bold text-white">${plan.price}</span>
                     <span className="text-gray-400">/{plan.period}</span>
                   </div>
                 </div>
