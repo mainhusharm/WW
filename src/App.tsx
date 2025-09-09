@@ -61,7 +61,6 @@ import CustomerServiceDashboard from './components/CustomerServiceDashboard';
 import SignupForm from './components/SignupForm';
 import EnhancedSignupForm from './components/EnhancedSignupForm';
 import EnhancedPaymentPage from './components/EnhancedPaymentPage';
-import HelpAndContact from './components/HelpAndContact';
 
 // Global Error Boundary for the entire app
 class GlobalErrorBoundary extends Component<
@@ -218,7 +217,6 @@ const AppContent = () => {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact-support" element={<ContactSupport />} />
-        <Route path="/help-contact" element={<HelpAndContact />} />
         <Route path="/payment" element={<PaymentFlow />} />
         <Route path="/trade-mentor/:tradeId" element={<TradeMentor />} />
         <Route path="/customer-service" element={<CustomerServiceMpinLogin />} />
