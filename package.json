@@ -23,7 +23,13 @@
     "db:seed": "tsx prisma/seed.ts",
     "backend": "node backend-server.js",
     "backend:dev": "nodemon backend-server.js",
-    "backend:render": "node backend-server-render.js"
+    "backend:render": "node backend-server-render.js",
+    "ai:live-metrics": "node api-server/live-system-metrics-api-production.js",
+    "ai:emergency": "node api-server/emergency-notification-api-production.js",
+    "ai:customer-care": "node api-server/ai-customer-care-engineer-production.js",
+    "ai:start-all": "concurrently \"npm run ai:live-metrics\" \"npm run ai:emergency\" \"npm run ai:customer-care\"",
+    "ai:test": "node test-live-dynamic-system.js",
+    "ai:verify": "node verify-dynamic-system.js"
   },
   "dependencies": {
     "@heroicons/react": "^2.0.0",
@@ -37,6 +43,7 @@
     "autoprefixer": "^10.0.0",
     "axios": "^1.0.0",
     "bcryptjs": "^2.4.3",
+    "concurrently": "^8.2.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "gsap": "^3.12.0",
