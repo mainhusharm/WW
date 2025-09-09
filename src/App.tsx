@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, Component, ReactNode } from 'react';
+import { useEffect, Suspense, Component, ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 // Import CORS fix to apply it globally
 import './utils/corsFix';
@@ -50,7 +50,6 @@ import AnimationTest from './components/AnimationTest';
 
 import CustomerServiceMpinLogin from './components/CustomerServiceMpinLogin';
 import CustomerServiceProtectedRoute from './components/CustomerServiceProtectedRoute';
-import CustomerServiceRedirect from './components/CustomerServiceRedirect';
 import NexusDeskPro from './components/NexusDeskPro';
 import CustomerDetail from './components/CustomerDetail';
 import ContactSupport from './components/ContactSupport';
@@ -62,15 +61,7 @@ import CustomerServiceDashboard from './components/CustomerServiceDashboard';
 import SignupForm from './components/SignupForm';
 import EnhancedSignupForm from './components/EnhancedSignupForm';
 import EnhancedPaymentPage from './components/EnhancedPaymentPage';
-import QuantumSupportHub from './components/QuantumSupportHub';
-import AICustomerCareEngineer from './components/AICustomerCareEngineer';
-import DynamicAICustomerCareEngineer from './components/DynamicAICustomerCareEngineer';
-import ProactiveMonitoringSystem from './components/ProactiveMonitoringSystem';
-import AIAssistantContact from './components/AIAssistantContact';
-import AIAssistantDashboard from './components/AIAssistantDashboard';
 import HelpAndContact from './components/HelpAndContact';
-import EmergencyMonitoringSystem from './components/EmergencyMonitoringSystem';
-import LiveEmergencyMonitoring from './components/LiveEmergencyMonitoring';
 
 // Global Error Boundary for the entire app
 class GlobalErrorBoundary extends Component<
@@ -252,11 +243,6 @@ const AppContent = () => {
             }
           />
         <Route path="/ai-coach" element={<ProtectedRoute><AICoach /></ProtectedRoute>} />
-        <Route path="/ai-customer-care" element={<DynamicAICustomerCareEngineer />} />
-        <Route path="/proactive-monitoring" element={<ProactiveMonitoringSystem />} />
-        <Route path="/ai-assistant-dashboard" element={<AIAssistantDashboard />} />
-        <Route path="/emergency-monitoring" element={<EmergencyMonitoringSystem />} />
-        <Route path="/live-emergency-monitoring" element={<LiveEmergencyMonitoring />} />
         <Route path="/lightning" element={<Lightning><LandingPage /></Lightning>} />
         <Route path="/animation-test" element={<AnimationTest />} />
         </Routes>
@@ -264,8 +250,6 @@ const AppContent = () => {
       {/* Show footer on all pages except dashboards */}
       {!isDashboardRoute && <Footer />}
       
-      {/* AI Assistant Contact - Available on all pages */}
-      <AIAssistantContact />
     </div>
   );
 }
