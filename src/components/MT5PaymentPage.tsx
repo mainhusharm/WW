@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CreditCard, Shield, Undo, Headphones, CheckCircle, Copy, Search } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
+// Stripe imports removed
 import Header from './Header';
 import { PAYMENT_CONFIG } from '../config/payment';
-import MT5StripeCheckoutForm from './MT5StripeCheckoutForm';
-
-// Initialize Stripe
-const stripePromise = loadStripe(PAYMENT_CONFIG.stripe.publishableKey);
+// Stripe components removed
 
 const MT5PaymentPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState('stripe');
+  const [paymentMethod, setPaymentMethod] = useState('paypal');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -479,17 +475,7 @@ const MT5PaymentPage: React.FC = () => {
 
               {/* Payment Method Tabs */}
               <div className="flex space-x-4">
-                <button
-                  onClick={() => switchPaymentMethod('stripe')}
-                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-all ${
-                    paymentMethod === 'stripe'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-800 text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5" />
-                  <span>Credit Card</span>
-                </button>
+                {/* Stripe Credit Card button removed */}
                 <button
                   onClick={() => switchPaymentMethod('paypal')}
                   className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-all ${
@@ -512,81 +498,7 @@ const MT5PaymentPage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Stripe Payment */}
-              {paymentMethod === 'stripe' && (
-                <div className="bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">Credit Card Payment</h3>
-                  <Elements stripe={stripePromise}>
-                    <MT5StripeCheckoutForm
-                      selectedPlan={selectedPlan}
-                      finalPrice={finalPrice}
-                      couponCode={couponCode}
-                      discountAmount={discountAmount}
-                      onPaymentSuccess={() => {
-                        console.log('Payment success callback triggered');
-                        setIsSuccess(true);
-                        // Save payment record to localStorage
-                        const paymentRecord = {
-                          id: `MT5-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-                          plan: selectedPlan?.name || 'Elite',
-                          amount: finalPrice,
-                          method: 'stripe',
-                          status: 'completed',
-                          timestamp: new Date().toISOString(),
-                          couponCode: couponCode || null,
-                          discountAmount: discountAmount
-                        };
-                        localStorage.setItem('mt5_payment_record', JSON.stringify(paymentRecord));
-                        localStorage.setItem('paymentRecord', JSON.stringify(paymentRecord));
-                        
-                        // Update existing MT5 user status to active
-                        const existingUsers = JSON.parse(localStorage.getItem('mt5_users') || '[]');
-                        const existingCustomers = JSON.parse(localStorage.getItem('mt5Customers') || '[]');
-                        
-                        // Find the most recent user (from signup)
-                        const latestUser = existingUsers[existingUsers.length - 1];
-                        const latestCustomer = existingCustomers[existingCustomers.length - 1];
-                        
-                        if (latestUser) {
-                          latestUser.status = 'active';
-                          latestUser.plan = selectedPlan?.name || 'Elite';
-                          localStorage.setItem('mt5_users', JSON.stringify(existingUsers));
-                          localStorage.setItem('currentUser', JSON.stringify(latestUser));
-                        } else {
-                          // Fallback: create a new user
-                          const mt5User = {
-                            id: `mt5_${Date.now()}`,
-                            name: 'MT5 Bot User',
-                            email: 'user@mt5bot.com',
-                            plan: selectedPlan?.name || 'Elite',
-                            status: 'active',
-                            joinDate: new Date().toISOString()
-                          };
-                          localStorage.setItem('currentUser', JSON.stringify(mt5User));
-                        }
-                        
-                        if (latestCustomer) {
-                          latestCustomer.status = 'COMPLETED';
-                          latestCustomer.selectedPlan = selectedPlan;
-                          localStorage.setItem('mt5Customers', JSON.stringify(existingCustomers));
-                        }
-                        
-                        console.log('Payment record and user saved, navigating to dashboard in 2 seconds');
-                        setTimeout(() => {
-                          console.log('Navigating to /mt5-dashboard');
-                          navigate('/mt5-dashboard');
-                        }, 2000);
-                      }}
-                      onPaymentError={(error) => {
-                        setIsError(true);
-                        setErrorMessage(error);
-                      }}
-                      isProcessing={isProcessing}
-                      setIsProcessing={setIsProcessing}
-                    />
-                  </Elements>
-                </div>
-              )}
+              {/* Stripe Payment removed */}
 
               {/* PayPal Payment */}
               {paymentMethod === 'paypal' && (

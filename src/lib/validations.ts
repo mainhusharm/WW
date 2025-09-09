@@ -3,7 +3,18 @@ import { z } from 'zod';
 export const SignupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   fullName: z.string().optional(),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  country: z.string().optional(),
+  tradingExperience: z.string().optional(),
+  tradingGoals: z.string().optional(),
+  riskTolerance: z.string().optional(),
+  preferredMarkets: z.string().optional(),
+  tradingStyle: z.string().optional(),
+  agreeToMarketing: z.boolean().optional(),
   selectedPlan: z.object({
     name: z.string(),
     price: z.number(),

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { TrendingUp, ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle, User, Mail, Lock, Database, Shield } from 'lucide-react';
+import { TrendingUp, ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle, User, Mail, Lock, Database, Shield, Phone, Building, Globe } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import Header from './Header';
 import TemporaryAccountNotice from './TemporaryAccountNotice';
@@ -27,6 +27,11 @@ const SignUp = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    phone: '',
+    company: '',
+    country: '',
+    agreeToTerms: false,
+    agreeToMarketing: false
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -52,6 +57,9 @@ const SignUp = () => {
     }
     if (!formData.email || !formData.email.includes('@')) {
       return 'Please enter a valid email address';
+    }
+    if (!formData.phone.trim()) {
+      return 'Phone number is required';
     }
     if (formData.password.length < 12) {
       return 'Password must be at least 12 characters long';
@@ -95,6 +103,10 @@ const SignUp = () => {
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
+        phone: formData.phone,
+        company: formData.company,
+        country: formData.country,
+        agreeToMarketing: formData.agreeToMarketing,
         plan_type: selectedPlan.name.toLowerCase(),
       });
 
@@ -165,6 +177,10 @@ const SignUp = () => {
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
+        phone: formData.phone,
+        company: formData.company,
+        country: formData.country,
+        agreeToMarketing: formData.agreeToMarketing,
         plan_type: selectedPlan.name.toLowerCase(),
         timestamp: Date.now()
       }));
@@ -176,7 +192,7 @@ const SignUp = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }));
     if (error) setError(''); // Clear error when user starts typing
   };
@@ -230,37 +246,11 @@ const SignUp = () => {
             </div>
           )}
 
-          {/* Enhanced Data Capture Status */}
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
-            <div className="flex items-center space-x-2 text-blue-400 mb-3">
-              <Database className="w-5 h-5" />
-              <span className="font-medium">Enhanced Data Capture System</span>
-              <Shield className="w-4 h-4" />
-            </div>
-            <p className="text-blue-300 text-sm mb-3">
-              Your data will be securely captured and stored with admin-only access controls.
-            </p>
-            <div className="flex items-center space-x-4 text-xs">
-              <div className={`flex items-center space-x-1 ${dataCaptureStatus.signup ? 'text-green-400' : 'text-gray-400'}`}>
-                <CheckCircle className="w-3 h-3" />
-                <span>Signup Data</span>
-              </div>
-              <div className={`flex items-center space-x-1 ${dataCaptureStatus.payment ? 'text-green-400' : 'text-gray-400'}`}>
-                <CheckCircle className="w-3 h-3" />
-                <span>Payment Data</span>
-              </div>
-              <div className={`flex items-center space-x-1 ${dataCaptureStatus.questionnaire ? 'text-green-400' : 'text-gray-400'}`}>
-                <CheckCircle className="w-3 h-3" />
-                <span>Questionnaire</span>
-              </div>
-            </div>
-          </div>
-
           <div className="space-y-6">
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">First Name</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">First Name*</label>
                 <div className="relative">
                   <User className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                   <input
@@ -268,13 +258,13 @@ const SignUp = () => {
                     value={formData.firstName}
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="John"
+                    placeholder="Enter your first name"
                     required
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Last Name*</label>
                 <div className="relative">
                   <User className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                   <input
@@ -282,7 +272,7 @@ const SignUp = () => {
                     value={formData.lastName}
                     onChange={(e) => handleInputChange('lastName', e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Doe"
+                    placeholder="Enter your last name"
                     required
                   />
                 </div>
@@ -291,7 +281,7 @@ const SignUp = () => {
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Email Address*</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <input
@@ -299,15 +289,71 @@ const SignUp = () => {
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="john@example.com"
+                  placeholder="Enter your email address"
                   required
                 />
               </div>
             </div>
 
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number*</label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter your phone number"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Company and Country */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Company (Optional)</label>
+                <div className="relative">
+                  <Building className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={formData.company}
+                    onChange={(e) => handleInputChange('company', e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your company name"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Country*</label>
+                <div className="relative">
+                  <Globe className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                  <select
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Select your country</option>
+                    <option value="US">United States</option>
+                    <option value="CA">Canada</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="AU">Australia</option>
+                    <option value="DE">Germany</option>
+                    <option value="FR">France</option>
+                    <option value="JP">Japan</option>
+                    <option value="SG">Singapore</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Password*</label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <input
@@ -315,7 +361,7 @@ const SignUp = () => {
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   className="w-full pl-10 pr-12 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Create a strong password (12+ chars, mixed case, numbers, symbols)"
+                  placeholder="Enter your password"
                   required
                   minLength={12}
                 />
@@ -327,14 +373,11 @@ const SignUp = () => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              <div className="mt-2 text-xs text-gray-400">
-                Password must be at least 12 characters with uppercase, lowercase, numbers, and special characters
-              </div>
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password*</label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <input
@@ -355,21 +398,38 @@ const SignUp = () => {
               </div>
             </div>
 
+
             {/* Terms Agreement */}
-            <div className="flex items-start space-x-3">
-              <input
-                type="checkbox"
-                id="terms"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-1 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="terms" className="text-sm text-gray-300 leading-relaxed">
-                I agree to the{' '}
-                <a href="/terms-of-service" target="_blank" className="text-blue-400 hover:text-blue-300">Terms of Service</a>
-                {' '}and{' '}
-                <a href="/privacy-policy" target="_blank" className="text-blue-400 hover:text-blue-300">Privacy Policy</a>
-              </label>
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-1 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="terms" className="text-sm text-gray-300 leading-relaxed">
+                  I agree to the{' '}
+                  <a href="/terms-of-service" target="_blank" className="text-blue-400 hover:text-blue-300">Terms and Conditions</a>
+                  {' '}and{' '}
+                  <a href="/privacy-policy" target="_blank" className="text-blue-400 hover:text-blue-300">Privacy Policy</a>
+                  <span className="text-red-400">*</span>
+                </label>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="marketing"
+                  checked={formData.agreeToMarketing}
+                  onChange={(e) => handleInputChange('agreeToMarketing', e.target.checked)}
+                  className="mt-1 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="marketing" className="text-sm text-gray-300 leading-relaxed">
+                  I would like to receive updates about new features and special offers
+                </label>
+              </div>
             </div>
             </div>
 
@@ -386,8 +446,8 @@ const SignUp = () => {
                 </>
               ) : (
                 <>
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Create Account
+                  <span>Create Account & Continue to Payment</span>
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </>
               )}
             </button>

@@ -1,12 +1,6 @@
-// Payment configuration with environment variables
+// Payment configuration with environment variables - PayPal only
 export const PAYMENT_CONFIG = {
-  // Stripe Configuration
-  stripe: {
-    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_iSQmzHiUwz1pmfaVTSXSEpbx',
-    secretKey: import.meta.env.VITE_STRIPE_SECRET_KEY || 'sk_test_Njv0R96TKWGPmh9FOD27rrJs', // Only used on backend
-    currency: 'USD',
-    apiVersion: '2023-10-16' as const,
-  },
+  // Stripe removed
   
   // PayPal Configuration
   paypal: {
@@ -17,22 +11,15 @@ export const PAYMENT_CONFIG = {
   },
   
   // Payment endpoints
+  // API Endpoints - PayPal only
   endpoints: {
-    stripe: {
-      createPaymentIntent: import.meta.env.PROD 
-        ? 'https://www.traderedgepro.com/api/payment/stripe/create-payment-intent'
-        : 'https://backend-d4fm.onrender.com/api/payment/stripe/create-payment-intent',
-      confirmPayment: import.meta.env.PROD
-        ? 'https://www.traderedgepro.com/api/payment/stripe/confirm-payment'
-        : 'https://backend-d4fm.onrender.com/api/payment/stripe/confirm-payment',
-    },
     paypal: {
       createOrder: import.meta.env.PROD
         ? 'https://www.traderedgepro.com/api/payment/paypal/create-order'
-        : 'https://backend-d4fm.onrender.com/api/payment/paypal/create-order',
+        : 'http://localhost:3001/api/payment/paypal/create-order',
       captureOrder: import.meta.env.PROD
         ? 'https://www.traderedgepro.com/api/payment/paypal/capture-order'
-        : 'https://backend-d4fm.onrender.com/api/payment/paypal/capture-order',
+        : 'http://localhost:3001/api/payment/paypal/capture-order',
     }
   },
   

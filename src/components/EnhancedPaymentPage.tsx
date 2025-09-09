@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Lock, CreditCard, ArrowLeft, X, AlertTriangle, AlertCircle, Copy, CheckCircle } from 'lucide-react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+// Stripe imports removed
 
 interface SelectedPlan {
   name: string;
@@ -28,101 +27,29 @@ interface CouponResponse {
   error?: string;
 }
 
-// Payment Configuration - Using REAL working keys from database done copy
+// Payment Configuration - PayPal only
 const PAYMENT_CONFIG = {
-  stripe: {
-    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_iSQmzHiUwz1pmfaVTSXSEpbx',
-    currency: 'USD',
-  },
   paypal: {
     clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tprIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW',
     currency: 'USD',
     environment: 'sandbox' as const, // Change to 'live' for production
   },
+  // Use local backend for development
+  endpoints: {
+    paypal: {
+      createOrder: import.meta.env.PROD
+        ? 'https://www.traderedgepro.com/api/payment/paypal/create-order'
+        : 'http://localhost:3001/api/payment/paypal/create-order',
+      captureOrder: import.meta.env.PROD
+        ? 'https://www.traderedgepro.com/api/payment/paypal/capture-order'
+        : 'http://localhost:3001/api/payment/paypal/capture-order',
+    }
+  }
 };
 
-// Initialize Stripe
-const stripePromise = loadStripe(PAYMENT_CONFIG.stripe.publishableKey);
+// Stripe removed - PayPal only
 
-// Stripe Checkout Form Component
-const StripeCheckoutForm: React.FC<{
-  clientSecret: string;
-  selectedPlan: SelectedPlan;
-  finalPrice: number;
-  couponApplied: boolean;
-  couponCode: string;
-  discount: number;
-  onPaymentSuccess: (paymentData: any) => void;
-  onPaymentError: (error: string) => void;
-}> = ({ clientSecret, selectedPlan, finalPrice, couponApplied, couponCode, discount, onPaymentSuccess, onPaymentError }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/payment-success`,
-      },
-    });
-
-    if (error) {
-      onPaymentError(error.message || 'Payment failed');
-    } else {
-      // Payment succeeded
-      const paymentData = {
-        method: 'stripe',
-        amount: finalPrice,
-        plan: selectedPlan.name,
-        paymentId: 'stripe_payment_' + Date.now(),
-        coupon_code: couponCode,
-        coupon_applied: couponApplied,
-        discount_amount: discount,
-        timestamp: new Date().toISOString(),
-      };
-      onPaymentSuccess(paymentData);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="bg-white/5 rounded-lg p-4 mb-4">
-        <h3 className="text-white font-semibold mb-2">Order Summary</h3>
-        <div className="flex justify-between text-white/80 text-sm mb-1">
-          <span>Plan:</span>
-          <span>{selectedPlan.name}</span>
-        </div>
-        <div className="flex justify-between text-white/80 text-sm mb-1">
-          <span>Amount:</span>
-          <span className="text-blue-400 font-semibold">${finalPrice.toFixed(2)}</span>
-        </div>
-        {couponApplied && (
-          <div className="mt-2 p-2 bg-green-600/20 border border-green-600 rounded text-green-400 text-sm">
-            Coupon applied: {couponCode} - Saved ${discount.toFixed(2)}
-          </div>
-        )}
-      </div>
-      
-      <PaymentElement />
-      <p className="text-white/70 text-sm">
-        Please enter your card details above. All transactions are secure and encrypted.
-      </p>
-      <button
-        type="submit"
-        disabled={!stripe}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 rounded-lg font-semibold transition-colors"
-      >
-        Pay ${finalPrice.toFixed(2)} now
-      </button>
-    </form>
-  );
-};
+// Stripe components removed - PayPal only
 
 export default function EnhancedPaymentPage() {
   const navigate = useNavigate();
@@ -283,9 +210,7 @@ export default function EnhancedPaymentPage() {
       case 'paypal':
         setShowPaymentForm(true);
         break;
-      case 'stripe':
-        await initializeStripePayment();
-        break;
+      // Stripe removed
       case 'crypto':
         setShowCryptoVerification(true);
         break;
@@ -605,33 +530,7 @@ export default function EnhancedPaymentPage() {
                 </div>
               </div>
 
-              {/* Stripe */}
-              <div
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  selectedPaymentMethod === 'stripe'
-                    ? 'border-blue-500 bg-blue-500/20'
-                    : 'border-white/20 hover:border-white/40'
-                }`}
-                onClick={() => handlePaymentMethodSelect('stripe')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center mr-3">
-                      <CreditCard className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-white font-medium">Stripe</div>
-                      <div className="text-white/70 text-sm">Pay with your credit card</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-white/70 text-sm mr-2">No additional fees</span>
-                    {selectedPaymentMethod === 'stripe' && (
-                      <Check className="w-5 h-5 text-blue-400" />
-                    )}
-                  </div>
-                </div>
-              </div>
+              {/* Stripe removed */}
 
               {/* Cryptocurrency */}
               <div
@@ -753,41 +652,7 @@ export default function EnhancedPaymentPage() {
               </div>
             )}
 
-            {/* Stripe Payment Form */}
-            {showPaymentForm && selectedPaymentMethod === 'stripe' && stripeClientSecret && (
-              <div className="mb-6">
-                <h3 className="text-white font-semibold mb-4">Complete Credit Card Payment</h3>
-                <Elements
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret: stripeClientSecret,
-                    appearance: {
-                      theme: 'night',
-                      variables: {
-                        colorPrimary: '#3b82f6',
-                        colorBackground: '#1f2937',
-                        colorText: '#ffffff',
-                        colorDanger: '#ef4444',
-                        fontFamily: 'Inter, system-ui, sans-serif',
-                        spacingUnit: '4px',
-                        borderRadius: '8px',
-                      },
-                    },
-                  }}
-                >
-                  <StripeCheckoutForm
-                    clientSecret={stripeClientSecret}
-                    selectedPlan={selectedPlan}
-                    finalPrice={finalPrice}
-                    couponApplied={couponApplied}
-                    couponCode={couponCode}
-                    discount={discount}
-                    onPaymentSuccess={handlePaymentSuccess}
-                    onPaymentError={handlePaymentError}
-                  />
-                </Elements>
-              </div>
-            )}
+            {/* Stripe Payment Form removed */}
 
             {/* Cryptocurrency Verification Form */}
             {showCryptoVerification && (

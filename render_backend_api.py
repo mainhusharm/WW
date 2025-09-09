@@ -859,10 +859,34 @@ def register():
         # Create user
         password_hash = hash_password(password)
         
+        # Extract additional fields
+        firstName = data.get('firstName', '')
+        lastName = data.get('lastName', '')
+        phone = data.get('phone', '')
+        company = data.get('company', '')
+        country = data.get('country', '')
+        tradingExperience = data.get('tradingExperience', '')
+        tradingGoals = data.get('tradingGoals', '')
+        riskTolerance = data.get('riskTolerance', '')
+        preferredMarkets = data.get('preferredMarkets', '')
+        tradingStyle = data.get('tradingStyle', '')
+        agreeToMarketing = data.get('agreeToMarketing', False)
+        
         cursor.execute("""
-            INSERT INTO users (username, email, password_hash, plan_type, normalized_email, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (username, email, password_hash, plan_type, email.lower().strip(), datetime.now(timezone.utc).isoformat()))
+            INSERT INTO users (
+                username, email, password_hash, plan_type, normalized_email, 
+                first_name, last_name, phone, company, country,
+                trading_experience, trading_goals, risk_tolerance, 
+                preferred_markets, trading_style, agree_to_marketing, created_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            username, email, password_hash, plan_type, email.lower().strip(),
+            firstName, lastName, phone, company, country,
+            tradingExperience, tradingGoals, riskTolerance,
+            preferredMarkets, tradingStyle, agreeToMarketing,
+            datetime.now(timezone.utc).isoformat()
+        ))
         
         user_id = cursor.lastrowid
         conn.commit()
