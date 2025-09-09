@@ -46,14 +46,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
       fees: 'No additional fees',
       enabled: true
     },
-    {
-      id: 'stripe',
-      name: 'Stripe',
-      icon: <Check className="w-6 h-6" />,
-      description: 'Pay with your credit card',
-      fees: 'No additional fees',
-      enabled: true
-    },
+    // Stripe removed
     {
       id: 'crypto',
       name: 'Cryptocurrency',
@@ -261,17 +254,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
             } 
           });
           return;
-        case 'stripe':
-          navigate('/stripe-payment', { 
-            state: { 
-              selectedPlan,
-              couponApplied,
-              discountAmount,
-              couponCode,
-              finalAmount: couponApplied ? selectedPlan.price - discountAmount : selectedPlan.price
-            } 
-          });
-          return;
+        // Stripe case removed
         case 'crypto':
           paymentResult = await processCryptoPayment();
           break;

@@ -9,7 +9,7 @@ import SignIn from './components/SignInFixed';
 import MembershipPlans from './components/MembershipPlans';
 import PaymentFlow from './components/PaymentFlow';
 import PayPalPayment from './components/PayPalPayment';
-import StripePayment from './components/StripePayment';
+// StripePayment removed
 import PaymentSuccess from './components/PaymentSuccess';
 import SuccessfulPaymentPage from './components/SuccessfulPaymentPage';
 import MT5BotsPage from './components/MT5BotsPage';
@@ -173,7 +173,7 @@ const AppContent = () => {
         <Route path="/mt5-admin" element={<MT5AdminDashboard />} />
         <Route path="/payment-flow" element={<ProtectedRoute><PaymentFlow /></ProtectedRoute>} />
         <Route path="/paypal-payment" element={<ProtectedRoute><PayPalPayment /></ProtectedRoute>} />
-        <Route path="/stripe-payment" element={<ProtectedRoute><StripePayment /></ProtectedRoute>} />
+        {/* Stripe payment route removed */}
         <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
         <Route path="/successful-payment" element={<SuccessfulPaymentPage />} />
         <Route path="/questionnaire" element={<Questionnaire />} />

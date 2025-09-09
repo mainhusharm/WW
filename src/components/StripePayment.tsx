@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
+// Stripe imports removed
 import CheckoutForm from './StripeCheckoutForm';
 import { useLocation } from 'react-router-dom';
 import { PAYMENT_CONFIG } from '../config/payment';
 
-const stripePromise = loadStripe(PAYMENT_CONFIG.stripe.publishableKey);
+// Stripe removed - PayPal only
 
 const StripePayment: React.FC = () => {
   const [clientSecret, setClientSecret] = useState('');
@@ -18,7 +17,7 @@ const StripePayment: React.FC = () => {
       const paymentAmount = finalAmount || selectedPlan.price;
       
       // Create PaymentIntent as soon as the page loads
-      fetch(PAYMENT_CONFIG.endpoints.stripe.createPaymentIntent, {
+      fetch(PAYMENT_CONFIG.endpoints.paypal.createOrder, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

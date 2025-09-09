@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Lock, CreditCard, ArrowLeft, X, AlertTriangle, AlertCircle, Copy, CheckCircle, Zap, Sparkles, Shield, Cpu, Globe, Coins, Star } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+// Stripe imports removed
 import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { PAYMENT_CONFIG } from '../config/payment';
 
@@ -31,8 +30,7 @@ interface CouponResponse {
 
 // Use the imported payment configuration
 
-// Initialize Stripe
-const stripePromise = loadStripe(PAYMENT_CONFIG.stripe.publishableKey);
+// Stripe removed - PayPal only
 
 // Stripe Payment Component
 const StripePaymentForm = ({ 
@@ -62,7 +60,7 @@ const StripePaymentForm = ({
 
     try {
       // Create payment intent using the working payment service
-      const response = await fetch(PAYMENT_CONFIG.endpoints.stripe.createPaymentIntent, {
+      const response = await fetch(PAYMENT_CONFIG.endpoints.paypal.createOrder, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

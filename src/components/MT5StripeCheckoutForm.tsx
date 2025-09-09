@@ -49,7 +49,7 @@ const MT5StripeCheckoutForm: React.FC<MT5StripeCheckoutFormProps> = ({
       }
 
       // Create payment intent
-      const response = await fetch(PAYMENT_CONFIG.endpoints.stripe.createPaymentIntent, {
+      const response = await fetch(PAYMENT_CONFIG.endpoints.paypal.createOrder, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
