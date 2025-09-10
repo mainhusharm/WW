@@ -109,6 +109,12 @@ export default function EnhancedSignupForm() {
       // Try API call first
       let data;
       try {
+        console.log('Making registration request to:', `${API_BASE}/api/auth/register`);
+        
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const response = await fetch(`${API_BASE}/api/auth/register`, {
           method: 'POST',
           headers: {
@@ -126,27 +132,46 @@ export default function EnhancedSignupForm() {
             agreeToMarketing: formData.agreeToMarketing,
             plan_type: selectedPlan?.name?.toLowerCase() || 'premium'
           }),
+          signal: controller.signal
         });
-
-        data = await response.json();
-      } catch (apiError) {
-        console.log('API call failed, redirecting to fixed signup page:', apiError);
         
-        // Redirect to the fixed signup page as fallback
-        window.location.href = '/signup-fixed';
+        clearTimeout(timeoutId);
+
+        console.log('Registration response status:', response.status);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.log('Registration error response:', errorData);
+          throw new Error(errorData.msg || errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        data = await response.json();
+        console.log('Registration response data:', data);
+      } catch (apiError) {
+        console.log('API call failed:', apiError);
+        
+        // Show error message instead of redirecting
+        setError('Registration service is temporarily unavailable. Please try again later or contact support.');
+        setIsLoading(false);
         return;
       }
 
-      if (data.success) {
+      // Handle both response formats: with success property or without
+      if (data.success || data.access_token) {
         // Store user data in localStorage
         const userData = {
-          id: data.user.id,
-          email: data.user.email,
-          fullName: data.user.fullName,
+          id: data.user?.id || data.user?.user_id,
+          email: data.user?.email,
+          fullName: data.user?.fullName || data.user?.username || `${formData.firstName} ${formData.lastName}`,
           selectedPlan: selectedPlan,
-          status: data.user.status,
+          status: data.user?.status || 'active',
           createdAt: new Date().toISOString()
         };
+
+        // Store access token if provided
+        if (data.access_token) {
+          localStorage.setItem('access_token', data.access_token);
+        }
 
         localStorage.setItem('userId', userData.id);
         localStorage.setItem('userEmail', userData.email);
@@ -164,7 +189,7 @@ export default function EnhancedSignupForm() {
           }
         });
       } else {
-        setErrors({ submit: data.error || 'Failed to create account' });
+        setErrors({ submit: data.error || data.msg || 'Failed to create account' });
       }
     } catch (error) {
       console.error('Registration error:', error);

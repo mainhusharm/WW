@@ -202,13 +202,30 @@ const CombinedMembershipPlans: React.FC = () => {
           {tradingPlans.map((plan, index) => (
             <div
               key={index}
-              className={`group relative bg-gray-800/50 backdrop-blur-sm rounded-2xl border ${plan.color} p-8 transition-all duration-500 hover:shadow-2xl ${
+              className={`futuristic-pricing-card group relative bg-gray-800/30 backdrop-blur-md rounded-2xl border ${plan.color} p-8 transition-all duration-700 hover:shadow-2xl ${
                 plan.popular ? 'scale-105 shadow-yellow-500/30' : 'hover:shadow-blue-500/30'
-              } overflow-hidden`}
+              } ${plan.popular ? '' : 'overflow-hidden'}`}
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.2) 0%, rgba(15, 23, 42, 0.3) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: `1px solid ${plan.popular ? 'rgba(251, 191, 36, 0.3)' : 'rgba(148, 163, 184, 0.2)'}`,
+                boxShadow: plan.popular 
+                  ? '0 8px 32px rgba(251, 191, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
+                  : '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+              }}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
-                  <div className="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-30">
+                  <div 
+                    className="popular-tag bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-6 py-3 rounded-full text-sm font-bold shadow-2xl animate-pulse"
+                    style={{
+                      background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                      boxShadow: '0 12px 35px rgba(251, 191, 36, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.3), 0 0 20px rgba(251, 191, 36, 0.4)',
+                      transform: 'translateY(0px)',
+                      animation: 'popularFloat 3s ease-in-out infinite',
+                      border: '2px solid rgba(255, 255, 255, 0.3)'
+                    }}
+                  >
                     MOST POPULAR
                   </div>
                 </div>
@@ -282,13 +299,30 @@ const CombinedMembershipPlans: React.FC = () => {
           {mt5Plans.map((plan, index) => (
             <div
               key={index}
-              className={`group relative bg-gray-800/50 backdrop-blur-sm rounded-2xl border ${plan.color} p-8 transition-all duration-500 hover:shadow-2xl ${
+              className={`futuristic-pricing-card group relative bg-gray-800/30 backdrop-blur-md rounded-2xl border ${plan.color} p-8 transition-all duration-700 hover:shadow-2xl ${
                 plan.popular ? 'scale-105 shadow-purple-500/30' : 'hover:shadow-blue-500/30'
-              } overflow-hidden`}
+              } ${plan.popular ? '' : 'overflow-hidden'}`}
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.2) 0%, rgba(15, 23, 42, 0.3) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: `1px solid ${plan.popular ? 'rgba(147, 51, 234, 0.3)' : 'rgba(148, 163, 184, 0.2)'}`,
+                boxShadow: plan.popular 
+                  ? '0 8px 32px rgba(147, 51, 234, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
+                  : '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+              }}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
-                  <div className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-30">
+                  <div 
+                    className="popular-tag bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full text-sm font-bold shadow-2xl animate-pulse"
+                    style={{
+                      background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)',
+                      boxShadow: '0 12px 35px rgba(139, 92, 246, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.3), 0 0 20px rgba(139, 92, 246, 0.4)',
+                      transform: 'translateY(0px)',
+                      animation: 'popularFloat 3s ease-in-out infinite',
+                      border: '2px solid rgba(255, 255, 255, 0.3)'
+                    }}
+                  >
                     MOST POPULAR
                   </div>
                 </div>

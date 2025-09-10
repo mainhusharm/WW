@@ -7,37 +7,13 @@ const SignupRedirect: React.FC = () => {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const checkBackendAndRedirect = async () => {
-      try {
-        // Test if the backend is available
-        const response = await fetch('http://localhost:5000/health', {
-          method: 'GET',
-          timeout: 3000
-        });
-        
-        if (response.ok) {
-          // Backend is available, use enhanced signup
-          console.log('✅ Backend available, using enhanced signup');
-          navigate('/signup-enhanced', { 
-            state: location.state,
-            replace: true 
-          });
-        } else {
-          throw new Error('Backend not responding');
-        }
-      } catch (error) {
-        console.log('❌ Backend not available, using fixed signup:', error);
-        // Backend not available, use fixed signup
-        navigate('/signup-fixed', { 
-          state: location.state,
-          replace: true 
-        });
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    checkBackendAndRedirect();
+    // Always redirect to enhanced signup form
+    console.log('✅ Redirecting to enhanced signup');
+    navigate('/signup-enhanced', { 
+      state: location.state,
+      replace: true 
+    });
+    setIsChecking(false);
   }, [navigate, location.state]);
 
   if (isChecking) {

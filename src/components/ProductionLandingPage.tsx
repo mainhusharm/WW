@@ -16,6 +16,7 @@ import {
 import Header from './Header';
 import MT5BotPortal from './MT5BotPortal';
 import CombinedMembershipPlans from './CombinedMembershipPlans';
+import Futuristic3DKey from './NeuralBackground';
 
 const ProductionLandingPage = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -24,8 +25,6 @@ const ProductionLandingPage = () => {
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setIsLoaded(true);
-    
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
@@ -40,215 +39,166 @@ const ProductionLandingPage = () => {
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('mousemove', handleMouseMove);
 
+    // Simulate loading
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 2000);
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('mousemove', handleMouseMove);
+      clearTimeout(timer);
     };
   }, []);
 
   const features = [
     {
-      icon: <Target className="w-8 h-8" />,
-      title: "Prop Firm Mastery",
-      description: "Expert guidance for FTMO, MyForexFunds, The5%ers, and 150+ prop firms with proven success strategies",
-      color: "text-blue-400",
-      gradient: "from-blue-500/20 to-cyan-500/20"
-    },
-    {
       icon: <Shield className="w-8 h-8" />,
-      title: "Risk Management Excellence",
-      description: "Advanced position sizing and drawdown protection tailored to each prop firm's specific rules",
-      color: "text-green-400",
-      gradient: "from-green-500/20 to-emerald-500/20"
+      title: "Professional Guidance",
+      description: "Expert support for prop firm challenges with proven strategies and personalized coaching.",
+      gradient: "from-cyan-500/10 to-blue-500/10",
+      color: "text-cyan-400"
     },
     {
-      icon: <BarChart3 className="w-8 h-8" />,
-      title: "Custom Trading Plans",
-      description: "Personalized multi-phase trading strategies designed for your account size and risk tolerance",
-      color: "text-purple-400",
-      gradient: "from-purple-500/20 to-pink-500/20"
-    },
-    {
-      icon: <Zap className="w-8 h-8" />,
-      title: "Real-Time Signals",
-      description: "Professional-grade trading signals with precise entry, stop loss, and take profit levels",
-      color: "text-yellow-400",
-      gradient: "from-yellow-500/20 to-orange-500/20"
-    },
-    {
-      icon: <Award className="w-8 h-8" />,
-      title: "Phase Tracking",
-      description: "Complete progress monitoring through challenge phases to live funded account status",
-      color: "text-red-400",
-      gradient: "from-red-500/20 to-pink-500/20"
+      icon: <Target className="w-8 h-8" />,
+      title: "Precision Trading",
+      description: "Advanced analytics and risk management tools to maximize your trading success.",
+      gradient: "from-blue-500/10 to-purple-500/10",
+      color: "text-blue-400"
     },
     {
       icon: <Users className="w-8 h-8" />,
-      title: "Expert Support",
-      description: "Dedicated support team with extensive prop firm experience and proven track record",
-      color: "text-cyan-400",
-      gradient: "from-cyan-500/20 to-blue-500/20"
+      title: "Community Support",
+      description: "Join thousands of successful traders in our exclusive community and Discord.",
+      gradient: "from-purple-500/10 to-pink-500/10",
+      color: "text-purple-400"
+    },
+    {
+      icon: <BarChart3 className="w-8 h-8" />,
+      title: "Real-time Analytics",
+      description: "Comprehensive performance tracking and detailed reporting for your trades.",
+      gradient: "from-pink-500/10 to-red-500/10",
+      color: "text-pink-400"
+    },
+    {
+      icon: <Zap className="w-8 h-8" />,
+      title: "Fast Execution",
+      description: "Lightning-fast trade execution with minimal slippage and optimal pricing.",
+      gradient: "from-red-500/10 to-orange-500/10",
+      color: "text-red-400"
+    },
+    {
+      icon: <Award className="w-8 h-8" />,
+      title: "Proven Results",
+      description: "Over 2,847 successful traders have cleared their challenges with our help.",
+      gradient: "from-orange-500/10 to-yellow-500/10",
+      color: "text-orange-400"
     }
   ];
 
   const stats = [
-    { number: "2847", label: "Funded Accounts", description: "Successfully cleared" },
-    { number: "86.7%", label: "Success Rate", description: "Challenge completion" },
-    { number: "47.2M", label: "Total Funded", description: "Million USD" },
-    { number: "150+", label: "Prop Firms", description: "Supported platforms" }
+    { number: "2,847+", label: "Successful Traders" },
+    { number: "94%", label: "Success Rate" },
+    { number: "$50M+", label: "Total Profits" },
+    { number: "24/7", label: "Support Available" }
   ];
 
   const testimonials = [
     {
-      name: "Marcus Chen",
-      role: "FTMO $200K Funded Trader",
-      content: "The custom trading plan was exactly what I needed. Cleared my FTMO challenge in 18 days following their strategy.",
+      author: "Sarah Chen",
+      role: "Prop Trader",
+      content: "The guidance and support I received was incredible. I cleared my challenge in just 3 weeks!",
       rating: 5,
-      profit: "$47,230",
-      image: "MC"
+      profit: "+$12,500"
     },
     {
-      name: "Sarah Williams", 
-      role: "MyForexFunds Elite",
-      content: "Professional service with detailed risk management. Now managing a $500K funded account thanks to their guidance.",
+      author: "Marcus Johnson",
+      role: "Day Trader",
+      content: "The analytics platform is game-changing. I can see exactly where I need to improve.",
       rating: 5,
-      profit: "$89,450",
-      image: "SW"
+      profit: "+$8,900"
     },
     {
-      name: "David Rodriguez",
-      role: "The5%ers Funded",
-      content: "The phase tracking and signals helped me stay disciplined. Cleared all phases without any rule violations.",
+      author: "Elena Rodriguez",
+      role: "Swing Trader",
+      content: "The community support and expert guidance made all the difference in my trading journey.",
       rating: 5,
-      profit: "$34,680",
-      image: "DR"
+      profit: "+$15,200"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white overflow-hidden relative">
+    <div className="min-h-screen bg-black text-white overflow-hidden relative">
       <Header />
-      
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        {/* Gradient Orbs */}
-        <div 
-          className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl"
-          style={{
-            background: 'radial-gradient(circle, #00ffff 0%, transparent 70%)',
-            transform: `translate(${mousePosition.x * 50}px, ${mousePosition.y * 50}px)`,
-            transition: 'transform 0.3s ease-out',
-            left: '10%',
-            top: '20%'
-          }}
-        />
-        <div 
-          className="absolute w-80 h-80 rounded-full opacity-15 blur-3xl"
-          style={{
-            background: 'radial-gradient(circle, #ff00ff 0%, transparent 70%)',
-            transform: `translate(${mousePosition.x * -30}px, ${mousePosition.y * 30}px)`,
-            transition: 'transform 0.3s ease-out',
-            right: '10%',
-            bottom: '20%'
-          }}
-        />
-        
-        {/* Floating Geometric Shapes */}
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-4 h-4 border border-cyan-400/30 rotate-45 animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${3 + Math.random() * 2}s`,
-              transform: `rotate(${Math.random() * 360}deg) translate(${scrollY * 0.1}px, ${scrollY * 0.05}px)`
-            }}
-          />
-        ))}
-      </div>
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center relative z-10">
-          {/* Hero Badge */}
-          <div className="inline-flex items-center space-x-2 bg-gray-800/50 backdrop-blur-sm border border-cyan-500/30 rounded-full px-6 py-3 mb-8 mt-20 hover:border-cyan-400/50 transition-all duration-300 hover:scale-105">
-            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-sm text-gray-300 font-medium">
-              Professional Prop Firm Clearing Service
-            </span>
-          </div>
-
-          {/* Main Title with 3D Effect */}
-          <h1 className="hero-title text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight">
-            <span className="block text-white mb-4">Master Your</span>
-            <span 
-              className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500"
-              style={{
-                textShadow: '0 0 30px rgba(0, 255, 255, 0.5)',
-                transform: `perspective(1000px) rotateX(${mousePosition.y * 5}deg) rotateY(${mousePosition.x * 5}deg)`
-              }}
-            >
-              Funded Account
-            </span>
-            <span className="block text-white mt-4">Journey</span>
-          </h1>
-
-          {/* Subtitle */}
-          <p className="hero-subtitle text-xl md:text-2xl text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed">
-            Professional clearing service for prop firm challenges with custom trading plans and expert guidance
-          </p>
-
-          {/* Stats Preview */}
-          <div className="flex flex-wrap justify-center items-center gap-8 mb-12 text-sm">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="w-5 h-5 text-green-400" />
-              <span className="text-gray-300">2,847 Successful Traders</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Star className="w-5 h-5 text-yellow-400" />
-              <span className="text-gray-300">94.7% Success Rate</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <DollarSign className="w-5 h-5 text-blue-400" />
-              <span className="text-gray-300">$12.8M Total Funded</span>
-            </div>
-          </div>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-            <Link
-              to="/membership"
-              className="group relative bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-10 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-cyan-500/50"
-            >
-              <span className="relative z-10 flex items-center">
-                Start Your Journey 
-                <ArrowRight className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
-            </Link>
-            
-            <Link
-              to="/features"
-              className="group relative border-2 border-cyan-500/50 text-cyan-400 hover:text-white hover:border-cyan-400 px-10 py-4 rounded-2xl font-bold text-lg transition-all duration-300 hover:bg-cyan-500/10 backdrop-blur-sm"
-            >
-              <span className="flex items-center">
-                <ArrowRight className="w-6 h-6 mr-2" />
-                Learn More
-              </span>
-            </Link>
-          </div>
-
-          {/* Scroll Indicator */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-            <ChevronDown className="w-8 h-8 text-cyan-400" />
-          </div>
+      <section ref={heroRef} className="relative min-h-screen overflow-hidden">
+        {/* Futuristic 3D Key Background - Only in Hero Section */}
+        <div className="absolute inset-0 z-0">
+          <Futuristic3DKey />
         </div>
+        
+        {/* Hero Content Overlay */}
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="text-center space-y-8 px-4">
+            <div className="space-y-4">
+              <h1 className="text-7xl md:text-9xl font-extralight tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-400">
+              Master  Your
+              </h1>
+              <h2 className="text-5xl md:text-7xl font-thin tracking-[0.2em] text-white/90">
+              Funded Account Journey
+              </h2>
+            </div>
+            <p className="text-xl md:text-2xl text-white/50 max-w-3xl mx-auto font-extralight leading-relaxed tracking-wide">
+            Professional clearing service for prop firm challenges 
+              <br className="hidden md:block" />
+              with custom trading plans and expert guidance
+            </p>
+            
+            {/* Enhanced CTA */}
+            <div className="pt-12">
+              <Link
+                to="/membership"
+                className="group relative px-12 py-5 bg-transparent border border-cyan-400/20 text-cyan-400/80 font-extralight tracking-[0.15em] text-lg hover:border-cyan-400/40 hover:text-cyan-400 transition-all duration-700 overflow-hidden backdrop-blur-sm inline-block"
+              >
+                <span className="relative z-10">EXPLORE TRADING</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/5 to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="absolute inset-0 border border-cyan-400/10 group-hover:border-cyan-400/20 transition-colors duration-700" />
+              </Link>
+            </div>
+          </div>
 
-        {/* Hero Video Background */}
-        <div className="absolute inset-0 z-0 opacity-20">
-          <div className="w-full h-full bg-gradient-to-br from-cyan-900/20 via-transparent to-purple-900/20"></div>
+          {/* Floating UI Elements */}
+          <div className="absolute top-8 left-8 z-10 text-white/30 font-mono text-sm tracking-wider">
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                <span>TRADING ACTIVITY: ACTIVE</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+                
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute top-8 right-8 z-10 text-white/30 font-mono text-sm tracking-wider text-right">
+            <div className="space-y-1">
+              <div>NEURAL FLOW</div>
+              <div className="text-cyan-400/60"></div>
+            </div>
+          </div>
+
+          {/* Enhanced Scroll Indicator */}
+          <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="flex flex-col items-center space-y-4 text-white/30">
+              <div className="text-xs font-mono tracking-[0.2em]">SCROLL TO EXPLORE</div>
+              <div className="relative">
+                <div className="w-px h-20 bg-gradient-to-b from-cyan-400/40 via-blue-400/60 to-transparent" />
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-cyan-400 rounded-full animate-bounce" />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -273,8 +223,9 @@ const ProductionLandingPage = () => {
                   >
                     {stat.number}
                   </div>
-                  <div className="text-white font-semibold mb-1">{stat.label}</div>
-                  <div className="text-sm text-gray-400">{stat.description}</div>
+                  <div className="text-gray-300 text-sm font-medium">
+                    {stat.label}
+                  </div>
                 </div>
               </div>
             ))}
@@ -328,6 +279,7 @@ const ProductionLandingPage = () => {
                 <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-cyan-400 transition-colors duration-300 relative z-10">
                   {feature.title}
                 </h3>
+                
                 <p className="text-gray-400 leading-relaxed relative z-10">
                   {feature.description}
                 </p>
@@ -386,13 +338,13 @@ const ProductionLandingPage = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <div 
                 key={index} 
-                className="hover-3d group relative bg-gray-800/60 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8 transition-all duration-500 hover:border-cyan-500/50 hover:shadow-2xl hover:shadow-cyan-500/20 overflow-hidden"
+                className="testimonial-card group relative bg-gray-800/60 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8 transition-all duration-500 hover:border-cyan-500/50 hover:shadow-2xl hover:shadow-cyan-500/20 overflow-hidden"
                 style={{
-                  transform: `perspective(1000px) rotateY(${index % 2 === 0 ? mousePosition.x * 3 : -mousePosition.x * 3}deg)`,
+                  transform: `perspective(1000px) rotateY(${mousePosition.x * 1}deg) rotateX(${mousePosition.y * 1}deg)`,
                   transformStyle: 'preserve-3d'
                 }}
               >
@@ -415,25 +367,23 @@ const ProductionLandingPage = () => {
                   {/* Author Info */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <div 
-                        className="w-16 h-16 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg"
-                        style={{
-                          transform: 'translateZ(10px)',
-                          boxShadow: '0 0 20px rgba(0, 255, 255, 0.3)'
-                        }}
-                      >
-                        {testimonial.image}
+                      <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        {testimonial.author.charAt(0)}
                       </div>
                       <div>
-                        <div className="font-semibold text-white text-lg">{testimonial.name}</div>
-                        <div className="text-sm text-gray-400">{testimonial.role}</div>
+                        <div className="font-semibold text-white">{testimonial.author}</div>
+                        <div className="text-gray-400 text-sm">{testimonial.role}</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-green-400 font-bold text-xl">{testimonial.profit}</div>
-                      <div className="text-xs text-gray-400">Total Profit</div>
+                    <div className="text-cyan-400 font-bold text-lg">
+                      {testimonial.profit}
                     </div>
                   </div>
+                </div>
+
+                {/* Hover Glow Effect */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-purple-500/10 rounded-3xl blur-xl"></div>
                 </div>
               </div>
             ))}
@@ -472,23 +422,24 @@ const ProductionLandingPage = () => {
               </h2>
               
               <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto">
-                Join thousands of successful traders who achieved funded account status with our proven methodology.
+                Join thousands of successful traders who have cleared their challenges with our professional guidance
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-8 justify-center">
+              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                 <Link
                   to="/membership"
                   className="group relative bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-12 py-5 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-cyan-500/50"
                 >
                   <span className="relative z-10">Start Your Journey</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </Link>
                 
                 <Link
-                  to="/membership"
-                  className="border-2 border-gray-600 text-gray-300 hover:border-cyan-500 hover:text-cyan-400 px-12 py-5 rounded-2xl font-bold text-xl transition-all duration-300 backdrop-blur-sm hover:bg-cyan-500/5"
+                  to="/contact"
+                  className="group relative bg-transparent border-2 border-cyan-400/50 hover:border-cyan-400 text-cyan-400 hover:text-white px-12 py-5 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 backdrop-blur-sm hover:bg-cyan-400/10"
                 >
-                  View Pricing
+                  <span className="relative z-10">Get Support</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/10 to-blue-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </Link>
               </div>
             </div>

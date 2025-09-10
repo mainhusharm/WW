@@ -170,18 +170,45 @@ const MembershipPlans: React.FC = () => {
               {plans.map((plan, index) => (
                 <div
                   key={index}
-                  className={`hover-3d group relative bg-gray-800/60 backdrop-blur-sm rounded-3xl border-2 ${plan.color} p-8 transition-all duration-500 hover:border-cyan-500/50 hover:shadow-2xl hover:shadow-cyan-500/20 overflow-hidden ${
-                    plan.popular ? 'scale-105' : ''
+                  className={`futuristic-pricing-card hover-3d group relative bg-gray-800/30 backdrop-blur-md rounded-3xl border-2 ${plan.color} p-8 transition-all duration-700 hover:border-cyan-500/50 hover:shadow-2xl hover:shadow-cyan-500/20 ${
+                    plan.popular ? 'scale-105' : 'overflow-hidden'
                   }`}
                   style={{
+                    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.2) 0%, rgba(15, 23, 42, 0.3) 100%)',
+                    backdropFilter: 'blur(20px)',
+                    border: `2px solid ${plan.popular ? 'rgba(251, 191, 36, 0.3)' : 'rgba(148, 163, 184, 0.2)'}`,
+                    boxShadow: plan.popular 
+                      ? '0 8px 32px rgba(251, 191, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
+                      : '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
                     transform: `perspective(1000px) rotateY(${mousePosition.x * 2}deg) rotateX(${mousePosition.y * 2}deg)`,
                     transformStyle: 'preserve-3d'
                   }}
                 >
+                  {/* Minimal Lightning Background Effect */}
+                  <div 
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"
+                    style={{
+                      background: `linear-gradient(45deg, transparent 30%, ${plan.color.includes('gray') ? 'rgba(59, 130, 246, 0.03)' : 
+                        plan.color.includes('blue') ? 'rgba(59, 130, 246, 0.05)' :
+                        plan.color.includes('yellow') ? 'rgba(251, 191, 36, 0.05)' :
+                        plan.color.includes('purple') ? 'rgba(147, 51, 234, 0.05)' : 'rgba(59, 130, 246, 0.03)'} 50%, transparent 70%)`,
+                      animation: 'lightningSweep 3s ease-in-out infinite'
+                    }}
+                  />
+                  
                   {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                      <div className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                        Most Popular
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-30">
+                      <div 
+                        className="popular-tag bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-6 py-3 rounded-full text-sm font-bold shadow-2xl animate-pulse"
+                        style={{
+                          background: 'linear-gradient(135deg,rgb(252, 193, 44) 0%,rgb(251, 169, 28) 100%)',
+                          boxShadow: '0 12px 35px rgba(255, 194, 40, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.3), 0 0 20px rgba(251, 191, 36, 0.4)',
+                          transform: 'translateY(0px)',
+                          animation: 'popularFloat 3s ease-in-out infinite',
+                          border: '2px solid rgba(255, 255, 255, 0.3)'
+                        }}
+                      >
+                        MOST POPULAR
                       </div>
                     </div>
                   )}
