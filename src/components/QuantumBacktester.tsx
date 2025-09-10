@@ -50,38 +50,75 @@ const QuantumBacktester: React.FC = () => {
   const tradingViewWidgetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (tradingViewWidgetRef.current) {
-      // Clear the container before appending a new script
-      tradingViewWidgetRef.current.innerHTML = '';
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-      script.async = true;
-      script.innerHTML = JSON.stringify({
-        "allow_symbol_change": true,
-        "calendar": false,
-        "details": false,
-        "hide_side_toolbar": true,
-        "hide_top_toolbar": false,
-        "hide_legend": false,
-        "hide_volume": false,
-        "hotlist": false,
-        "interval": "D",
-        "locale": "en",
-        "save_image": true,
-        "style": "1",
-        "symbol": tradeData.symbol === 'XAUUSD' ? 'OANDA:XAUUSD' : `OANDA:${tradeData.symbol}`,
-        "theme": "dark",
-        "timezone": "Etc/UTC",
-        "backgroundColor": "rgba(17, 24, 39, 0)",
-        "gridColor": "rgba(46, 46, 46, 0.06)",
-        "watchlist": [],
-        "withdateranges": false,
-        "compareSymbols": [],
-        "studies": [],
-        "autosize": true
-      });
-      tradingViewWidgetRef.current.appendChild(script);
-    }
+    if (!tradingViewWidgetRef.current) return;
+
+    const loadTradingViewChart = () => {
+      try {
+        // Clear the container before appending a new script
+        tradingViewWidgetRef.current!.innerHTML = '';
+        
+        // Check if TradingView is already available
+        if (window.TradingView) {
+          initializeChart();
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+        script.async = true;
+        script.onload = () => {
+          console.log('TradingView chart script loaded successfully');
+          initializeChart();
+        };
+        script.onerror = (error) => {
+          console.error('Failed to load TradingView chart script:', error);
+        };
+        
+        script.innerHTML = JSON.stringify({
+          "allow_symbol_change": true,
+          "calendar": false,
+          "details": false,
+          "hide_side_toolbar": true,
+          "hide_top_toolbar": false,
+          "hide_legend": false,
+          "hide_volume": false,
+          "hotlist": false,
+          "interval": "D",
+          "locale": "en",
+          "save_image": true,
+          "style": "1",
+          "symbol": tradeData.symbol === 'XAUUSD' ? 'OANDA:XAUUSD' : `OANDA:${tradeData.symbol}`,
+          "theme": "dark",
+          "timezone": "Etc/UTC",
+          "backgroundColor": "rgba(17, 24, 39, 0)",
+          "gridColor": "rgba(46, 46, 46, 0.06)",
+          "watchlist": [],
+          "withdateranges": false,
+          "compareSymbols": [],
+          "studies": [],
+          "autosize": true
+        });
+        
+        tradingViewWidgetRef.current!.appendChild(script);
+      } catch (error) {
+        console.error('Error loading TradingView chart:', error);
+      }
+    };
+
+    const initializeChart = () => {
+      try {
+        // Chart initialization logic here if needed
+      } catch (error) {
+        console.error('Error initializing TradingView chart:', error);
+      }
+    };
+
+    // Add a small delay to ensure DOM is ready
+    const timer = setTimeout(loadTradingViewChart, 100);
+    
+    return () => {
+      clearTimeout(timer);
+    };
   }, [tradeData.symbol]);
   // Load backtest history from localStorage
   useEffect(() => {

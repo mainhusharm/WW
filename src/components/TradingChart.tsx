@@ -1,21 +1,40 @@
 // TradingViewWidget.jsx
-import React, { useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, memo, useState } from 'react';
+import FallbackChart from './FallbackChart';
 
 let isScriptAppended = false;
 
 function TradingViewWidget() {
   const container = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
-  useEffect(
-    () => {
-      if (isScriptAppended || !container.current) return;
+  useEffect(() => {
+    if (isScriptAppended || !container.current) return;
 
-      const script = document.createElement("script");
-      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-      script.type = "text/javascript";
-      script.async = true;
-      script.innerHTML = `
-        {
+    const loadTradingViewScript = () => {
+      try {
+        // Check if TradingView is already available
+        if (window.TradingView) {
+          initializeWidget();
+          return;
+        }
+
+        const script = document.createElement("script");
+        script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+        script.type = "text/javascript";
+        script.async = true;
+        script.onload = () => {
+          console.log('TradingView script loaded successfully');
+          initializeWidget();
+        };
+        script.onerror = (error) => {
+          console.error('Failed to load TradingView script:', error);
+          setHasError(true);
+          setIsLoading(false);
+        };
+        
+        script.innerHTML = JSON.stringify({
           "allow_symbol_change": true,
           "calendar": false,
           "details": false,
@@ -38,12 +57,45 @@ function TradingViewWidget() {
           "compareSymbols": [],
           "studies": [],
           "autosize": true
-        }`;
-      container.current.appendChild(script);
-      isScriptAppended = true;
-    },
-    []
-  );
+        });
+        
+        if (container.current) {
+          container.current.appendChild(script);
+          isScriptAppended = true;
+        }
+      } catch (error) {
+        console.error('Error loading TradingView widget:', error);
+        setHasError(true);
+        setIsLoading(false);
+      }
+    };
+
+    const initializeWidget = () => {
+      try {
+        setIsLoading(false);
+        setHasError(false);
+      } catch (error) {
+        console.error('Error initializing TradingView widget:', error);
+        setHasError(true);
+        setIsLoading(false);
+      }
+    };
+
+    // Add a small delay to ensure DOM is ready
+    const timer = setTimeout(loadTradingViewScript, 100);
+    
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
+
+  if (hasError) {
+    return <FallbackChart symbol="BTC/USD" height="100%" />;
+  }
+
+  if (isLoading) {
+    return <FallbackChart symbol="BTC/USD" height="100%" />;
+  }
 
   return (
     <div className="tradingview-widget-container" ref={container} style={{ height: "100%", width: "100%" }}>
