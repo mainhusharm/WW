@@ -232,7 +232,24 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
           📝 Add to Journal
         </button>
         <button 
-          onClick={() => onChatWithNexus(signal)}
+          onClick={() => {
+            // Redirect to AI Coach with signal context
+            const signalData = encodeURIComponent(JSON.stringify({
+              pair: signal.pair || signal.symbol,
+              symbol: signal.pair || signal.symbol,
+              direction: signal.direction || signal.action,
+              action: signal.direction || signal.action,
+              entry: signal.entry || signal.entryPrice,
+              entryPrice: signal.entry || signal.entryPrice,
+              stopLoss: signal.stopLoss,
+              takeProfit: signal.takeProfit,
+              confidence: signal.confidence,
+              timeframe: signal.timeframe || '1H',
+              riskReward: signal.riskReward,
+              analysis: signal.analysis || signal.description
+            }));
+            window.location.href = `/dashboard/ai-coach?signal=${signalData}`;
+          }}
           className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-purple-500/25"
         >
           🤖 Chat with Nexus
@@ -470,33 +487,36 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         };
       }
 
-      // Get risk parameters from user's plan using actual signal prices
-      const riskParams = lotSizeCalculator.getRiskParameters(riskPlan, symbol, entryPrice, stopLoss);
+      // Get user's risk parameters from questionnaire
+      const accountBalance = riskPlan?.accountBalance || riskPlan?.accountSize || 10000;
+      const riskPercentage = riskPlan?.riskPercentage || riskPlan?.riskPerTrade || 1;
       
-      // Calculate lot size and other parameters
-      const calculation = lotSizeCalculator.calculateLotSize(riskParams);
+      // Calculate money at risk based on user's risk percentage
+      const moneyAtRisk = (accountBalance * riskPercentage) / 100;
       
-      // Calculate dollar amounts using proper pip calculation
-      const pipValue = calculation.pipValue;
-      const contractSize = calculation.contractSize;
-      const lotSize = calculation.lotSize;
-      
-      // Calculate pips for stop loss and take profit
+      // Calculate stop loss in pips
+      const pipValue = symbol.includes('JPY') ? 0.01 : 0.0001;
       const stopLossPips = Math.abs(entryPrice - stopLoss) / pipValue;
+      
+      // Calculate lot size: Money at Risk / (Stop Loss Pips × Pip Value per Lot)
+      const pipValuePerLot = 10; // $10 per pip for major pairs
+      const lotSize = Math.max(0.01, moneyAtRisk / (stopLossPips * pipValuePerLot));
+      const roundedLotSize = Math.round(lotSize * 100) / 100;
+      
+      // Calculate dollar amounts
       const takeProfit = parseFloat(Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0');
       const takeProfitPips = takeProfit ? Math.abs(takeProfit - entryPrice) / pipValue : 0;
       
-      // Calculate dollar amounts: Pips × Lot Size × Contract Size × Pip Value
-      const stopLossDollar = stopLossPips * lotSize * contractSize * pipValue;
-      const takeProfitDollar = takeProfitPips * lotSize * contractSize * pipValue;
+      const stopLossDollar = stopLossPips * roundedLotSize * pipValuePerLot;
+      const takeProfitDollar = takeProfitPips * roundedLotSize * pipValuePerLot;
       
       // Check if trade exists and get its status
       const existingTrade = trades.get(signal.id);
       const tradeStatus = existingTrade?.status || 'active';
       
       return {
-        lotSize: calculation.lotSize,
-        dollarAmount: calculation.moneyAtRisk,
+        lotSize: roundedLotSize,
+        dollarAmount: Math.round(moneyAtRisk * 100) / 100,
         stopLossDollar: Math.round(stopLossDollar * 100) / 100,
         takeProfitDollar: Math.round(takeProfitDollar * 100) / 100,
         tradeStatus: tradeStatus as 'active' | 'won' | 'lost' | 'breakeven'

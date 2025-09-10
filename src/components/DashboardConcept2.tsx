@@ -1484,11 +1484,22 @@ const DashboardConcept2: React.FC<DashboardConcept2Props> = ({ onLogout, trading
                     timestamp: new Date().toISOString()
                   };
                   
-                  // Store signal data in localStorage for AI Coach to access
-                  localStorage.setItem('nexus_chat_signal', JSON.stringify(signalData));
-                  
-                  // Navigate to AI Coach tab
-                  setActiveTab('ai-coach');
+                  // Redirect to AI Coach with signal context
+                  const signalDataForUrl = encodeURIComponent(JSON.stringify({
+                    pair: signalSymbol,
+                    symbol: signalSymbol,
+                    direction: signalDirection,
+                    action: signalDirection,
+                    entry: signalEntry,
+                    entryPrice: signalEntry,
+                    stopLoss: signalStopLoss,
+                    takeProfit: signalTakeProfit,
+                    confidence: signalConfidence,
+                    timeframe: signal.timeframe || '1H',
+                    riskReward: signal.riskReward || '2.0',
+                    analysis: signalAnalysis
+                  }));
+                  window.location.href = `/dashboard/ai-coach?signal=${signalDataForUrl}`;
                 }}
               />}
               {activeTab === 'analytics' && <PerformanceAnalytics tradingState={{ 

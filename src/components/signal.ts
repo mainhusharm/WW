@@ -19,6 +19,7 @@ export interface TradingSignal {
   timestamp: Date;
   session: 'Sydney' | 'Tokyo' | 'London' | 'New York';
   pips: number;
+  timeframe?: string;
 }
 
 export interface MarketStatus {

@@ -41,6 +41,7 @@ const AICoachEnhanced: React.FC = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messageHistory, setMessageHistory] = useState<Record<string, Message[]>>({});
   const [showApiKeySetup, setShowApiKeySetup] = useState(false);
+  const [signalContext, setSignalContext] = useState<any>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,15 +65,83 @@ const AICoachEnhanced: React.FC = () => {
     const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     setSessionId(newSessionId);
     
-    // Add welcome message
-    const welcomeMessage: Message = {
-      id: 'welcome',
-      role: 'assistant',
-      content: `Hello ${user?.email?.split('@')[0] || 'Trader'}! I'm Nexus, your AI Trading Coach powered by ${selectedModel}. I'm here to help you with trading strategies, risk management, and market analysis. What would you like to discuss today?`,
-      timestamp: new Date()
-    };
-    setMessages([welcomeMessage]);
+    // Load existing messages from localStorage if any
+    const savedMessages = localStorage.getItem(`ai_coach_messages_${user?.email}`);
+    if (savedMessages) {
+      try {
+        const parsedMessages = JSON.parse(savedMessages);
+        setMessages(parsedMessages.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })));
+      } catch (error) {
+        console.error('Error loading saved messages:', error);
+        // Add welcome message if no saved messages
+        const welcomeMessage: Message = {
+          id: 'welcome',
+          role: 'assistant',
+          content: `Hello ${user?.email?.split('@')[0] || 'Trader'}! I'm Nexus, your AI Trading Coach powered by ${selectedModel}. I'm here to help you with trading strategies, risk management, and market analysis. What would you like to discuss today?`,
+          timestamp: new Date()
+        };
+        setMessages([welcomeMessage]);
+      }
+    } else {
+      // Add welcome message only if no saved messages
+      const welcomeMessage: Message = {
+        id: 'welcome',
+        role: 'assistant',
+        content: `Hello ${user?.email?.split('@')[0] || 'Trader'}! I'm Nexus, your AI Trading Coach powered by ${selectedModel}. I'm here to help you with trading strategies, risk management, and market analysis. What would you like to discuss today?`,
+        timestamp: new Date()
+      };
+      setMessages([welcomeMessage]);
+    }
   }, [user, selectedModel]);
+
+  // Save messages to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0 && user?.email) {
+      localStorage.setItem(`ai_coach_messages_${user.email}`, JSON.stringify(messages));
+    }
+  }, [messages, user?.email]);
+
+  // Handle signal context from URL parameters or localStorage
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const signalData = urlParams.get('signal');
+    
+    if (signalData) {
+      try {
+        const parsedSignal = JSON.parse(decodeURIComponent(signalData));
+        setSignalContext(parsedSignal);
+        
+        // Add signal-specific message
+        const signalMessage: Message = {
+          id: `signal_${Date.now()}`,
+          role: 'assistant',
+          content: `I see you're asking about the ${parsedSignal.pair || parsedSignal.symbol} ${parsedSignal.direction || parsedSignal.action} signal. Let me analyze this setup for you:
+
+**Signal Details:**
+- Pair: ${parsedSignal.pair || parsedSignal.symbol}
+- Direction: ${parsedSignal.direction || parsedSignal.action}
+- Entry: ${parsedSignal.entry || parsedSignal.entryPrice}
+- Stop Loss: ${parsedSignal.stopLoss}
+- Take Profit: ${parsedSignal.takeProfit}
+- Confidence: ${parsedSignal.confidence}%
+- Timeframe: ${parsedSignal.timeframe || '1H'}
+
+How can I help you with this signal? Would you like me to analyze the setup, discuss risk management, or provide entry/exit strategies?`,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, signalMessage]);
+        
+        // Clear URL parameter
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (error) {
+        console.error('Error parsing signal data:', error);
+      }
+    }
+  }, []);
 
   // Create particles effect
   useEffect(() => {
@@ -334,18 +403,32 @@ Please try asking your question again, and I'll do my best to provide specific g
             </div>
           </div>
           
-          <div className="trade-metrics">
-            <div className="metric">
-              <div className="metric-value">78%</div>
-              <div className="metric-label">Win Rate</div>
+          <div className="flex items-center space-x-4">
+            <div className="trade-metrics">
+              <div className="metric">
+                <div className="metric-value">78%</div>
+                <div className="metric-label">Win Rate</div>
+              </div>
+              <div className="metric">
+                <div className="metric-value">+2.4%</div>
+                <div className="metric-label">Today's P&L</div>
+              </div>
+              <div className="metric">
+                <div className="metric-value">2h 15m</div>
+                <div className="metric-label">Session Time</div>
+              </div>
             </div>
-            <div className="metric">
-              <div className="metric-value">+2.4%</div>
-              <div className="metric-label">Today's P&L</div>
-            </div>
-            <div className="metric">
-              <div className="metric-value">2h 15m</div>
-              <div className="metric-label">Session Time</div>
+            
+            {/* API Key Management */}
+            <div className="api-key-section">
+              <button
+                onClick={() => setShowApiKeySetup(true)}
+                className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded-lg transition-colors"
+                title="Change API Key"
+              >
+                <Key className="w-4 h-4" />
+                <span className="text-sm">API Key</span>
+              </button>
             </div>
           </div>
         </div>

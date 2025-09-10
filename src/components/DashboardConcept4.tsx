@@ -1658,7 +1658,22 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
                   console.log('Adding signal to journal:', signal);
                 }}
                 onChatWithNexus={(signal) => {
-                  console.log('Chat with Nexus for signal:', signal);
+                  // Redirect to AI Coach with signal context
+                  const signalData = encodeURIComponent(JSON.stringify({
+                    pair: signal.pair || signal.symbol,
+                    symbol: signal.pair || signal.symbol,
+                    direction: signal.direction || signal.action,
+                    action: signal.direction || signal.action,
+                    entry: signal.entry || signal.entryPrice,
+                    entryPrice: signal.entry || signal.entryPrice,
+                    stopLoss: signal.stopLoss,
+                    takeProfit: signal.takeProfit,
+                    confidence: signal.confidence,
+                    timeframe: signal.timeframe || '1H',
+                    riskReward: signal.riskReward,
+                    analysis: signal.analysis || signal.description
+                  }));
+                  window.location.href = `/dashboard/ai-coach?signal=${signalData}`;
                 }}
               />}
               {activeTab === 'analytics' && <PerformanceAnalytics tradingState={{ 

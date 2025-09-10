@@ -122,8 +122,8 @@ export class AdvancedSignalGenerator {
     };
   }
 
-  // Generate complete trading signal
-  public generateSignal(pair: string): TradingSignal | null {
+  // Generate complete trading signal with dynamic calculations
+  public generateSignal(pair: string, userContext?: any, riskPlan?: any): TradingSignal | null {
     if (!this.MAJOR_PAIRS.includes(pair)) {
       return null;
     }
@@ -183,6 +183,12 @@ export class AdvancedSignalGenerator {
     const riskCondition = this.calculateRiskManagement(pair, direction);
     conditions.push(riskCondition);
 
+    // Calculate dynamic confidence based on confirmations
+    const dynamicConfidence = this.calculateDynamicConfidence(conditions);
+
+    // Determine optimal timeframe based on confirmations
+    const optimalTimeframe = this.determineOptimalTimeframe(conditions);
+
     return {
       pair,
       direction,
@@ -190,12 +196,57 @@ export class AdvancedSignalGenerator {
       stopLoss: this.roundPrice(stopLoss, pair),
       takeProfit: this.roundPrice(takeProfit, pair),
       riskReward: Math.round(riskReward * 10) / 10,
-      confidence: Math.round(overallConfidence),
+      confidence: dynamicConfidence,
       conditions,
       timestamp: new Date(),
       session: this.getCurrentSession(),
-      pips
+      pips,
+      timeframe: optimalTimeframe
     };
+  }
+
+  // Calculate dynamic confidence based on actual confirmations
+  private calculateDynamicConfidence(conditions: SignalCondition[]): number {
+    if (conditions.length === 0) return 0;
+
+    // Calculate weighted confidence score
+    const totalWeight = conditions.reduce((sum, condition) => sum + condition.weight, 0);
+    const weightedScore = conditions.reduce((sum, condition) => {
+      const score = condition.status === 'neutral' ? 50 : (condition.status === 'bullish' || condition.status === 'bearish') ? condition.confidence : 0;
+      return sum + (score * condition.weight);
+    }, 0);
+
+    const baseConfidence = totalWeight > 0 ? weightedScore / totalWeight : 0;
+    
+    // Apply confirmation count multiplier
+    const confirmationMultiplier = Math.min(1.2, 0.6 + (conditions.length * 0.1));
+    
+    // Apply timeframe alignment bonus
+    const timeframeAlignment = this.calculateTimeframeAlignment(conditions);
+    
+    const finalConfidence = Math.min(95, baseConfidence * confirmationMultiplier * timeframeAlignment);
+    
+    return Math.round(finalConfidence);
+  }
+
+  // Calculate timeframe alignment bonus
+  private calculateTimeframeAlignment(conditions: SignalCondition[]): number {
+    // This would analyze the timeframes of confirmations
+    // For now, return a base multiplier
+    return 1.0;
+  }
+
+  // Determine optimal timeframe based on confirmations
+  private determineOptimalTimeframe(conditions: SignalCondition[]): string {
+    // Analyze the timeframes of confirmations and determine the best one
+    // For now, return a default based on session
+    const session = this.getCurrentSession();
+    if (session === 'London' || session === 'New York') {
+      return '1H';
+    } else if (session === 'Tokyo') {
+      return '4H';
+    }
+    return '1H';
   }
 
   // Get current trading session
