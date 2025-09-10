@@ -23,6 +23,11 @@ class WebSocketService {
   private reconnectInterval = 5000;
   private callbacks: WebSocketCallbacks = {};
   private isConnecting = false;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private heartbeatTimeout: NodeJS.Timeout | null = null;
+  private heartbeatIntervalMs = 30000; // 30 seconds
+  private heartbeatTimeoutMs = 10000; // 10 seconds
+  private lastHeartbeat = 0;
 
   constructor() {
     this.setupEventListeners();
@@ -61,6 +66,7 @@ class WebSocketService {
         console.log('WebSocket connected');
         this.reconnectAttempts = 0;
         this.isConnecting = false;
+        this.startHeartbeat();
         this.callbacks.onConnect?.();
       };
 
@@ -76,6 +82,7 @@ class WebSocketService {
       this.socket.onclose = (event) => {
         console.log('WebSocket disconnected:', event.code, event.reason);
         this.isConnecting = false;
+        this.stopHeartbeat();
         this.callbacks.onDisconnect?.();
         
         if (!event.wasClean && this.reconnectAttempts < this.maxReconnectAttempts) {
@@ -97,6 +104,13 @@ class WebSocketService {
   }
 
   private handleMessage(message: WebSocketMessage) {
+    // Handle heartbeat responses
+    if (message.type === 'pong' || message.data?.type === 'pong') {
+      this.lastHeartbeat = Date.now();
+      this.clearHeartbeatTimeout();
+      return;
+    }
+
     switch (message.type) {
       case 'notification':
         this.callbacks.onNotification?.(message.data);
@@ -112,6 +126,41 @@ class WebSocketService {
         break;
       default:
         console.warn('Unknown WebSocket message type:', message.type);
+    }
+  }
+
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    this.lastHeartbeat = Date.now();
+    
+    this.heartbeatInterval = setInterval(() => {
+      if (this.socket?.readyState === WebSocket.OPEN) {
+        this.send({ type: 'ping', timestamp: Date.now() });
+        this.setHeartbeatTimeout();
+      }
+    }, this.heartbeatIntervalMs);
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    this.clearHeartbeatTimeout();
+  }
+
+  private setHeartbeatTimeout() {
+    this.clearHeartbeatTimeout();
+    this.heartbeatTimeout = setTimeout(() => {
+      console.warn('WebSocket heartbeat timeout, reconnecting...');
+      this.socket?.close();
+    }, this.heartbeatTimeoutMs);
+  }
+
+  private clearHeartbeatTimeout() {
+    if (this.heartbeatTimeout) {
+      clearTimeout(this.heartbeatTimeout);
+      this.heartbeatTimeout = null;
     }
   }
 
@@ -132,6 +181,7 @@ class WebSocketService {
   }
 
   public disconnect() {
+    this.stopHeartbeat();
     if (this.socket) {
       this.socket.close(1000, 'Client disconnecting');
       this.socket = null;
@@ -174,6 +224,24 @@ class WebSocketService {
       default:
         return 'unknown';
     }
+  }
+
+  public getConnectionHealth(): {
+    state: string;
+    reconnectAttempts: number;
+    lastHeartbeat: number;
+    isHealthy: boolean;
+  } {
+    const now = Date.now();
+    const timeSinceLastHeartbeat = now - this.lastHeartbeat;
+    const isHealthy = this.isConnected() && timeSinceLastHeartbeat < this.heartbeatIntervalMs * 2;
+
+    return {
+      state: this.getConnectionState(),
+      reconnectAttempts: this.reconnectAttempts,
+      lastHeartbeat: this.lastHeartbeat,
+      isHealthy
+    };
   }
 }
 

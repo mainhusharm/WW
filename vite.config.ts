@@ -19,9 +19,22 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: mode === 'development',
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 1000, // Back to 1000 since we have good chunking now
       rollupOptions: {
         output: {
+          // Manual chunk splitting for better optimization
+          manualChunks: {
+            // Vendor chunks
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-router': ['react-router-dom'],
+            'vendor-ui': ['lucide-react', '@heroicons/react'],
+            'vendor-charts': ['recharts'],
+            'vendor-3d': ['three', '@react-three/fiber', '@react-three/drei'],
+            'vendor-animations': ['gsap'],
+            'vendor-utils': ['axios', 'uuid', 'zod'],
+            'vendor-payments': ['@stripe/stripe-js', '@paypal/react-paypal-js'],
+            'vendor-socket': ['socket.io-client', 'pusher-js'],
+          },
           // Ensure consistent chunk naming
           chunkFileNames: (chunkInfo) => {
             const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop() : 'chunk';
@@ -68,7 +81,22 @@ export default defineConfig(({ mode }) => {
         compress: {
           drop_console: true,
           drop_debugger: true,
+          pure_funcs: ['console.log', 'console.info', 'console.debug'],
+          passes: 2,
+          unsafe: true,
+          unsafe_comps: true,
+          unsafe_math: true,
+          unsafe_proto: true,
         },
+        mangle: {
+          toplevel: true,
+          properties: {
+            regex: /^_/
+          }
+        },
+        format: {
+          comments: false,
+        }
       } : undefined,
       // Ensure proper target for modern browsers
       target: 'es2020',

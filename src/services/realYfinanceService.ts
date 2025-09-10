@@ -313,13 +313,6 @@ class RealYfinanceService {
   // formatForexSymbol method removed - no longer needed
 
   /**
-   * Clear cache
-   */
-  clearCache(): void {
-    this.priceCache.clear();
-  }
-
-  /**
    * Get cache status
    */
   getCacheStatus(): { size: number; keys: string[] } {

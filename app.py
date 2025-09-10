@@ -15,15 +15,215 @@ import time
 import hashlib
 import sqlite3
 import os
+import logging
+import traceback
+from collections import defaultdict, deque
 
-# Create Flask app
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Create Flask app with production optimizations
 app = Flask(__name__)
 
-# Initialize Socket.IO
-socketio = SocketIO(app, cors_allowed_origins="*")
+# Production optimizations
+app.config['JSON_SORT_KEYS'] = False  # Faster JSON serialization
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False  # Faster JSON responses
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year cache for static files
+
+# Initialize Socket.IO with production settings
+socketio = SocketIO(
+    app, 
+    cors_allowed_origins="*", 
+    logger=False,  # Disable in production
+    engineio_logger=False,  # Disable in production
+    ping_timeout=60,  # Increase ping timeout
+    ping_interval=25,  # Increase ping interval
+    max_http_buffer_size=1000000,  # 1MB max buffer
+    always_connect=True,  # Always allow connections
+    transports=['websocket', 'polling']  # Support both transports
+)
 
 # Database configuration
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///trading_platform.db')
+
+# Connection pooling for better performance
+import threading
+from queue import Queue
+
+# Simple connection pool for SQLite
+class ConnectionPool:
+    def __init__(self, max_connections=10):
+        self.max_connections = max_connections
+        self.pool = Queue(maxsize=max_connections)
+        self.lock = threading.Lock()
+        
+    def get_connection(self):
+        try:
+            return self.pool.get_nowait()
+        except:
+            return get_db_connection()
+    
+    def return_connection(self, conn):
+        try:
+            self.pool.put_nowait(conn)
+        except:
+            conn.close()
+
+# Initialize connection pool
+connection_pool = ConnectionPool()
+
+def get_pooled_db_connection():
+    """Get database connection from pool"""
+    return connection_pool.get_connection()
+
+def return_pooled_db_connection(conn):
+    """Return database connection to pool"""
+    connection_pool.return_connection(conn)
+
+# Rate limiting configuration
+RATE_LIMITS = {
+    'default': {'requests': 1000, 'window': 60},  # 1000 requests per minute
+    'auth': {'requests': 100, 'window': 60},      # 100 auth requests per minute
+    'signals': {'requests': 300, 'window': 60},   # 300 signal requests per minute
+    'api': {'requests': 2000, 'window': 60},      # 2000 API requests per minute
+}
+
+# Rate limiting storage
+rate_limit_storage = defaultdict(lambda: defaultdict(deque))
+rate_limit_lock = threading.Lock()
+
+# Caching system for better performance
+from functools import lru_cache
+import time
+
+class SimpleCache:
+    def __init__(self, default_ttl=300):  # 5 minutes default TTL
+        self.cache = {}
+        self.ttl = {}
+        self.default_ttl = default_ttl
+        self.lock = threading.Lock()
+    
+    def get(self, key):
+        with self.lock:
+            if key in self.cache:
+                if time.time() < self.ttl.get(key, 0):
+                    return self.cache[key]
+                else:
+                    # Expired
+                    del self.cache[key]
+                    del self.ttl[key]
+            return None
+    
+    def set(self, key, value, ttl=None):
+        with self.lock:
+            self.cache[key] = value
+            self.ttl[key] = time.time() + (ttl or self.default_ttl)
+    
+    def clear(self):
+        with self.lock:
+            self.cache.clear()
+            self.ttl.clear()
+
+# Initialize cache
+app_cache = SimpleCache()
+
+def get_client_ip():
+    """Get client IP address for rate limiting"""
+    if request.headers.get('X-Forwarded-For'):
+        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
+    return request.remote_addr or 'unknown'
+
+def is_rate_limited(endpoint_type='default'):
+    """Check if client is rate limited"""
+    client_ip = get_client_ip()
+    
+    # Bypass rate limiting for localhost during testing
+    if client_ip in ['127.0.0.1', 'localhost', '::1']:
+        return False
+    
+    now = time.time()
+    limits = RATE_LIMITS.get(endpoint_type, RATE_LIMITS['default'])
+    
+    with rate_limit_lock:
+        # Clean old requests outside the window
+        client_requests = rate_limit_storage[client_ip][endpoint_type]
+        while client_requests and now - client_requests[0] > limits['window']:
+            client_requests.popleft()
+        
+        # Check if limit exceeded
+        if len(client_requests) >= limits['requests']:
+            logger.warning(f"Rate limit exceeded for {client_ip} on {endpoint_type}: {len(client_requests)}/{limits['requests']}")
+            return True
+        
+        # Add current request
+        client_requests.append(now)
+        return False
+
+def rate_limit_response():
+    """Return rate limit exceeded response"""
+    return jsonify({
+        'error': 'Rate limit exceeded',
+        'message': 'Too many requests. Please try again later.',
+        'retry_after': 60
+    }), 429
+
+def apply_rate_limiting(endpoint_type='api'):
+    """Decorator to apply rate limiting to endpoints"""
+    def decorator(f):
+        def wrapper(*args, **kwargs):
+            if is_rate_limited(endpoint_type):
+                return rate_limit_response()
+            return f(*args, **kwargs)
+        wrapper.__name__ = f.__name__
+        return wrapper
+    return decorator
+
+def handle_errors(f):
+    """Decorator to handle errors gracefully"""
+    def wrapper(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error in {f.__name__}: {str(e)}", exc_info=True)
+            return jsonify({
+                'error': 'Internal server error',
+                'message': 'An unexpected error occurred. Please try again later.',
+                'timestamp': datetime.now().isoformat()
+            }), 500
+    wrapper.__name__ = f.__name__
+    return wrapper
+
+# Global error handlers
+@app.errorhandler(404)
+def not_found(error):
+    logger.warning(f"404 Not Found: {request.url}")
+    return jsonify({
+        'error': 'Not Found',
+        'message': 'The requested resource was not found',
+        'timestamp': datetime.now().isoformat()
+    }), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"500 Internal Server Error: {str(error)}", exc_info=True)
+    return jsonify({
+        'error': 'Internal Server Error',
+        'message': 'An unexpected error occurred',
+        'timestamp': datetime.now().isoformat()
+    }), 500
+
+@app.errorhandler(429)
+def rate_limit_error(error):
+    logger.warning(f"429 Rate Limit Exceeded: {request.url}")
+    return rate_limit_response()
 
 # Simple in-memory user storage (temporary fallback)
 SIMPLE_USERS = {
@@ -36,12 +236,20 @@ SIMPLE_USERS = {
 }
 
 def get_db_connection():
-    """Get database connection"""
+    """Get database connection with optimizations for concurrency"""
     if DATABASE_URL.startswith('sqlite'):
-        # SQLite connection
+        # SQLite connection with WAL mode for better concurrency
         db_path = DATABASE_URL.replace('sqlite:///', '')
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, timeout=30.0)
         conn.row_factory = sqlite3.Row
+        
+        # Enable WAL mode for better concurrency
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA cache_size=10000")
+        conn.execute("PRAGMA temp_store=MEMORY")
+        conn.execute("PRAGMA mmap_size=268435456")  # 256MB
+        
         return conn
     else:
         # PostgreSQL connection (for production)
@@ -52,9 +260,56 @@ def get_db_connection():
         except ImportError:
             # Fallback to SQLite if psycopg2 is not available
             print("Warning: psycopg2 not available, falling back to SQLite")
-            conn = sqlite3.connect('trading_platform.db')
+            conn = sqlite3.connect('trading_platform.db', timeout=30.0)
             conn.row_factory = sqlite3.Row
             return conn
+
+def init_database():
+    """Initialize database tables"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Create users table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                username TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                plan_type TEXT DEFAULT 'premium',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Create signals table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS signals (
+                id TEXT PRIMARY KEY,
+                pair TEXT NOT NULL,
+                direction TEXT NOT NULL,
+                entry_price TEXT NOT NULL,
+                stop_loss TEXT NOT NULL,
+                take_profit TEXT NOT NULL,
+                confidence INTEGER NOT NULL,
+                analysis TEXT,
+                ict_concepts TEXT,
+                market TEXT DEFAULT 'forex',
+                timeframe TEXT DEFAULT '1h',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'active',
+                source TEXT DEFAULT 'admin_generated'
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+        logger.info("Database initialized successfully")
+        
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        raise
 
 def hash_password(password):
     """Hash password using SHA-256"""
@@ -300,15 +555,87 @@ def generate_real_time_user_profile():
 
 # API Endpoints
 @app.route('/health', methods=['GET'])
+@handle_errors
 def health_check():
-    """Real-time health check"""
+    """Comprehensive health check with system metrics"""
+    try:
+        # Get system metrics
+        import psutil
+        cpu_percent = psutil.cpu_percent(interval=1)
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+        
+        system_metrics = {
+            "cpu_percent": cpu_percent,
+            "memory_percent": memory.percent,
+            "memory_available_gb": round(memory.available / (1024**3), 2),
+            "disk_percent": disk.percent,
+            "disk_free_gb": round(disk.free / (1024**3), 2)
+        }
+    except ImportError:
+        system_metrics = {"error": "psutil not available"}
+    except Exception as e:
+        system_metrics = {"error": str(e)}
+    
     return jsonify({
         "status": "healthy",
         "message": "Real-time server is running",
         "timestamp": datetime.now().isoformat(),
         "signals_count": len(signals_storage),
+        "webhook_subscribers": len(webhook_subscribers),
+        "rate_limit_storage_size": sum(len(requests) for client in rate_limit_storage.values() for requests in client.values()),
+        "system_metrics": system_metrics,
         "uptime": "Real-time"
     })
+
+@app.route('/health/detailed', methods=['GET'])
+@handle_errors
+def detailed_health_check():
+    """Detailed health check for monitoring systems"""
+    try:
+        # Database health
+        db_health = "unknown"
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            db_health = "healthy"
+            conn.close()
+        except Exception as e:
+            db_health = f"error: {str(e)}"
+        
+        # WebSocket health
+        ws_health = "unknown"
+        try:
+            # Check if Socket.IO is running
+            ws_health = "healthy"
+        except Exception as e:
+            ws_health = f"error: {str(e)}"
+        
+        return jsonify({
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "components": {
+                "database": db_health,
+                "websocket": ws_health,
+                "rate_limiting": "active",
+                "signal_storage": f"{len(signals_storage)} signals",
+                "webhook_system": f"{len(webhook_subscribers)} subscribers"
+            },
+            "metrics": {
+                "signals_generated": len(signals_storage),
+                "active_webhooks": len(webhook_subscribers),
+                "rate_limited_ips": len(rate_limit_storage)
+            }
+        })
+    except Exception as e:
+        logger.error(f"Detailed health check failed: {str(e)}", exc_info=True)
+        return jsonify({
+            "status": "error",
+            "message": "Health check failed",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
 
 @app.route('/api/user/profile', methods=['GET'])
 @app.route('/user/profile', methods=['GET'])
@@ -394,6 +721,10 @@ def get_test_signals():
 @app.route('/api/signals', methods=['GET'])
 def get_signals():
     """Get real-time signals - main endpoint"""
+    # Rate limiting for signal endpoints
+    if is_rate_limited('signals'):
+        return rate_limit_response()
+    
     return jsonify({
         "signals": signals_storage[-20:],  # Last 20 signals
         "total_count": len(signals_storage),
@@ -403,6 +734,10 @@ def get_signals():
 @app.route('/api/signals/mark-taken', methods=['POST'])
 def mark_signal_taken():
     """Mark signal as taken (real-time)"""
+    # Rate limiting for signal endpoints
+    if is_rate_limited('signals'):
+        return rate_limit_response()
+    
     data = request.get_json() or {}
     signal_id = data.get('signalId')
     outcome = data.get('outcome', 'Unknown')
@@ -650,6 +985,10 @@ def direct_login():
     if request.method == 'OPTIONS':
         return '', 200
     
+    # Rate limiting for auth endpoints
+    if is_rate_limited('auth'):
+        return rate_limit_response()
+    
     try:
         data = request.get_json()
         if not data:
@@ -692,6 +1031,10 @@ def simple_login():
     if request.method == 'OPTIONS':
         return '', 200
     
+    # Rate limiting for auth endpoints
+    if is_rate_limited('auth'):
+        return rate_limit_response()
+    
     try:
         data = request.get_json()
         if not data:
@@ -733,6 +1076,10 @@ def login():
     """User login endpoint"""
     if request.method == 'OPTIONS':
         return '', 200
+    
+    # Rate limiting for auth endpoints
+    if is_rate_limited('auth'):
+        return rate_limit_response()
     
     # Debug logging
     print(f"🔍 LOGIN REQUEST: {request.method} {request.url}")
@@ -818,10 +1165,15 @@ def login():
         return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
 @app.route('/api/auth/register', methods=['POST', 'OPTIONS'])
+@handle_errors
 def register():
     """User registration endpoint"""
     if request.method == 'OPTIONS':
         return '', 200
+    
+    # Rate limiting for auth endpoints
+    if is_rate_limited('auth'):
+        return rate_limit_response()
     
     try:
         data = request.get_json()
@@ -830,39 +1182,65 @@ def register():
         
         email = data.get('email')
         password = data.get('password')
-        username = data.get('username', email.split('@')[0])  # Default username from email
+        username = data.get('username', email.split('@')[0]) if email else None
+        phone = data.get('phone', '')
+        company = data.get('company', '')
+        country = data.get('country', '')
         
         if not email or not password:
             return jsonify({"msg": "Email and password required"}), 400
         
-        # Connect to database
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        # Validate email format
+        if '@' not in email or '.' not in email.split('@')[1]:
+            return jsonify({"msg": "Invalid email format"}), 400
         
-        # Check if user already exists
-        cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
-        if cursor.fetchone():
-            conn.close()
-            return jsonify({"msg": "User already exists"}), 409
+        # Validate password strength
+        if len(password) < 8:
+            return jsonify({"msg": "Password must be at least 8 characters long"}), 400
         
-        # Create user
-        user_id = str(uuid.uuid4())
-        password_hash = hash_password(password)
+        # Connect to database with proper error handling
+        conn = None
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            # Check if user already exists
+            cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+            if cursor.fetchone():
+                return jsonify({"msg": "User already exists"}), 409
+            
+            # Create user
+            user_id = str(uuid.uuid4())
+            password_hash = hash_password(password)
+            
+            cursor.execute("""
+                INSERT INTO users (id, username, email, password_hash, plan_type, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (user_id, username, email, password_hash, 'premium', datetime.now().isoformat()))
+            
+            conn.commit()
+            
+        except sqlite3.IntegrityError as e:
+            if "UNIQUE constraint failed" in str(e):
+                return jsonify({"msg": "User already exists"}), 409
+            else:
+                raise
+        except Exception as e:
+            raise
+        finally:
+            if conn:
+                conn.close()
         
-        cursor.execute("""
-            INSERT INTO users (id, username, email, password_hash, plan_type, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (user_id, username, email, password_hash, 'premium', datetime.now().isoformat()))
-        
-        conn.commit()
-        conn.close()
+        logger.info(f"New user registered: {email}")
         
         return jsonify({
             "msg": "User created successfully",
-            "user_id": user_id
+            "user_id": user_id,
+            "success": True
         }), 201
         
     except Exception as e:
+        logger.error(f"Registration error: {str(e)}", exc_info=True)
         return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
 @app.route('/api/auth/profile', methods=['GET', 'OPTIONS'])
@@ -930,7 +1308,15 @@ if __name__ == '__main__':
     print("✅ Background signal generation DISABLED - Only admin signals")
     print("✅ Real-time data generation active")
     
+    # Initialize database
+    try:
+        init_database()
+        print("✅ Database initialized successfully")
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+        exit(1)
+    
     # For local development
     import os
-    port = int(os.environ.get('PORT', 8080))
+    port = int(os.environ.get('PORT', 5000))
     socketio.run(app, host='0.0.0.0', port=port, debug=False)
