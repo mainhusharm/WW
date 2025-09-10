@@ -111,7 +111,7 @@ const AICoachEnhanced: React.FC = () => {
     }
   }, [messages, user?.email]);
 
-  // Handle signal context from URL parameters or localStorage
+  // Handle signal context from URL parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const signalData = urlParams.get('signal');
@@ -121,11 +121,13 @@ const AICoachEnhanced: React.FC = () => {
         const parsedSignal = JSON.parse(decodeURIComponent(signalData));
         setSignalContext(parsedSignal);
         
-        // Add signal-specific message
-        const signalMessage: Message = {
-          id: `signal_${Date.now()}`,
-          role: 'assistant',
-          content: `I see you're asking about the ${parsedSignal.pair || parsedSignal.symbol} ${parsedSignal.direction || parsedSignal.action} signal. Let me analyze this setup for you:
+        // Only add signal message if there are no existing messages
+        const savedMessages = localStorage.getItem(`ai_coach_messages_${user?.email}`);
+        if (!savedMessages || JSON.parse(savedMessages).length === 0) {
+          const signalMessage: Message = {
+            id: `signal_${Date.now()}`,
+            role: 'assistant',
+            content: `I see you're asking about the ${parsedSignal.pair || parsedSignal.symbol} ${parsedSignal.direction || parsedSignal.action} signal. Let me analyze this setup for you:
 
 **Signal Details:**
 - Pair: ${parsedSignal.pair || parsedSignal.symbol}
@@ -137,10 +139,14 @@ const AICoachEnhanced: React.FC = () => {
 - Timeframe: ${parsedSignal.timeframe || '1H'}
 
 How can I help you with this signal? Would you like me to analyze the setup, discuss risk management, or provide entry/exit strategies?`,
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, signalMessage]);
+            timestamp: new Date()
+          };
+          
+          setMessages([signalMessage]);
+        } else {
+          // If there are existing messages, just set the signal context without adding a message
+          console.log('Signal context set for existing chat session');
+        }
         
         // Clear URL parameter
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -148,7 +154,7 @@ How can I help you with this signal? Would you like me to analyze the setup, dis
         console.error('Error parsing signal data:', error);
       }
     }
-  }, []);
+  }, [user?.email]);
 
   // Create particles effect
   useEffect(() => {
@@ -428,6 +434,13 @@ Please try asking your question again, and I'll do my best to provide specific g
                   </div>
                 )}
               </div>
+              {signalContext && (
+                <div className="signal-context mt-2">
+                  <span className="px-2 py-1 bg-green-600/20 text-green-400 text-xs rounded-full">
+                    📊 {signalContext.pair || signalContext.symbol} {signalContext.direction || signalContext.action}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           
