@@ -36,7 +36,7 @@ export default function SignupForm() {
   const [success, setSuccess] = useState<string | null>(null);
 
   // Get API URL from environment variable
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   
   const [formData, setFormData] = useState<FormData>({
     email: '',
