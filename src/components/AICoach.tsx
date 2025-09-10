@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Key } from 'lucide-react';
+import { Key, Cpu, Settings, Zap } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import { useTradingPlan } from '../contexts/TradingPlanContext';
 import ApiKeySetup from './ApiKeySetup';
 import { getUserApiKey } from '../utils/apiKeyTest';
+import geminiService, { GeminiModel, GeminiRequest } from '../services/geminiService';
 
 interface Message {
   id: string;
@@ -25,9 +26,9 @@ const AICoach: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
   const [userApiKey, setUserApiKey] = useState<string>('');
-
-  // Gemini API configuration
-  const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-1.5-flash');
+  const [availableModels, setAvailableModels] = useState<GeminiModel[]>([]);
+  const [showModelSelector, setShowModelSelector] = useState(false);
 
   useEffect(() => {
     // Load user's API key from localStorage
@@ -35,8 +36,12 @@ const AICoach: React.FC = () => {
       const savedKey = getUserApiKey(user.email);
       if (savedKey) {
         setUserApiKey(savedKey);
+        geminiService.setApiKey(savedKey);
       }
     }
+    
+    // Load available models
+    setAvailableModels(geminiService.getAvailableModels());
   }, [user]);
 
   // Force show setup screen for testing - remove this line after testing
