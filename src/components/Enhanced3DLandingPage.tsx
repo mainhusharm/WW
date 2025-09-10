@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  TrendingUp, 
   Shield, 
   Target, 
   Users, 
@@ -10,10 +9,8 @@ import {
   Star, 
   ArrowRight,
   Award,
-  Clock,
   DollarSign,
   Zap,
-  Play,
   ChevronDown
 } from 'lucide-react';
 import Header from './Header';
@@ -29,7 +26,6 @@ const Enhanced3DLandingPage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     try {

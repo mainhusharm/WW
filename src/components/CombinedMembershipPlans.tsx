@@ -57,7 +57,7 @@ const CombinedMembershipPlans: React.FC = () => {
       iconBg: 'bg-yellow-500',
       color: 'border-yellow-500',
       bgColor: 'bg-yellow-500/10',
-      buttonColor: 'bg-yellow-600 hover:bg-yellow-700',
+      buttonColor: 'bg-yellow-500 hover:bg-yellow-600',
       popular: true,
       features: [
         'Risk management plan for 1 month',
@@ -84,7 +84,7 @@ const CombinedMembershipPlans: React.FC = () => {
       iconBg: 'bg-purple-500',
       color: 'border-purple-500',
       bgColor: 'bg-purple-500/10',
-      buttonColor: 'bg-purple-600 hover:bg-purple-700',
+      buttonColor: 'bg-purple-500 hover:bg-purple-600',
       features: [
         'Risk management plan for 3 months',
         'Trading signals for 3 months',
@@ -114,7 +114,7 @@ const CombinedMembershipPlans: React.FC = () => {
       iconBg: 'bg-orange-500',
       color: 'border-orange-500',
       bgColor: 'bg-orange-500/10',
-      buttonColor: 'bg-orange-600 hover:bg-orange-700',
+      buttonColor: 'bg-orange-500 hover:bg-orange-600',
       features: [
         'Basic strategy automation',
         'EX5 file delivery',
@@ -134,7 +134,7 @@ const CombinedMembershipPlans: React.FC = () => {
       iconBg: 'bg-purple-500',
       color: 'border-purple-500',
       bgColor: 'bg-purple-500/10',
-      buttonColor: 'bg-purple-600 hover:bg-purple-700',
+      buttonColor: 'bg-purple-500 hover:bg-purple-600',
       popular: true,
       features: [
         'Advanced strategy automation',
@@ -157,7 +157,7 @@ const CombinedMembershipPlans: React.FC = () => {
       iconBg: 'bg-green-500',
       color: 'border-green-500',
       bgColor: 'bg-green-500/10',
-      buttonColor: 'bg-green-600 hover:bg-green-700',
+      buttonColor: 'bg-green-500 hover:bg-green-600',
       features: [
         'Full professional bot development',
         'EX5 + Source Code (MQ5)',
@@ -187,60 +187,34 @@ const CombinedMembershipPlans: React.FC = () => {
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
       <div className="max-w-7xl mx-auto">
+        {/* Trading Platform Access Section */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">Membership</span>
+            Trading Platform Access
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
-            Select the perfect plan to accelerate your trading success with our professional services.
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+            Get access to our comprehensive trading platform with advanced tools, signals, and analytics.
           </p>
-          
-          {/* Tab Navigation */}
-          <div className="flex justify-center mb-12">
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-2 border border-gray-700/50">
-              <button
-                onClick={() => setActiveTab('trading')}
-                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  activeTab === 'trading'
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Trading Platform Access
-              </button>
-              <button
-                onClick={() => setActiveTab('mt5')}
-                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  activeTab === 'mt5'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                MT5 Bot Development
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Trading Platform Plans */}
-        {activeTab === 'trading' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {tradingPlans.map((plan, index) => (
-              <div
-                key={index}
-                className={`group relative bg-transparent backdrop-blur-xl rounded-2xl border border-white/20 p-8 transition-all duration-500 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/30 overflow-hidden ${
-                  plan.popular ? 'scale-105' : ''
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
-                    <div className="bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                      MOST POPULAR
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
+          {tradingPlans.map((plan, index) => (
+            <div
+              key={index}
+              className={`group relative bg-gray-800/50 backdrop-blur-sm rounded-2xl border ${plan.color} p-8 transition-all duration-500 hover:shadow-2xl ${
+                plan.popular ? 'scale-105 shadow-yellow-500/30' : 'hover:shadow-blue-500/30'
+              } overflow-hidden`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
+                  <div className="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                    MOST POPULAR
                   </div>
-                )}
+                </div>
+              )}
 
-                <div className="text-center mb-8 relative z-10">
+              <div className="text-center mb-8 relative z-10">
                   <div className={`w-12 h-12 ${plan.iconBg} rounded-lg flex items-center justify-center mx-auto mb-4`}>
                     <div className="text-white">
                       {plan.icon}
@@ -289,27 +263,38 @@ const CombinedMembershipPlans: React.FC = () => {
               </div>
             ))}
           </div>
-        )}
+
+        {/* Custom Expert Advisor Development Section */}
+        <div className="text-center mb-16">
+          <div className="inline-block bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold mb-4">
+            MT5 BOT DEVELOPMENT SERVICE
+          </div>
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
+            Custom Expert Advisor Development
+          </h2>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+            Professional MT5 bot development tailored to your needs and budget.
+          </p>
+        </div>
 
         {/* MT5 Bot Development Plans */}
-        {activeTab === 'mt5' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {mt5Plans.map((plan, index) => (
-              <div
-                key={index}
-                className={`group relative bg-transparent backdrop-blur-xl rounded-2xl border border-white/20 p-8 transition-all duration-500 hover:border-purple-400/50 hover:shadow-2xl hover:shadow-purple-500/30 overflow-hidden ${
-                  plan.popular ? 'scale-105' : ''
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
-                    <div className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                      MOST POPULAR
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {mt5Plans.map((plan, index) => (
+            <div
+              key={index}
+              className={`group relative bg-gray-800/50 backdrop-blur-sm rounded-2xl border ${plan.color} p-8 transition-all duration-500 hover:shadow-2xl ${
+                plan.popular ? 'scale-105 shadow-purple-500/30' : 'hover:shadow-blue-500/30'
+              } overflow-hidden`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
+                  <div className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                    MOST POPULAR
                   </div>
-                )}
-                
-                <div className="text-center mb-8">
+                </div>
+              )}
+              
+              <div className="text-center mb-8">
                   <div className={`w-12 h-12 ${plan.iconBg} rounded-lg flex items-center justify-center mx-auto mb-4`}>
                     <div className="text-white">
                       {plan.icon}
@@ -341,7 +326,6 @@ const CombinedMembershipPlans: React.FC = () => {
               </div>
             ))}
           </div>
-        )}
       </div>
     </section>
   );

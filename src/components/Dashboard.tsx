@@ -13,7 +13,7 @@ import DashboardConcept2 from './DashboardConcept2';
 import DashboardConcept3 from './DashboardConcept3';
 import DashboardConcept4 from './DashboardConcept4';
 import DashboardConcept5 from './DashboardConcept5';
-import RealTimeDataService from '../services/realTimeDataService';
+import { realTimeDataService } from '../services/realTimeDataService';
 
 const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const { user } = useUser();
@@ -39,7 +39,7 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   // Initialize real-time data service
   useEffect(() => {
     if (user?.id) {
-      const realTimeService = RealTimeDataService.getInstance();
+      const realTimeService = realTimeDataService;
       
       // Subscribe to real-time dashboard data
       const unsubscribeDashboard = realTimeService.subscribeToDashboardData(

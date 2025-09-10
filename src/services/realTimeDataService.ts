@@ -103,6 +103,27 @@ class RealTimeDataService {
     }
   }
 
+  // Subscribe to dashboard data
+  subscribeToDashboardData(userId: string, callback: (data: any) => void, interval: number) {
+    const key = `dashboard_${userId}`;
+    this.subscribe(key, callback);
+    return () => this.unsubscribe(key);
+  }
+
+  // Subscribe to performance metrics
+  subscribeToPerformanceMetrics(userId: string, callback: (data: any) => void, interval: number) {
+    const key = `performance_${userId}`;
+    this.subscribe(key, callback);
+    return () => this.unsubscribe(key);
+  }
+
+  // Subscribe to connection status
+  subscribeToConnectionStatus(callback: (isOnline: boolean) => void) {
+    const key = 'connection_status';
+    this.subscribe(key, callback);
+    return () => this.unsubscribe(key);
+  }
+
   // Unsubscribe from real-time data updates
   unsubscribe(key: string) {
     this.subscribers.delete(key);
@@ -258,7 +279,7 @@ class RealTimeDataService {
 
   // Generate simulated queries for demo purposes
   private generateSimulatedQueries(): RealTimeQuery[] {
-    const queryTypes = [
+    const queryTypes: { type: 'customer' | 'technical'; message: string; priority: 'high' | 'medium' | 'low' | 'urgent' }[] = [
       { type: 'customer', message: 'I can\'t access my premium features', priority: 'high' },
       { type: 'customer', message: 'How do I reset my password?', priority: 'medium' },
       { type: 'customer', message: 'My payment failed, can you help?', priority: 'urgent' },
@@ -306,7 +327,7 @@ class RealTimeDataService {
 
   // Generate simulated issues for demo purposes
   private generateSimulatedIssues(): RealTimeIssue[] {
-    const issueTypes = [
+    const issueTypes: { type: 'error' | 'performance' | 'security' | 'feature' | 'infrastructure'; description: string; component: string; severity: 'high' | 'medium' | 'critical' }[] = [
       { type: 'error', description: 'API endpoint returning 500 errors', component: 'Backend API', severity: 'high' },
       { type: 'performance', description: 'Database query taking >2s', component: 'Database', severity: 'medium' },
       { type: 'security', description: 'Potential XSS vulnerability detected', component: 'Frontend', severity: 'critical' },

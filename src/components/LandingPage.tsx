@@ -252,47 +252,29 @@ const LandingPage: React.FC = () => {
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-5xl mx-auto relative z-10">
           {/* Floating badge with enhanced animation */}
-          <div className="inline-flex items-center space-x-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2 mb-8 animate-fade-in hover:scale-105 transition-transform duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/25">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+          <div className="inline-flex items-center space-x-2 bg-black backdrop-blur-sm border border-gray-700/50 rounded-full px-4 py-2 mb-8 animate-fade-in hover:scale-105 transition-transform duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/25">
+            <Zap className="w-4 h-4 text-yellow-400" />
             <span className="text-sm text-gray-300">
-              Professional Prop Firm Clearing Service
+              AI-Powered Trading Platform
             </span>
           </div>
 
           {/* Main title with enhanced styling and animations */}
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-8 leading-tight animate-fade-in animate-slide-up">
-            Master Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-500 animate-pulse hover:animate-none transition-all duration-500 hover:scale-105 inline-block">Funded Account</span> Journey
+            TraderEdge Pro
           </h1>
           
           <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed animate-fade-in animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            Professional clearing service for prop firm challenges with custom trading plans and expert guidance
-          </p>
-          
-          <p className="text-lg text-gray-400 mb-12 max-w-3xl mx-auto animate-fade-in animate-slide-up" style={{ animationDelay: '0.4s' }}>
-            Join <span className="text-blue-400 font-semibold hover:text-cyan-400 transition-colors duration-300">2,847 successful traders</span> who cleared their challenges with our proven methodology.
+            Professional clearing service for prop firm challenges with custom trading plans and expert guidance.
           </p>
           
           {/* Enhanced CTA buttons with hover effects */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16 animate-fade-in animate-slide-up" style={{ animationDelay: '0.6s' }}>
             <Link
               to="/signup"
-              className="group bg-gradient-to-r from-blue-600 via-cyan-600 to-purple-600 hover:from-blue-700 hover:via-cyan-700 hover:to-purple-700 text-white px-10 py-5 rounded-2xl text-xl font-semibold transition-all duration-500 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25 flex items-center gap-3 border border-blue-400/30 hover:border-cyan-400/50 relative overflow-hidden"
+              className="group bg-gradient-to-r from-green-400 to-cyan-500 text-white px-12 py-4 rounded-lg text-xl font-semibold transition-all duration-500 transform hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/25 flex items-center justify-center"
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-              <span className="relative z-10">Start Your Journey</span>
-              <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform duration-300 relative z-10" />
-            </Link>
-            <Link
-              to="/features"
-              className="group border-2 border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white px-10 py-5 rounded-2xl text-xl font-semibold transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/25 hover:scale-105 transform"
-            >
-              View Pricing
-            </Link>
-            <Link
-              to="/affiliate-links"
-              className="group bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-10 py-5 rounded-2xl text-xl font-semibold transition-all duration-500 transform hover:scale-105 hover:shadow-2xl hover:shadow-green-500/25 flex items-center gap-3 hover:shadow-lg hover:shadow-emerald-500/25"
-            >
-              Get Free Access <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
+              Get Started
             </Link>
           </div>
           
@@ -301,32 +283,39 @@ const LandingPage: React.FC = () => {
             {stats.map((stat, index) => (
               <div 
                 key={index} 
-                className="group relative bg-gray-800/40 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6 transition-all duration-500 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/20 overflow-hidden animate-stagger"
-                style={{ 
-                  animationDelay: `${1.0 + (index * 0.1)}s`,
-                  transform: `perspective(1000px) rotateY(${mousePosition.x * 3}deg) rotateX(${mousePosition.y * 3}deg)`,
-                  transformStyle: 'preserve-3d'
-                }}
+                className="group relative p-6 transition-all duration-500 overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                <div className="text-3xl md:text-4xl font-bold text-blue-400 mb-2 group-hover:scale-110 transition-transform duration-300 relative z-10 group-hover:text-cyan-400">
+                <div className="text-3xl md:text-4xl font-bold text-green-400 mb-2 group-hover:scale-110 transition-transform duration-300 relative z-10">
                   {isLoadingStats ? (
-                    <div className="animate-pulse bg-blue-400/20 rounded h-10 w-20 mx-auto"></div>
+                    <div className="animate-pulse bg-green-400/20 rounded h-10 w-20 mx-auto"></div>
                   ) : (
                     stat.number
                   )}
                 </div>
-                <div className="text-white font-semibold mb-1 relative z-10 group-hover:text-blue-200 transition-colors duration-300">{stat.label}</div>
-                <div className="text-sm text-gray-400 relative z-10 group-hover:text-gray-300 transition-colors duration-300">{stat.description}</div>
-                
-                {/* Hover glow effect */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-transparent to-purple-500/20 rounded-2xl blur-xl"></div>
-                </div>
+                <div className="text-white font-semibold mb-1 relative z-10">{stat.label}</div>
+                <div className="text-sm text-gray-400 relative z-10">{stat.description}</div>
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Spacer Section */}
+      <section className="py-16"></section>
+
+      {/* Stats Cards Section */}
+      <section className="px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+          {stats.map((stat, index) => (
+            <div
+              key={index}
+              className="bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6 text-center transition-all duration-500 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-500/20"
+            >
+              <p className="text-4xl font-bold text-white mb-2">{stat.number}</p>
+              <p className="text-lg text-gray-400">{stat.label}</p>
+              <p className="text-sm text-gray-500">{stat.description}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -371,7 +360,7 @@ const LandingPage: React.FC = () => {
       <section ref={featuresRef} className="py-24 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20 animate-on-scroll">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">Professional-Grade Features</h2>
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">Professional-Grade <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Features</span></h2>
             <p className="text-xl text-gray-400 max-w-4xl mx-auto">
               Everything you need to successfully clear prop firm challenges and manage funded accounts
             </p>

@@ -28,7 +28,7 @@ const MT5BotPortal: React.FC = () => {
   ];
 
   return (
-    <div className="relative bg-gradient-to-br from-purple-900/30 via-blue-900/20 to-cyan-900/30 backdrop-blur-sm rounded-3xl border border-purple-500/30 p-8 mb-12 overflow-hidden">
+    <div className="relative bg-black backdrop-blur-sm rounded-3xl border border-purple-500/30 p-8 mb-12 overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-cyan-500/10 rounded-3xl"></div>
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-400/20 to-purple-500/20 rounded-full blur-3xl"></div>
@@ -54,7 +54,7 @@ const MT5BotPortal: React.FC = () => {
         {/* Feature Cards */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {features.map((feature, index) => (
-            <div key={index} className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 text-center border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
+            <div key={index} className="bg-black backdrop-blur-sm rounded-2xl p-4 text-center border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
               <div className="text-purple-400 mb-2 flex justify-center">
                 {feature.icon}
               </div>
@@ -68,10 +68,10 @@ const MT5BotPortal: React.FC = () => {
         <div className="text-center mb-8">
           <Link
             to="/mt5-bots"
-            className="inline-flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-purple-500/50"
+            className="inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-purple-500/50"
           >
             <span className="flex items-center">
-              <span className="mr-2">+</span>
+              <span className="mr-2 font-bold">+</span>
               Access Portal
               <ArrowRight className="w-5 h-5 ml-2" />
             </span>
