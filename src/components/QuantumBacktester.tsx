@@ -47,79 +47,7 @@ const QuantumBacktester: React.FC = () => {
   
   const [backtestHistory, setBacktestHistory] = useState<BacktestTrade[]>([]);
   const [showCalculation, setShowCalculation] = useState(false);
-  const tradingViewWidgetRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!tradingViewWidgetRef.current) return;
-
-    const loadTradingViewChart = () => {
-      try {
-        // Clear the container before appending a new script
-        tradingViewWidgetRef.current!.innerHTML = '';
-        
-        // Check if TradingView is already available
-        if (window.TradingView) {
-          initializeChart();
-          return;
-        }
-
-        const script = document.createElement('script');
-        script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-        script.async = true;
-        script.onload = () => {
-          console.log('TradingView chart script loaded successfully');
-          initializeChart();
-        };
-        script.onerror = (error) => {
-          console.error('Failed to load TradingView chart script:', error);
-        };
-        
-        script.innerHTML = JSON.stringify({
-          "allow_symbol_change": true,
-          "calendar": false,
-          "details": false,
-          "hide_side_toolbar": true,
-          "hide_top_toolbar": false,
-          "hide_legend": false,
-          "hide_volume": false,
-          "hotlist": false,
-          "interval": "D",
-          "locale": "en",
-          "save_image": true,
-          "style": "1",
-          "symbol": tradeData.symbol === 'XAUUSD' ? 'OANDA:XAUUSD' : `OANDA:${tradeData.symbol}`,
-          "theme": "dark",
-          "timezone": "Etc/UTC",
-          "backgroundColor": "rgba(17, 24, 39, 0)",
-          "gridColor": "rgba(46, 46, 46, 0.06)",
-          "watchlist": [],
-          "withdateranges": false,
-          "compareSymbols": [],
-          "studies": [],
-          "autosize": true
-        });
-        
-        tradingViewWidgetRef.current!.appendChild(script);
-      } catch (error) {
-        console.error('Error loading TradingView chart:', error);
-      }
-    };
-
-    const initializeChart = () => {
-      try {
-        // Chart initialization logic here if needed
-      } catch (error) {
-        console.error('Error initializing TradingView chart:', error);
-      }
-    };
-
-    // Add a small delay to ensure DOM is ready
-    const timer = setTimeout(loadTradingViewChart, 100);
-    
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [tradeData.symbol]);
+  // TradingView chart removed - using simple price display instead
   // Load backtest history from localStorage
   useEffect(() => {
     const savedHistory = localStorage.getItem('backtest_history');
@@ -271,12 +199,24 @@ const QuantumBacktester: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* TradingView Widget BEGIN */}
-          <div ref={tradingViewWidgetRef} className="tradingview-widget-container" style={{height:"700px", width:"100%"}}>
-            <div className="tradingview-widget-container__widget" style={{height:"calc(100% - 32px)",width:"100%"}}></div>
-            <div className="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span className="blue-text">Track all markets on TradingView</span></a></div>
+          {/* Price Display - TradingView Chart Removed */}
+          <div className="bg-gray-900/50 backdrop-blur-lg rounded-2xl border border-cyan-500/30 p-8" style={{height:"700px", width:"100%"}}>
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="text-6xl mb-4">📈</div>
+                <div className="text-2xl font-bold text-cyan-400 mb-2">Market Analysis</div>
+                <div className="text-gray-400 mb-4">Symbol: {tradeData.symbol}</div>
+                <div className="text-lg text-gray-300">
+                  <div className="mb-2">Entry: <span className="text-green-400">${tradeData.entryPrice}</span></div>
+                  <div className="mb-2">Stop Loss: <span className="text-red-400">${tradeData.stopLoss}</span></div>
+                  <div className="mb-2">Take Profit: <span className="text-blue-400">${tradeData.takeProfit}</span></div>
+                  <div className="text-sm text-gray-500 mt-4">
+                    Chart functionality removed to prevent errors
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          {/* TradingView Widget END */}
 
           {/* Backtest History Chat */}
           <div className="bg-gray-900/50 backdrop-blur-lg rounded-2xl border border-cyan-500/30 p-8">
