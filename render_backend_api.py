@@ -835,6 +835,8 @@ def register():
     
     try:
         data = request.get_json()
+        print(f"Received registration data: {data}")
+        
         if not data:
             return jsonify({"msg": "No JSON data provided"}), 400
         
@@ -843,12 +845,16 @@ def register():
         username = data.get('username', 'New User')
         plan_type = data.get('plan_type', 'premium')
         
+        print(f"Processing registration for email: {email}, plan: {plan_type}")
+        
         if not email or not password:
             return jsonify({"msg": "Email and password required"}), 400
         
         # Connect to database
+        print("Attempting database connection...")
         conn = get_db_connection()
         cursor = conn.cursor()
+        print("Database connection successful")
         
         # Check if user exists
         cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
@@ -857,7 +863,9 @@ def register():
             return jsonify({"msg": "User already exists"}), 409
         
         # Create user
+        print("Hashing password...")
         password_hash = hash_password(password)
+        print("Password hashed successfully")
         
         # Extract additional fields
         firstName = data.get('firstName', '')
@@ -872,6 +880,10 @@ def register():
         tradingStyle = data.get('tradingStyle', '')
         agreeToMarketing = data.get('agreeToMarketing', False)
         
+        print(f"User data prepared: username={username}, email={email}, plan={plan_type}")
+        print(f"Additional fields: firstName={firstName}, lastName={lastName}, phone={phone}")
+        
+        print("Executing database insert...")
         cursor.execute("""
             INSERT INTO users (
                 username, email, password_hash, plan_type, normalized_email, 
@@ -887,6 +899,7 @@ def register():
             preferredMarkets, tradingStyle, agreeToMarketing,
             datetime.now(timezone.utc).isoformat()
         ))
+        print("Database insert executed successfully")
         
         user_id = cursor.lastrowid
         conn.commit()
@@ -908,4 +921,8 @@ def register():
         }), 201
         
     except Exception as e:
-        return jsonify({"msg": f"Server error: {str(e)}"}), 500
+        print(f"Registration error: {str(e)}")
+        print(f"Error type: {type(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"msg": f"Server error: {str(e)}", "error_type": str(type(e))}), 500

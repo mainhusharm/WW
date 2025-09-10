@@ -124,7 +124,7 @@ export default function EnhancedSignupForm() {
             company: formData.company,
             country: formData.country,
             agreeToMarketing: formData.agreeToMarketing,
-            selectedPlan: selectedPlan
+            plan_type: selectedPlan?.name?.toLowerCase() || 'premium'
           }),
         });
 
