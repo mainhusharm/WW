@@ -82,17 +82,32 @@ export default defineConfig(({ mode }) => {
           drop_console: true,
           drop_debugger: true,
           pure_funcs: ['console.log', 'console.info', 'console.debug'],
-          passes: 2,
-          unsafe: true,
-          unsafe_comps: true,
-          unsafe_math: true,
-          unsafe_proto: true,
+          passes: 1,
+          // Remove unsafe options that break React
+          unsafe: false,
+          unsafe_comps: false,
+          unsafe_math: false,
+          unsafe_proto: false,
         },
         mangle: {
-          toplevel: true,
+          toplevel: false, // Don't mangle top-level to preserve React internals
           properties: {
-            regex: /^_/
-          }
+            // Only mangle properties starting with underscore, not React internals
+            regex: /^_[a-zA-Z]/
+          },
+          // Preserve React internal properties
+          reserved: [
+            'ReactCurrentOwner',
+            'ReactCurrentDispatcher',
+            'ReactCurrentBatchConfig',
+            'ReactCurrentActQueue',
+            'ReactCurrentCache',
+            'ReactCurrentOwner',
+            'ReactCurrentDispatcher',
+            'ReactCurrentBatchConfig',
+            'ReactCurrentActQueue',
+            'ReactCurrentCache'
+          ]
         },
         format: {
           comments: false,
