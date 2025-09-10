@@ -1204,7 +1204,7 @@ def login():
 @app.route('/api/auth/register', methods=['POST', 'OPTIONS'])
 @handle_errors
 def register():
-    """User registration endpoint"""
+    """User registration endpoint - saves to both users and customer service tables"""
     if request.method == 'OPTIONS':
         return '', 200
     
@@ -1241,20 +1241,124 @@ def register():
             conn = get_db_connection()
             cursor = conn.cursor()
             
-            # Check if user already exists
+            # Create customer service tables if they don't exist
+            if DATABASE_URL.startswith('sqlite'):
+                # Create customers table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS customers (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        unique_id TEXT UNIQUE NOT NULL,
+                        name TEXT NOT NULL,
+                        email TEXT UNIQUE NOT NULL,
+                        password_hash TEXT,
+                        membership_tier TEXT DEFAULT 'premium',
+                        join_date TEXT NOT NULL,
+                        last_active TEXT,
+                        phone TEXT,
+                        company TEXT,
+                        country TEXT,
+                        status TEXT DEFAULT 'active',
+                        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                        payment_status TEXT DEFAULT 'pending',
+                        payment_date TEXT,
+                        questionnaire_completed BOOLEAN DEFAULT 0,
+                        account_type TEXT,
+                        prop_firm TEXT,
+                        account_size INTEGER DEFAULT 0
+                    )
+                """)
+                
+                # Create customer_activities table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS customer_activities (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        customer_id INTEGER NOT NULL,
+                        activity_type TEXT NOT NULL,
+                        activity_details TEXT,
+                        timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+                        ip_address TEXT,
+                        user_agent TEXT,
+                        FOREIGN KEY (customer_id) REFERENCES customers (id)
+                    )
+                """)
+                
+                # Create customer_service_data table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS customer_service_data (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        customer_id INTEGER NOT NULL,
+                        email TEXT NOT NULL,
+                        questionnaire_data TEXT,
+                        screenshots TEXT,
+                        risk_management_plan TEXT,
+                        subscription_plan TEXT,
+                        account_type TEXT,
+                        prop_firm TEXT,
+                        account_size INTEGER,
+                        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (customer_id) REFERENCES customers (id)
+                    )
+                """)
+            
+            # Check if user already exists in both tables
             if DATABASE_URL.startswith('sqlite'):
                 cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+                if cursor.fetchone():
+                    return jsonify({"msg": "User already exists"}), 409
+                
+                cursor.execute("SELECT id FROM customers WHERE email = ?", (email,))
                 if cursor.fetchone():
                     return jsonify({"msg": "User already exists"}), 409
                 
                 # Create user for SQLite
                 user_id = str(uuid.uuid4())
                 password_hash = hash_password(password)
+                unique_id = str(uuid.uuid4())[:8].upper()
+                current_time = datetime.now().isoformat()
                 
+                # Insert into users table
                 cursor.execute("""
                     INSERT INTO users (id, username, email, password_hash, plan_type, created_at)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (user_id, username, email, password_hash, 'premium', datetime.now().isoformat()))
+                """, (user_id, username, email, password_hash, 'premium', current_time))
+                
+                # Insert into customers table
+                cursor.execute("""
+                    INSERT INTO customers (
+                        unique_id, name, email, password_hash, membership_tier,
+                        join_date, last_active, phone, company, country, status,
+                        created_at, updated_at, payment_status, account_type
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    unique_id, username, email, password_hash, 'premium',
+                    current_time, current_time, phone, company, country, 'active',
+                    current_time, current_time, 'pending', 'premium'
+                ))
+                
+                customer_id = cursor.lastrowid
+                
+                # Insert into customer_service_data table
+                cursor.execute("""
+                    INSERT INTO customer_service_data (
+                        customer_id, email, account_type, prop_firm, account_size,
+                        created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    customer_id, email, 'premium', 'Unknown', 0,
+                    current_time, current_time
+                ))
+                
+                # Log the registration activity
+                cursor.execute("""
+                    INSERT INTO customer_activities (
+                        customer_id, activity_type, activity_details, timestamp
+                    ) VALUES (?, ?, ?, ?)
+                """, (
+                    customer_id, 'registration', f'User registered with email: {email}', current_time
+                ))
+                
             else:
                 # PostgreSQL - check if user exists
                 cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
@@ -1283,7 +1387,7 @@ def register():
             if conn:
                 conn.close()
         
-        logger.info(f"New user registered: {email}")
+        logger.info(f"New user registered: {email} (User ID: {user_id}, Customer ID: {customer_id if 'customer_id' in locals() else 'N/A'})")
         
         return jsonify({
             "msg": "User created successfully",
@@ -1293,6 +1397,131 @@ def register():
         
     except Exception as e:
         logger.error(f"Registration error: {str(e)}", exc_info=True)
+        return jsonify({"msg": f"Server error: {str(e)}"}), 500
+
+@app.route('/api/customers', methods=['GET'])
+@handle_errors
+def get_customers():
+    """Get all customers for customer service dashboard"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Create customer service tables if they don't exist
+        if DATABASE_URL.startswith('sqlite'):
+            # Create customers table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS customers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    unique_id TEXT UNIQUE NOT NULL,
+                    name TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT,
+                    membership_tier TEXT DEFAULT 'premium',
+                    join_date TEXT NOT NULL,
+                    last_active TEXT,
+                    phone TEXT,
+                    company TEXT,
+                    country TEXT,
+                    status TEXT DEFAULT 'active',
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    payment_status TEXT DEFAULT 'pending',
+                    payment_date TEXT,
+                    questionnaire_completed BOOLEAN DEFAULT 0,
+                    account_type TEXT,
+                    prop_firm TEXT,
+                    account_size INTEGER DEFAULT 0
+                )
+            """)
+            
+            # Create customer_activities table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS customer_activities (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    customer_id INTEGER NOT NULL,
+                    activity_type TEXT NOT NULL,
+                    activity_details TEXT,
+                    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+                    ip_address TEXT,
+                    user_agent TEXT,
+                    FOREIGN KEY (customer_id) REFERENCES customers (id)
+                )
+            """)
+            
+            # Create customer_service_data table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS customer_service_data (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    customer_id INTEGER NOT NULL,
+                    email TEXT NOT NULL,
+                    questionnaire_data TEXT,
+                    screenshots TEXT,
+                    risk_management_plan TEXT,
+                    subscription_plan TEXT,
+                    account_type TEXT,
+                    prop_firm TEXT,
+                    account_size INTEGER,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (customer_id) REFERENCES customers (id)
+                )
+            """)
+            
+            conn.commit()
+        
+        if DATABASE_URL.startswith('sqlite'):
+            cursor.execute("""
+                SELECT c.*, csd.account_type, csd.prop_firm, csd.account_size,
+                       csd.questionnaire_data, csd.created_at as service_created_at
+                FROM customers c
+                LEFT JOIN customer_service_data csd ON c.id = csd.customer_id
+                ORDER BY c.created_at DESC
+            """)
+        else:
+            # PostgreSQL query
+            cursor.execute("""
+                SELECT c.*, csd.account_type, csd.prop_firm, csd.account_size,
+                       csd.questionnaire_data, csd.created_at as service_created_at
+                FROM customers c
+                LEFT JOIN customer_service_data csd ON c.id = csd.customer_id
+                ORDER BY c.created_at DESC
+            """)
+        
+        customers = cursor.fetchall()
+        conn.close()
+        
+        customer_list = []
+        for customer in customers:
+            customer_list.append({
+                "id": customer['id'],
+                "unique_id": customer['unique_id'],
+                "name": customer['name'],
+                "email": customer['email'],
+                "membership_tier": customer['membership_tier'],
+                "status": customer['status'],
+                "payment_status": customer['payment_status'],
+                "payment_date": customer['payment_date'],
+                "questionnaire_completed": customer['questionnaire_completed'],
+                "account_type": customer['account_type'],
+                "prop_firm": customer['prop_firm'],
+                "account_size": customer['account_size'],
+                "phone": customer['phone'],
+                "company": customer['company'],
+                "country": customer['country'],
+                "join_date": customer['join_date'],
+                "last_active": customer['last_active'],
+                "created_at": customer['created_at']
+            })
+        
+        return jsonify({
+            "success": True,
+            "customers": customer_list,
+            "total": len(customer_list)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching customers: {str(e)}", exc_info=True)
         return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
 @app.route('/api/auth/profile', methods=['GET', 'OPTIONS'])

@@ -398,14 +398,19 @@
             showLoading();
 
             try {
-                // Prepare data for API
+                // Prepare data for API (matching EnhancedSignupForm structure)
                 const apiData = {
                     email: formData.email,
                     password: formData.password,
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    fullName: formData.firstName + ' ' + formData.lastName,
                     username: formData.firstName + formData.lastName,
                     phone: formData.phone,
                     company: formData.company,
-                    country: formData.country
+                    country: formData.country,
+                    agreeToMarketing: formData.newsletter,
+                    plan_type: 'premium'
                 };
 
                 console.log('Sending registration request to:', API_BASE + '/api/auth/register');

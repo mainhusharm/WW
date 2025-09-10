@@ -130,19 +130,11 @@ export default function EnhancedSignupForm() {
 
         data = await response.json();
       } catch (apiError) {
-        console.log('API call failed, using localStorage fallback:', apiError);
+        console.log('API call failed, redirecting to fixed signup page:', apiError);
         
-        // Fallback to localStorage for production
-        const userId = `user_${Date.now()}`;
-        data = {
-          success: true,
-          user: {
-            id: userId,
-            email: formData.email,
-            fullName: `${formData.firstName} ${formData.lastName}`,
-            status: 'PENDING'
-          }
-        };
+        // Redirect to the fixed signup page as fallback
+        window.location.href = '/signup-fixed';
+        return;
       }
 
       if (data.success) {

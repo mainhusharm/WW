@@ -60,6 +60,7 @@ import DatabaseDashboard from './components/DatabaseDashboard';
 import CustomerServiceDashboard from './components/CustomerServiceDashboard';
 import SignupForm from './components/SignupForm';
 import EnhancedSignupForm from './components/EnhancedSignupForm';
+import SignupRedirect from './components/SignupRedirect';
 import EnhancedPaymentPage from './components/EnhancedPaymentPage';
 
 // Global Error Boundary for the entire app
@@ -159,6 +160,8 @@ const AppContent = () => {
           <Route path="/signup" element={<SignUp />} />
         <Route path="/signup-prisma" element={<SignupForm />} />
         <Route path="/signup-enhanced" element={<EnhancedSignupForm />} />
+        <Route path="/signup-fixed" element={<div style={{width: '100%', height: '100vh'}}><iframe src="/signup-fixed.html" style={{width: '100%', height: '100%', border: 'none'}} /></div>} />
+        <Route path="/signup-smart" element={<SignupRedirect />} />
         <Route path="/payment-enhanced" element={<EnhancedPaymentPage />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/membership" element={<MembershipPlans />} />
