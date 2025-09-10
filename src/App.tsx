@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from
 import './utils/corsFix';
 import LandingPage from './components/LandingPage';
 import Enhanced3DLandingPage from './components/Enhanced3DLandingPage';
+import ProductionLandingPage from './components/ProductionLandingPage';
 import SignUp from './components/SignUp';
 import SignIn from './components/SignInFixed';
 import MembershipPlans from './components/MembershipPlans';
@@ -154,7 +155,7 @@ const AppContent = () => {
     <div className="min-h-screen" style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}>
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          <Route path="/" element={<Enhanced3DLandingPage />} />
+          <Route path="/" element={<ProductionLandingPage />} />
           <Route path="/3d" element={<Enhanced3DLandingPage />} />
           <Route path="/classic" element={<LandingPage />} />
           <Route path="/signup" element={<SignUp />} />

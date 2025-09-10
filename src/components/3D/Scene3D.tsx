@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, Suspense } from 'react';
+import React, { useRef, useEffect, useState, Suspense, ErrorBoundary } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Sphere, Torus, Float, Environment, PerspectiveCamera, Points } from '@react-three/drei';
 import * as THREE from 'three';
@@ -59,10 +59,54 @@ const ClientOnly = ({ children, fallback = null }: { children: React.ReactNode; 
   return <>{children}</>;
 };
 
+// Error boundary for 3D components
+class Scene3DErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    console.warn('3D Scene error caught by boundary:', error);
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.warn('3D Scene error details:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="fixed inset-0 z-0 pointer-events-none bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="text-4xl mb-4">🎯</div>
+            <div className="text-xl font-semibold">Trading Excellence</div>
+            <div className="text-sm text-gray-300">Professional-grade trading solutions</div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 // Safe hook wrapper to prevent undefined hook errors
 const useSafeFrame = (callback: (state: any) => void) => {
   try {
-    return useFrame(callback);
+    return useFrame((state, delta) => {
+      try {
+        if (state && typeof callback === 'function') {
+          callback(state);
+        }
+      } catch (error) {
+        console.warn('Frame callback error:', error);
+      }
+    });
   } catch (error) {
     console.warn('useFrame hook error:', error);
     return null;
@@ -89,10 +133,14 @@ const AnimatedSphere: React.FC<AnimatedGeometryProps> = ({ position, color, scal
   const meshRef = useRef<THREE.Mesh>(null);
   
   useSafeFrame((state) => {
-    if (meshRef.current && state?.clock) {
-      meshRef.current.rotation.x += rotationSpeed;
-      meshRef.current.rotation.y += rotationSpeed * 0.5;
-      meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime) * 0.2;
+    try {
+      if (meshRef.current && state?.clock && typeof state.clock.elapsedTime === 'number') {
+        meshRef.current.rotation.x += rotationSpeed;
+        meshRef.current.rotation.y += rotationSpeed * 0.5;
+        meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime) * 0.2;
+      }
+    } catch (error) {
+      console.warn('AnimatedSphere frame error:', error);
     }
   });
 
@@ -109,10 +157,14 @@ const AnimatedTorus: React.FC<AnimatedGeometryProps> = ({ position, color, scale
   const meshRef = useRef<THREE.Mesh>(null);
   
   useSafeFrame((state) => {
-    if (meshRef.current && state?.clock) {
-      meshRef.current.rotation.x += rotationSpeed;
-      meshRef.current.rotation.z += rotationSpeed * 0.3;
-      meshRef.current.position.x = position[0] + Math.cos(state.clock.elapsedTime * 0.5) * 0.3;
+    try {
+      if (meshRef.current && state?.clock && typeof state.clock.elapsedTime === 'number') {
+        meshRef.current.rotation.x += rotationSpeed;
+        meshRef.current.rotation.z += rotationSpeed * 0.3;
+        meshRef.current.position.x = position[0] + Math.cos(state.clock.elapsedTime * 0.5) * 0.3;
+      }
+    } catch (error) {
+      console.warn('AnimatedTorus frame error:', error);
     }
   });
 
@@ -144,9 +196,13 @@ const ParticleField: React.FC = () => {
   }
 
   useSafeFrame((state) => {
-    if (pointsRef.current && state?.clock) {
-      pointsRef.current.rotation.x = state.clock.elapsedTime * 0.05;
-      pointsRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+    try {
+      if (pointsRef.current && state?.clock && typeof state.clock.elapsedTime === 'number') {
+        pointsRef.current.rotation.x = state.clock.elapsedTime * 0.05;
+        pointsRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+      }
+    } catch (error) {
+      console.warn('ParticleField frame error:', error);
     }
   });
 
@@ -176,10 +232,14 @@ const CameraController: React.FC<{ scrollY: number }> = ({ scrollY }) => {
   const camera = three?.camera;
   
   useSafeFrame(() => {
-    if (camera) {
-      camera.position.z = 5 + scrollY * 0.01;
-      camera.position.y = scrollY * 0.005;
-      camera.lookAt(0, 0, 0);
+    try {
+      if (camera && typeof scrollY === 'number') {
+        camera.position.z = 5 + scrollY * 0.01;
+        camera.position.y = scrollY * 0.005;
+        camera.lookAt(0, 0, 0);
+      }
+    } catch (error) {
+      console.warn('CameraController frame error:', error);
     }
   });
 
@@ -217,29 +277,39 @@ const Scene3D: React.FC<Scene3DProps> = ({ scrollY, isVisible }) => {
           </div>
         </div>
       }>
-        <Canvas onError={() => setHasError(true)}>
-          <PerspectiveCamera makeDefault position={[0, 0, 5]} />
-          <CameraController scrollY={scrollY} />
-          
-          {/* Lighting */}
-          <ambientLight intensity={0.3} />
-          <pointLight position={[10, 10, 10]} intensity={1} color="#00ffff" />
-          <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff00ff" />
-          <spotLight position={[0, 10, 0]} angle={0.3} penumbra={1} intensity={1} color="#ffffff" />
+        <Scene3DErrorBoundary fallback={
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center">
+            <div className="text-center text-white">
+              <div className="text-4xl mb-4">🎯</div>
+              <div className="text-xl font-semibold">Trading Excellence</div>
+              <div className="text-sm text-gray-300">Professional-grade trading solutions</div>
+            </div>
+          </div>
+        }>
+          <Canvas onError={() => setHasError(true)}>
+            <PerspectiveCamera makeDefault position={[0, 0, 5]} />
+            <CameraController scrollY={scrollY} />
+            
+            {/* Lighting */}
+            <ambientLight intensity={0.3} />
+            <pointLight position={[10, 10, 10]} intensity={1} color="#00ffff" />
+            <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff00ff" />
+            <spotLight position={[0, 10, 0]} angle={0.3} penumbra={1} intensity={1} color="#ffffff" />
 
-          {/* 3D Objects */}
-          <AnimatedSphere position={[-3, 2, -2]} color="#00ffff" scale={0.8} />
-          <AnimatedSphere position={[3, -1, -1]} color="#ff00ff" scale={0.6} />
-          <AnimatedTorus position={[0, 0, -3]} color="#00ff88" scale={1.2} />
-          <AnimatedTorus position={[-2, -2, -4]} color="#ffaa00" scale={0.8} />
-          
-          
-          {/* Particle Field */}
-          <ParticleField />
-          
-          {/* Environment */}
-          <Environment preset="night" />
-        </Canvas>
+            {/* 3D Objects */}
+            <AnimatedSphere position={[-3, 2, -2]} color="#00ffff" scale={0.8} />
+            <AnimatedSphere position={[3, -1, -1]} color="#ff00ff" scale={0.6} />
+            <AnimatedTorus position={[0, 0, -3]} color="#00ff88" scale={1.2} />
+            <AnimatedTorus position={[-2, -2, -4]} color="#ffaa00" scale={0.8} />
+            
+            
+            {/* Particle Field */}
+            <ParticleField />
+            
+            {/* Environment */}
+            <Environment preset="night" />
+          </Canvas>
+        </Scene3DErrorBoundary>
       </ClientOnly>
     </div>
   );
