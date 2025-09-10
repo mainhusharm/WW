@@ -1,8 +1,7 @@
 // TradingViewWidget.jsx
 import React, { useEffect, useRef, memo, useState } from 'react';
 import FallbackChart from './FallbackChart';
-
-let isScriptAppended = false;
+import tradingViewLoader from '../services/tradingViewLoader';
 
 function TradingViewWidget() {
   const container = useRef<HTMLDivElement>(null);
@@ -10,30 +9,17 @@ function TradingViewWidget() {
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (isScriptAppended || !container.current) return;
+    if (!container.current) return;
 
-    const loadTradingViewScript = () => {
+    const loadTradingViewWidget = async () => {
       try {
-        // Check if TradingView is already available
-        if (window.TradingView) {
-          initializeWidget();
-          return;
-        }
-
+        // Use centralized loader
+        await tradingViewLoader.loadWidgetScript('advanced-chart');
+        
+        // Create widget script
         const script = document.createElement("script");
-        script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
         script.type = "text/javascript";
         script.async = true;
-        script.onload = () => {
-          console.log('TradingView script loaded successfully');
-          initializeWidget();
-        };
-        script.onerror = (error) => {
-          console.error('Failed to load TradingView script:', error);
-          setHasError(true);
-          setIsLoading(false);
-        };
-        
         script.innerHTML = JSON.stringify({
           "allow_symbol_change": true,
           "calendar": false,
@@ -61,7 +47,8 @@ function TradingViewWidget() {
         
         if (container.current) {
           container.current.appendChild(script);
-          isScriptAppended = true;
+          setIsLoading(false);
+          setHasError(false);
         }
       } catch (error) {
         console.error('Error loading TradingView widget:', error);
@@ -70,19 +57,8 @@ function TradingViewWidget() {
       }
     };
 
-    const initializeWidget = () => {
-      try {
-        setIsLoading(false);
-        setHasError(false);
-      } catch (error) {
-        console.error('Error initializing TradingView widget:', error);
-        setHasError(true);
-        setIsLoading(false);
-      }
-    };
-
     // Add a small delay to ensure DOM is ready
-    const timer = setTimeout(loadTradingViewScript, 100);
+    const timer = setTimeout(loadTradingViewWidget, 100);
     
     return () => {
       clearTimeout(timer);
