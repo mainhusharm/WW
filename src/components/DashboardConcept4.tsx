@@ -1673,7 +1673,7 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
                     riskReward: signal.riskReward,
                     analysis: signal.analysis || signal.description
                   }));
-                  window.location.href = `/dashboard/ai-coach?signal=${signalData}`;
+                  window.location.href = `/ai-coach?signal=${signalData}`;
                 }}
               />}
               {activeTab === 'analytics' && <PerformanceAnalytics tradingState={{ 

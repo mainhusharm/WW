@@ -1499,7 +1499,7 @@ const DashboardConcept2: React.FC<DashboardConcept2Props> = ({ onLogout, trading
                     riskReward: signal.riskReward || '2.0',
                     analysis: signalAnalysis
                   }));
-                  window.location.href = `/dashboard/ai-coach?signal=${signalDataForUrl}`;
+                  window.location.href = `/ai-coach?signal=${signalDataForUrl}`;
                 }}
               />}
               {activeTab === 'analytics' && <PerformanceAnalytics tradingState={{ 

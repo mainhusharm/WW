@@ -232,7 +232,11 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
           📝 Add to Journal
         </button>
         <button 
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Chat with Nexus clicked for signal:', signal);
+            
             // Redirect to AI Coach with signal context
             const signalData = encodeURIComponent(JSON.stringify({
               pair: signal.pair || signal.symbol,
@@ -248,7 +252,9 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
               riskReward: signal.riskReward,
               analysis: signal.analysis || signal.description
             }));
-            window.location.href = `/dashboard/ai-coach?signal=${signalData}`;
+            
+            console.log('Redirecting to AI Coach with signal data:', signalData);
+            window.location.href = `/ai-coach?signal=${signalData}`;
           }}
           className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-purple-500/25"
         >
