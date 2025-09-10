@@ -146,6 +146,8 @@ export default defineConfig(({ mode }) => {
       __DEV__: mode === 'development',
       // Force React 18 mode
       __REACT_18__: 'true',
+      // Add global variables for 3D components
+      global: 'globalThis',
     },
     optimizeDeps: {
       include: [

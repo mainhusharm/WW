@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Sphere, Box, Torus, Float, Text3D, Environment, PerspectiveCamera, Points } from '@react-three/drei';
+import { Sphere, Torus, Float, Environment, PerspectiveCamera, Points } from '@react-three/drei';
 import * as THREE from 'three';
 
 // Enhanced Client-side only wrapper with better error handling
@@ -9,7 +9,23 @@ const ClientOnly = ({ children, fallback = null }: { children: React.ReactNode; 
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+      setHasError(true);
+      return;
+    }
+
     try {
+      // Additional checks for required WebGL support
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      
+      if (!gl) {
+        console.warn('WebGL not supported, falling back to static background');
+        setHasError(true);
+        return;
+      }
+
       setHasMounted(true);
     } catch (error) {
       console.error('Error mounting 3D component:', error);
@@ -18,11 +34,26 @@ const ClientOnly = ({ children, fallback = null }: { children: React.ReactNode; 
   }, []);
 
   if (hasError) {
-    return <div className="text-red-400 text-center p-4">3D Component Error</div>;
+    return fallback || (
+      <div className="fixed inset-0 z-0 pointer-events-none bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="text-4xl mb-4">🎯</div>
+          <div className="text-xl font-semibold">Trading Excellence</div>
+          <div className="text-sm text-gray-300">Professional-grade trading solutions</div>
+        </div>
+      </div>
+    );
   }
 
   if (!hasMounted) {
-    return fallback || <div className="text-cyan-400 text-center p-4">Loading 3D...</div>;
+    return fallback || (
+      <div className="fixed inset-0 z-0 pointer-events-none bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-sm text-cyan-400">Loading 3D Experience...</div>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
