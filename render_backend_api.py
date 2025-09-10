@@ -13,6 +13,7 @@ from typing import Dict, List, Optional, Any
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from psycopg2 import ProgrammingError
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -1042,11 +1043,27 @@ def register():
         cursor = conn.cursor()
         print("Database connection successful")
         
-        # Check if user exists
-        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-        if cursor.fetchone():
-            conn.close()
-            return jsonify({"msg": "User already exists"}), 409
+        # Check if users table exists, if not create it
+        try:
+            cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+            if cursor.fetchone():
+                conn.close()
+                return jsonify({"msg": "User already exists"}), 409
+        except ProgrammingError as e:
+            if "relation \"users\" does not exist" in str(e):
+                print("Users table doesn't exist, creating it...")
+                initialize_database()
+                # Reconnect after creating tables
+                conn.close()
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                # Check again if user exists
+                cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+                if cursor.fetchone():
+                    conn.close()
+                    return jsonify({"msg": "User already exists"}), 409
+            else:
+                raise
         
         # Create user
         print("Hashing password...")
