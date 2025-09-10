@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Key, MessageCircle, Send, Trash2, Download, Upload, Brain, Target, TrendingUp, AlertTriangle, CheckCircle, Clock, User, Bot, Cpu, Settings, Zap } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import { useTradingPlan } from '../contexts/TradingPlanContext';
 import ApiKeySetup from './ApiKeySetup';
@@ -42,22 +43,28 @@ const AICoachEnhanced: React.FC = () => {
   const [messageHistory, setMessageHistory] = useState<Record<string, Message[]>>({});
   const [showApiKeySetup, setShowApiKeySetup] = useState(false);
   const [signalContext, setSignalContext] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load user's API key from localStorage
-    if (user?.email) {
-      const savedKey = getUserApiKey(user.email);
-      if (savedKey) {
-        setUserApiKey(savedKey);
-        geminiService.setApiKey(savedKey);
-      } else {
-        setShowApiKeySetup(true);
+    try {
+      // Load user's API key from localStorage
+      if (user?.email) {
+        const savedKey = getUserApiKey(user.email);
+        if (savedKey) {
+          setUserApiKey(savedKey);
+          geminiService.setApiKey(savedKey);
+        } else {
+          setShowApiKeySetup(true);
+        }
       }
+      
+      // Load available models
+      setAvailableModels(geminiService.getAvailableModels());
+    } catch (err) {
+      console.error('Error initializing AI Coach:', err);
+      setError('Failed to initialize AI Coach. Please refresh the page.');
     }
-    
-    // Load available models
-    setAvailableModels(geminiService.getAvailableModels());
   }, [user]);
 
   useEffect(() => {
@@ -326,6 +333,26 @@ Please try asking your question again, and I'll do my best to provide specific g
     return model ? model.displayName : modelName;
   };
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+            <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-red-400 mb-2">Something went wrong</h2>
+            <p className="text-gray-300 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (showApiKeySetup) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
@@ -336,6 +363,7 @@ Please try asking your question again, and I'll do my best to provide specific g
               geminiService.setApiKey(key);
               setShowApiKeySetup(false);
             }}
+            currentApiKey={userApiKey}
           />
         </div>
       </div>
