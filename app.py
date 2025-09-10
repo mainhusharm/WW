@@ -255,7 +255,10 @@ def get_db_connection():
         # PostgreSQL connection (for production)
         try:
             import psycopg2
+            from psycopg2.extras import RealDictCursor
             conn = psycopg2.connect(DATABASE_URL)
+            # Set cursor factory to return dict-like rows
+            conn.cursor_factory = RealDictCursor
             return conn
         except ImportError:
             # Fallback to SQLite if psycopg2 is not available
@@ -270,38 +273,72 @@ def init_database():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Create users table if it doesn't exist
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id TEXT PRIMARY KEY,
-                username TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                plan_type TEXT DEFAULT 'premium',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Create signals table if it doesn't exist
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS signals (
-                id TEXT PRIMARY KEY,
-                pair TEXT NOT NULL,
-                direction TEXT NOT NULL,
-                entry_price TEXT NOT NULL,
-                stop_loss TEXT NOT NULL,
-                take_profit TEXT NOT NULL,
-                confidence INTEGER NOT NULL,
-                analysis TEXT,
-                ict_concepts TEXT,
-                market TEXT DEFAULT 'forex',
-                timeframe TEXT DEFAULT '1h',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                status TEXT DEFAULT 'active',
-                source TEXT DEFAULT 'admin_generated'
-            )
-        ''')
+        if DATABASE_URL.startswith('sqlite'):
+            # SQLite table creation
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id TEXT PRIMARY KEY,
+                    username TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    plan_type TEXT DEFAULT 'premium',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS signals (
+                    id TEXT PRIMARY KEY,
+                    pair TEXT NOT NULL,
+                    direction TEXT NOT NULL,
+                    entry_price TEXT NOT NULL,
+                    stop_loss TEXT NOT NULL,
+                    take_profit TEXT NOT NULL,
+                    confidence INTEGER NOT NULL,
+                    analysis TEXT,
+                    ict_concepts TEXT,
+                    market TEXT DEFAULT 'forex',
+                    timeframe TEXT DEFAULT '1h',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    status TEXT DEFAULT 'active',
+                    source TEXT DEFAULT 'admin_generated'
+                )
+            ''')
+        else:
+            # PostgreSQL table creation
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+                    username VARCHAR(100) NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    plan_type VARCHAR(50) DEFAULT 'premium',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS signals (
+                    id SERIAL PRIMARY KEY,
+                    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
+                    pair VARCHAR(20) NOT NULL,
+                    direction VARCHAR(10) NOT NULL,
+                    entry_price VARCHAR(20) NOT NULL,
+                    stop_loss VARCHAR(20) NOT NULL,
+                    take_profit VARCHAR(20) NOT NULL,
+                    confidence INTEGER NOT NULL,
+                    analysis TEXT,
+                    ict_concepts TEXT,
+                    market VARCHAR(20) DEFAULT 'forex',
+                    timeframe VARCHAR(10) DEFAULT '1h',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    status VARCHAR(20) DEFAULT 'active',
+                    source VARCHAR(50) DEFAULT 'admin_generated'
+                )
+            ''')
         
         conn.commit()
         conn.close()
@@ -1205,28 +1242,43 @@ def register():
             cursor = conn.cursor()
             
             # Check if user already exists
-            cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
-            if cursor.fetchone():
-                return jsonify({"msg": "User already exists"}), 409
-            
-            # Create user
-            user_id = str(uuid.uuid4())
-            password_hash = hash_password(password)
-            
-            cursor.execute("""
-                INSERT INTO users (id, username, email, password_hash, plan_type, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (user_id, username, email, password_hash, 'premium', datetime.now().isoformat()))
+            if DATABASE_URL.startswith('sqlite'):
+                cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+                if cursor.fetchone():
+                    return jsonify({"msg": "User already exists"}), 409
+                
+                # Create user for SQLite
+                user_id = str(uuid.uuid4())
+                password_hash = hash_password(password)
+                
+                cursor.execute("""
+                    INSERT INTO users (id, username, email, password_hash, plan_type, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (user_id, username, email, password_hash, 'premium', datetime.now().isoformat()))
+            else:
+                # PostgreSQL - check if user exists
+                cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+                if cursor.fetchone():
+                    return jsonify({"msg": "User already exists"}), 409
+                
+                # Create user for PostgreSQL
+                password_hash = hash_password(password)
+                
+                cursor.execute("""
+                    INSERT INTO users (username, email, password_hash, plan_type)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id
+                """, (username, email, password_hash, 'premium'))
+                
+                user_id = cursor.fetchone()['id']
             
             conn.commit()
             
-        except sqlite3.IntegrityError as e:
-            if "UNIQUE constraint failed" in str(e):
+        except Exception as e:
+            if "UNIQUE constraint failed" in str(e) or "duplicate key value" in str(e):
                 return jsonify({"msg": "User already exists"}), 409
             else:
                 raise
-        except Exception as e:
-            raise
         finally:
             if conn:
                 conn.close()
