@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Data Capture System - FIXED</title>
+    <title>Sign Up - Trading Platform</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -20,344 +20,445 @@
             justify-content: center;
             padding: 20px;
         }
-        
-        .container {
+
+        .signup-container {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             padding: 40px;
-            max-width: 500px;
             width: 100%;
+            max-width: 500px;
         }
-        
-        .header {
+
+        .logo {
             text-align: center;
             margin-bottom: 30px;
         }
-        
-        .header h1 {
+
+        .logo h1 {
             color: #333;
-            font-size: 2rem;
+            font-size: 2.5rem;
+            font-weight: 700;
             margin-bottom: 10px;
         }
-        
-        .header p {
+
+        .logo p {
             color: #666;
-            font-size: 1rem;
+            font-size: 1.1rem;
         }
-        
-        .features {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-        
-        .features h3 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-        
-        .feature-list {
-            list-style: none;
-        }
-        
-        .feature-list li {
-            color: #28a745;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        
-        .feature-list li::before {
-            content: "✓ ";
-            color: #28a745;
-            font-weight: bold;
-        }
-        
+
         .form-group {
             margin-bottom: 20px;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 8px;
             color: #333;
             font-weight: 500;
         }
-        
+
         .form-group input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 6px;
-            font-size: 1rem;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
             transition: border-color 0.3s ease;
         }
-        
+
         .form-group input:focus {
             outline: none;
             border-color: #667eea;
         }
-        
-        .password-requirements {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 5px;
+
+        .form-row {
+            display: flex;
+            gap: 15px;
         }
-        
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
         .checkbox-group {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             margin-bottom: 20px;
         }
-        
+
         .checkbox-group input[type="checkbox"] {
+            width: auto;
             margin-right: 10px;
-            margin-top: 2px;
         }
-        
+
         .checkbox-group label {
+            margin-bottom: 0;
+            font-size: 14px;
             color: #666;
-            font-size: 0.9rem;
-            line-height: 1.4;
         }
-        
-        .btn {
+
+        .signup-btn {
             width: 100%;
-            background: #667eea;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 15px;
-            border-radius: 6px;
-            font-size: 1.1rem;
-            font-weight: 500;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.2s ease;
         }
-        
-        .btn:hover {
-            background: #5a6fd8;
+
+        .signup-btn:hover {
             transform: translateY(-2px);
         }
-        
-        .btn:disabled {
-            background: #ccc;
+
+        .signup-btn:disabled {
+            opacity: 0.7;
             cursor: not-allowed;
             transform: none;
         }
-        
-        .message {
+
+        .error-message {
+            background: #fee;
+            color: #c33;
             padding: 15px;
-            border-radius: 6px;
+            border-radius: 10px;
             margin-bottom: 20px;
+            border: 1px solid #fcc;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #363;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #cfc;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
             font-weight: 500;
         }
-        
-        .message.success {
-            background: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
-        }
-        
-        .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border-left: 4px solid #dc3545;
-        }
-        
-        .message.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border-left: 4px solid #17a2b8;
-        }
-        
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        
-        .status-success {
-            background: #28a745;
-        }
-        
-        .status-error {
-            background: #dc3545;
-        }
-        
-        .status-warning {
-            background: #ffc107;
+
+        .back-link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Enhanced Data Capture System</h1>
-            <p>Your data will be securely captured and stored with admin-only access controls.</p>
+    <div class="signup-container">
+        <div class="logo">
+            <h1>🚀 TradeEdge Pro</h1>
+            <p>Create your account to get started</p>
         </div>
-        
-        <div class="features">
-            <h3>Data Captured:</h3>
-            <ul class="feature-list">
-                <li>Signup Data</li>
-                <li>Payment Data</li>
-                <li>Questionnaire</li>
-            </ul>
-        </div>
-        
-        <div id="message-container"></div>
-        
+
+        <div id="error-message" class="error-message" style="display: none;"></div>
+        <div id="success-message" class="success-message" style="display: none;"></div>
+
         <form id="signup-form">
-            <div class="form-group">
-                <label for="firstName">First Name</label>
-                <input type="text" id="firstName" name="firstName" value="John" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="lastName">Last Name</label>
-                <input type="text" id="lastName" name="lastName" value="Doe" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" value="anchalw11@gmail.com" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" value="Anchalsharma1806@" required>
-                <div class="password-requirements">
-                    Password must be at least 12 characters with uppercase, lowercase, numbers, and special characters
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="firstName">First Name *</label>
+                    <input type="text" id="firstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name *</label>
+                    <input type="text" id="lastName" name="lastName" required>
                 </div>
             </div>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="terms" name="terms" checked required>
-                <label for="terms">I agree to the Terms of Service and Privacy Policy</label>
+
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" required>
             </div>
-            
-            <button type="submit" class="btn" id="submit-btn">
-                Create Account
+
+            <div class="form-group">
+                <label for="phone">Phone Number *</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" name="password" required minlength="8">
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password *</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+            </div>
+
+            <div class="form-group">
+                <label for="company">Company (Optional)</label>
+                <input type="text" id="company" name="company">
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country *</label>
+                <select id="country" name="country" required style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 16px;">
+                    <option value="">Select Country</option>
+                    <option value="US">United States</option>
+                    <option value="UK">United Kingdom</option>
+                    <option value="CA">Canada</option>
+                    <option value="AU">Australia</option>
+                    <option value="DE">Germany</option>
+                    <option value="FR">France</option>
+                    <option value="IT">Italy</option>
+                    <option value="ES">Spain</option>
+                    <option value="NL">Netherlands</option>
+                    <option value="SE">Sweden</option>
+                    <option value="NO">Norway</option>
+                    <option value="DK">Denmark</option>
+                    <option value="FI">Finland</option>
+                    <option value="CH">Switzerland</option>
+                    <option value="AT">Austria</option>
+                    <option value="BE">Belgium</option>
+                    <option value="IE">Ireland</option>
+                    <option value="PT">Portugal</option>
+                    <option value="GR">Greece</option>
+                    <option value="PL">Poland</option>
+                    <option value="CZ">Czech Republic</option>
+                    <option value="HU">Hungary</option>
+                    <option value="RO">Romania</option>
+                    <option value="BG">Bulgaria</option>
+                    <option value="HR">Croatia</option>
+                    <option value="SI">Slovenia</option>
+                    <option value="SK">Slovakia</option>
+                    <option value="LT">Lithuania</option>
+                    <option value="LV">Latvia</option>
+                    <option value="EE">Estonia</option>
+                    <option value="JP">Japan</option>
+                    <option value="KR">South Korea</option>
+                    <option value="SG">Singapore</option>
+                    <option value="HK">Hong Kong</option>
+                    <option value="TW">Taiwan</option>
+                    <option value="IN">India</option>
+                    <option value="CN">China</option>
+                    <option value="BR">Brazil</option>
+                    <option value="MX">Mexico</option>
+                    <option value="AR">Argentina</option>
+                    <option value="CL">Chile</option>
+                    <option value="CO">Colombia</option>
+                    <option value="PE">Peru</option>
+                    <option value="ZA">South Africa</option>
+                    <option value="NG">Nigeria</option>
+                    <option value="KE">Kenya</option>
+                    <option value="EG">Egypt</option>
+                    <option value="MA">Morocco</option>
+                    <option value="TN">Tunisia</option>
+                    <option value="DZ">Algeria</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="terms" name="terms" required>
+                <label for="terms">I agree to the Terms and Conditions and Privacy Policy *</label>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="newsletter" name="newsletter">
+                <label for="newsletter">I would like to receive updates about new features and special offers</label>
+            </div>
+
+            <button type="submit" class="signup-btn" id="signup-btn">
+                Create Account & Continue to Payment
             </button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Creating your account...</p>
+            </div>
         </form>
-        
-        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px; font-size: 0.9rem; color: #666;">
-            <div><span class="status-indicator status-success"></span>CORS Fix: Applied</div>
-            <div><span class="status-indicator status-success"></span>Backend: Connected</div>
-            <div><span class="status-indicator status-success"></span>Registration: Ready</div>
+
+        <div class="back-link">
+            <a href="/">Want to change your plan? Back to Plans</a>
         </div>
     </div>
 
     <script>
-        const BACKEND_URL = 'https://node-backend-g1mk.onrender.com';
-        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        // API Configuration - Using local backend
+        const API_BASE = 'http://localhost:5000';
         
-        // Override fetch to use CORS proxy
-        const originalFetch = window.fetch;
-        window.fetch = function(url, options = {}) {
-            if (typeof url === 'string' && url.includes('node-backend-g1mk.onrender.com')) {
-                console.log('🔄 Using CORS proxy for:', url);
-                const proxyUrl = `${CORS_PROXY}${encodeURIComponent(url)}`;
-                return originalFetch(proxyUrl, options);
+        // Form elements
+        const form = document.getElementById('signup-form');
+        const errorDiv = document.getElementById('error-message');
+        const successDiv = document.getElementById('success-message');
+        const loadingDiv = document.getElementById('loading');
+        const signupBtn = document.getElementById('signup-btn');
+
+        // Show error message
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+        }
+
+        // Hide messages
+        function hideMessages() {
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+        }
+
+        // Show loading
+        function showLoading() {
+            loadingDiv.style.display = 'block';
+            signupBtn.disabled = true;
+            signupBtn.textContent = 'Creating Account...';
+        }
+
+        // Hide loading
+        function hideLoading() {
+            loadingDiv.style.display = 'none';
+            signupBtn.disabled = false;
+            signupBtn.textContent = 'Create Account & Continue to Payment';
+        }
+
+        // Validate form
+        function validateForm(formData) {
+            if (formData.password !== formData.confirmPassword) {
+                showError('Passwords do not match');
+                return false;
             }
-            return originalFetch(url, options);
-        };
-        
-        function showMessage(message, type = 'info') {
-            const container = document.getElementById('message-container');
-            container.innerHTML = `<div class="message ${type}">${message}</div>`;
-        }
-        
-        function validatePassword(password) {
-            const minLength = password.length >= 12;
-            const hasUpper = /[A-Z]/.test(password);
-            const hasLower = /[a-z]/.test(password);
-            const hasNumber = /\d/.test(password);
-            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-            
-            return minLength && hasUpper && hasLower && hasNumber && hasSpecial;
-        }
-        
-        async function submitForm(formData) {
-            const submitBtn = document.getElementById('submit-btn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Creating Account...';
-            
-            try {
-                showMessage('🔄 Creating your account...', 'info');
-                
-                const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    showMessage(`✅ Account created successfully! Welcome, ${formData.firstName}!`, 'success');
-                    console.log('✅ Registration successful:', data);
-                } else {
-                    throw new Error(data.error || 'Registration failed');
-                }
-                
-            } catch (error) {
-                console.error('❌ Registration error:', error);
-                showMessage(`❌ Registration failed: ${error.message}`, 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Create Account';
+
+            if (formData.password.length < 8) {
+                showError('Password must be at least 8 characters long');
+                return false;
             }
+
+            if (!formData.terms) {
+                showError('You must agree to the Terms and Conditions');
+                return false;
+            }
+
+            return true;
         }
-        
-        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+            hideMessages();
+
+            // Get form data
             const formData = {
                 firstName: document.getElementById('firstName').value,
                 lastName: document.getElementById('lastName').value,
                 email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
                 password: document.getElementById('password').value,
-                fullName: `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`,
-                terms: document.getElementById('terms').checked
+                confirmPassword: document.getElementById('confirmPassword').value,
+                company: document.getElementById('company').value,
+                country: document.getElementById('country').value,
+                terms: document.getElementById('terms').checked,
+                newsletter: document.getElementById('newsletter').checked
             };
-            
-            // Validate password
-            if (!validatePassword(formData.password)) {
-                showMessage('❌ Password must be at least 12 characters with uppercase, lowercase, numbers, and special characters', 'error');
+
+            // Validate form
+            if (!validateForm(formData)) {
                 return;
             }
-            
-            // Validate terms
-            if (!formData.terms) {
-                showMessage('❌ Please agree to the Terms of Service and Privacy Policy', 'error');
-                return;
-            }
-            
-            await submitForm(formData);
-        });
-        
-        // Test CORS fix on page load
-        window.addEventListener('load', async () => {
+
+            showLoading();
+
             try {
-                console.log('🧪 Testing CORS fix...');
-                const response = await fetch(`${BACKEND_URL}/health`);
-                const data = await response.json();
-                
-                if (data.status === 'OK') {
-                    console.log('✅ CORS fix working! Backend connected.');
-                    showMessage('✅ CORS fix applied! Registration is ready.', 'success');
+                // Prepare data for API
+                const apiData = {
+                    email: formData.email,
+                    password: formData.password,
+                    username: formData.firstName + formData.lastName,
+                    phone: formData.phone,
+                    company: formData.company,
+                    country: formData.country
+                };
+
+                console.log('Sending registration request to:', API_BASE + '/api/auth/register');
+                console.log('Data:', apiData);
+
+                // Make API request
+                const response = await fetch(API_BASE + '/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(apiData)
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
+                const result = await response.json();
+                console.log('Response data:', result);
+
+                if (response.ok) {
+                    showSuccess('Account created successfully! Redirecting to payment...');
+                    // Redirect to payment page after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/payment';
+                    }, 2000);
                 } else {
-                    console.log('⚠️ Backend connected but unexpected response');
+                    if (result.msg) {
+                        showError(result.msg);
+                    } else {
+                        showError('Failed to create account. Please try again.');
+                    }
                 }
             } catch (error) {
-                console.error('❌ CORS fix test failed:', error);
-                showMessage('⚠️ CORS fix applied but backend test failed. Registration may still work.', 'info');
+                console.error('Registration error:', error);
+                showError('Network error. Please check your connection and try again.');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Test API connection on page load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(API_BASE + '/health');
+                if (response.ok) {
+                    console.log('✅ Backend connection successful');
+                } else {
+                    console.log('⚠️ Backend connection issue');
+                }
+            } catch (error) {
+                console.log('❌ Backend connection failed:', error);
+                showError('Backend server is not running. Please start the server and try again.');
             }
         });
     </script>
