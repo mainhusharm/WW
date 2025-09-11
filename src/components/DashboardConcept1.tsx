@@ -323,6 +323,10 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   // Load account data from userDataService
   useEffect(() => {
     if (user?.email) {
+      // Initialize userDataService with user email
+      userDataService.setUserEmail(user.email);
+      
+      // Get account data (this will create default data if none exists)
       const accountData = userDataService.getAccountData();
       if (accountData) {
         setCurrentAccountData(accountData);
@@ -342,6 +346,32 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
     }, 2000); // Refresh every 2 seconds
 
     return () => clearInterval(interval);
+  }, [user?.email]);
+
+  // Force save data periodically to ensure persistence
+  useEffect(() => {
+    const saveInterval = setInterval(() => {
+      if (user?.email) {
+        userDataService.forceSave();
+      }
+    }, 5000); // Save every 5 seconds
+
+    return () => clearInterval(saveInterval);
+  }, [user?.email]);
+
+  // Save data when user leaves the page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (user?.email) {
+        userDataService.forceSave();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, [user?.email]);
 
   // Save dashboard state for persistence

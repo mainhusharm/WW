@@ -5,28 +5,11 @@ import {
   Eye, Edit, Trash2, MessageSquare, Database, 
   Cpu, Zap, Target, BarChart3, Globe, Lock, RefreshCw
 } from 'lucide-react';
+import { quantumAdminService, QuantumUser, QuantumUserUpdate } from '../services/quantumAdminService';
+import MiniUserDashboard from './MiniUserDashboard';
 
-interface User {
-  id: string;
-  uniqueId: string;
-  email: string;
-  name: string;
-  membershipTier: string;
-  status: 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'INACTIVE';
-  accountSize: number;
-  currentEquity: number;
-  totalPnl: number;
-  winRate: number;
-  totalTrades: number;
-  lastActive: string;
-  createdAt: string;
-  propFirm: string;
-  accountType: string;
-  tradingExperience: string;
-  riskTolerance: string;
-  questionnaireData?: any;
-  riskManagementPlan?: any;
-}
+// Use QuantumUser from service instead of local interface
+type User = QuantumUser;
 
 interface UserChatMessage {
   id: string;
@@ -52,89 +35,45 @@ const QuantumAdminDashboard: React.FC = () => {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: 'success' | 'info' | 'warning' | 'error', timestamp: Date}>>([]);
+  const [showMiniDashboard, setShowMiniDashboard] = useState(false);
+  const [selectedUserForMini, setSelectedUserForMini] = useState<User | null>(null);
   const refreshInterval = useRef<NodeJS.Timeout | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Load data from localStorage or create mock data
-  const loadUsers = useCallback(() => {
-    const savedUsers = localStorage.getItem('quantum_admin_users');
-    if (savedUsers) {
-      try {
-        const parsedUsers = JSON.parse(savedUsers);
-        setUsers(parsedUsers);
-        setFilteredUsers(parsedUsers);
-        setIsLoading(false);
-        return;
-      } catch (error) {
-        console.error('Error parsing saved users:', error);
+  // Load users from real database
+  const loadUsers = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      console.log('🔄 Loading users from real database...');
+      
+      const fetchedUsers = await quantumAdminService.fetchUsers();
+      console.log('✅ Fetched users:', fetchedUsers.length);
+      
+      setUsers(fetchedUsers);
+      setFilteredUsers(fetchedUsers);
+      
+      // Save to localStorage for caching
+      localStorage.setItem('quantum_admin_users', JSON.stringify(fetchedUsers));
+      
+      addNotification(`Loaded ${fetchedUsers.length} users from database`, 'success');
+    } catch (error) {
+      console.error('❌ Error loading users:', error);
+      addNotification('Failed to load users from database, using cached data', 'warning');
+      
+      // Fallback to localStorage
+      const savedUsers = localStorage.getItem('quantum_admin_users');
+      if (savedUsers) {
+        try {
+          const parsedUsers = JSON.parse(savedUsers);
+          setUsers(parsedUsers);
+          setFilteredUsers(parsedUsers);
+        } catch (parseError) {
+          console.error('Error parsing saved users:', parseError);
+        }
       }
+    } finally {
+      setIsLoading(false);
     }
-
-    // Create mock data if no saved data
-    const mockUsers: User[] = [
-      {
-        id: '1',
-        uniqueId: 'CUS-001',
-        email: 'john.doe@example.com',
-        name: 'John Doe',
-        membershipTier: 'Professional',
-        status: 'ACTIVE',
-        accountSize: 100000,
-        currentEquity: 105000,
-        totalPnl: 5000,
-        winRate: 68.5,
-        totalTrades: 45,
-        lastActive: '2024-01-15T10:30:00Z',
-        createdAt: '2024-01-01T00:00:00Z',
-        propFirm: 'FTMO',
-        accountType: 'Challenge',
-        tradingExperience: 'Intermediate',
-        riskTolerance: 'Moderate'
-      },
-      {
-        id: '2',
-        uniqueId: 'CUS-002',
-        email: 'jane.smith@example.com',
-        name: 'Jane Smith',
-        membershipTier: 'Elite',
-        status: 'ACTIVE',
-        accountSize: 200000,
-        currentEquity: 198000,
-        totalPnl: -2000,
-        winRate: 45.2,
-        totalTrades: 32,
-        lastActive: '2024-01-15T09:15:00Z',
-        createdAt: '2024-01-05T00:00:00Z',
-        propFirm: 'MyForexFunds',
-        accountType: 'Funded',
-        tradingExperience: 'Advanced',
-        riskTolerance: 'Aggressive'
-      },
-      {
-        id: '3',
-        uniqueId: 'CUS-003',
-        email: 'mike.wilson@example.com',
-        name: 'Mike Wilson',
-        membershipTier: 'Basic',
-        status: 'PENDING',
-        accountSize: 50000,
-        currentEquity: 50000,
-        totalPnl: 0,
-        winRate: 0,
-        totalTrades: 0,
-        lastActive: '2024-01-14T16:45:00Z',
-        createdAt: '2024-01-10T00:00:00Z',
-        propFirm: 'TopStep',
-        accountType: 'Challenge',
-        tradingExperience: 'Beginner',
-        riskTolerance: 'Conservative'
-      }
-    ];
-
-    setUsers(mockUsers);
-    setFilteredUsers(mockUsers);
-    localStorage.setItem('quantum_admin_users', JSON.stringify(mockUsers));
-    setIsLoading(false);
   }, []);
 
   // Initialize data
@@ -228,6 +167,43 @@ const QuantumAdminDashboard: React.FC = () => {
         timestamp: new Date().toISOString()
       }
     ]);
+  };
+
+  const handleMiniDashboardOpen = (user: User) => {
+    setSelectedUserForMini(user);
+    setShowMiniDashboard(true);
+  };
+
+  const handleMiniDashboardClose = () => {
+    setShowMiniDashboard(false);
+    setSelectedUserForMini(null);
+  };
+
+  const handleUserUpdate = async (userId: string, updates: Partial<User>) => {
+    try {
+      const success = await quantumAdminService.updateUser(userId, updates);
+      if (success) {
+        // Update local state
+        setUsers(prev => prev.map(user => 
+          user.id === userId ? { ...user, ...updates } : user
+        ));
+        setFilteredUsers(prev => prev.map(user => 
+          user.id === userId ? { ...user, ...updates } : user
+        ));
+        
+        // Update selected user if it's the same
+        if (selectedUser?.id === userId) {
+          setSelectedUser(prev => prev ? { ...prev, ...updates } : null);
+        }
+        
+        addNotification(`User ${updates.name || 'data'} updated successfully`, 'success');
+      } else {
+        addNotification('Failed to update user', 'error');
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      addNotification('Error updating user', 'error');
+    }
   };
 
   const handleSendMessage = () => {
@@ -541,14 +517,21 @@ const QuantumAdminDashboard: React.FC = () => {
                       <button
                         onClick={() => handleUserSelect(user)}
                         className="p-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 rounded-lg transition-all"
-                        title="View Dashboard"
+                        title="View Chat Dashboard"
                       >
-                        <Eye className="w-4 h-4" />
+                        <MessageSquare className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleMiniDashboardOpen(user)}
+                        className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all"
+                        title="Mini User Dashboard"
+                      >
+                        <Settings className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setEditingUser(user)}
-                        className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all"
-                        title="Edit User"
+                        className="p-2 text-green-400 hover:text-green-300 hover:bg-green-400/10 rounded-lg transition-all"
+                        title="Quick Edit"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
@@ -889,6 +872,19 @@ const QuantumAdminDashboard: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Mini User Dashboard Modal */}
+        {showMiniDashboard && selectedUserForMini && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+              <MiniUserDashboard
+                user={selectedUserForMini}
+                onUpdate={handleUserUpdate}
+                onClose={handleMiniDashboardClose}
+              />
+            </div>
           </div>
         )}
 

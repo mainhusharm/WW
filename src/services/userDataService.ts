@@ -28,9 +28,26 @@ export class UserDataService {
     const data = localStorage.getItem(key);
     
     if (data) {
-      return JSON.parse(data);
+      const parsedData = JSON.parse(data);
+      // Ensure the account balance is always up to date with questionnaire data
+      const questionnaireData = this.getQuestionnaireData();
+      if (questionnaireData) {
+        const questionnaireBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity;
+        if (questionnaireBalance && parsedData.accountBalance !== questionnaireBalance) {
+          // Update account balance from questionnaire but preserve P&L and trade data
+          parsedData.accountBalance = questionnaireBalance;
+          this.saveAccountData(parsedData);
+        }
+      }
+      return parsedData;
     } else {
-      // Initialize with user's actual account data from questionnaire
+      // Try to restore from backup first
+      const backupData = this.restoreFromBackup();
+      if (backupData) {
+        return backupData;
+      }
+      
+      // If no backup, initialize with user's actual account data from questionnaire
       const accountData = this.getDefaultAccountData();
       this.saveAccountData(accountData);
       return accountData;
@@ -42,7 +59,17 @@ export class UserDataService {
     if (!this.userEmail) return;
     
     const key = `account_data_${this.userEmail}`;
-    localStorage.setItem(key, JSON.stringify(data));
+    // Add timestamp to track when data was last saved
+    const dataWithTimestamp = {
+      ...data,
+      lastSaved: new Date().toISOString(),
+      version: '1.0'
+    };
+    localStorage.setItem(key, JSON.stringify(dataWithTimestamp));
+    
+    // Also save a backup copy
+    const backupKey = `account_data_backup_${this.userEmail}`;
+    localStorage.setItem(backupKey, JSON.stringify(dataWithTimestamp));
   }
 
   // Get user-specific trading state
@@ -163,6 +190,32 @@ export class UserDataService {
     }
 
     this.saveAccountData(updatedData);
+    
+    // Force immediate save to ensure persistence
+    this.forceSave();
+  }
+
+  // Force save all data to ensure persistence
+  public forceSave(): void {
+    if (!this.userEmail) return;
+    
+    // Save account data
+    const accountData = this.getAccountData();
+    if (accountData) {
+      this.saveAccountData(accountData);
+    }
+    
+    // Save trading state
+    const tradingState = this.getTradingState();
+    if (tradingState) {
+      this.saveTradingState(tradingState);
+    }
+    
+    // Save taken signals
+    const takenSignals = this.getTakenSignals();
+    if (takenSignals) {
+      this.saveTakenSignals(takenSignals);
+    }
   }
 
   // Calculate win rate
@@ -256,7 +309,24 @@ export class UserDataService {
     });
   }
 
-  // Clear all user data (for testing)
+  // Restore data from backup if main data is missing
+  public restoreFromBackup(): any {
+    if (!this.userEmail) return null;
+    
+    const backupKey = `account_data_backup_${this.userEmail}`;
+    const backupData = localStorage.getItem(backupKey);
+    
+    if (backupData) {
+      const parsedData = JSON.parse(backupData);
+      // Restore the main data
+      this.saveAccountData(parsedData);
+      return parsedData;
+    }
+    
+    return null;
+  }
+
+  // Clear all user data (for testing) - but keep backup
   public clearUserData(): void {
     if (!this.userEmail) return;
     
@@ -267,6 +337,7 @@ export class UserDataService {
     ];
     
     keys.forEach(key => localStorage.removeItem(key));
+    // Note: We keep the backup data for recovery
   }
 }
 
