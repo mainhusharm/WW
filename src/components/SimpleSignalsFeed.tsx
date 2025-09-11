@@ -65,7 +65,8 @@ const SimpleSignalCard: React.FC<SimpleSignalCardProps> = ({
     } else if (tradeStatus === 'breakeven') {
       return 'border-yellow-500/50 bg-yellow-900/20 opacity-75';
     } else if (isTaken) {
-      return 'border-green-500/50 bg-green-900/20';
+      // Make taken trades grey
+      return 'border-gray-500/50 bg-gray-800/60 opacity-60';
     } else if (signal.is_recommended) {
       return 'border-yellow-500/50 bg-yellow-900/10';
     } else {
@@ -295,6 +296,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [marketFilter, setMarketFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'winning' | 'losing'>('all');
   const [trades, setTrades] = useState<Map<string, any>>(new Map());
   const tradeManager = TradeManager.getInstance();
   const [stats, setStats] = useState({
@@ -306,6 +308,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   });
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected'>('connected');
   const [userRiskPlan, setUserRiskPlan] = useState<any>(null);
+  const [tradeOutcomes, setTradeOutcomes] = useState<Map<string, 'won' | 'lost' | 'breakeven'>>(new Map());
   
   // Default risk plan for users without a comprehensive plan
   const defaultRiskPlan = {
@@ -338,6 +341,13 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
           // Load user-specific taken signals
           const takenSignals = userDataService.getTakenSignals();
           setTakenSignalIds(takenSignals);
+          
+          // Load trade outcomes from localStorage
+          const storedOutcomes = localStorage.getItem(`trade_outcomes_${user.email}`);
+          if (storedOutcomes) {
+            const outcomesMap = new Map(JSON.parse(storedOutcomes));
+            setTradeOutcomes(outcomesMap);
+          }
           
           // Load user's risk management plan
           const riskPlan = localStorage.getItem('comprehensive_plan');
@@ -557,16 +567,19 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
       const stopLossDollar = stopLossPips * roundedLotSize * pipValuePerLot;
       const takeProfitDollar = takeProfitPips * roundedLotSize * pipValuePerLot;
       
-      // Check if trade exists and get its status
-      const existingTrade = trades.get(signal.id);
-      const tradeStatus = existingTrade?.status || 'active';
+      // Check trade outcome from localStorage
+      const tradeOutcome = tradeOutcomes.get(signal.id);
+      let tradeStatus: 'active' | 'won' | 'lost' | 'breakeven' = 'active';
+      if (tradeOutcome === 'won') tradeStatus = 'won';
+      else if (tradeOutcome === 'lost') tradeStatus = 'lost';
+      else if (tradeOutcome === 'breakeven') tradeStatus = 'breakeven';
       
       return {
         lotSize: roundedLotSize,
         dollarAmount: Math.round(moneyAtRisk * 100) / 100,
         stopLossDollar: Math.round(stopLossDollar * 100) / 100,
         takeProfitDollar: Math.round(takeProfitDollar * 100) / 100,
-        tradeStatus: tradeStatus as 'active' | 'won' | 'lost' | 'breakeven'
+        tradeStatus
       };
     } catch (error) {
       console.error('Error calculating signal metrics:', error);
@@ -580,10 +593,29 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
     }
   };
 
-  // Apply market filter
-  const filteredSignals = marketFilter === 'all' 
-    ? signals 
-    : signals.filter(s => s.market === marketFilter);
+  // Apply market and tab filters
+  const filteredSignals = signals.filter(signal => {
+    // First filter by market
+    let marketMatch = true;
+    if (marketFilter === 'forex') {
+      marketMatch = signal.market === 'forex' || signal.pair?.includes('USD') || signal.pair?.includes('EUR') || 
+                   signal.pair?.includes('GBP') || signal.pair?.includes('JPY') || signal.pair?.includes('CHF') ||
+                   signal.pair?.includes('AUD') || signal.pair?.includes('CAD') || signal.pair?.includes('NZD');
+    } else if (marketFilter === 'crypto') {
+      marketMatch = signal.market === 'crypto' || signal.pair?.includes('BTC') || signal.pair?.includes('ETH') ||
+                   signal.pair?.includes('USDT') || signal.pair?.includes('ADA') || signal.pair?.includes('BNB') ||
+                   signal.pair?.includes('XRP') || signal.pair?.includes('SOL') || signal.pair?.includes('DOT');
+    }
+    
+    if (!marketMatch) return false;
+    
+    // Then filter by tab
+    if (activeTab === 'all') return true;
+    if (activeTab === 'winning') return tradeOutcomes.get(signal.id) === 'won';
+    if (activeTab === 'losing') return tradeOutcomes.get(signal.id) === 'lost';
+    
+    return true;
+  });
   
   // Calculate stats
   useEffect(() => {
@@ -602,6 +634,18 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
     });
   }, [signals]);
   
+  // Save trade outcome to localStorage
+  const saveTradeOutcome = (signalId: string, outcome: 'won' | 'lost' | 'breakeven') => {
+    if (!user?.email) return;
+    
+    const newOutcomes = new Map(tradeOutcomes);
+    newOutcomes.set(signalId, outcome);
+    setTradeOutcomes(newOutcomes);
+    
+    // Save to localStorage
+    localStorage.setItem(`trade_outcomes_${user.email}`, JSON.stringify(Array.from(newOutcomes.entries())));
+  };
+
   // Handle marking signal as taken
   const handleMarkAsTaken = async (signal: Signal, outcome: TradeOutcome, pnl?: number) => {
     if (!user?.email) return;
@@ -623,6 +667,10 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
       userDataService.addTakenSignal(signal.id);
       const updatedTakenSignals = userDataService.getTakenSignals();
       setTakenSignalIds(updatedTakenSignals);
+      
+      // Save trade outcome
+      const outcomeType = outcome === 'Target Hit' ? 'won' : outcome === 'Stop Loss Hit' ? 'lost' : 'breakeven';
+      saveTradeOutcome(signal.id, outcomeType);
       
       // Call parent callback with calculated P&L
       onMarkAsTaken(signal, outcome, calculatedPnl);
@@ -765,6 +813,27 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
             </button>
           ))}
         </div>
+        
+        {/* Trade Outcome Tabs */}
+        <div className="flex space-x-2 mt-4">
+          {[
+            { key: 'all', label: 'All Markets' },
+            { key: 'winning', label: 'Winning Trades' },
+            { key: 'losing', label: 'Losing Trades' }
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as 'all' | 'winning' | 'losing')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${
+                activeTab === tab.key
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
       
       {/* Signals List */}
@@ -772,6 +841,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         {filteredSignals.map(signal => {
           const trade = trades.get(signal.id);
           const metrics = calculateSignalMetrics(signal);
+          const tradeOutcome = tradeOutcomes.get(signal.id);
           return (
             <SimpleSignalCard
               key={signal.id}
