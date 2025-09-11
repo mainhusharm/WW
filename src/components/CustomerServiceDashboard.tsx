@@ -112,8 +112,8 @@ export default function CustomerServiceDashboard() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [userPayments, setUserPayments] = useState<Payment[]>([]);
 
-  // Get API URL from environment variable
-  const API_BASE = import.meta.env.VITE_API_URL || 'https://backend-d4fm.onrender.com';
+  // Get API URL from environment variable - hardcoded for production fix
+  const API_BASE = 'https://backend-d4fm.onrender.com';
   console.log('API_BASE URL:', API_BASE); // v2 - force deployment
 
   // Get current user from URL params or localStorage
