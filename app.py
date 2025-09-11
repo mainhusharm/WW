@@ -1737,13 +1737,12 @@ if __name__ == '__main__':
     print("✅ Background signal generation DISABLED - Only admin signals")
     print("✅ Real-time data generation active")
     
-    # Initialize database
+    # Initialize database (don't fail if it doesn't work)
     try:
         init_database()
         print("✅ Database initialized successfully")
     except Exception as e:
-        print(f"❌ Database initialization failed: {e}")
-        exit(1)
+        print(f"⚠️ Database initialization failed, continuing without database: {e}")
     
     # For local development
     import os
