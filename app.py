@@ -1794,6 +1794,171 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"⚠️ Database initialization failed, continuing without database: {e}")
     
+# User Flow Management Endpoints
+@app.route('/api/user-flow/status', methods=['GET'])
+def get_user_flow_status():
+    """Get user flow status"""
+    try:
+        email = request.args.get('email')
+        if not email:
+            return jsonify({'success': False, 'error': 'Email required'}), 400
+        
+        # Check if user exists in database
+        conn = get_db_connection()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+                user = cursor.fetchone()
+                
+                if user:
+                    # Check if user has completed questionnaire
+                    questionnaire_completed = user[6] if len(user) > 6 else False
+                    
+                    # For now, return basic status
+                    # In a real implementation, you'd check payment status, etc.
+                    completed_steps = []
+                    missing_steps = []
+                    
+                    if questionnaire_completed:
+                        completed_steps.append('questionnaire')
+                    else:
+                        missing_steps.append('questionnaire')
+                    
+                    # Add payment and risk management checks here
+                    missing_steps.extend(['payment', 'risk_management'])
+                    
+                    is_complete = len(completed_steps) >= 1 and len(missing_steps) == 0
+                    current_step = missing_steps[0] if missing_steps else None
+                    
+                    return jsonify({
+                        'success': True,
+                        'isComplete': is_complete,
+                        'completedSteps': completed_steps,
+                        'missingSteps': missing_steps,
+                        'currentStep': current_step,
+                        'redirectTo': f'/{current_step}' if current_step else None
+                    })
+                else:
+                    return jsonify({
+                        'success': True,
+                        'isComplete': False,
+                        'completedSteps': [],
+                        'missingSteps': ['payment', 'questionnaire', 'risk_management'],
+                        'currentStep': 'payment',
+                        'redirectTo': '/payment'
+                    })
+            finally:
+                conn.close()
+        else:
+            return jsonify({
+                'success': True,
+                'isComplete': False,
+                'completedSteps': [],
+                'missingSteps': ['payment', 'questionnaire', 'risk_management'],
+                'currentStep': 'payment',
+                'redirectTo': '/payment'
+            })
+            
+    except Exception as e:
+        print(f"Error getting user flow status: {e}")
+        return jsonify({'success': False, 'error': 'Failed to get user flow status'}), 500
+
+@app.route('/api/user-flow/mark-step', methods=['POST'])
+def mark_step_completed():
+    """Mark a step as completed"""
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        step = data.get('step')
+        completed = data.get('completed', True)
+        
+        if not email or not step:
+            return jsonify({'success': False, 'error': 'Email and step required'}), 400
+        
+        # For now, just return success
+        # In a real implementation, you'd update the database
+        return jsonify({
+            'success': True,
+            'message': f'Step {step} marked as {"completed" if completed else "incomplete"}'
+        })
+        
+    except Exception as e:
+        print(f"Error marking step completed: {e}")
+        return jsonify({'success': False, 'error': 'Failed to mark step'}), 500
+
+@app.route('/api/user-flow/account-exists', methods=['GET'])
+def check_account_exists():
+    """Check if account exists"""
+    try:
+        email = request.args.get('email')
+        if not email:
+            return jsonify({'success': False, 'error': 'Email required'}), 400
+        
+        # Check if user exists in database
+        conn = get_db_connection()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM users WHERE email = ?", (email,))
+                count = cursor.fetchone()[0]
+                
+                return jsonify({
+                    'success': True,
+                    'exists': count > 0
+                })
+            finally:
+                conn.close()
+        else:
+            return jsonify({
+                'success': True,
+                'exists': False
+            })
+            
+    except Exception as e:
+        print(f"Error checking account existence: {e}")
+        return jsonify({'success': False, 'error': 'Failed to check account existence'}), 500
+
+@app.route('/api/questionnaire', methods=['POST'])
+def save_questionnaire():
+    """Save questionnaire data"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        # For now, just return success
+        # In a real implementation, you'd save the questionnaire data to the database
+        return jsonify({
+            'success': True,
+            'message': 'Questionnaire data saved successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error saving questionnaire: {e}")
+        return jsonify({'success': False, 'error': 'Failed to save questionnaire'}), 500
+
+@app.route('/api/users/<user_id>/screenshot', methods=['POST'])
+def save_user_screenshot():
+    """Save user screenshot"""
+    try:
+        data = request.get_json()
+        screenshot_url = data.get('screenshotUrl')
+        
+        if not screenshot_url:
+            return jsonify({'success': False, 'error': 'Screenshot URL required'}), 400
+        
+        # For now, just return success
+        # In a real implementation, you'd save the screenshot to the database
+        return jsonify({
+            'success': True,
+            'message': 'Screenshot saved successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error saving screenshot: {e}")
+        return jsonify({'success': False, 'error': 'Failed to save screenshot'}), 500
+
     # For local development
     import os
     port = int(os.environ.get('PORT', 5001))
