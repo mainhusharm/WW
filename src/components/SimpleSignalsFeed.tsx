@@ -4,6 +4,7 @@ import { useUser } from '../contexts/UserContext';
 import TradeManager from '../services/tradeManager';
 import { lotSizeCalculator } from '../services/lotSizeCalculator';
 import { tradeManagementService, Trade } from '../services/tradeManagementService';
+import { userDataService } from '../services/userDataService';
 
 interface SimpleSignalCardProps {
   signal: Signal;
@@ -329,15 +330,22 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
     const loadUserData = async () => {
       if (user?.email) {
         try {
+          // Initialize user data service
+          userDataService.setUserEmail(user.email);
+          
+          // Load user-specific account data
+          const accountData = userDataService.getAccountData();
+          setAccountPerformance(accountData);
+          
+          // Load user-specific taken signals
+          const takenSignals = userDataService.getTakenSignals();
+          setTakenSignalIds(takenSignals);
+          
           // Load user's risk management plan
           const riskPlan = localStorage.getItem('comprehensive_plan');
           if (riskPlan) {
             setUserRiskPlan(JSON.parse(riskPlan));
           }
-          
-          // Load account performance
-          const performance = await tradeManagementService.getAccountPerformance(user.email);
-          setAccountPerformance(performance);
         } catch (error) {
           console.error('Error loading user data:', error);
         }
@@ -566,55 +574,35 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
     if (!user?.email) return;
     
     try {
-      // Create trade from signal using the new trade management service
-      const trade = await tradeManagementService.createTradeFromSignal(signal, user.email, riskPlan);
+      // Initialize user data service
+      userDataService.setUserEmail(user.email);
       
-      // Determine trade status based on outcome
-      let tradeStatus: 'won' | 'lost' | 'breakeven';
-      let exitPrice = 0;
+      // Calculate P&L based on signal data
+      const calculatedPnl = userDataService.calculatePnL(signal, outcome);
       
-      switch (outcome) {
-        case 'Target Hit':
-          tradeStatus = 'won';
-          exitPrice = parseFloat(Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0');
-          break;
-        case 'Stop Loss Hit':
-          tradeStatus = 'lost';
-          exitPrice = parseFloat(signal.stopLoss || '0');
-          break;
-        case 'Breakeven':
-          tradeStatus = 'breakeven';
-          exitPrice = parseFloat(signal.entry || signal.entryPrice || '0');
-          break;
-        default:
-          tradeStatus = 'won'; // Default to won for other outcomes
-          exitPrice = parseFloat(Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0');
-      }
+      // Update account balance with calculated P&L
+      userDataService.updateAccountBalance(calculatedPnl);
       
-      // Update trade status
-      await tradeManagementService.updateTradeStatus(trade.id, tradeStatus, exitPrice, user.email);
+      // Get updated account data
+      const updatedAccountData = userDataService.getAccountData();
+      setAccountPerformance(updatedAccountData);
       
-      // Reload trades and account performance
-      const allTrades = await tradeManagementService.getTrades(user.email);
-      const tradesMap = new Map();
-      allTrades.forEach(t => {
-        tradesMap.set(t.signalId, t);
+      // Add signal to taken signals
+      userDataService.addTakenSignal(signal.id);
+      const updatedTakenSignals = userDataService.getTakenSignals();
+      setTakenSignalIds(updatedTakenSignals);
+      
+      // Call parent callback with calculated P&L
+      onMarkAsTaken(signal, outcome, calculatedPnl);
+      
+      console.log('Signal marked as taken:', {
+        signalId: signal.id,
+        outcome,
+        calculatedPnl,
+        newBalance: updatedAccountData.accountBalance
       });
-      setTrades(tradesMap);
-      
-      // Update account performance
-      const performance = await tradeManagementService.getAccountPerformance(user.email);
-      setAccountPerformance(performance);
-      
-      // Update taken signal IDs
-      setTakenSignalIds(prev => [...prev, signal.id]);
-      
-      // Call parent callback
-      onMarkAsTaken(signal, outcome, pnl);
-      
-      console.log('Trade status updated:', tradeStatus, 'Trade ID:', trade.id);
     } catch (error) {
-      console.error('Error updating trade status:', error);
+      console.error('Error marking signal as taken:', error);
     }
   };
   
@@ -740,8 +728,8 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
                 <div className="text-sm text-gray-400">Account Balance</div>
               </div>
               <div className="text-center">
-                <div className={`text-2xl font-bold ${accountPerformance.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  ${accountPerformance.totalPnL.toLocaleString()}
+                <div className={`text-2xl font-bold ${accountPerformance.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  ${accountPerformance.totalPnl.toLocaleString()}
                 </div>
                 <div className="text-sm text-gray-400">Total P&L</div>
               </div>
