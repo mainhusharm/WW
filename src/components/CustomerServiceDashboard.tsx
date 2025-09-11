@@ -114,6 +114,7 @@ export default function CustomerServiceDashboard() {
 
   // Get API URL from environment variable
   const API_BASE = import.meta.env.VITE_API_URL || 'https://backend-d4fm.onrender.com';
+  console.log('API_BASE URL:', API_BASE);
 
   // Get current user from URL params or localStorage
   const currentUserId = searchParams.get('userId') || localStorage.getItem('userId');
@@ -449,6 +450,16 @@ export default function CustomerServiceDashboard() {
                 }`}
               >
                 {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
+              <button
+                onClick={() => {
+                  console.log('Manual test - API_BASE:', API_BASE);
+                  console.log('Manual test - Full URL:', `${API_BASE}/api/database/users`);
+                  fetchUsers();
+                }}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                Test API
               </button>
               <div className="text-sm text-gray-500">
                 Last updated: {lastRefresh.toLocaleTimeString()}
