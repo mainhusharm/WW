@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Signup to Customer Service Database</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .test-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #28a745;
+            margin: 5px;
+            width: auto;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Signup to Customer Service Database</h1>
+        
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="firstName">First Name:</label>
+                <input type="text" id="firstName" name="firstName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" name="lastName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="planType">Plan Type:</label>
+                <select id="planType" name="planType">
+                    <option value="premium">Premium</option>
+                    <option value="basic">Basic</option>
+                    <option value="free">Free</option>
+                </select>
+            </div>
+            
+            <button type="submit" id="submitBtn">Test Signup to Customer Service</button>
+        </form>
+        
+        <div id="result"></div>
+        
+        <div class="test-section">
+            <h3>🧪 Quick Tests</h3>
+            <p>Test the function with different scenarios:</p>
+            
+            <button class="test-button" onclick="testValidSignup()">Test Valid Signup</button>
+            <button class="test-button" onclick="testDuplicateEmail()">Test Duplicate Email</button>
+            <button class="test-button" onclick="testEmptyFields()">Test Empty Fields</button>
+            <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+            <button class="test-button" onclick="viewDatabaseData()">View Database Data</button>
+        </div>
+    </div>
+
+    <script>
+        // Import the Python function (this would need to be run via a Python backend)
+        // For now, we'll simulate the function behavior
+        
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+        }
+        
+        function testValidSignup() {
+            // Fill form with test data
+            document.getElementById('email').value = 'test@example.com';
+            document.getElementById('password').value = 'password123';
+            document.getElementById('firstName').value = 'John';
+            document.getElementById('lastName').value = 'Doe';
+            document.getElementById('planType').value = 'premium';
+            
+            showResult('Form filled with test data. Click "Test Signup to Customer Service" to proceed.', 'info');
+        }
+        
+        function testDuplicateEmail() {
+            // Fill form with same email to test duplicate handling
+            document.getElementById('email').value = 'test@example.com';
+            document.getElementById('password').value = 'password456';
+            document.getElementById('firstName').value = 'Jane';
+            document.getElementById('lastName').value = 'Smith';
+            document.getElementById('planType').value = 'basic';
+            
+            showResult('Form filled with duplicate email. This should test the duplicate email handling.', 'info');
+        }
+        
+        function testEmptyFields() {
+            // Clear all fields
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('firstName').value = '';
+            document.getElementById('lastName').value = '';
+            document.getElementById('planType').value = 'premium';
+            
+            showResult('Form cleared. This should test validation for empty fields.', 'info');
+        }
+        
+        function testDatabaseConnection() {
+            showResult('Testing database connection...\n\nNote: This test requires the Python backend to be running.\n\nTo test properly:\n1. Run: python3 signup_to_customer_service.py\n2. The function will create tables and test with sample data\n3. Check the console output for results', 'info');
+        }
+        
+        function viewDatabaseData() {
+            showResult('To view database data:\n\n1. Install SQLite browser or use command line\n2. Open: trading_platform.db\n3. Check tables: customers, customer_service_data\n4. Or run: sqlite3 trading_platform.db "SELECT * FROM customers;"', 'info');
+        }
+        
+        // Handle form submission
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Testing...';
+            
+            const formData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                planType: document.getElementById('planType').value
+            };
+            
+            try {
+                // Since we can't directly call Python from browser, we'll show instructions
+                showResult(`Testing signup with data:\n${JSON.stringify(formData, null, 2)}\n\nTo actually test this function:\n\n1. Save the form data above\n2. Run: python3 signup_to_customer_service.py\n3. The script will test with sample data\n4. Check the console output for results\n\nOr integrate this function into your Flask backend and call it via API.`, 'info');
+                
+            } catch (error) {
+                showResult(`Error: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Test Signup to Customer Service';
+            }
+        });
+        
+        // Initialize with sample data
+        testValidSignup();
+    </script>
+</body>
+</html>
