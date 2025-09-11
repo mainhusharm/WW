@@ -1566,8 +1566,8 @@ def init_database_endpoint():
         }), 500
 
 @app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint that also initializes database"""
+def api_health_check():
+    """API health check endpoint that also initializes database"""
     try:
         # Try to initialize database
         init_database()
@@ -1632,6 +1632,34 @@ def get_database_users():
             'success': False,
             'error': str(e)
         }), 500
+
+@app.route('/api/bulk', methods=['POST'])
+def bulk_data():
+    """Bulk data endpoint for price data"""
+    try:
+        data = request.get_json()
+        symbols = data.get('symbols', [])
+        
+        # Return mock data for now
+        bulk_data = []
+        for symbol in symbols:
+            bulk_data.append({
+                'symbol': symbol,
+                'price': round(random.uniform(1.0, 100.0), 2),
+                'change': round(random.uniform(-5.0, 5.0), 2),
+                'changePercent': round(random.uniform(-5.0, 5.0), 2),
+                'volume': random.randint(1000, 100000),
+                'marketState': 'REGULAR',
+                'timestamp': datetime.now().isoformat()
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': bulk_data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/validate-coupon', methods=['POST'])
 def validate_coupon():
