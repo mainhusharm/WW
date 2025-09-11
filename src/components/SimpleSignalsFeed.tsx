@@ -393,6 +393,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         // Load signals from localStorage (stored by admin dashboard)
         const adminSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
         console.log('Loaded signals from localStorage:', adminSignals.length);
+        console.log('First few signals:', adminSignals.slice(0, 3));
         
         if (adminSignals.length === 0) {
           console.log('No signals found in localStorage');
@@ -483,6 +484,9 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
           console.log('Converted signal with lot size:', signal); // Debug log
           return signal;
         });
+        
+        console.log('Converted signals:', convertedSignals.length);
+        console.log('First converted signal:', convertedSignals[0]);
         
         setSignals(convertedSignals);
         setConnectionStatus('connected');
@@ -632,7 +636,14 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
       recommended,
       forex,
       crypto,
-      signals: signals.map(s => ({ id: s.id, status: s.status, market: s.market, is_recommended: s.is_recommended }))
+      signalsCount: signals.length,
+      signals: signals.map(s => ({ 
+        id: s.id, 
+        status: s.status, 
+        market: s.market, 
+        is_recommended: s.is_recommended,
+        pair: s.pair
+      }))
     });
     
     setStats({
