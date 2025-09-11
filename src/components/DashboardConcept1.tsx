@@ -1216,7 +1216,7 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
         <div className="holo-sidebar">
             <div className="holo-logo">
               TraderEdgePro
-              <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>
+              <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold" style={{display: 'inline-block'}}>BETA</span>
             </div>
             <div className="p-4">
               <select 

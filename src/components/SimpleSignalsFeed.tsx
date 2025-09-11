@@ -306,7 +306,6 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   });
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected'>('connected');
   const [userRiskPlan, setUserRiskPlan] = useState<any>(null);
-  const [accountPerformance, setAccountPerformance] = useState<any>(null);
   
   // Default risk plan for users without a comprehensive plan
   const defaultRiskPlan = {
@@ -335,7 +334,6 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
           
           // Load user-specific account data
           const accountData = userDataService.getAccountData();
-          setAccountPerformance(accountData);
           
           // Load user-specific taken signals
           const takenSignals = userDataService.getTakenSignals();
@@ -585,7 +583,6 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
       
       // Get updated account data
       const updatedAccountData = userDataService.getAccountData();
-      setAccountPerformance(updatedAccountData);
       
       // Add signal to taken signals
       userDataService.addTakenSignal(signal.id);
@@ -716,34 +713,6 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
           </div>
         </div>
         
-        {/* Account Performance */}
-        {accountPerformance && (
-          <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg p-6 mb-6 border border-blue-500/30">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-              📊 Account Performance
-            </h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">${accountPerformance.accountBalance.toLocaleString()}</div>
-                <div className="text-sm text-gray-400">Account Balance</div>
-              </div>
-              <div className="text-center">
-                <div className={`text-2xl font-bold ${accountPerformance.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  ${accountPerformance.totalPnl.toLocaleString()}
-                </div>
-                <div className="text-sm text-gray-400">Total P&L</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-400">{accountPerformance.winRate.toFixed(1)}%</div>
-                <div className="text-sm text-gray-400">Win Rate</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-400">{accountPerformance.totalTrades}</div>
-                <div className="text-sm text-gray-400">Total Trades</div>
-              </div>
-            </div>
-          </div>
-        )}
         
         {/* Market Filter */}
         <div className="flex space-x-2">
