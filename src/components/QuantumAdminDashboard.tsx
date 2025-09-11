@@ -196,6 +196,29 @@ const QuantumAdminDashboard: React.FC = () => {
     }
   };
 
+  const handleRefreshUser = async (userId: string) => {
+    try {
+      const user = await quantumAdminService.fetchUserById(userId);
+      if (user) {
+        // Update local state
+        setUsers(prev => prev.map(u => u.id === userId ? user : u));
+        setFilteredUsers(prev => prev.map(u => u.id === userId ? user : u));
+        
+        // Update selected user if it's the same
+        if (selectedUser?.id === userId) {
+          setSelectedUser(user);
+        }
+        
+        addNotification(`User ${user.name} data refreshed from database`, 'success');
+      } else {
+        addNotification('Failed to refresh user data', 'error');
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      addNotification('Error refreshing user data', 'error');
+    }
+  };
+
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedUser) return;
 
@@ -496,9 +519,11 @@ const QuantumAdminDashboard: React.FC = () => {
                   <th className="text-left py-3 px-4 text-cyan-300">User ID</th>
                   <th className="text-left py-3 px-4 text-cyan-300">Name</th>
                   <th className="text-left py-3 px-4 text-cyan-300">Status</th>
+                  <th className="text-left py-3 px-4 text-cyan-300">Account Size</th>
                   <th className="text-left py-3 px-4 text-cyan-300">Equity</th>
                   <th className="text-left py-3 px-4 text-cyan-300">P&L</th>
                   <th className="text-left py-3 px-4 text-cyan-300">Win Rate</th>
+                  <th className="text-left py-3 px-4 text-cyan-300">Prop Firm</th>
                   <th className="text-left py-3 px-4 text-cyan-300">Actions</th>
                 </tr>
               </thead>
@@ -518,11 +543,13 @@ const QuantumAdminDashboard: React.FC = () => {
                         <span className="ml-1">{user.status}</span>
                       </span>
                     </td>
+                    <td className="py-3 px-4 text-white">${user.accountSize.toLocaleString()}</td>
                     <td className="py-3 px-4 text-white">${user.currentEquity.toLocaleString()}</td>
                     <td className={`py-3 px-4 ${user.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {user.totalPnl >= 0 ? '+' : ''}${user.totalPnl.toLocaleString()}
                     </td>
                     <td className="py-3 px-4 text-white">{user.winRate.toFixed(1)}%</td>
+                    <td className="py-3 px-4 text-white text-sm">{user.propFirm}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-2">
                         <button
@@ -538,6 +565,13 @@ const QuantumAdminDashboard: React.FC = () => {
                           title="Mini User Dashboard"
                         >
                           <Settings className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleRefreshUser(user.id)}
+                          className="p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10 rounded-lg transition-all"
+                          title="Refresh User Data"
+                        >
+                          <RefreshCw className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setEditingUser(user)}

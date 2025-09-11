@@ -32,11 +32,11 @@ export class UserDataService {
       
       // Calculate current account balance as initial balance + total P&L
       const questionnaireData = this.getQuestionnaireData();
-      const initialBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity || 10000;
+      const initialBalance = parseFloat(questionnaireData?.accountSize || questionnaireData?.accountEquity || '10000');
       const currentBalance = initialBalance + (parsedData.totalPnl || 0);
       
-      // Update the account balance to reflect current value
-      parsedData.accountBalance = currentBalance;
+      // Update the account balance to reflect current value (round to 2 decimal places)
+      parsedData.accountBalance = Math.round(currentBalance * 100) / 100;
       
       // Don't update account balance from questionnaire if user has trading data
       // Only update if this is the first time or if there's no trading history
@@ -236,7 +236,7 @@ export class UserDataService {
   private getDefaultAccountData(): any {
     // Try to get user's actual account data from questionnaire
     const questionnaireData = this.getQuestionnaireData();
-    const accountBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity || 10000;
+    const accountBalance = parseFloat(questionnaireData?.accountSize || questionnaireData?.accountEquity || '10000');
     
     return {
       accountBalance: accountBalance,

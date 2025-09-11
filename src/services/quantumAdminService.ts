@@ -48,14 +48,14 @@ class QuantumAdminService {
     this.baseUrl = API_BASE;
   }
 
-  // Fetch all users from the real database
+  // Fetch all users from the real database with complete account data
   async fetchUsers(): Promise<QuantumUser[]> {
     try {
-      console.log('🔍 Fetching users from real database...');
+      console.log('🔍 Fetching users with account data from real database...');
       
-      // Try multiple endpoints to find users
+      // Try the comprehensive users endpoint first (includes account data)
       const endpoints = [
-        '/api/users',
+        '/api/users',  // Comprehensive endpoint with account data
         '/api/customers',
         '/api/database/users',
         '/api/customers/search'
@@ -77,7 +77,9 @@ class QuantumAdminService {
 
             if (data.users || data.customers) {
               const users = data.users || data.customers;
-              return this.transformUsers(users);
+              const transformedUsers = this.transformUsers(users);
+              console.log(`📊 Transformed ${transformedUsers.length} users with account data`);
+              return transformedUsers;
             }
           }
         } catch (error) {
@@ -86,8 +88,8 @@ class QuantumAdminService {
         }
       }
 
-      // If all endpoints fail, return mock data
-      console.log('⚠️ All endpoints failed, using mock data');
+      // If all endpoints fail, return empty array
+      console.log('⚠️ All endpoints failed, no users available');
       return this.getMockUsers();
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -95,32 +97,51 @@ class QuantumAdminService {
     }
   }
 
-  // Transform database users to QuantumUser format
+  // Transform database users to QuantumUser format with comprehensive account data
   private transformUsers(users: any[]): QuantumUser[] {
-    return users.map((user, index) => ({
-      id: user.id?.toString() || `user_${index}`,
-      uniqueId: user.unique_id || user.uniqueId || `CUS-${String(index + 1).padStart(3, '0')}`,
-      email: user.email || 'no-email@example.com',
-      name: user.username || user.fullName || user.name || 'Unknown User',
-      membershipTier: user.membership_tier || user.plan_type || 'Basic',
-      status: this.mapStatus(user.status || user.account_status || 'PENDING'),
-      accountSize: user.account_size || user.accountSize || 50000,
-      currentEquity: user.current_equity || user.currentEquity || user.account_size || 50000,
-      totalPnl: user.total_pnl || user.totalPnl || 0,
-      winRate: user.win_rate || user.winRate || 0,
-      totalTrades: user.total_trades || user.totalTrades || 0,
-      lastActive: user.last_active || user.lastActive || user.last_login || new Date().toISOString(),
-      createdAt: user.created_at || user.createdAt || new Date().toISOString(),
-      propFirm: user.prop_firm || user.propFirm || 'Not Set',
-      accountType: user.account_type || user.accountType || 'Challenge',
-      tradingExperience: user.trading_experience || user.tradingExperience || 'Beginner',
-      riskTolerance: user.risk_tolerance || user.riskTolerance || 'Moderate',
-      questionnaireData: user.questionnaire_data || user.questionnaireData,
-      riskManagementPlan: user.risk_management_plan || user.riskManagementPlan,
-      paymentStatus: user.payment_status || user.paymentStatus || 'pending',
-      isActive: user.is_active !== undefined ? user.is_active : true,
-      isVerified: user.is_verified !== undefined ? user.is_verified : false,
-    }));
+    return users.map((user, index) => {
+      // Calculate current equity and P&L based on account data
+      const accountSize = user.account_size || user.accountSize || 50000;
+      const currentEquity = user.current_equity || user.currentEquity || accountSize;
+      const totalPnl = currentEquity - accountSize;
+      
+      // Calculate win rate and total trades from trading data
+      const winRate = user.win_rate || user.winRate || 0;
+      const totalTrades = user.total_trades || user.totalTrades || 0;
+      
+      // Determine status from multiple possible fields
+      const status = this.mapStatus(
+        user.status || 
+        user.account_status || 
+        user.payment_status || 
+        'PENDING'
+      );
+
+      return {
+        id: user.id?.toString() || `user_${index}`,
+        uniqueId: user.unique_id || user.uniqueId || user.uuid || `CUS-${String(index + 1).padStart(3, '0')}`,
+        email: user.email || 'no-email@example.com',
+        name: user.username || user.fullName || user.name || 'Unknown User',
+        membershipTier: user.membership_tier || user.plan_type || 'Basic',
+        status: status,
+        accountSize: accountSize,
+        currentEquity: currentEquity,
+        totalPnl: totalPnl,
+        winRate: winRate,
+        totalTrades: totalTrades,
+        lastActive: user.last_active || user.lastActive || user.last_login || new Date().toISOString(),
+        createdAt: user.created_at || user.createdAt || new Date().toISOString(),
+        propFirm: user.prop_firm || user.propFirm || 'Not Set',
+        accountType: user.account_type || user.accountType || 'Challenge',
+        tradingExperience: user.trading_experience || user.tradingExperience || 'Beginner',
+        riskTolerance: user.risk_tolerance || user.riskTolerance || 'Moderate',
+        questionnaireData: user.questionnaire_data || user.questionnaireData || null,
+        riskManagementPlan: user.risk_management_plan || user.riskManagementPlan || null,
+        paymentStatus: user.payment_status || user.paymentStatus || 'pending',
+        isActive: user.is_active !== undefined ? user.is_active : true,
+        isVerified: user.is_verified !== undefined ? user.is_verified : false,
+      };
+    });
   }
 
   // Map database status to QuantumUser status
@@ -141,6 +162,35 @@ class QuantumAdminService {
   private getMockUsers(): QuantumUser[] {
     console.log('⚠️ No real users found in database, returning empty array');
     return [];
+  }
+
+  // Fetch individual user with complete account data
+  async fetchUserById(userId: string): Promise<QuantumUser | null> {
+    try {
+      console.log(`🔍 Fetching user ${userId} with account data...`);
+      
+      const response = await fetch(`${this.baseUrl}/api/users/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.user) {
+          const transformedUser = this.transformUsers([data.user])[0];
+          console.log(`✅ Fetched user ${userId} with account data`);
+          return transformedUser;
+        }
+      }
+      
+      console.log(`❌ Failed to fetch user ${userId}`);
+      return null;
+    } catch (error) {
+      console.error(`Error fetching user ${userId}:`, error);
+      return null;
+    }
   }
 
   // Update user data
