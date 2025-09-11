@@ -117,7 +117,7 @@ export default function EnhancedPaymentPage() {
     setError(null);
 
     try {
-      const response = await fetch('https://node-backend-g1mk.onrender.com/api/validate-coupon', {
+      const response = await fetch('https://backend-d4fm.onrender.com/api/validate-coupon', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

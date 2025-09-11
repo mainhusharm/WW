@@ -70,7 +70,7 @@ export const makeCorsSafeRequest = async (url: string, options: RequestInit = {}
 export const getAlternativeApiUrl = () => {
   // Try different backend URLs that might work
   const alternatives = [
-    'https://node-backend-g1mk.onrender.com',
+    'https://backend-d4fm.onrender.com',
     'https://backend-bkt7.onrender.com',
     'https://trading-platform-api.onrender.com'
   ];
