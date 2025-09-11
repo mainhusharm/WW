@@ -1658,6 +1658,21 @@ def get_profile():
     except Exception as e:
         return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
+@app.route('/api/init-database', methods=['POST'])
+def init_database_endpoint():
+    """Initialize database tables - for fixing missing tables"""
+    try:
+        init_database()
+        return jsonify({
+            'success': True,
+            'message': 'Database initialized successfully'
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/validate-coupon', methods=['POST'])
 def validate_coupon():
     """Validate coupon code for payment"""
