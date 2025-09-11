@@ -52,25 +52,15 @@ const QuantumAdminDashboard: React.FC = () => {
       setUsers(fetchedUsers);
       setFilteredUsers(fetchedUsers);
       
-      // Save to localStorage for caching
-      localStorage.setItem('quantum_admin_users', JSON.stringify(fetchedUsers));
-      
-      addNotification(`Loaded ${fetchedUsers.length} users from database`, 'success');
+      addNotification(`Loaded ${fetchedUsers.length} real users from database`, 'success');
     } catch (error) {
       console.error('❌ Error loading users:', error);
-      addNotification('Failed to load users from database, using cached data', 'warning');
+      addNotification('Failed to load users from database - no real users available', 'error');
       
-      // Fallback to localStorage
-      const savedUsers = localStorage.getItem('quantum_admin_users');
-      if (savedUsers) {
-        try {
-          const parsedUsers = JSON.parse(savedUsers);
-          setUsers(parsedUsers);
-          setFilteredUsers(parsedUsers);
-        } catch (parseError) {
-          console.error('Error parsing saved users:', parseError);
-        }
-      }
+      // Don't fallback to localStorage - only show real users
+      console.log('❌ No real users available from database');
+      setUsers([]);
+      setFilteredUsers([]);
     } finally {
       setIsLoading(false);
     }
@@ -479,68 +469,90 @@ const QuantumAdminDashboard: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-cyan-400/20">
-                <th className="text-left py-3 px-4 text-cyan-300">User ID</th>
-                <th className="text-left py-3 px-4 text-cyan-300">Name</th>
-                <th className="text-left py-3 px-4 text-cyan-300">Status</th>
-                <th className="text-left py-3 px-4 text-cyan-300">Equity</th>
-                <th className="text-left py-3 px-4 text-cyan-300">P&L</th>
-                <th className="text-left py-3 px-4 text-cyan-300">Win Rate</th>
-                <th className="text-left py-3 px-4 text-cyan-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map(user => (
-                <tr key={user.id} className="border-b border-gray-800/50 hover:bg-gray-900/30">
-                  <td className="py-3 px-4 text-white font-mono">{user.uniqueId}</td>
-                  <td className="py-3 px-4">
-                    <div>
-                      <p className="text-white font-medium">{user.name}</p>
-                      <p className="text-sm text-gray-400">{user.email}</p>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                      {getStatusIcon(user.status)}
-                      <span className="ml-1">{user.status}</span>
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-white">${user.currentEquity.toLocaleString()}</td>
-                  <td className={`py-3 px-4 ${user.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {user.totalPnl >= 0 ? '+' : ''}${user.totalPnl.toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4 text-white">{user.winRate.toFixed(1)}%</td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleUserSelect(user)}
-                        className="p-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 rounded-lg transition-all"
-                        title="View Chat Dashboard"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleMiniDashboardOpen(user)}
-                        className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all"
-                        title="Mini User Dashboard"
-                      >
-                        <Settings className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setEditingUser(user)}
-                        className="p-2 text-green-400 hover:text-green-300 hover:bg-green-400/10 rounded-lg transition-all"
-                        title="Quick Edit"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+          {filteredUsers.length === 0 ? (
+            <div className="p-8 text-center">
+              <Database className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">No Users Found</h3>
+              <p className="text-gray-400 mb-4">
+                {isLoading ? 'Loading users from database...' : 'No real users found in the customer service database.'}
+              </p>
+              <div className="space-y-2 text-sm text-gray-500">
+                <p>• Make sure your customer service database is running</p>
+                <p>• Check that users exist in the database</p>
+                <p>• Verify API endpoints are accessible</p>
+              </div>
+              <button
+                onClick={loadUsers}
+                className="mt-4 px-4 py-2 bg-cyan-500/20 text-cyan-300 rounded-lg hover:bg-cyan-500/30 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4 inline mr-2" />
+                Retry Loading
+              </button>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-cyan-400/20">
+                  <th className="text-left py-3 px-4 text-cyan-300">User ID</th>
+                  <th className="text-left py-3 px-4 text-cyan-300">Name</th>
+                  <th className="text-left py-3 px-4 text-cyan-300">Status</th>
+                  <th className="text-left py-3 px-4 text-cyan-300">Equity</th>
+                  <th className="text-left py-3 px-4 text-cyan-300">P&L</th>
+                  <th className="text-left py-3 px-4 text-cyan-300">Win Rate</th>
+                  <th className="text-left py-3 px-4 text-cyan-300">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredUsers.map(user => (
+                  <tr key={user.id} className="border-b border-gray-800/50 hover:bg-gray-900/30">
+                    <td className="py-3 px-4 text-white font-mono">{user.uniqueId}</td>
+                    <td className="py-3 px-4">
+                      <div>
+                        <p className="text-white font-medium">{user.name}</p>
+                        <p className="text-sm text-gray-400">{user.email}</p>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+                        {getStatusIcon(user.status)}
+                        <span className="ml-1">{user.status}</span>
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-white">${user.currentEquity.toLocaleString()}</td>
+                    <td className={`py-3 px-4 ${user.totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {user.totalPnl >= 0 ? '+' : ''}${user.totalPnl.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-white">{user.winRate.toFixed(1)}%</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleUserSelect(user)}
+                          className="p-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 rounded-lg transition-all"
+                          title="View Chat Dashboard"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleMiniDashboardOpen(user)}
+                          className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all"
+                          title="Mini User Dashboard"
+                        >
+                          <Settings className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setEditingUser(user)}
+                          className="p-2 text-green-400 hover:text-green-300 hover:bg-green-400/10 rounded-lg transition-all"
+                          title="Quick Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

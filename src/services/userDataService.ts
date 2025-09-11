@@ -29,14 +29,25 @@ export class UserDataService {
     
     if (data) {
       const parsedData = JSON.parse(data);
-      // Ensure the account balance is always up to date with questionnaire data
+      
+      // Calculate current account balance as initial balance + total P&L
       const questionnaireData = this.getQuestionnaireData();
-      if (questionnaireData) {
-        const questionnaireBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity;
-        if (questionnaireBalance && parsedData.accountBalance !== questionnaireBalance) {
-          // Update account balance from questionnaire but preserve P&L and trade data
-          parsedData.accountBalance = questionnaireBalance;
-          this.saveAccountData(parsedData);
+      const initialBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity || 10000;
+      const currentBalance = initialBalance + (parsedData.totalPnl || 0);
+      
+      // Update the account balance to reflect current value
+      parsedData.accountBalance = currentBalance;
+      
+      // Don't update account balance from questionnaire if user has trading data
+      // Only update if this is the first time or if there's no trading history
+      if (parsedData.totalTrades === 0) {
+        if (questionnaireData) {
+          const questionnaireBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity;
+          if (questionnaireBalance) {
+            // Only update account balance if no trades have been made yet
+            parsedData.accountBalance = questionnaireBalance;
+            this.saveAccountData(parsedData);
+          }
         }
       }
       return parsedData;
@@ -175,19 +186,17 @@ export class UserDataService {
   // Update account balance based on P&L
   public updateAccountBalance(pnl: number): void {
     const accountData = this.getAccountData();
-    const newBalance = accountData.accountBalance + pnl;
+    const newTotalTrades = accountData.totalTrades + 1;
+    const newWins = pnl > 0 ? (accountData.wins || 0) + 1 : (accountData.wins || 0);
     
     const updatedData = {
       ...accountData,
-      accountBalance: newBalance,
       totalPnl: accountData.totalPnl + pnl,
-      totalTrades: accountData.totalTrades + 1,
-      winRate: this.calculateWinRate(accountData.totalTrades + 1, accountData.wins + (pnl > 0 ? 1 : 0))
+      totalTrades: newTotalTrades,
+      wins: newWins,
+      winRate: this.calculateWinRate(newTotalTrades, newWins)
+      // Note: accountBalance will be calculated by getAccountData() as initialBalance + totalPnl
     };
-
-    if (pnl > 0) {
-      updatedData.wins = (updatedData.wins || 0) + 1;
-    }
 
     this.saveAccountData(updatedData);
     

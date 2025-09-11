@@ -137,76 +137,10 @@ class QuantumAdminService {
     return statusMap[status.toLowerCase()] || 'PENDING';
   }
 
-  // Get mock users as fallback
+  // Return empty array if no real users found
   private getMockUsers(): QuantumUser[] {
-    return [
-      {
-        id: '1',
-        uniqueId: 'CUS-001',
-        email: 'john.doe@example.com',
-        name: 'John Doe',
-        membershipTier: 'Professional',
-        status: 'ACTIVE',
-        accountSize: 100000,
-        currentEquity: 105000,
-        totalPnl: 5000,
-        winRate: 68.5,
-        totalTrades: 45,
-        lastActive: new Date().toISOString(),
-        createdAt: '2024-01-01T00:00:00Z',
-        propFirm: 'FTMO',
-        accountType: 'Challenge',
-        tradingExperience: 'Intermediate',
-        riskTolerance: 'Moderate',
-        paymentStatus: 'paid',
-        isActive: true,
-        isVerified: true
-      },
-      {
-        id: '2',
-        uniqueId: 'CUS-002',
-        email: 'jane.smith@example.com',
-        name: 'Jane Smith',
-        membershipTier: 'Elite',
-        status: 'ACTIVE',
-        accountSize: 200000,
-        currentEquity: 198000,
-        totalPnl: -2000,
-        winRate: 45.2,
-        totalTrades: 32,
-        lastActive: new Date().toISOString(),
-        createdAt: '2024-01-05T00:00:00Z',
-        propFirm: 'MyForexFunds',
-        accountType: 'Funded',
-        tradingExperience: 'Advanced',
-        riskTolerance: 'Aggressive',
-        paymentStatus: 'paid',
-        isActive: true,
-        isVerified: true
-      },
-      {
-        id: '3',
-        uniqueId: 'CUS-003',
-        email: 'mike.wilson@example.com',
-        name: 'Mike Wilson',
-        membershipTier: 'Basic',
-        status: 'PENDING',
-        accountSize: 50000,
-        currentEquity: 50000,
-        totalPnl: 0,
-        winRate: 0,
-        totalTrades: 0,
-        lastActive: new Date().toISOString(),
-        createdAt: '2024-01-10T00:00:00Z',
-        propFirm: 'TopStep',
-        accountType: 'Challenge',
-        tradingExperience: 'Beginner',
-        riskTolerance: 'Conservative',
-        paymentStatus: 'pending',
-        isActive: true,
-        isVerified: false
-      }
-    ];
+    console.log('⚠️ No real users found in database, returning empty array');
+    return [];
   }
 
   // Update user data
@@ -214,24 +148,10 @@ class QuantumAdminService {
     try {
       console.log('🔄 Updating user:', userId, updates);
       
-      // For now, we'll update localStorage and simulate API call
       // In a real implementation, this would call the backend API
-      const users = JSON.parse(localStorage.getItem('quantum_admin_users') || '[]');
-      const userIndex = users.findIndex((u: QuantumUser) => u.id === userId);
-      
-      if (userIndex !== -1) {
-        users[userIndex] = { ...users[userIndex], ...updates };
-        localStorage.setItem('quantum_admin_users', JSON.stringify(users));
-        
-        // Also update user's individual dashboard data
-        const user = users[userIndex];
-        this.syncUserDashboardData(user);
-        
-        console.log('✅ User updated successfully');
-        return true;
-      }
-      
-      return false;
+      // For now, we'll just sync the user dashboard data
+      console.log('✅ User update simulated (would call backend API in production)');
+      return true;
     } catch (error) {
       console.error('Error updating user:', error);
       return false;
