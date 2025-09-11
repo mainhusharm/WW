@@ -1584,6 +1584,56 @@ def api_health_check():
             'timestamp': datetime.now().isoformat()
         }), 500
 
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    """Get all users for customer service dashboard"""
+    try:
+        init_database()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if DATABASE_URL.startswith('sqlite'):
+            cursor.execute("SELECT * FROM users ORDER BY created_at DESC")
+        else:
+            cursor.execute("SELECT * FROM users ORDER BY created_at DESC")
+        
+        users = cursor.fetchall()
+        conn.close()
+        
+        user_list = []
+        for user in users:
+            user_list.append({
+                'id': user['id'],
+                'email': user['email'],
+                'fullName': user['username'] or 'No name provided',
+                'selectedPlan': {'name': user['plan_type'] or 'premium'},
+                'questionnaireData': None,
+                'cryptoAssets': [],
+                'forexPairs': [],
+                'otherForexPair': None,
+                'screenshotUrl': None,
+                'riskManagementPlan': None,
+                'tradingPreferences': {},
+                'status': 'PENDING',
+                'planActivatedAt': None,
+                'createdAt': user['created_at'],
+                'updatedAt': user['updated_at'],
+                'payments': [],
+                'trades': []
+            })
+        
+        return jsonify({
+            'success': True,
+            'users': user_list,
+            'count': len(user_list)
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/database/users', methods=['GET'])
 def get_database_users():
     """Get all users from database to verify data storage"""

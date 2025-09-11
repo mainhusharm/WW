@@ -113,7 +113,7 @@ export default function CustomerServiceDashboard() {
   const [userPayments, setUserPayments] = useState<Payment[]>([]);
 
   // Get API URL from environment variable
-  const API_BASE = import.meta.env.VITE_API_URL || 'https://backend-bkt7.onrender.com';
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://backend-d4fm.onrender.com';
 
   // Get current user from URL params or localStorage
   const currentUserId = searchParams.get('userId') || localStorage.getItem('userId');
