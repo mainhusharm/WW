@@ -1658,19 +1658,40 @@ def get_profile():
     except Exception as e:
         return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
-@app.route('/api/init-database', methods=['POST'])
+@app.route('/api/init-database', methods=['POST', 'GET'])
 def init_database_endpoint():
     """Initialize database tables - for fixing missing tables"""
     try:
         init_database()
         return jsonify({
             'success': True,
-            'message': 'Database initialized successfully'
+            'message': 'Database initialized successfully',
+            'database_url': DATABASE_URL[:20] + '...' if len(DATABASE_URL) > 20 else DATABASE_URL
         }), 200
     except Exception as e:
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': str(e),
+            'database_url': DATABASE_URL[:20] + '...' if len(DATABASE_URL) > 20 else DATABASE_URL
+        }), 500
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint that also initializes database"""
+    try:
+        # Try to initialize database
+        init_database()
+        return jsonify({
+            'status': 'healthy',
+            'database': 'initialized',
+            'timestamp': datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'database': 'failed',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
         }), 500
 
 @app.route('/api/validate-coupon', methods=['POST'])
