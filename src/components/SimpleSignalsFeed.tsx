@@ -296,7 +296,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [marketFilter, setMarketFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState<'all' | 'winning' | 'losing'>('all');
+  const [activeTab, setActiveTab] = useState<'Signals' | 'winning' | 'losing'>('Signals');
   const [trades, setTrades] = useState<Map<string, any>>(new Map());
   const tradeManager = TradeManager.getInstance();
   const [stats, setStats] = useState({
@@ -626,7 +626,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
     if (!marketMatch) return false;
     
     // Then filter by tab
-    if (activeTab === 'all') return true;
+    if (activeTab === 'Signals') return true;
     if (activeTab === 'winning') return tradeOutcomes.get(signal.id) === 'won';
     if (activeTab === 'losing') return tradeOutcomes.get(signal.id) === 'lost';
     
@@ -849,13 +849,13 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         {/* Trade Outcome Tabs */}
         <div className="flex space-x-2 mt-4">
           {[
-            { key: 'all', label: 'All Markets' },
+            { key: 'Signals', label: 'All Markets' },
             { key: 'winning', label: 'Winning Trades' },
             { key: 'losing', label: 'Losing Trades' }
           ].map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key as 'all' | 'winning' | 'losing')}
+              onClick={() => setActiveTab(tab.key as 'Signals' | 'winning' | 'losing')}
               className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${
                 activeTab === tab.key
                   ? 'bg-purple-600 text-white'

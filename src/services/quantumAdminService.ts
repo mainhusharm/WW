@@ -1,5 +1,6 @@
-// Quantum Admin Service - Real Database Integration
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+// Quantum Admin Service - Real-time Database Integration with WebSocket
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5001';
+const API_KEY = 'quantum_key_2025'; // API key for secure access
 
 export interface QuantumUser {
   id: string;
@@ -48,52 +49,39 @@ class QuantumAdminService {
     this.baseUrl = API_BASE;
   }
 
-  // Fetch all users from the real database with complete account data
+  // Fetch all users from the real-time database with API key authentication
   async fetchUsers(): Promise<QuantumUser[]> {
     try {
-      console.log('🔍 Fetching users with account data from real database...');
+      console.log('🔍 Fetching users from real-time database with API key...');
       
-      // Try the comprehensive users endpoint first (includes account data)
-      const endpoints = [
-        '/api/users',  // Comprehensive endpoint with account data
-        '/api/customers',
-        '/api/database/users',
-        '/api/customers/search'
-      ];
+      const response = await fetch(`${this.baseUrl}/api/users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY
+        },
+      });
 
-      for (const endpoint of endpoints) {
-        try {
-          console.log(`Trying endpoint: ${this.baseUrl}${endpoint}`);
-          const response = await fetch(`${this.baseUrl}${endpoint}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Real-time data fetched successfully:', data);
 
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`✅ Success from ${endpoint}:`, data);
-
-            if (data.users || data.customers) {
-              const users = data.users || data.customers;
-              const transformedUsers = this.transformUsers(users);
-              console.log(`📊 Transformed ${transformedUsers.length} users with account data`);
-              return transformedUsers;
-            }
-          }
-        } catch (error) {
-          console.log(`❌ Failed to fetch from ${endpoint}:`, error);
-          continue;
+        if (data.success && data.users && Array.isArray(data.users)) {
+          const transformedUsers = this.transformUsers(data.users);
+          console.log(`📊 Transformed ${transformedUsers.length} real users from database`);
+          return transformedUsers;
+        } else {
+          console.log('❌ Invalid response format:', data);
+          return [];
         }
+      } else {
+        const errorText = await response.text();
+        console.log(`❌ API request failed: ${response.status}`, errorText);
+        return [];
       }
-
-      // If all endpoints fail, return empty array
-      console.log('⚠️ All endpoints failed, no users available');
-      return this.getMockUsers();
     } catch (error) {
-      console.error('Error fetching users:', error);
-      return this.getMockUsers();
+      console.error('❌ Error fetching users from real-time database:', error);
+      return [];
     }
   }
 
@@ -164,15 +152,16 @@ class QuantumAdminService {
     return [];
   }
 
-  // Fetch individual user with complete account data
+  // Fetch individual user with API key authentication
   async fetchUserById(userId: string): Promise<QuantumUser | null> {
     try {
-      console.log(`🔍 Fetching user ${userId} with account data...`);
+      console.log(`🔍 Fetching user ${userId} from real-time database...`);
       
       const response = await fetch(`${this.baseUrl}/api/users/${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'X-API-Key': API_KEY
         },
       });
 
@@ -180,7 +169,7 @@ class QuantumAdminService {
         const data = await response.json();
         if (data.success && data.user) {
           const transformedUser = this.transformUsers([data.user])[0];
-          console.log(`✅ Fetched user ${userId} with account data`);
+          console.log(`✅ Fetched user ${userId} from real-time database`);
           return transformedUser;
         }
       }
@@ -193,15 +182,30 @@ class QuantumAdminService {
     }
   }
 
-  // Update user data
+  // Update user data with real-time API call
   async updateUser(userId: string, updates: QuantumUserUpdate): Promise<boolean> {
     try {
-      console.log('🔄 Updating user:', userId, updates);
+      console.log('🔄 Updating user in real-time database:', userId, updates);
       
-      // In a real implementation, this would call the backend API
-      // For now, we'll just sync the user dashboard data
-      console.log('✅ User update simulated (would call backend API in production)');
-      return true;
+      const response = await fetch(`${this.baseUrl}/api/users/${userId}/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY
+        },
+        body: JSON.stringify(updates)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          console.log('✅ User updated successfully in real-time database');
+          return true;
+        }
+      }
+      
+      console.log(`❌ Failed to update user ${userId}`);
+      return false;
     } catch (error) {
       console.error('Error updating user:', error);
       return false;

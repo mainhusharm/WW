@@ -6,6 +6,7 @@ import {
   Cpu, Zap, Target, BarChart3, Globe, Lock, RefreshCw
 } from 'lucide-react';
 import { quantumAdminService, QuantumUser, QuantumUserUpdate } from '../services/quantumAdminService';
+import { realtimeService } from '../services/realtimeService';
 import MiniUserDashboard from './MiniUserDashboard';
 
 // Use QuantumUser from service instead of local interface
@@ -69,6 +70,37 @@ const QuantumAdminDashboard: React.FC = () => {
   // Initialize data
   useEffect(() => {
     loadUsers();
+    
+    // Setup real-time WebSocket listeners
+    realtimeService.on('users_updated', (data) => {
+      console.log('📡 Real-time users update received:', data);
+      if (data.users && Array.isArray(data.users)) {
+        setUsers(data.users);
+        setFilteredUsers(data.users);
+        setLastUpdate(new Date());
+        addNotification(`Real-time update: ${data.users.length} users`, 'info');
+      }
+    });
+
+    realtimeService.on('connected', () => {
+      console.log('✅ Connected to real-time updates');
+      addNotification('Connected to real-time updates', 'success');
+      realtimeService.requestUsers();
+    });
+
+    realtimeService.on('disconnected', () => {
+      console.log('❌ Disconnected from real-time updates');
+      addNotification('Disconnected from real-time updates', 'warning');
+    });
+
+    realtimeService.on('error', (error) => {
+      console.error('❌ Real-time service error:', error);
+      addNotification('Real-time service error', 'error');
+    });
+
+    return () => {
+      realtimeService.disconnect();
+    };
   }, [loadUsers]);
 
   // Save users to localStorage whenever they change
