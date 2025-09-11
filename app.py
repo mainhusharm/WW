@@ -1413,6 +1413,23 @@ def register():
                 cursor.execute("SELECT id FROM customers WHERE email = ?", (email,))
                 if cursor.fetchone():
                     return jsonify({"msg": "User already exists"}), 409
+            else:
+                # PostgreSQL - check if tables exist first
+                try:
+                    cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+                    if cursor.fetchone():
+                        return jsonify({"msg": "User already exists"}), 409
+                except Exception as e:
+                    if "relation \"users\" does not exist" in str(e):
+                        # Tables don't exist, create them
+                        logger.info("Database tables don't exist, creating them...")
+                        init_database()
+                        # Retry the check
+                        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+                        if cursor.fetchone():
+                            return jsonify({"msg": "User already exists"}), 409
+                    else:
+                        raise
                 
                 # Create user for SQLite
                 user_id = str(uuid.uuid4())
