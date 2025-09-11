@@ -74,20 +74,6 @@ const Header = () => {
             >
               Get Started
             </Link>
-            <Link
-              to="/quantum-admin"
-              className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium text-sm"
-              title="Quantum Admin Dashboard"
-            >
-              Admin
-            </Link>
-            <Link
-              to="/user-dashboard"
-              className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-sm"
-              title="User Dashboard"
-            >
-              User
-            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -172,20 +158,6 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Get Started
-                </Link>
-                <Link
-                  to="/quantum-admin"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-cyan-400 hover:text-cyan-300 hover:bg-gray-800 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Admin
-                </Link>
-                <Link
-                  to="/user-dashboard"
-                  className="block px-3 py-2 rounded-md text-base font-medium text-blue-400 hover:text-blue-300 hover:bg-gray-800 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  User
                 </Link>
               </div>
             </div>
