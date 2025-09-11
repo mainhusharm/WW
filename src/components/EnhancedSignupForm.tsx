@@ -142,6 +142,14 @@ export default function EnhancedSignupForm() {
         if (!response.ok) {
           const errorData = await response.json();
           console.log('Registration error response:', errorData);
+          
+          // Handle specific error cases
+          if (response.status === 409) {
+            setError('An account with this email already exists. Please sign in instead or use a different email address.');
+            setIsLoading(false);
+            return;
+          }
+          
           throw new Error(errorData.msg || errorData.error || `HTTP ${response.status}: ${response.statusText}`);
         }
         
@@ -150,8 +158,14 @@ export default function EnhancedSignupForm() {
       } catch (apiError) {
         console.log('API call failed:', apiError);
         
-        // Show error message instead of redirecting
-        setError('Registration service is temporarily unavailable. Please try again later or contact support.');
+        // Check if it's a 409 error (user already exists)
+        if (apiError.message && apiError.message.includes('409')) {
+          setError('An account with this email already exists. Please sign in instead or use a different email address.');
+        } else if (apiError.message && apiError.message.includes('User already exists')) {
+          setError('An account with this email already exists. Please sign in instead or use a different email address.');
+        } else {
+          setError('Registration service is temporarily unavailable. Please try again later or contact support.');
+        }
         setIsLoading(false);
         return;
       }
