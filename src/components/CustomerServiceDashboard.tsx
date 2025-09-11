@@ -173,6 +173,49 @@ export default function CustomerServiceDashboard() {
         console.log('Direct connection failed, trying CORS proxy...', directError);
       }
       
+      // Try the database users endpoint as fallback
+      try {
+        const response = await fetch(`${API_BASE}/api/database/users`);
+        const data = await response.json();
+
+        if (data.success && data.users) {
+          // Transform database users to match frontend structure
+          const transformedUsers = data.users.map((user: any) => ({
+            id: user.id,
+            email: user.email,
+            fullName: user.username || 'No name provided',
+            selectedPlan: { name: user.plan_type || 'premium' },
+            questionnaireData: null,
+            cryptoAssets: [],
+            forexPairs: [],
+            otherForexPair: null,
+            screenshotUrl: null,
+            riskManagementPlan: null,
+            tradingPreferences: {},
+            status: 'PENDING',
+            planActivatedAt: null,
+            createdAt: user.created_at,
+            updatedAt: user.created_at,
+            payments: [],
+            trades: []
+          }));
+          
+          setUsers(transformedUsers);
+          setError(null);
+          
+          // If we have a current user ID, find and select them
+          if (currentUserId) {
+            const currentUser = transformedUsers.find((user: any) => user.id === currentUserId);
+            if (currentUser) {
+              setSelectedUser(currentUser);
+            }
+          }
+          return;
+        }
+      } catch (dbError) {
+        console.log('Database users endpoint also failed, trying localStorage...', dbError);
+      }
+      
       // Fallback to localStorage
       try {
         const users = JSON.parse(localStorage.getItem('users') || '[]');
