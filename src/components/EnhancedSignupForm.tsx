@@ -145,7 +145,7 @@ export default function EnhancedSignupForm() {
           
           // Handle specific error cases
           if (response.status === 409) {
-            setError('An account with this email already exists. Please sign in instead or use a different email address.');
+            setErrors({ submit: 'An account with this email already exists. Please sign in instead or use a different email address.' });
             setIsLoading(false);
             return;
           }
@@ -160,11 +160,11 @@ export default function EnhancedSignupForm() {
         
         // Check if it's a 409 error (user already exists)
         if (apiError.message && apiError.message.includes('409')) {
-          setError('An account with this email already exists. Please sign in instead or use a different email address.');
+          setErrors({ submit: 'An account with this email already exists. Please sign in instead or use a different email address.' });
         } else if (apiError.message && apiError.message.includes('User already exists')) {
-          setError('An account with this email already exists. Please sign in instead or use a different email address.');
+          setErrors({ submit: 'An account with this email already exists. Please sign in instead or use a different email address.' });
         } else {
-          setError('Registration service is temporarily unavailable. Please try again later or contact support.');
+          setErrors({ submit: 'Registration service is temporarily unavailable. Please try again later or contact support.' });
         }
         setIsLoading(false);
         return;

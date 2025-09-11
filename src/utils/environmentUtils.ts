@@ -3,8 +3,7 @@
 
 export const isProduction = (): boolean => {
   return window.location.hostname.includes('onrender.com') || 
-         window.location.hostname.includes('traderedgepro.com') ||
-         !window.location.hostname.includes('localhost');
+         window.location.hostname.includes('traderedgepro.com');
 };
 
 export const isDevelopment = (): boolean => {
