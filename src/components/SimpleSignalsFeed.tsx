@@ -391,11 +391,22 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         setError(null);
         
         // Load signals from localStorage (stored by admin dashboard)
-        const adminSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
-        console.log('Loaded signals from localStorage:', adminSignals.length);
-        console.log('First few signals:', adminSignals.slice(0, 3));
+        // Check multiple possible keys for signals
+        const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+        const adminSignals = JSON.parse(localStorage.getItem('admin_signals') || '[]');
+        const generatedSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
         
-        if (adminSignals.length === 0) {
+        // Combine all signal sources
+        const allSignals = [...telegramMessages, ...adminSignals, ...generatedSignals];
+        console.log('Loaded signals from localStorage:', {
+          telegramMessages: telegramMessages.length,
+          adminSignals: adminSignals.length,
+          generatedSignals: generatedSignals.length,
+          total: allSignals.length
+        });
+        console.log('First few signals:', allSignals.slice(0, 3));
+        
+        if (allSignals.length === 0) {
           console.log('No signals found in localStorage');
           setSignals([]);
           setConnectionStatus('disconnected');
@@ -403,7 +414,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         }
 
         // Convert admin messages to Signal format with proper lot size calculations
-        const convertedSignals: Signal[] = adminSignals.map((msg: any) => {
+        const convertedSignals: Signal[] = allSignals.map((msg: any) => {
           console.log('Converting signal:', msg); // Debug log
           
           const lines = msg.text.split('\n');

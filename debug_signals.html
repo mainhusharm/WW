@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Count Debug</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #1a1a1a; 
+            color: white; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+        }
+        .card { 
+            background: #2a2a2a; 
+            padding: 20px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border: 1px solid #444; 
+        }
+        .stat { 
+            display: inline-block; 
+            margin: 10px; 
+            padding: 10px 20px; 
+            background: #333; 
+            border-radius: 5px; 
+        }
+        .error { 
+            color: #ff6b6b; 
+        }
+        .success { 
+            color: #51cf66; 
+        }
+        .warning { 
+            color: #ffd43b; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Signal Count Debug Test</h1>
+        
+        <div class="card">
+            <h2>LocalStorage Analysis</h2>
+            <div id="localStorageData"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Signal Analysis</h2>
+            <div id="signalAnalysis"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Calculated Stats</h2>
+            <div id="calculatedStats"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Actions</h2>
+            <button onclick="refreshData()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Refresh Data</button>
+            <button onclick="createTestSignals()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">Create Test Signals</button>
+        </div>
+    </div>
+
+    <script>
+        function refreshData() {
+            // Check localStorage for signals
+            const telegramMessages = localStorage.getItem('telegram_messages');
+            
+            let localStorageHtml = '<h3>Available Keys:</h3><ul>';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                localStorageHtml += `<li><strong>${key}:</strong> ${localStorage.getItem(key)?.substring(0, 100)}...</li>`;
+            }
+            localStorageHtml += '</ul>';
+            
+            if (telegramMessages) {
+                try {
+                    const messages = JSON.parse(telegramMessages);
+                    localStorageHtml += `<h3>Telegram Messages (${messages.length}):</h3>`;
+                    localStorageHtml += `<pre>${JSON.stringify(messages, null, 2)}</pre>`;
+                } catch (e) {
+                    localStorageHtml += `<p class="error">Error parsing telegram_messages: ${e.message}</p>`;
+                }
+            } else {
+                localStorageHtml += '<p class="warning">No telegram_messages found in localStorage</p>';
+            }
+            
+            document.getElementById('localStorageData').innerHTML = localStorageHtml;
+            
+            // Analyze signals
+            analyzeSignals();
+        }
+        
+        function createTestSignals() {
+            const testSignals = [
+                {
+                    id: 1,
+                    text: "EUR/USD\nBUY NOW\nEntry 1.0850\nStop Loss 1.0800\nTake Profit 1.0950\nConfidence 90%\n\nStrong bullish momentum",
+                    timestamp: new Date().toISOString()
+                },
+                {
+                    id: 2,
+                    text: "GBP/USD\nSELL NOW\nEntry 1.2650\nStop Loss 1.2700\nTake Profit 1.2500\nConfidence 85%\n\nBearish setup confirmed",
+                    timestamp: new Date().toISOString()
+                },
+                {
+                    id: 3,
+                    text: "BTC/USDT\nBUY NOW\nEntry 45000\nStop Loss 44000\nTake Profit 47000\nConfidence 88%\n\nCrypto breakout signal",
+                    timestamp: new Date().toISOString()
+                }
+            ];
+            
+            localStorage.setItem('telegram_messages', JSON.stringify(testSignals));
+            refreshData();
+        }
+        
+        function analyzeSignals() {
+            const telegramMessages = localStorage.getItem('telegram_messages');
+            let analysisHtml = '';
+            
+            if (telegramMessages) {
+                try {
+                    const messages = JSON.parse(telegramMessages);
+                    analysisHtml += `<h3>Signal Analysis (${messages.length} messages):</h3>`;
+                    
+                    let totalSignals = 0;
+                    let activeSignals = 0;
+                    let recommendedSignals = 0;
+                    let forexSignals = 0;
+                    let cryptoSignals = 0;
+                    
+                    messages.forEach((msg, index) => {
+                        if (msg.text && msg.text.includes('Entry') && msg.text.includes('Stop Loss')) {
+                            totalSignals++;
+                            
+                            // Check if it's active (not taken)
+                            const isTaken = localStorage.getItem(`taken_signal_${msg.id}`);
+                            if (!isTaken) activeSignals++;
+                            
+                            // Check if recommended (confidence > 85)
+                            const confidenceMatch = msg.text.match(/Confidence\s+([0-9]+)%/i);
+                            const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 85;
+                            if (confidence > 85) recommendedSignals++;
+                            
+                            // Check market type
+                            const lines = msg.text.split('\n');
+                            const pair = lines[0] || 'UNKNOWN';
+                            const isCrypto = pair.includes('USDT') || pair.includes('BTC') || pair.includes('ETH') || 
+                                           pair.includes('ADA') || pair.includes('BNB') || pair.includes('XRP') ||
+                                           pair.includes('SOL') || pair.includes('DOT') || pair.includes('DOGE') ||
+                                           pair.includes('AVAX') || pair.includes('LINK') || pair.includes('LTC') ||
+                                           pair.includes('XLM') || pair.includes('FIL') || pair.includes('AAVE');
+                            
+                            if (isCrypto) {
+                                cryptoSignals++;
+                            } else {
+                                forexSignals++;
+                            }
+                        }
+                    });
+                    
+                    analysisHtml += `
+                        <div class="stat">Total Signals: ${totalSignals}</div>
+                        <div class="stat">Active: ${activeSignals}</div>
+                        <div class="stat">Recommended: ${recommendedSignals}</div>
+                        <div class="stat">Forex: ${forexSignals}</div>
+                        <div class="stat">Crypto: ${cryptoSignals}</div>
+                    `;
+                    
+                } catch (e) {
+                    analysisHtml += `<p class="error">Error analyzing signals: ${e.message}</p>`;
+                }
+            } else {
+                analysisHtml = '<p class="warning">No signals found to analyze</p>';
+            }
+            
+            document.getElementById('signalAnalysis').innerHTML = analysisHtml;
+            
+            // Calculate final stats
+            calculateStats();
+        }
+        
+        function calculateStats() {
+            const telegramMessages = localStorage.getItem('telegram_messages');
+            let statsHtml = '';
+            
+            if (telegramMessages) {
+                try {
+                    const messages = JSON.parse(telegramMessages);
+                    const validSignals = messages.filter(msg => 
+                        msg.text && msg.text.includes('Entry') && msg.text.includes('Stop Loss')
+                    );
+                    
+                    const total = validSignals.length;
+                    const active = validSignals.filter(msg => {
+                        const isTaken = localStorage.getItem(`taken_signal_${msg.id}`);
+                        return !isTaken;
+                    }).length;
+                    
+                    const recommended = validSignals.filter(msg => {
+                        const confidenceMatch = msg.text.match(/Confidence\s+([0-9]+)%/i);
+                        const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 85;
+                        return confidence > 85;
+                    }).length;
+                    
+                    const forex = validSignals.filter(msg => {
+                        const lines = msg.text.split('\n');
+                        const pair = lines[0] || 'UNKNOWN';
+                        return !pair.includes('USDT') && !pair.includes('BTC') && !pair.includes('ETH') && 
+                               !pair.includes('ADA') && !pair.includes('BNB') && !pair.includes('XRP') &&
+                               !pair.includes('SOL') && !pair.includes('DOT') && !pair.includes('DOGE') &&
+                               !pair.includes('AVAX') && !pair.includes('LINK') && !pair.includes('LTC') &&
+                               !pair.includes('XLM') && !pair.includes('FIL') && !pair.includes('AAVE');
+                    }).length;
+                    
+                    const crypto = validSignals.filter(msg => {
+                        const lines = msg.text.split('\n');
+                        const pair = lines[0] || 'UNKNOWN';
+                        return pair.includes('USDT') || pair.includes('BTC') || pair.includes('ETH') || 
+                               pair.includes('ADA') || pair.includes('BNB') || pair.includes('XRP') ||
+                               pair.includes('SOL') || pair.includes('DOT') || pair.includes('DOGE') ||
+                               pair.includes('AVAX') || pair.includes('LINK') || pair.includes('LTC') ||
+                               pair.includes('XLM') || pair.includes('FIL') || pair.includes('AAVE');
+                    }).length;
+                    
+                    statsHtml = `
+                        <h3>Final Calculated Stats:</h3>
+                        <div class="stat" style="background: #444;">Total: ${total}</div>
+                        <div class="stat" style="background: #28a745;">Active: ${active}</div>
+                        <div class="stat" style="background: #ffc107; color: #000;">Recommended: ${recommended}</div>
+                        <div class="stat" style="background: #007bff;">Forex: ${forex}</div>
+                        <div class="stat" style="background: #6f42c1;">Crypto: ${crypto}</div>
+                    `;
+                    
+                } catch (e) {
+                    statsHtml = `<p class="error">Error calculating stats: ${e.message}</p>`;
+                }
+            } else {
+                statsHtml = '<p class="warning">No signals found for stats calculation</p>';
+            }
+            
+            document.getElementById('calculatedStats').innerHTML = statsHtml;
+        }
+        
+        // Load data on page load
+        refreshData();
+    </script>
+</body>
+</html>
