@@ -51,6 +51,7 @@ const QuantumAdminDashboard: React.FC = () => {
   const [equityUpdate, setEquityUpdate] = useState({ amount: '', reason: '' });
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: 'success' | 'info' | 'warning' | 'error', timestamp: Date}>>([]);
   const refreshInterval = useRef<NodeJS.Timeout | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -186,6 +187,22 @@ const QuantumAdminDashboard: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 1000);
   }, [loadUsers]);
 
+  // Add notification function
+  const addNotification = useCallback((message: string, type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
+    const notification = {
+      id: Date.now().toString(),
+      message,
+      type,
+      timestamp: new Date()
+    };
+    setNotifications(prev => [notification, ...prev.slice(0, 9)]); // Keep last 10 notifications
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== notification.id));
+    }, 5000);
+  }, []);
+
   // Search functionality
   useEffect(() => {
     if (searchTerm) {
@@ -242,26 +259,110 @@ const QuantumAdminDashboard: React.FC = () => {
     if (!selectedUser || !equityUpdate.amount) return;
 
     const newEquity = parseFloat(equityUpdate.amount);
+    const oldEquity = selectedUser.currentEquity;
+    const newPnl = newEquity - selectedUser.accountSize;
+    
     const message: UserChatMessage = {
       id: Date.now().toString(),
       type: 'system',
-      message: `Equity updated from $${selectedUser.currentEquity.toLocaleString()} to $${newEquity.toLocaleString()}. Reason: ${equityUpdate.reason}`,
+      message: `Equity updated from $${oldEquity.toLocaleString()} to $${newEquity.toLocaleString()}. Reason: ${equityUpdate.reason}`,
       timestamp: new Date().toISOString(),
       action: 'equity_update',
-      data: { oldEquity: selectedUser.currentEquity, newEquity }
+      data: { oldEquity, newEquity, reason: equityUpdate.reason }
     };
 
     setUserChatMessages(prev => [...prev, message]);
     
-    // Update user equity
+    // Update user equity with real-time sync
+    const updatedUser = { 
+      ...selectedUser, 
+      currentEquity: newEquity, 
+      totalPnl: newPnl,
+      lastActive: new Date().toISOString()
+    };
+    
     setUsers(prev => prev.map(user => 
-      user.id === selectedUser.id 
-        ? { ...user, currentEquity: newEquity, totalPnl: newEquity - user.accountSize }
-        : user
+      user.id === selectedUser.id ? updatedUser : user
     ));
     
-    setSelectedUser(prev => prev ? { ...prev, currentEquity: newEquity, totalPnl: newEquity - prev.accountSize } : null);
+    setSelectedUser(updatedUser);
+    
+    // Sync to user's individual dashboard data
+    const userDashboardKey = `dashboard_data_${selectedUser.email}`;
+    const userTradingStateKey = `trading_state_${selectedUser.email}`;
+    
+    // Update user's dashboard data
+    const userDashboardData = localStorage.getItem(userDashboardKey);
+    if (userDashboardData) {
+      try {
+        const parsed = JSON.parse(userDashboardData);
+        const updatedDashboardData = {
+          ...parsed,
+          performance: {
+            ...parsed.performance,
+            accountBalance: newEquity,
+            totalPnl: newPnl
+          },
+          account: {
+            ...parsed.account,
+            balance: newEquity,
+            equity: newEquity
+          }
+        };
+        localStorage.setItem(userDashboardKey, JSON.stringify(updatedDashboardData));
+      } catch (error) {
+        console.error('Error updating user dashboard data:', error);
+      }
+    }
+    
+    // Update user's trading state
+    const userTradingState = localStorage.getItem(userTradingStateKey);
+    if (userTradingState) {
+      try {
+        const parsed = JSON.parse(userTradingState);
+        const updatedTradingState = {
+          ...parsed,
+          currentEquity: newEquity,
+          performanceMetrics: {
+            ...parsed.performanceMetrics,
+            totalPnl: newPnl
+          }
+        };
+        localStorage.setItem(userTradingStateKey, JSON.stringify(updatedTradingState));
+      } catch (error) {
+        console.error('Error updating user trading state:', error);
+      }
+    }
+    
+    // Create a system notification for the user
+    const userNotification = {
+      id: Date.now().toString(),
+      type: 'equity_update',
+      message: `Your account equity has been updated to $${newEquity.toLocaleString()}`,
+      timestamp: new Date().toISOString(),
+      data: { oldEquity, newEquity, reason: equityUpdate.reason }
+    };
+    
+    // Store notification for user to see
+    const userNotificationsKey = `user_notifications_${selectedUser.email}`;
+    const existingNotifications = localStorage.getItem(userNotificationsKey);
+    const notifications = existingNotifications ? JSON.parse(existingNotifications) : [];
+    notifications.unshift(userNotification);
+    localStorage.setItem(userNotificationsKey, JSON.stringify(notifications.slice(0, 50))); // Keep last 50 notifications
+    
     setEquityUpdate({ amount: '', reason: '' });
+    
+    // Add success notification
+    addNotification(`Equity updated for ${selectedUser.name} to $${newEquity.toLocaleString()}`, 'success');
+    
+    // Show success message
+    const successMessage: UserChatMessage = {
+      id: (Date.now() + 1).toString(),
+      type: 'system',
+      message: `✅ Equity update successful! User dashboard has been synchronized.`,
+      timestamp: new Date().toISOString()
+    };
+    setUserChatMessages(prev => [...prev, successMessage]);
   };
 
   const handleStatusUpdate = (status: User['status']) => {
@@ -711,6 +812,23 @@ const QuantumAdminDashboard: React.FC = () => {
           <div className="p-6">
             <h1 className="text-2xl font-bold text-cyan-400 mb-2">Quantum Admin</h1>
             <p className="text-sm text-gray-400">User Management System</p>
+            <div className="mt-4 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-400">Live</span>
+              </div>
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="p-1 text-cyan-400 hover:text-cyan-300 transition-colors"
+                title="Refresh Data"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              Last update: {lastUpdate.toLocaleTimeString()}
+            </div>
           </div>
           
           <nav className="mt-8">
@@ -744,6 +862,35 @@ const QuantumAdminDashboard: React.FC = () => {
             </div>
           </nav>
         </div>
+
+        {/* Notifications */}
+        {notifications.length > 0 && (
+          <div className="fixed top-4 right-4 z-50 space-y-2">
+            {notifications.map(notification => (
+              <div
+                key={notification.id}
+                className={`px-4 py-3 rounded-lg shadow-lg backdrop-blur-md border transition-all duration-300 ${
+                  notification.type === 'success' 
+                    ? 'bg-green-500/20 border-green-500/30 text-green-300'
+                    : notification.type === 'error'
+                    ? 'bg-red-500/20 border-red-500/30 text-red-300'
+                    : notification.type === 'warning'
+                    ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-300'
+                    : 'bg-blue-500/20 border-blue-500/30 text-blue-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    notification.type === 'success' ? 'bg-green-400' :
+                    notification.type === 'error' ? 'bg-red-400' :
+                    notification.type === 'warning' ? 'bg-yellow-400' : 'bg-blue-400'
+                  }`}></div>
+                  <span className="text-sm font-medium">{notification.message}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="quantum-main">

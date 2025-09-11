@@ -60,6 +60,7 @@ import Footer from './components/Footer';
 import DatabaseDashboard from './components/DatabaseDashboard';
 import CustomerServiceDashboard from './components/CustomerServiceDashboard';
 import QuantumAdminDashboard from './components/QuantumAdminDashboard';
+import RealTimeUserDashboard from './components/RealTimeUserDashboard';
 import SignupForm from './components/SignupForm';
 import EnhancedSignupForm from './components/EnhancedSignupForm';
 import SignupRedirect from './components/SignupRedirect';
@@ -239,6 +240,10 @@ const AppContent = () => {
         <Route
           path="/quantum-admin"
           element={<QuantumAdminDashboard />}
+        />
+        <Route
+          path="/user-dashboard"
+          element={<RealTimeUserDashboard />}
         />
           <Route
             path="/customer-service/customer/:id"

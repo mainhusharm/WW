@@ -392,8 +392,6 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         
         // Load signals from localStorage (stored by admin dashboard)
         const adminSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
-        console.log('Loaded admin signals from localStorage:', adminSignals.length, 'signals');
-        console.log('First few signals:', adminSignals.slice(0, 3));
         
         if (adminSignals.length === 0) {
           console.log('No signals found in localStorage');
@@ -620,14 +618,11 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
   
   // Calculate stats
   useEffect(() => {
-    console.log('Calculating stats for signals:', signals.length, signals);
     const total = signals.length;
     const active = signals.filter(s => s.status === 'active').length;
     const recommended = signals.filter(s => s.is_recommended).length;
     const forex = signals.filter(s => s.market === 'forex').length;
     const crypto = signals.filter(s => s.market === 'crypto').length;
-    
-    console.log('Calculated stats:', { total, active, recommended, forex, crypto });
     
     setStats({
       total,

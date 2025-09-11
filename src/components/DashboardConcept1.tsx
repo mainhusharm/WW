@@ -281,6 +281,14 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [journalLoading, setJournalLoading] = useState(true);
   
+  // Account data state for real-time updates
+  const [currentAccountData, setCurrentAccountData] = useState({
+    accountBalance: 10000,
+    totalPnl: 0,
+    winRate: 0,
+    totalTrades: 0
+  });
+  
   const [newJournalEntry, setNewJournalEntry] = useState({
     date: new Date().toISOString().split('T')[0],
     symbol: '',
@@ -310,6 +318,30 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
     };
 
     loadJournalEntries();
+  }, [user?.email]);
+
+  // Load account data from userDataService
+  useEffect(() => {
+    if (user?.email) {
+      const accountData = userDataService.getAccountData();
+      if (accountData) {
+        setCurrentAccountData(accountData);
+      }
+    }
+  }, [user?.email]);
+
+  // Refresh account data periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (user?.email) {
+        const accountData = userDataService.getAccountData();
+        if (accountData) {
+          setCurrentAccountData(accountData);
+        }
+      }
+    }, 2000); // Refresh every 2 seconds
+
+    return () => clearInterval(interval);
   }, [user?.email]);
 
   // Save dashboard state for persistence
@@ -1114,37 +1146,6 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   const initialBalance = hasAccount
     ? parseFloat(questionnaireAnswers.accountEquity)
     : parseFloat(questionnaireAnswers.accountSize) || dashboardData?.performance?.accountBalance || 10000;
-  // Get current account data from userDataService
-  const [currentAccountData, setCurrentAccountData] = useState({
-    accountBalance: initialBalance,
-    totalPnl: 0,
-    winRate: 0,
-    totalTrades: 0
-  });
-
-  // Load account data from userDataService
-  useEffect(() => {
-    if (user?.email) {
-      const accountData = userDataService.getAccountData();
-      if (accountData) {
-        setCurrentAccountData(accountData);
-      }
-    }
-  }, [user?.email]);
-
-  // Refresh account data periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (user?.email) {
-        const accountData = userDataService.getAccountData();
-        if (accountData) {
-          setCurrentAccountData(accountData);
-        }
-      }
-    }, 2000); // Refresh every 2 seconds
-
-    return () => clearInterval(interval);
-  }, [user?.email]);
 
   const currentEquity = currentAccountData.accountBalance;
   

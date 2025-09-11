@@ -81,6 +81,13 @@ const Header = () => {
             >
               Admin
             </Link>
+            <Link
+              to="/user-dashboard"
+              className="text-blue-400 hover:text-blue-300 transition-colors font-medium text-sm"
+              title="User Dashboard"
+            >
+              User
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -172,6 +179,13 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Admin
+                </Link>
+                <Link
+                  to="/user-dashboard"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-blue-400 hover:text-blue-300 hover:bg-gray-800 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  User
                 </Link>
               </div>
             </div>
