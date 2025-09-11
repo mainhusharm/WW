@@ -102,7 +102,7 @@ const SignIn = () => {
         }
       } else {
         // Try backend authentication
-        let apiEndpoint = 'https://simple-auth-backend.onrender.com/api/auth/login';
+        let apiEndpoint = 'https://backend-d4fm.onrender.com/api/auth/login';
         let response;
         let data;
         

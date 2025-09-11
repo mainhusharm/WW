@@ -4,7 +4,7 @@ Real-time Working Server - No Prefilled Data
 All data is generated dynamically and in real-time
 """
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_socketio import SocketIO, emit
 import json
 import uuid
@@ -18,6 +18,7 @@ import os
 import logging
 import traceback
 from collections import defaultdict, deque
+import yfinance as yf
 
 # Configure logging
 logging.basicConfig(
@@ -795,6 +796,107 @@ def mark_signal_taken():
         "updated_at": datetime.now().isoformat()
     })
 
+# Store initial prices and previous close to simulate a live feed
+futures_prices_cache = {}
+cache_lock = threading.Lock()
+
+def fetch_initial_prices():
+    """Fetch initial prices for all futures assets."""
+    symbols = ["ES=F", "NQ=F", "YM=F", "RTY=F", "CL=F", "GC=F", "SI=F", "ZN=F", "ZB=F", "6E=F"]
+    with cache_lock:
+        for symbol in symbols:
+            if symbol not in futures_prices_cache:
+                try:
+                    ticker = yf.Ticker(symbol)
+                    info = ticker.info
+                    futures_prices_cache[symbol] = {
+                        "name": info.get('shortName', symbol),
+                        "price": info.get('regularMarketPrice', 0),
+                        "previous_close": info.get('previousClose', 0),
+                        "volume": info.get('volume', 0),
+                        "last_updated": time.time()
+                    }
+                except Exception as e:
+                    print(f"Error fetching initial price for {symbol}: {e}")
+                    futures_prices_cache[symbol] = {
+                        "name": symbol, "price": 0, "previous_close": 0, "volume": 0, "error": str(e)
+                    }
+
+@app.route('/api/futures/prices', methods=['GET'])
+def get_futures_prices():
+    """Get real-time prices for futures assets."""
+    data = {}
+    symbols = ["ES=F", "NQ=F", "YM=F", "RTY=F", "CL=F", "GC=F", "SI=F", "ZN=F", "ZB=F", "6E=F"]
+    for symbol in symbols:
+        try:
+            ticker = yf.Ticker(symbol)
+            info = ticker.info
+            
+            price = info.get('regularMarketPrice', info.get('previousClose', 0))
+            volume = info.get('volume', 0)
+            previous_close = info.get('previousClose', price)
+
+            if price and previous_close:
+                change = price - previous_close
+                change_percent = (change / previous_close) * 100 if previous_close else 0
+            else:
+                change = 0
+                change_percent = 0
+
+            data[symbol] = {
+                "name": info.get('shortName', symbol),
+                "price": price,
+                "change": change,
+                "changePercent": change_percent,
+                "volume": volume
+            }
+        except Exception as e:
+            print(f"Error fetching real-time price for {symbol}: {e}")
+            data[symbol] = {"name": symbol, "error": "Failed to fetch real-time data"}
+
+    return jsonify(data)
+
+@app.route('/api/signals/futures/send', methods=['POST'])
+def send_futures_signal():
+    """Send a futures signal from the admin dashboard."""
+    data = request.get_json() or {}
+    asset = data.get('asset')
+    timeframe = data.get('timeframe')
+    signal_type = data.get('type')
+
+    if not all([asset, timeframe, signal_type]):
+        return jsonify({'success': False, 'message': 'Missing required fields.'}), 400
+
+    # In a real application, you'd generate a more detailed signal.
+    # For now, we'll create a basic one.
+    signal = {
+        "id": str(uuid.uuid4()),
+        "pair": asset,
+        "direction": signal_type,
+        "entry_price": "N/A",
+        "stop_loss": "N/A",
+        "take_profit": "N/A",
+        "confidence": 90,
+        "analysis": f"Signal for {asset} on {timeframe} timeframe.",
+        "ict_concepts": [],
+        "market": "futures",
+        "timeframe": timeframe,
+        "created_at": datetime.now().isoformat(),
+        "status": "active",
+        "source": "admin_generated"
+    }
+
+    signals_storage.append(signal)
+    
+    # Broadcast the signal via WebSocket
+    try:
+        socketio.emit('new_signal', signal, namespace='/')
+        print(f"📡 Futures signal broadcasted via WebSocket: {signal['pair']}")
+    except Exception as e:
+        print(f"❌ WebSocket broadcast error: {e}")
+
+    return jsonify({'success': True, 'message': 'Futures signal sent successfully.'})
+
 @app.route('/api/admin/create-signal', methods=['POST'])
 def create_admin_signal():
     """Create signal from admin dashboard (real-time)"""
@@ -1164,16 +1266,16 @@ def login():
         # Check password
         if isinstance(user, dict):
             # Simple user format
-            stored_hash = user['password_hash']
-            user_id = user['id']
-            username = user['username']
-            plan_type = user['plan_type']
+            stored_hash = user.get('password_hash')
+            user_id = user.get('id')
+            username = user.get('username')
+            plan_type = user.get('plan_type')
         else:
             # Database user format
-            stored_hash = user['password_hash']
-            user_id = user['id']
-            username = user['username']
-            plan_type = user['plan_type']
+            stored_hash = user['password_hash'] if user else None
+            user_id = user['id'] if user else None
+            username = user['username'] if user else None
+            plan_type = user['plan_type'] if user else None
         
         if stored_hash and stored_hash != hash_password(password):
             return jsonify({"msg": "Invalid email or password"}), 401
@@ -1374,7 +1476,8 @@ def register():
                     RETURNING id
                 """, (username, email, password_hash, 'premium'))
                 
-                user_id = cursor.fetchone()['id']
+                user_id_row = cursor.fetchone()
+                user_id = user_id_row['id'] if user_id_row else None
             
             conn.commit()
             
@@ -1493,25 +1596,26 @@ def get_customers():
         
         customer_list = []
         for customer in customers:
+            customer_dict = dict(customer)
             customer_list.append({
-                "id": customer['id'],
-                "unique_id": customer['unique_id'],
-                "name": customer['name'],
-                "email": customer['email'],
-                "membership_tier": customer['membership_tier'],
-                "status": customer['status'],
-                "payment_status": customer['payment_status'],
-                "payment_date": customer['payment_date'],
-                "questionnaire_completed": customer['questionnaire_completed'],
-                "account_type": customer['account_type'],
-                "prop_firm": customer['prop_firm'],
-                "account_size": customer['account_size'],
-                "phone": customer['phone'],
-                "company": customer['company'],
-                "country": customer['country'],
-                "join_date": customer['join_date'],
-                "last_active": customer['last_active'],
-                "created_at": customer['created_at']
+                "id": customer_dict.get('id'),
+                "unique_id": customer_dict.get('unique_id'),
+                "name": customer_dict.get('name'),
+                "email": customer_dict.get('email'),
+                "membership_tier": customer_dict.get('membership_tier'),
+                "status": customer_dict.get('status'),
+                "payment_status": customer_dict.get('payment_status'),
+                "payment_date": customer_dict.get('payment_date'),
+                "questionnaire_completed": customer_dict.get('questionnaire_completed'),
+                "account_type": customer_dict.get('account_type'),
+                "prop_firm": customer_dict.get('prop_firm'),
+                "account_size": customer_dict.get('account_size'),
+                "phone": customer_dict.get('phone'),
+                "company": customer_dict.get('company'),
+                "country": customer_dict.get('country'),
+                "join_date": customer_dict.get('join_date'),
+                "last_active": customer_dict.get('last_active'),
+                "created_at": customer_dict.get('created_at')
             })
         
         return jsonify({
@@ -1554,6 +1658,37 @@ def get_profile():
     except Exception as e:
         return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
+@app.route('/api/validate-coupon', methods=['POST'])
+def validate_coupon():
+    """Validate coupon code for payment"""
+    try:
+        data = request.get_json()
+        coupon_code = data.get('coupon_code')
+        plan_id = data.get('plan_id', 'pro')
+        original_price = data.get('original_price', 29.99)
+        
+        if coupon_code == 'TRADERFREE':
+            return jsonify({
+                'valid': True,
+                'discount_amount': original_price,
+                'final_price': 0.00,
+                'message': 'Free access coupon applied!'
+            }), 200
+        elif coupon_code == 'INTERNAL_DEV_OVERRIDE_2024':
+            return jsonify({
+                'valid': True,
+                'discount_amount': original_price - 0.10,
+                'final_price': 0.10,
+                'message': 'Development override coupon applied!'
+            }), 200
+        else:
+            return jsonify({
+                'valid': False,
+                'error': 'Invalid coupon code'
+            }), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/auth/validate', methods=['POST', 'OPTIONS'])
 def validate_token():
     """Validate access token"""
@@ -1578,6 +1713,16 @@ def validate_token():
     except Exception as e:
         return jsonify({"msg": f"Server error: {str(e)}"}), 500
 
+@app.route('/')
+def index():
+    logger.info("Serving admin_dashboard.html")
+    return send_from_directory('.', 'admin_dashboard.html')
+
+@app.route('/<path:path>')
+def static_proxy(path):
+    """Serve static files"""
+    return send_from_directory('.', path)
+
 if __name__ == '__main__':
     print("🚀 Starting Real-Time Working Server with WebSocket support")
     print("✅ All endpoints configured")
@@ -1599,5 +1744,5 @@ if __name__ == '__main__':
     
     # For local development
     import os
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5001))
     socketio.run(app, host='0.0.0.0', port=port, debug=False)

@@ -8,6 +8,7 @@ import NewForexSignalGenerator from './NewForexSignalGenerator';
 import ReliableDataFeed from './ReliableDataFeed';
 import ForexDataDashboard from './ForexData';
 import TransferredQueries from './TransferredQueries';
+import FuturesDashboard from './FuturesDashboard';
 
 const StatCard = ({ label, value, icon }: { label: string, value: string | number, icon: React.ReactNode }) => (
     <div className="bg-gray-900/50 backdrop-blur-sm p-6 rounded-2xl border border-blue-500/30 transition-all duration-300 hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/20 group">
@@ -28,6 +29,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isForexBotRunning, setIsForexBotRunning] = useState(false);
   const [isCryptoBotRunning, setIsCryptoBotRunning] = useState(false);
+  const [isFuturesBotRunning, setIsFuturesBotRunning] = useState(false);
   
   const [signal, setSignal] = useState({
     currencyPair: 'EURUSD',
@@ -188,6 +190,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                 Crypto
               </button>
               <button
+                onClick={() => setActiveTab('futures')}
+                className={`px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg ${activeTab === 'futures' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                Futures
+              </button>
+              <button
                 onClick={() => setActiveTab('kickstarter-approvals')}
                 className={`px-4 py-2 text-sm font-semibold transition-colors rounded-t-lg ${activeTab === 'kickstarter-approvals' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white'}`}
               >
@@ -294,6 +302,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
             {activeTab === 'crypto' && (
               <div className="animate-fade-in-up">
                 <CryptoDashboard isBotRunning={isCryptoBotRunning} setIsBotRunning={setIsCryptoBotRunning} />
+              </div>
+            )}
+
+            {activeTab === 'futures' && (
+              <div className="animate-fade-in-up">
+                <FuturesDashboard isBotRunning={isFuturesBotRunning} setIsBotRunning={setIsFuturesBotRunning} />
               </div>
             )}
 

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futures Signal Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        #signals { list-style-type: none; padding: 0; }
+        #signals li { border: 1px solid #ccc; border-radius: 4px; padding: 1rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <h1>Futures Signal Test</h1>
+    <ul id="signals"></ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const signalsList = document.getElementById('signals');
+
+        socket.on('connect', () => {
+            console.log('Connected to WebSocket');
+        });
+
+        socket.on('new_signal', (signal) => {
+            console.log('New signal received:', signal);
+            if (signal.market === 'futures') {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <strong>${signal.pair} (${signal.timeframe})</strong><br>
+                    Type: ${signal.direction}<br>
+                    Analysis: ${signal.analysis}
+                `;
+                signalsList.prepend(listItem);
+            }
+        });
+    </script>
+</body>
+</html>

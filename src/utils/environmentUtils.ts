@@ -25,7 +25,7 @@ export const getEnvironment = (): 'development' | 'production' | 'render' => {
 // Get appropriate API base URL based on environment
 export const getApiBaseUrl = (): string => {
   if (isProduction()) {
-    return 'https://simple-auth-backend.onrender.com';
+    return 'https://backend-d4fm.onrender.com';
   }
   return 'http://localhost:5000';
 };

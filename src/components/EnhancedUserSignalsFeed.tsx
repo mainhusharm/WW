@@ -286,7 +286,8 @@ const EnhancedUserSignalsFeed: React.FC<EnhancedUserSignalsFeedProps> = ({
     active: 0,
     recommended: 0,
     forex: 0,
-    crypto: 0
+    crypto: 0,
+    futures: 0
   });
   
   const signalsPerPage = 10;
@@ -322,6 +323,39 @@ const EnhancedUserSignalsFeed: React.FC<EnhancedUserSignalsFeedProps> = ({
         return prevSignals;
       });
     };
+
+    const handleNewFuturesSignal = (futuresSignal: any) => {
+      const convertedSignal: Signal = {
+        id: futuresSignal.id,
+        pair: futuresSignal.asset,
+        direction: futuresSignal.direction,
+        entry: futuresSignal.entryPrice.toString(),
+        entryPrice: futuresSignal.entryPrice,
+        stopLoss: futuresSignal.stopLoss.toString(),
+        takeProfit: Array.isArray(futuresSignal.takeProfit) 
+          ? futuresSignal.takeProfit.join(', ')
+          : futuresSignal.takeProfit.toString(),
+        confidence: futuresSignal.confidence,
+        analysis: futuresSignal.analysis,
+        timestamp: futuresSignal.timestamp,
+        status: 'active',
+        market: 'futures',
+        timeframe: futuresSignal.timeframe,
+        is_recommended: futuresSignal.confidence > 85,
+        type: futuresSignal.direction.toLowerCase()
+      };
+
+      setSignals(prevSignals => {
+        const existingSignalIds = new Set(prevSignals.map(s => s.id));
+        
+        if (!existingSignalIds.has(convertedSignal.id)) {
+          console.log(`Received new futures signal: ${convertedSignal.id}`);
+          return [convertedSignal, ...prevSignals];
+        }
+
+        return prevSignals;
+      });
+    };
     
     socket.on('new_signal', handleNewSignal);
     
@@ -329,6 +363,40 @@ const EnhancedUserSignalsFeed: React.FC<EnhancedUserSignalsFeedProps> = ({
       socket.off('new_signal', handleNewSignal);
     };
   }, [socket]);
+
+  // Listen for futures signals from admin dashboard
+  useEffect(() => {
+    const handleFuturesSignal = (event: CustomEvent) => {
+      const futuresSignal = event.detail;
+      const convertedSignal: Signal = {
+        id: futuresSignal.id,
+        pair: futuresSignal.asset,
+        direction: futuresSignal.direction,
+        entry: futuresSignal.entryPrice.toString(),
+        entryPrice: futuresSignal.entryPrice,
+        stopLoss: futuresSignal.stopLoss.toString(),
+        takeProfit: Array.isArray(futuresSignal.takeProfit) 
+          ? futuresSignal.takeProfit.join(', ')
+          : futuresSignal.takeProfit.toString(),
+        confidence: futuresSignal.confidence,
+        analysis: futuresSignal.analysis,
+        timestamp: futuresSignal.timestamp,
+        status: 'active',
+        market: 'futures',
+        timeframe: futuresSignal.timeframe,
+        is_recommended: futuresSignal.confidence > 85,
+        type: futuresSignal.direction.toLowerCase()
+      };
+
+      setSignals(prevSignals => [convertedSignal, ...prevSignals]);
+    };
+
+    window.addEventListener('newFuturesSignal', handleFuturesSignal as EventListener);
+    
+    return () => {
+      window.removeEventListener('newFuturesSignal', handleFuturesSignal as EventListener);
+    };
+  }, []);
 
   // Fetch initial signals and stats
   useEffect(() => {
@@ -339,6 +407,11 @@ const EnhancedUserSignalsFeed: React.FC<EnhancedUserSignalsFeedProps> = ({
         
         // Fetch signals from admin API (working endpoint)
         const signalsResponse = await api.get('/api/signals/admin');
+        
+        // Load futures signals from localStorage
+        const futuresSignals = JSON.parse(localStorage.getItem('futures_signals') || '[]');
+        
+        let allSignals: Signal[] = [];
         
         if (signalsResponse.data.success && signalsResponse.data.signals) {
           // Transform admin signals to match our interface
@@ -360,28 +433,60 @@ const EnhancedUserSignalsFeed: React.FC<EnhancedUserSignalsFeedProps> = ({
             is_recommended: signal.confidence > 85
           }));
           
-          // Apply market filter
-          const filteredSignals = marketFilter === 'all' 
-            ? transformedSignals 
-            : transformedSignals.filter((s: any) => s.market === marketFilter);
-          
-          setSignals(filteredSignals);
-          
-          // Calculate stats
-          const total = transformedSignals.length;
-          const active = transformedSignals.filter((s: any) => s.status === 'active').length;
-          const recommended = transformedSignals.filter((s: any) => s.is_recommended).length;
-          const forex = transformedSignals.filter((s: any) => s.market === 'forex').length;
-          const crypto = transformedSignals.filter((s: any) => s.market === 'crypto').length;
-          
-          setStats({
-            total,
-            active,
-            recommended,
-            forex,
-            crypto
-          });
+          allSignals = [...allSignals, ...transformedSignals];
         }
+
+        // Add futures signals
+        if (futuresSignals.length > 0) {
+          const transformedFuturesSignals = futuresSignals.map((signal: any) => ({
+            id: signal.id,
+            pair: signal.asset,
+            direction: signal.direction,
+            entry: signal.entryPrice.toString(),
+            entryPrice: signal.entryPrice,
+            stopLoss: signal.stopLoss.toString(),
+            takeProfit: Array.isArray(signal.takeProfit) 
+              ? signal.takeProfit.join(', ')
+              : signal.takeProfit.toString(),
+            confidence: signal.confidence,
+            analysis: signal.analysis,
+            timestamp: signal.timestamp,
+            status: 'active',
+            market: 'futures',
+            timeframe: signal.timeframe,
+            is_recommended: signal.confidence > 85,
+            type: signal.direction.toLowerCase()
+          }));
+          
+          allSignals = [...allSignals, ...transformedFuturesSignals];
+        }
+
+        // Sort by timestamp (newest first)
+        allSignals.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        
+        // Apply market filter
+        const filteredSignals = marketFilter === 'all' 
+          ? allSignals 
+          : allSignals.filter((s: any) => s.market === marketFilter);
+        
+        setSignals(filteredSignals);
+        
+        // Calculate stats
+        const total = allSignals.length;
+        const active = allSignals.filter((s: any) => s.status === 'active').length;
+        const recommended = allSignals.filter((s: any) => s.is_recommended).length;
+        const forex = allSignals.filter((s: any) => s.market === 'forex').length;
+        const crypto = allSignals.filter((s: any) => s.market === 'crypto').length;
+        const futures = allSignals.filter((s: any) => s.market === 'futures').length;
+        
+        setStats({
+          total,
+          active,
+          recommended,
+          forex,
+          crypto,
+          futures
+        });
         
       } catch (err) {
         console.error('Error fetching signals:', err);
@@ -393,7 +498,7 @@ const EnhancedUserSignalsFeed: React.FC<EnhancedUserSignalsFeedProps> = ({
     
     fetchData();
   }, [marketFilter]);
-  
+
   // Handle marking signal as taken
   const handleMarkAsTaken = async (signal: Signal, outcome: TradeOutcome, pnl?: number) => {
     try {
@@ -520,7 +625,7 @@ const EnhancedUserSignalsFeed: React.FC<EnhancedUserSignalsFeedProps> = ({
         </div>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
           <div className="bg-gray-800/50 rounded-lg p-4 text-center">
             <div className="text-2xl font-bold text-white">{stats.total}</div>
             <div className="text-sm text-gray-400">Total Signals</div>
@@ -541,11 +646,15 @@ const EnhancedUserSignalsFeed: React.FC<EnhancedUserSignalsFeedProps> = ({
             <div className="text-2xl font-bold text-purple-400">{stats.crypto}</div>
             <div className="text-sm text-gray-400">Crypto</div>
           </div>
+          <div className="bg-gray-800/50 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold text-orange-400">{stats.futures}</div>
+            <div className="text-sm text-gray-400">Futures</div>
+          </div>
         </div>
         
         {/* Market Filter */}
         <div className="flex space-x-2">
-          {['all', 'forex', 'crypto'].map((market) => (
+          {['all', 'forex', 'crypto', 'futures'].map((market) => (
             <button
               key={market}
               onClick={() => setMarketFilter(market)}
@@ -555,7 +664,9 @@ const EnhancedUserSignalsFeed: React.FC<EnhancedUserSignalsFeedProps> = ({
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
-              {market === 'all' ? 'All Markets' : market.charAt(0).toUpperCase() + market.slice(1)}
+              {market === 'all' ? 'All Markets' : 
+               market === 'futures' ? 'Futures' :
+               market.charAt(0).toUpperCase() + market.slice(1)}
             </button>
           ))}
         </div>

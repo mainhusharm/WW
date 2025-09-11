@@ -31,12 +31,12 @@ export const getApiBaseUrl = () => {
   // If we're in production and origin is not allowed, use a different approach
   if (import.meta.env.PROD && !isOriginAllowed()) {
     // Use working backend
-    return 'https://backend-bkt7.onrender.com';
+    return 'https://backend-d4fm.onrender.com';
   }
   
   // Default to the configured URL
   return import.meta.env.PROD 
-    ? 'https://node-backend-g1mk.onrender.com'
+    ? 'https://backend-d4fm.onrender.com'
     : 'http://localhost:5000';
 };
 
