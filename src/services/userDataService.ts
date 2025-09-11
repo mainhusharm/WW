@@ -26,7 +26,15 @@ export class UserDataService {
     
     const key = `account_data_${this.userEmail}`;
     const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : this.getDefaultAccountData();
+    
+    if (data) {
+      return JSON.parse(data);
+    } else {
+      // Initialize with user's actual account data from questionnaire
+      const accountData = this.getDefaultAccountData();
+      this.saveAccountData(accountData);
+      return accountData;
+    }
   }
 
   // Save user-specific account data
@@ -80,42 +88,44 @@ export class UserDataService {
     }
   }
 
-  // Calculate P&L from signal data
+  // Calculate P&L from signal data based on user's actual account and risk settings
   public calculatePnL(signal: any, outcome: 'Target Hit' | 'Stop Loss Hit' | 'Breakeven'): number {
     const entryPrice = parseFloat(signal.entry || signal.entryPrice || '0');
     const stopLoss = parseFloat(signal.stopLoss || '0');
     const takeProfit = parseFloat(Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0');
     
-    // Use the dollar amounts from the signal if available, otherwise calculate
+    // Get user's actual account data and risk settings
+    const questionnaireData = this.getQuestionnaireData();
+    const accountBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity || 10000;
+    const riskPercentage = questionnaireData?.riskPercentage || 1;
+    
+    // Calculate money at risk based on user's actual risk percentage
+    const moneyAtRisk = (accountBalance * riskPercentage) / 100;
+    
     let pnl = 0;
     
     switch (outcome) {
       case 'Target Hit':
-        // Use take profit dollar amount if available, otherwise calculate
+        // Use take profit dollar amount if available, otherwise calculate based on risk-reward ratio
         if (signal.takeProfitDollar) {
           pnl = parseFloat(signal.takeProfitDollar);
         } else if (signal.takeProfitAmount) {
           pnl = parseFloat(signal.takeProfitAmount);
-        } else if (entryPrice > 0 && takeProfit > 0) {
-          // Calculate based on price difference and lot size
-          const lotSize = parseFloat(signal.lotSize || '0.1');
-          const pipValue = 10; // Standard pip value for most forex pairs
-          const pips = Math.abs(takeProfit - entryPrice) * 10000; // Convert to pips
-          pnl = pips * pipValue * lotSize;
+        } else {
+          // Calculate based on risk-reward ratio and user's money at risk
+          const riskRewardRatio = this.calculateRiskRewardRatio(entryPrice, stopLoss, takeProfit);
+          pnl = moneyAtRisk * riskRewardRatio;
         }
         break;
       case 'Stop Loss Hit':
-        // Use stop loss dollar amount if available, otherwise calculate
+        // Use stop loss dollar amount if available, otherwise use user's money at risk
         if (signal.stopLossDollar) {
-          pnl = -Math.abs(parseFloat(signal.stopLossDollar)); // Negative for loss
+          pnl = -Math.abs(parseFloat(signal.stopLossDollar));
         } else if (signal.stopLossAmount) {
           pnl = -Math.abs(parseFloat(signal.stopLossAmount));
-        } else if (entryPrice > 0 && stopLoss > 0) {
-          // Calculate based on price difference and lot size
-          const lotSize = parseFloat(signal.lotSize || '0.1');
-          const pipValue = 10; // Standard pip value for most forex pairs
-          const pips = Math.abs(entryPrice - stopLoss) * 10000; // Convert to pips
-          pnl = -(pips * pipValue * lotSize); // Negative for loss
+        } else {
+          // Use the user's actual money at risk as the loss
+          pnl = -moneyAtRisk;
         }
         break;
       case 'Breakeven':
@@ -124,6 +134,15 @@ export class UserDataService {
     }
 
     return Math.round(pnl * 100) / 100; // Round to 2 decimal places
+  }
+
+  // Calculate risk-reward ratio
+  private calculateRiskRewardRatio(entry: number, stopLoss: number, takeProfit: number): number {
+    if (!entry || !stopLoss || !takeProfit) return 2; // Default 1:2 ratio
+    
+    const risk = Math.abs(entry - stopLoss);
+    const reward = Math.abs(takeProfit - entry);
+    return risk > 0 ? reward / risk : 2;
   }
 
   // Update account balance based on P&L
@@ -151,15 +170,30 @@ export class UserDataService {
     return totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
   }
 
-  // Get default account data
+  // Get default account data based on user's questionnaire data
   private getDefaultAccountData(): any {
+    // Try to get user's actual account data from questionnaire
+    const questionnaireData = this.getQuestionnaireData();
+    const accountBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity || 10000;
+    
     return {
-      accountBalance: 10000,
+      accountBalance: accountBalance,
       totalPnl: 0,
       totalTrades: 0,
       wins: 0,
       winRate: 0
     };
+  }
+
+  // Get questionnaire data
+  private getQuestionnaireData(): any {
+    try {
+      const data = localStorage.getItem('questionnaireAnswers');
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error('Error parsing questionnaire data:', error);
+      return null;
+    }
   }
 
   // Get default trading state
@@ -179,6 +213,47 @@ export class UserDataService {
         totalTrades: 0
       }
     };
+  }
+
+  // Recalculate lot sizes for existing signals based on user's current account data
+  public recalculateSignalLotSizes(signals: any[]): any[] {
+    const questionnaireData = this.getQuestionnaireData();
+    const accountBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity || 10000;
+    const riskPercentage = questionnaireData?.riskPercentage || 1;
+    
+    return signals.map(signal => {
+      const entryPrice = parseFloat(signal.entry || signal.entryPrice || '0');
+      const stopLoss = parseFloat(signal.stopLoss || '0');
+      
+      if (!entryPrice || !stopLoss) return signal;
+      
+      // Calculate money at risk based on user's actual risk percentage
+      const moneyAtRisk = (accountBalance * riskPercentage) / 100;
+      
+      // Calculate stop loss in pips
+      const symbol = signal.pair || signal.symbol || 'EURUSD';
+      const pipValue = symbol.includes('JPY') ? 0.01 : 0.0001;
+      const stopLossPips = Math.abs(entryPrice - stopLoss) / pipValue;
+      
+      // Calculate lot size: Money at Risk / (Stop Loss Pips × Pip Value per Lot)
+      const pipValuePerLot = 10; // $10 per pip for major pairs
+      const lotSize = Math.max(0.01, moneyAtRisk / (stopLossPips * pipValuePerLot));
+      const roundedLotSize = Math.round(lotSize * 100) / 100;
+      
+      // Calculate dollar amounts
+      const units = roundedLotSize * 100000;
+      const stopLossDollar = Math.abs(entryPrice - stopLoss) * units;
+      const takeProfit = parseFloat(Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0');
+      const takeProfitDollar = takeProfit ? Math.abs(takeProfit - entryPrice) * units : 0;
+      
+      return {
+        ...signal,
+        lotSize: roundedLotSize,
+        moneyAtRisk: moneyAtRisk,
+        stopLossDollar: stopLossDollar,
+        takeProfitDollar: takeProfitDollar
+      };
+    });
   }
 
   // Clear all user data (for testing)

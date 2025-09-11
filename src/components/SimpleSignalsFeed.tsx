@@ -391,7 +391,7 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
           return;
         }
 
-        // Convert admin messages to Signal format
+        // Convert admin messages to Signal format with proper lot size calculations
         const convertedSignals: Signal[] = adminSignals.map((msg: any) => {
           console.log('Converting signal:', msg); // Debug log
           
@@ -417,6 +417,36 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
                          pair.includes('AVAX') || pair.includes('LINK') || pair.includes('LTC') ||
                          pair.includes('XLM') || pair.includes('FIL') || pair.includes('AAVE');
           
+          // Calculate lot size and dollar amounts based on user's actual account data
+          let lotSize = 0.01;
+          let moneyAtRisk = 0;
+          let stopLossDollar = 0;
+          let takeProfitDollar = 0;
+          
+          if (entryPrice && stopLoss) {
+            // Get user's actual risk parameters from questionnaire data
+            const questionnaireData = JSON.parse(localStorage.getItem('questionnaireAnswers') || '{}');
+            const accountBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity || 10000;
+            const riskPercentage = questionnaireData?.riskPercentage || 1;
+            
+            // Calculate money at risk based on user's risk percentage
+            moneyAtRisk = (accountBalance * riskPercentage) / 100;
+            
+            // Calculate stop loss in pips
+            const pipValue = pair.includes('JPY') ? 0.01 : 0.0001;
+            const stopLossPips = Math.abs(entryPrice - stopLoss) / pipValue;
+            
+            // Calculate lot size: Money at Risk / (Stop Loss Pips × Pip Value per Lot)
+            const pipValuePerLot = 10; // $10 per pip for major pairs
+            lotSize = Math.max(0.01, moneyAtRisk / (stopLossPips * pipValuePerLot));
+            lotSize = Math.round(lotSize * 100) / 100;
+            
+            // Calculate dollar amounts
+            const units = lotSize * 100000;
+            stopLossDollar = Math.abs(entryPrice - stopLoss) * units;
+            takeProfitDollar = takeProfit ? Math.abs(takeProfit - entryPrice) * units : 0;
+          }
+          
           const signal = {
             id: msg.id.toString(),
             pair,
@@ -432,10 +462,14 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
             analysis: msg.text.split('\n\n')[1] || 'Professional trading signal',
             market: isCrypto ? 'crypto' : 'forex',
             status: 'active',
-            type: direction === 'LONG' ? 'buy' : 'sell'
+            type: direction === 'LONG' ? 'buy' : 'sell',
+            lotSize,
+            moneyAtRisk,
+            stopLossDollar,
+            takeProfitDollar
           };
           
-          console.log('Converted signal:', signal); // Debug log
+          console.log('Converted signal with lot size:', signal); // Debug log
           return signal;
         });
         
@@ -499,9 +533,10 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         };
       }
 
-      // Get user's risk parameters from questionnaire
-      const accountBalance = riskPlan?.accountBalance || riskPlan?.accountSize || 10000;
-      const riskPercentage = riskPlan?.riskPercentage || riskPlan?.riskPerTrade || 1;
+      // Get user's actual risk parameters from questionnaire data
+      const questionnaireData = JSON.parse(localStorage.getItem('questionnaireAnswers') || '{}');
+      const accountBalance = questionnaireData?.accountSize || questionnaireData?.accountEquity || riskPlan?.accountBalance || riskPlan?.accountSize || 10000;
+      const riskPercentage = questionnaireData?.riskPercentage || riskPlan?.riskPercentage || riskPlan?.riskPerTrade || 1;
       
       // Calculate money at risk based on user's risk percentage
       const moneyAtRisk = (accountBalance * riskPercentage) / 100;
