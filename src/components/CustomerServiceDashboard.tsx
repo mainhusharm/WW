@@ -149,6 +149,7 @@ export default function CustomerServiceDashboard() {
   // Fetch users from API using CORS proxy
   const fetchUsers = useCallback(async () => {
     try {
+      console.log('Starting fetchUsers...');
       setLoading(true);
       
       // Try direct connection first
@@ -175,10 +176,14 @@ export default function CustomerServiceDashboard() {
       
       // Try the database users endpoint as fallback
       try {
+        console.log('Trying database users endpoint...', `${API_BASE}/api/database/users`);
         const response = await fetch(`${API_BASE}/api/database/users`);
         const data = await response.json();
+        
+        console.log('Database users response:', data);
 
         if (data.success && data.users) {
+          console.log('Found users in database:', data.users.length);
           // Transform database users to match frontend structure
           const transformedUsers = data.users.map((user: any) => ({
             id: user.id,
@@ -200,7 +205,9 @@ export default function CustomerServiceDashboard() {
             trades: []
           }));
           
+          console.log('Transformed users:', transformedUsers);
           setUsers(transformedUsers);
+          console.log('Users state set to:', transformedUsers);
           setError(null);
           
           // If we have a current user ID, find and select them
@@ -211,6 +218,8 @@ export default function CustomerServiceDashboard() {
             }
           }
           return;
+        } else {
+          console.log('Database users endpoint returned no users or failed:', data);
         }
       } catch (dbError) {
         console.log('Database users endpoint also failed, trying localStorage...', dbError);
@@ -218,10 +227,14 @@ export default function CustomerServiceDashboard() {
       
       // Fallback to localStorage
       try {
+        console.log('Trying localStorage fallback...');
         const users = JSON.parse(localStorage.getItem('users') || '[]');
         const data: UsersResponse = { users };
+        
+        console.log('localStorage users:', users);
 
         if (data.success && data.users) {
+          console.log('Using localStorage users:', data.users.length);
           setUsers(data.users);
           setError(null);
           
@@ -233,6 +246,7 @@ export default function CustomerServiceDashboard() {
             }
           }
         } else {
+          console.log('localStorage fallback failed, using mock data...');
           setError(data.error || 'Failed to fetch users');
         }
       } catch (proxyError) {
@@ -240,6 +254,7 @@ export default function CustomerServiceDashboard() {
         console.log('Backend not available, using mock data for testing...');
         
         // Create mock users for testing when backend is not available
+        console.log('Creating mock users...');
         const mockUsers = [
           {
             id: 'working-user-id',
@@ -271,6 +286,7 @@ export default function CustomerServiceDashboard() {
           }
         ];
         
+        console.log('Using mock users:', mockUsers.length);
         setUsers(mockUsers);
         setError(null);
         
@@ -364,6 +380,7 @@ export default function CustomerServiceDashboard() {
 
   // Initial load
   useEffect(() => {
+    console.log('CustomerServiceDashboard mounted, calling fetchUsers...');
     fetchUsers();
   }, [fetchUsers]);
 
@@ -372,6 +389,12 @@ export default function CustomerServiceDashboard() {
     const interval = setInterval(fetchUsers, 30000);
     return () => clearInterval(interval);
   }, [fetchUsers]);
+
+  // Debug: Log when users state changes
+  useEffect(() => {
+    console.log('Users state changed:', users.length, 'users');
+    console.log('Users:', users);
+  }, [users]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
