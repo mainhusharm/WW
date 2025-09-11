@@ -7,6 +7,7 @@ import {
 import { useUser } from '../contexts/UserContext';
 import { useTradingPlan } from '../contexts/TradingPlanContext';
 import { useDashboardData } from './DashboardDataReader';
+import { userDataService } from '../services/userDataService';
 import SignalsFeed from './SignalsFeed';
 import NewSignalsFeed from './NewSignalsFeed';
 import OriginalSignalsFeed from './OriginalSignalsFeed';
@@ -1113,7 +1114,39 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   const initialBalance = hasAccount
     ? parseFloat(questionnaireAnswers.accountEquity)
     : parseFloat(questionnaireAnswers.accountSize) || dashboardData?.performance?.accountBalance || 10000;
-  const currentEquity = initialBalance + (tradingState?.performanceMetrics?.totalPnl || 0);
+  // Get current account data from userDataService
+  const [currentAccountData, setCurrentAccountData] = useState({
+    accountBalance: initialBalance,
+    totalPnl: 0,
+    winRate: 0,
+    totalTrades: 0
+  });
+
+  // Load account data from userDataService
+  useEffect(() => {
+    if (user?.email) {
+      const accountData = userDataService.getAccountData();
+      if (accountData) {
+        setCurrentAccountData(accountData);
+      }
+    }
+  }, [user?.email]);
+
+  // Refresh account data periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (user?.email) {
+        const accountData = userDataService.getAccountData();
+        if (accountData) {
+          setCurrentAccountData(accountData);
+        }
+      }
+    }, 2000); // Refresh every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [user?.email]);
+
+  const currentEquity = currentAccountData.accountBalance;
   
   const stats = [
     {
@@ -1123,17 +1156,17 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
     },
     {
       label: 'Win Rate',
-      value: `${(tradingState?.performanceMetrics?.winRate || 0).toFixed(1)}%`,
+      value: `${currentAccountData.winRate.toFixed(1)}%`,
       icon: <Target className="w-8 h-8" />,
     },
     {
       label: 'Total Trades',
-      value: tradingState?.performanceMetrics?.totalTrades || 0,
+      value: currentAccountData.totalTrades,
       icon: <Activity className="w-8 h-8" />,
     },
     {
       label: 'Total P&L',
-      value: `${(tradingState?.performanceMetrics?.totalPnl || 0) >= 0 ? '+' : ''}$${(tradingState?.performanceMetrics?.totalPnl || 0).toFixed(2)}`,
+      value: `${currentAccountData.totalPnl >= 0 ? '+' : ''}$${currentAccountData.totalPnl.toFixed(2)}`,
       icon: <Award className="w-8 h-8" />,
     },
   ];

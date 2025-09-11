@@ -52,9 +52,12 @@ class JournalService {
         const response = await api.get(`${this.baseUrl}/entries?userEmail=${userEmail}`);
         const dbEntries = response.data;
         
+        // Ensure dbEntries is an array
+        const entriesArray = Array.isArray(dbEntries) ? dbEntries : [];
+        
         // Update localStorage with database data
-        localStorage.setItem(`journal_entries_${userEmail}`, JSON.stringify(dbEntries));
-        return dbEntries;
+        localStorage.setItem(`journal_entries_${userEmail}`, JSON.stringify(entriesArray));
+        return entriesArray;
       } catch (dbError) {
         console.warn('Failed to fetch from database, using localStorage:', dbError);
         return this.getLocalEntries(userEmail);
@@ -67,8 +70,17 @@ class JournalService {
 
   // Get entries from localStorage only
   private getLocalEntries(userEmail: string): JournalEntry[] {
-    const saved = localStorage.getItem(`journal_entries_${userEmail}`);
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem(`journal_entries_${userEmail}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error parsing journal entries from localStorage:', error);
+      return [];
+    }
   }
 
   // Delete journal entry
