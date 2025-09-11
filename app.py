@@ -269,13 +269,14 @@ def get_db_connection():
             return conn
 
 def init_database():
-    """Initialize database tables"""
+    """Initialize database tables - simplified version"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
+        # Create only essential tables - users and signals
         if DATABASE_URL.startswith('sqlite'):
-            # SQLite table creation
+            # SQLite - simple table creation
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY,
@@ -283,8 +284,7 @@ def init_database():
                     email TEXT UNIQUE NOT NULL,
                     password_hash TEXT NOT NULL,
                     plan_type TEXT DEFAULT 'premium',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
             
@@ -298,33 +298,25 @@ def init_database():
                     take_profit TEXT NOT NULL,
                     confidence INTEGER NOT NULL,
                     analysis TEXT,
-                    ict_concepts TEXT,
-                    market TEXT DEFAULT 'forex',
-                    timeframe TEXT DEFAULT '1h',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    status TEXT DEFAULT 'active',
-                    source TEXT DEFAULT 'admin_generated'
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
         else:
-            # PostgreSQL table creation
+            # PostgreSQL - simple table creation
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
-                    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
                     username VARCHAR(100) NOT NULL,
                     email VARCHAR(255) UNIQUE NOT NULL,
                     password_hash VARCHAR(255) NOT NULL,
                     plan_type VARCHAR(50) DEFAULT 'premium',
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
             
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS signals (
                     id SERIAL PRIMARY KEY,
-                    uuid UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
                     pair VARCHAR(20) NOT NULL,
                     direction VARCHAR(10) NOT NULL,
                     entry_price VARCHAR(20) NOT NULL,
@@ -332,18 +324,13 @@ def init_database():
                     take_profit VARCHAR(20) NOT NULL,
                     confidence INTEGER NOT NULL,
                     analysis TEXT,
-                    ict_concepts TEXT,
-                    market VARCHAR(20) DEFAULT 'forex',
-                    timeframe VARCHAR(10) DEFAULT '1h',
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    status VARCHAR(20) DEFAULT 'active',
-                    source VARCHAR(50) DEFAULT 'admin_generated'
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
         
         conn.commit()
         conn.close()
-        logger.info("Database initialized successfully")
+        logger.info("Database initialized successfully with simplified tables")
         
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
@@ -1306,7 +1293,7 @@ def login():
 @app.route('/api/auth/register', methods=['POST', 'OPTIONS'])
 @handle_errors
 def register():
-    """User registration endpoint - simplified version that works without database"""
+    """User registration endpoint - with proper database storage"""
     if request.method == 'OPTIONS':
         return '', 200
     
@@ -1322,6 +1309,8 @@ def register():
         email = data.get('email')
         password = data.get('password')
         username = data.get('username', email.split('@')[0]) if email else None
+        firstName = data.get('firstName', '')
+        lastName = data.get('lastName', '')
         phone = data.get('phone', '')
         company = data.get('company', '')
         country = data.get('country', '')
@@ -1337,12 +1326,60 @@ def register():
         if len(password) < 8:
             return jsonify({"msg": "Password must be at least 8 characters long"}), 400
         
-        # For now, just return success without database operations
-        # This allows the frontend to work while we fix the database issue
-        user_id = str(uuid.uuid4())
+        # Initialize database first
+        init_database()
+        
+        # Connect to database and store user
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # Check if user already exists
+            if DATABASE_URL.startswith('sqlite'):
+                cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+            else:
+                cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+            
+            if cursor.fetchone():
+                return jsonify({"msg": "User already exists"}), 409
+            
+            # Create user
+            user_id = str(uuid.uuid4())
+            password_hash = hash_password(password)
+            current_time = datetime.now().isoformat()
+            
+            if DATABASE_URL.startswith('sqlite'):
+                cursor.execute("""
+                    INSERT INTO users (id, username, email, password_hash, plan_type, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (user_id, username, email, password_hash, 'premium', current_time))
+            else:
+                cursor.execute("""
+                    INSERT INTO users (username, email, password_hash, plan_type, created_at)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (username, email, password_hash, 'premium', current_time))
+                
+                # Get the actual user ID from PostgreSQL
+                result = cursor.fetchone()
+                if result:
+                    user_id = str(result['id'])
+            
+            conn.commit()
+            
+        except Exception as db_error:
+            conn.rollback()
+            if "UNIQUE constraint failed" in str(db_error) or "duplicate key value" in str(db_error):
+                return jsonify({"msg": "User already exists"}), 409
+            else:
+                raise db_error
+        finally:
+            conn.close()
+        
+        # Create access token
         access_token = create_access_token(user_id)
         
-        logger.info(f"New user registered (simplified): {email} (User ID: {user_id})")
+        logger.info(f"New user registered successfully: {email} (User ID: {user_id})")
         
         return jsonify({
             "msg": "User created successfully",
@@ -1545,6 +1582,55 @@ def health_check():
             'database': 'failed',
             'error': str(e),
             'timestamp': datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/database/users', methods=['GET'])
+def get_database_users():
+    """Get all users from database to verify data storage"""
+    try:
+        init_database()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if DATABASE_URL.startswith('sqlite'):
+            cursor.execute("SELECT id, username, email, plan_type, created_at FROM users ORDER BY created_at DESC")
+        else:
+            cursor.execute("SELECT id, username, email, plan_type, created_at FROM users ORDER BY created_at DESC")
+        
+        users = cursor.fetchall()
+        conn.close()
+        
+        # Convert to list of dicts
+        user_list = []
+        for user in users:
+            if DATABASE_URL.startswith('sqlite'):
+                user_list.append({
+                    'id': user['id'],
+                    'username': user['username'],
+                    'email': user['email'],
+                    'plan_type': user['plan_type'],
+                    'created_at': user['created_at']
+                })
+            else:
+                user_list.append({
+                    'id': user['id'],
+                    'username': user['username'],
+                    'email': user['email'],
+                    'plan_type': user['plan_type'],
+                    'created_at': user['created_at'].isoformat() if user['created_at'] else None
+                })
+        
+        return jsonify({
+            'success': True,
+            'count': len(user_list),
+            'users': user_list,
+            'database_type': 'sqlite' if DATABASE_URL.startswith('sqlite') else 'postgresql'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
         }), 500
 
 @app.route('/api/validate-coupon', methods=['POST'])
