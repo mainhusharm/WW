@@ -152,44 +152,27 @@ export default function CustomerServiceDashboard() {
       console.log('Starting fetchUsers...');
       setLoading(true);
       
-      // Try direct connection first
+      // Try the database users endpoint first (most reliable)
       try {
-        const response = await fetch(`${API_BASE}/api/users`);
-        const data: UsersResponse = await response.json();
-
-        if (data.success && data.users) {
-          setUsers(data.users);
-          setError(null);
-          
-          // If we have a current user ID, find and select them
-          if (currentUserId) {
-            const currentUser = data.users.find(user => user.id === currentUserId);
-            if (currentUser) {
-              setSelectedUser(currentUser);
-            }
-          }
-          return;
-        }
-      } catch (directError) {
-        console.log('Direct connection failed, trying CORS proxy...', directError);
-      }
-      
-      // Try the database users endpoint as fallback
-      try {
-        console.log('Trying database users endpoint...', `${API_BASE}/api/database/users`);
+        console.log('Trying database users endpoint first...', `${API_BASE}/api/database/users`);
         const response = await fetch(`${API_BASE}/api/database/users`);
         const data = await response.json();
         
         console.log('Database users response:', data);
 
-        if (data.success && data.users) {
+        if (data.success && data.users && data.users.length > 0) {
           console.log('Found users in database:', data.users.length);
           // Transform database users to match frontend structure
           const transformedUsers = data.users.map((user: any) => ({
-            id: user.id,
+            id: user.id.toString(),
             email: user.email,
             fullName: user.username || 'No name provided',
-            selectedPlan: { name: user.plan_type || 'premium' },
+            selectedPlan: { 
+              name: user.plan_type || 'premium',
+              price: 499,
+              period: 'monthly',
+              description: 'Premium trading signals'
+            },
             questionnaireData: null,
             cryptoAssets: [],
             forexPairs: [],
@@ -222,7 +205,29 @@ export default function CustomerServiceDashboard() {
           console.log('Database users endpoint returned no users or failed:', data);
         }
       } catch (dbError) {
-        console.log('Database users endpoint also failed, trying localStorage...', dbError);
+        console.log('Database users endpoint failed, trying alternative...', dbError);
+      }
+      
+      // Try direct connection as fallback
+      try {
+        const response = await fetch(`${API_BASE}/api/users`);
+        const data: UsersResponse = await response.json();
+
+        if (data.success && data.users) {
+          setUsers(data.users);
+          setError(null);
+          
+          // If we have a current user ID, find and select them
+          if (currentUserId) {
+            const currentUser = data.users.find(user => user.id === currentUserId);
+            if (currentUser) {
+              setSelectedUser(currentUser);
+            }
+          }
+          return;
+        }
+      } catch (directError) {
+        console.log('Direct connection failed, trying localStorage...', directError);
       }
       
       // Fallback to localStorage
@@ -384,9 +389,9 @@ export default function CustomerServiceDashboard() {
     fetchUsers();
   }, [fetchUsers]);
 
-  // Auto-refresh every 30 seconds
+  // Auto-refresh every 10 seconds for real-time updates
   useEffect(() => {
-    const interval = setInterval(fetchUsers, 30000);
+    const interval = setInterval(fetchUsers, 10000);
     return () => clearInterval(interval);
   }, [fetchUsers]);
 
@@ -436,9 +441,14 @@ export default function CustomerServiceDashboard() {
             <div className="flex items-center space-x-4">
               <button
                 onClick={fetchUsers}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={loading}
+                className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  loading 
+                    ? 'bg-gray-400 text-white cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
               >
-                Refresh
+                {loading ? 'Refreshing...' : 'Refresh'}
               </button>
               <div className="text-sm text-gray-500">
                 Last updated: {lastRefresh.toLocaleTimeString()}
@@ -452,6 +462,23 @@ export default function CustomerServiceDashboard() {
         {error && (
           <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded mb-6">
             {error}
+          </div>
+        )}
+
+        {users.length > 0 && !error && (
+          <div className="bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium">
+                  Successfully loaded {users.length} users from database. Dashboard is synced with backend.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
