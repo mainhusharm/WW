@@ -9,6 +9,7 @@ import ConsentForm from './ConsentForm';
 import FuturisticBackground from './FuturisticBackground';
 import FuturisticCursor from './FuturisticCursor';
 import DashboardFallback from './DashboardFallback';
+import SimpleDashboard from './SimpleDashboard';
 import { supabaseApi } from '../lib/supabase';
 import DashboardConcept1 from './DashboardConcept1';
 import DashboardConcept2 from './DashboardConcept2';
@@ -16,7 +17,6 @@ import DashboardConcept3 from './DashboardConcept3';
 import DashboardConcept4 from './DashboardConcept4';
 import DashboardConcept5 from './DashboardConcept5';
 import { realTimeDataService } from '../services/realTimeDataService';
-import { supabaseApi } from '../lib/supabase';
 
 const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const { user } = useUser();
@@ -31,6 +31,7 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [showConsentForm, setShowConsentForm] = useState(false);
   const [realTimeData, setRealTimeData] = useState<any>(null);
   const [supabaseAvailable, setSupabaseAvailable] = useState(true);
+  const [criticalError, setCriticalError] = useState(false);
 
   // Function to save dashboard data to Supabase
   const saveDashboardToSupabase = async (dashboardData: any, tradingState: any, theme: string) => {
@@ -176,6 +177,20 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
       console.error('❌ Failed to update equity in Supabase:', error);
     }
   };
+
+  // Global error handler
+  useEffect(() => {
+    const handleError = (error: ErrorEvent) => {
+      console.error('Global error caught:', error);
+      if (error.message?.includes('Cannot read properties of undefined') || 
+          error.message?.includes('headers')) {
+        setCriticalError(true);
+      }
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
 
   // Check for consent on mount
   useEffect(() => {
@@ -330,6 +345,11 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         } catch (error) {
           console.error('Error loading data from Supabase, falling back to localStorage:', error);
           setSupabaseAvailable(false);
+          // Check if this is a critical error
+          if (error instanceof Error && error.message.includes('Cannot read properties of undefined')) {
+            setCriticalError(true);
+            return;
+          }
           // Continue to localStorage fallback below
         }
         
@@ -636,6 +656,11 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         </div>
       </div>
     );
+  }
+
+  // Use simple dashboard if there's a critical error
+  if (criticalError) {
+    return <SimpleDashboard onLogout={onLogout} />;
   }
 
   // Use fallback component if Supabase is not available
