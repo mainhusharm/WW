@@ -102,6 +102,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           
           // Set up API authorization
           if (activeToken && typeof activeToken === 'string' && !activeToken.startsWith('demo-token')) {
+            if (!api.defaults.headers.common) {
+              api.defaults.headers.common = {};
+            }
             api.defaults.headers.common['Authorization'] = `Bearer ${activeToken}`;
             
             // Fetch fresh user profile data from backend
@@ -265,6 +268,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     // Only set API auth for real tokens
     if (token && typeof token === 'string' && !token.startsWith('demo-token')) {
+      if (!api.defaults.headers.common) {
+        api.defaults.headers.common = {};
+      }
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
     
@@ -296,7 +302,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('remember_me');
     sessionStorage.removeItem('session_token');
     sessionStorage.removeItem('user_session');
-    delete api.defaults.headers.common['Authorization'];
+    if (api.defaults.headers.common) {
+      delete api.defaults.headers.common['Authorization'];
+    }
     setUser(null);
   };
 

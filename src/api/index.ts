@@ -4,11 +4,15 @@ import { isProduction, getSafeHeaders, logEnvironmentInfo } from '../utils/envir
 
 // Create axios instance with production configuration
 const api = axios.create({
-  ...API_CONFIG,
-  // Ensure we're using the correct base URL
+  // Only use valid axios configuration options
   baseURL: API_CONFIG.baseURL,
   // Add response type
   responseType: 'json',
+  // Add default headers
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
 });
 
 // Add a request interceptor to handle CORS
