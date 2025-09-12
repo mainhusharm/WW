@@ -26,6 +26,7 @@ const corsOrigins = process.env.CORS_ORIGIN
 // More permissive CORS for development and testing
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('CORS origin:', origin); // Add this line for debugging
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
