@@ -19,6 +19,11 @@ api.interceptors.request.use(
       logEnvironmentInfo();
     }
     
+    // Ensure headers object exists
+    if (!config.headers) {
+      config.headers = {};
+    }
+    
     // Use safe headers for production
     if (isProduction()) {
       config.headers = getSafeHeaders(config.headers);
@@ -133,6 +138,11 @@ api.interceptors.response.use(
 // Add request interceptor to include auth token and add request logging
 api.interceptors.request.use(
   (config) => {
+    // Ensure headers object exists
+    if (!config.headers) {
+      config.headers = {};
+    }
+    
     // Add auth token if available
     const token = localStorage.getItem('access_token') || localStorage.getItem('token');
     if (token) {

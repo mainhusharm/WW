@@ -45,8 +45,9 @@ export const shouldUseCorsProxy = (): boolean => {
 };
 
 // Get safe headers for CORS requests
-export const getSafeHeaders = (originalHeaders: Record<string, string> = {}): Record<string, string> => {
-  const safeHeaders = { ...originalHeaders };
+export const getSafeHeaders = (originalHeaders: Record<string, string> | undefined | null = {}): Record<string, string> => {
+  // Ensure originalHeaders is always an object
+  const safeHeaders = { ...(originalHeaders || {}) };
   
   // Remove headers that cause CORS issues
   delete safeHeaders['Authorization'];
