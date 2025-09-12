@@ -8,6 +8,8 @@ import api from '../api';
 import ConsentForm from './ConsentForm';
 import FuturisticBackground from './FuturisticBackground';
 import FuturisticCursor from './FuturisticCursor';
+import DashboardFallback from './DashboardFallback';
+import { supabaseApi } from '../lib/supabase';
 import DashboardConcept1 from './DashboardConcept1';
 import DashboardConcept2 from './DashboardConcept2';
 import DashboardConcept3 from './DashboardConcept3';
@@ -28,18 +30,19 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showConsentForm, setShowConsentForm] = useState(false);
   const [realTimeData, setRealTimeData] = useState<any>(null);
+  const [supabaseAvailable, setSupabaseAvailable] = useState(true);
 
   // Function to save dashboard data to Supabase
   const saveDashboardToSupabase = async (dashboardData: any, tradingState: any, theme: string) => {
     try {
-      console.log('Saving dashboard data to Supabase:', dashboardData);
+      console.log('Saving dashboard data to Supabase:', {
+        user: user?.email,
+        currentEquity: tradingState?.currentEquity,
+        totalPnl: tradingState?.performanceMetrics?.totalPnl,
+        totalTrades: tradingState?.performanceMetrics?.totalTrades
+      });
       
       const supabaseDashboardData = {
-        id: crypto.randomUUID(),
-        user_id: user?.id || 'unknown',
-        user_email: user?.email || 'unknown@example.com',
-        user_name: user?.fullName || user?.name || 'Unknown User',
-        
         // User Profile Data
         prop_firm: dashboardData?.userProfile?.propFirm || null,
         account_type: dashboardData?.userProfile?.accountType || null,
@@ -50,9 +53,9 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         
         // Performance Metrics
         account_balance: dashboardData?.performance?.accountBalance ? parseFloat(dashboardData.performance.accountBalance.toString()) : null,
-        total_pnl: dashboardData?.performance?.totalPnl || 0,
-        win_rate: dashboardData?.performance?.winRate || 0,
-        total_trades: dashboardData?.performance?.totalTrades || 0,
+        total_pnl: tradingState?.performanceMetrics?.totalPnl || 0,
+        win_rate: tradingState?.performanceMetrics?.winRate || 0,
+        total_trades: tradingState?.performanceMetrics?.totalTrades || 0,
         winning_trades: tradingState?.performanceMetrics?.winningTrades || 0,
         losing_trades: tradingState?.performanceMetrics?.losingTrades || 0,
         average_win: tradingState?.performanceMetrics?.averageWin || 0,
@@ -109,16 +112,20 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         
         // Metadata
         last_activity: new Date().toISOString(),
-        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
       // Try to update existing dashboard first, then create if not exists
       try {
-        const existingDashboard = await supabaseApi.getUserDashboardByUserId(user?.id || 'unknown');
+        const existingDashboard = await supabaseApi.getUserDashboardByUserId(user?.id || user?.email || 'unknown');
         if (existingDashboard) {
           const result = await supabaseApi.updateUserDashboard(existingDashboard.id, supabaseDashboardData);
-          console.log('✅ Dashboard data updated in Supabase:', result);
+          console.log('✅ Dashboard data updated in Supabase:', {
+            id: result.id,
+            currentEquity: result.current_equity,
+            totalPnl: result.total_pnl,
+            totalTrades: result.total_trades
+          });
           return result;
         }
       } catch (error) {
@@ -126,12 +133,47 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         console.log('Creating new dashboard...');
       }
 
-      const result = await supabaseApi.createUserDashboard(supabaseDashboardData);
-      console.log('✅ Dashboard data saved to Supabase:', result);
+      const result = await supabaseApi.createUserDashboard({
+        id: crypto.randomUUID(),
+        user_id: user?.id || user?.email || 'unknown',
+        user_email: user?.email || 'unknown@example.com',
+        user_name: user?.fullName || user?.name || 'Unknown User',
+        ...supabaseDashboardData,
+        created_at: new Date().toISOString()
+      });
+      console.log('✅ Dashboard data saved to Supabase:', {
+        id: result.id,
+        currentEquity: result.current_equity,
+        totalPnl: result.total_pnl,
+        totalTrades: result.total_trades
+      });
       return result;
     } catch (error) {
       console.error('❌ Failed to save dashboard to Supabase:', error);
       return null;
+    }
+  };
+
+  // Function to handle real-time equity updates
+  const updateEquityInSupabase = async (newEquity: number, pnl: number) => {
+    try {
+      const existingDashboard = await supabaseApi.getUserDashboardByUserId(user?.id || user?.email || 'unknown');
+      if (existingDashboard) {
+        const result = await supabaseApi.updateUserDashboard(existingDashboard.id, {
+          current_equity: newEquity,
+          total_pnl: pnl,
+          account_balance: newEquity,
+          last_activity: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+        console.log('✅ Equity updated in Supabase:', {
+          currentEquity: result.current_equity,
+          totalPnl: result.total_pnl
+        });
+        return result;
+      }
+    } catch (error) {
+      console.error('❌ Failed to update equity in Supabase:', error);
     }
   };
 
@@ -201,12 +243,95 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     }
   }, [user?.id]);
 
-  // Load initial data from API and localStorage
+  // Load initial data from Supabase, API and localStorage
   useEffect(() => {
     const initializeData = async () => {
       if (user?.email) {
         setIsLoading(true);
         const stateKey = `trading_state_${user.email}`;
+        
+        // Try to load data from Supabase first
+        try {
+          console.log('Loading dashboard data from Supabase...');
+          const supabasePromise = supabaseApi.getUserDashboardByUserId(user.id || user.email);
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Supabase timeout')), 5000)
+          );
+          const existingDashboard = await Promise.race([supabasePromise, timeoutPromise]);
+          
+          if (existingDashboard && existingDashboard.id) {
+            console.log('Found existing dashboard in Supabase:', existingDashboard);
+            
+            // Load dashboard data from Supabase
+            const supabaseDashboardData = {
+              userProfile: {
+                propFirm: existingDashboard.prop_firm || 'Not Set',
+                accountType: existingDashboard.account_type || 'Not Set',
+                accountSize: existingDashboard.account_size || 'Not Set',
+                riskPerTrade: existingDashboard.risk_per_trade ? `${existingDashboard.risk_per_trade}%` : 'Not Set',
+                experience: existingDashboard.experience || 'Not Set',
+                uniqueId: existingDashboard.unique_id || 'Not Set'
+              },
+              performance: {
+                accountBalance: existingDashboard.account_balance || existingDashboard.current_equity || 'Not Set',
+                totalPnl: existingDashboard.total_pnl || 0,
+                winRate: existingDashboard.win_rate || 0,
+                totalTrades: existingDashboard.total_trades || 0
+              },
+              riskProtocol: {
+                maxDailyRisk: existingDashboard.max_daily_risk || 'Not Set',
+                riskPerTrade: existingDashboard.risk_per_trade_amount || 'Not Set',
+                maxDrawdown: existingDashboard.max_drawdown_limit || 'Not Set'
+              }
+            };
+            
+            setDashboardData(supabaseDashboardData);
+            
+            // Load trading state from Supabase
+            const supabaseTradingState: TradingState = {
+              initialEquity: existingDashboard.initial_equity || 100000,
+              currentEquity: existingDashboard.current_equity || existingDashboard.initial_equity || 100000,
+              trades: existingDashboard.trade_history || [],
+              openPositions: existingDashboard.open_positions || [],
+              riskSettings: {
+                riskPerTrade: existingDashboard.risk_per_trade_percentage || 1,
+                dailyLossLimit: existingDashboard.daily_loss_limit || 5,
+                consecutiveLossesLimit: existingDashboard.consecutive_losses_limit || 3,
+              },
+              performanceMetrics: {
+                totalPnl: existingDashboard.total_pnl || 0,
+                winRate: existingDashboard.win_rate || 0,
+                totalTrades: existingDashboard.total_trades || 0,
+                winningTrades: existingDashboard.winning_trades || 0,
+                losingTrades: existingDashboard.losing_trades || 0,
+                averageWin: existingDashboard.average_win || 0,
+                averageLoss: existingDashboard.average_loss || 0,
+                profitFactor: existingDashboard.profit_factor || 0,
+                maxDrawdown: existingDashboard.max_drawdown || 0,
+                currentDrawdown: existingDashboard.current_drawdown || 0,
+                grossProfit: existingDashboard.gross_profit || 0,
+                grossLoss: existingDashboard.gross_loss || 0,
+                consecutiveWins: existingDashboard.consecutive_wins || 0,
+                consecutiveLosses: existingDashboard.consecutive_losses || 0,
+                sharpeRatio: existingDashboard.sharpe_ratio || 0,
+              },
+              dailyStats: {
+                pnl: existingDashboard.daily_pnl || 0,
+                trades: existingDashboard.daily_trades || 0,
+                initialEquity: existingDashboard.daily_initial_equity || existingDashboard.initial_equity || 100000
+              },
+            };
+            
+            setTradingState(supabaseTradingState);
+            console.log('✅ Loaded data from Supabase successfully');
+            setIsLoading(false);
+            return; // Exit early if Supabase data is loaded
+          }
+        } catch (error) {
+          console.error('Error loading data from Supabase, falling back to localStorage:', error);
+          setSupabaseAvailable(false);
+          // Continue to localStorage fallback below
+        }
         
         // Restore dashboard state from user backup if available
         const backupData = localStorage.getItem(`user_backup_${user.email}`);
@@ -363,8 +488,12 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   // Save dashboard data to Supabase whenever it changes
   useEffect(() => {
     if (dashboardData && tradingState && user?.id) {
-      // Save to Supabase in background (don't block the UI)
-      saveDashboardToSupabase(dashboardData, tradingState, theme);
+      // Debounce the save to avoid too many API calls
+      const timeoutId = setTimeout(() => {
+        saveDashboardToSupabase(dashboardData, tradingState, theme);
+      }, 1000); // Wait 1 second after changes stop
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [dashboardData, tradingState, theme, user?.id]);
 
@@ -399,6 +528,21 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
       }));
     }
   }, [tradingState]);
+
+  // Handle real-time equity updates and save to Supabase
+  useEffect(() => {
+    if (tradingState?.currentEquity && user?.id) {
+      const { currentEquity, performanceMetrics } = tradingState;
+      const pnl = performanceMetrics?.totalPnl || 0;
+      
+      // Update equity in Supabase when it changes
+      const timeoutId = setTimeout(() => {
+        updateEquityInSupabase(currentEquity, pnl);
+      }, 2000); // Wait 2 seconds after equity changes
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [tradingState?.currentEquity, tradingState?.performanceMetrics?.totalPnl, user?.id]);
 
   const handleConsentAccept = () => {
     setShowConsentForm(false);
@@ -492,6 +636,11 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         </div>
       </div>
     );
+  }
+
+  // Use fallback component if Supabase is not available
+  if (!supabaseAvailable) {
+    return <DashboardFallback onLogout={onLogout} />;
   }
 
   if (!user.setupComplete) {

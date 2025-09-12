@@ -59,6 +59,7 @@ import Lightning from './components/Lightning';
 import Footer from './components/Footer';
 import DatabaseDashboard from './components/DatabaseDashboard';
 import CustomerServiceDashboard from './components/CustomerServiceDashboard';
+import CustomerServiceDashboardSupabase from './components/CustomerServiceDashboardSupabase';
 import QuantumAdminDashboard from './components/QuantumAdminDashboard';
 import RealTimeUserDashboard from './components/RealTimeUserDashboard';
 import SignupForm from './components/SignupForm';
@@ -237,6 +238,10 @@ const AppContent = () => {
         <Route
           path="/customer-service-dashboard"
           element={<CustomerServiceDashboard />}
+        />
+        <Route
+          path="/customer-service-dashboard-supabase"
+          element={<CustomerServiceDashboardSupabase />}
         />
         <Route
           path="/quantum-admin"

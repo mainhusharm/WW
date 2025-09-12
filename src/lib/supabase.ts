@@ -581,80 +581,115 @@ export const supabaseApi = {
 
   // User Dashboard
   async getUserDashboards() {
-    const { data, error } = await supabase
-      .from('user dashboard')
-      .select('*')
-      .order('last_activity', { ascending: false })
-    
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('user dashboard')
+        .select('*')
+        .order('last_activity', { ascending: false })
+      
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching user dashboards:', error)
+      return []
+    }
   },
 
   async getUserDashboard(id: string) {
-    const { data, error } = await supabase
-      .from('user dashboard')
-      .select('*')
-      .eq('id', id)
-      .single()
-    
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('user dashboard')
+        .select('*')
+        .eq('id', id)
+        .single()
+      
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error fetching user dashboard:', error)
+      return null
+    }
   },
 
   async getUserDashboardByUserId(userId: string) {
-    const { data, error } = await supabase
-      .from('user dashboard')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
-    
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('user dashboard')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+      
+      if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows returned
+      return data
+    } catch (error) {
+      console.error('Error fetching user dashboard by user ID:', error)
+      return null
+    }
   },
 
   async createUserDashboard(dashboardData: any) {
-    const { data, error } = await supabase
-      .from('user dashboard')
-      .insert(dashboardData)
-      .select()
-      .single()
-    
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('user dashboard')
+        .insert(dashboardData)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error creating user dashboard:', error)
+      return null
+    }
   },
 
   async updateUserDashboard(id: string, updates: any) {
-    const { data, error } = await supabase
-      .from('user dashboard')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single()
-    
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('user dashboard')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error updating user dashboard:', error)
+      return null
+    }
   },
 
   async updateUserDashboardByUserId(userId: string, updates: any) {
-    const { data, error } = await supabase
-      .from('user dashboard')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('user_id', userId)
-      .select()
-      .single()
-    
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('user dashboard')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error updating user dashboard by user ID:', error)
+      return null
+    }
   },
 
   async deleteUserDashboard(id: string) {
-    const { error } = await supabase
-      .from('user dashboard')
-      .delete()
-      .eq('id', id)
-    
-    if (error) throw error
-    return true
+    try {
+      const { error } = await supabase
+        .from('user dashboard')
+        .delete()
+        .eq('id', id)
+      
+      if (error) throw error
+      return true
+    } catch (error) {
+      console.error('Error deleting user dashboard:', error)
+      return false
+    }
   },
 
   // Legacy Questionnaire (keeping for compatibility)
