@@ -51,7 +51,7 @@ export const makeCorsSafeRequest = async (url: string, options: RequestInit = {}
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      ...options.headers,
+      ...(options.headers || {}),
     },
     mode: 'cors',
     credentials: 'omit'
@@ -98,7 +98,7 @@ export const makeRequestWithCorsProxy = async (url: string, options: RequestInit
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
-      ...options.headers,
+      ...(options.headers || {}),
     },
     mode: 'cors',
     credentials: 'omit'

@@ -37,7 +37,7 @@ class TradingBotAPI {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         headers: {
           'Content-Type': 'application/json',
-          ...options.headers,
+          ...(options.headers || {}),
         },
         ...options,
       });

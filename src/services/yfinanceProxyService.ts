@@ -133,7 +133,7 @@ class YFinanceProxyService {
           headers: {
             'Content-Type': 'application/json',
             'Origin': 'https://frontend-zwwl.onrender.com',
-            ...options.headers
+            ...(options.headers || {})
           }
         });
         

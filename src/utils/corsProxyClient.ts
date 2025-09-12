@@ -20,7 +20,7 @@ export const corsProxyRequest = async (url: string, options: RequestInit = {}) =
   const fullUrl = url.startsWith('http') ? url : `${BACKEND_URL}${url}`;
   
   // Clean headers for CORS proxy compatibility
-  const cleanHeaders = { ...options.headers };
+  const cleanHeaders = { ...(options.headers || {}) };
   
   // Remove problematic headers that CORS proxies don't support
   delete cleanHeaders['Authorization'];

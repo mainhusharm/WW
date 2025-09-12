@@ -17,7 +17,7 @@ export const directRequest = async (url: string, options: RequestInit = {}) => {
         mode: 'no-cors' as RequestMode,
         headers: {
           'Content-Type': 'application/json',
-          ...options.headers,
+          ...(options.headers || {}),
         }
       }
     },
@@ -29,7 +29,7 @@ export const directRequest = async (url: string, options: RequestInit = {}) => {
         mode: 'same-origin' as RequestMode,
         headers: {
           'Content-Type': 'application/json',
-          ...options.headers,
+          ...(options.headers || {}),
         }
       }
     },
@@ -42,7 +42,7 @@ export const directRequest = async (url: string, options: RequestInit = {}) => {
         credentials: 'omit' as RequestCredentials,
         headers: {
           'Content-Type': 'application/json',
-          ...options.headers,
+          ...(options.headers || {}),
         }
       }
     }

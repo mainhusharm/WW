@@ -18,7 +18,7 @@ export const simpleFetch = async (url: string, options: RequestInit = {}) => {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          ...options.headers,
+          ...(options.headers || {}),
         },
         mode: 'cors' as RequestMode,
         credentials: 'omit' as RequestCredentials
@@ -31,7 +31,7 @@ export const simpleFetch = async (url: string, options: RequestInit = {}) => {
         ...options,
         headers: {
           'Content-Type': 'application/json',
-          ...options.headers,
+          ...(options.headers || {}),
         },
         mode: 'no-cors' as RequestMode
       }
