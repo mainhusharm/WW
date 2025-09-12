@@ -88,10 +88,12 @@ const RiskProtocol: React.FC<RiskProtocolProps> = ({ dashboardData }) => {
             });
             
             // Compound for next trade (assuming 70% win rate)
-            if (Math.random() > 0.3) {
-              currentBalance += profitTarget;
+            // Use expected value calculation instead of random
+            const expectedOutcome = profitTarget * 0.7 - riskAmount * 0.3;
+            if (expectedOutcome > 0) {
+              currentBalance += profitTarget * 0.7;
             } else {
-              currentBalance -= riskAmount;
+              currentBalance -= riskAmount * 0.3;
             }
           }
         }
@@ -112,14 +114,16 @@ const RiskProtocol: React.FC<RiskProtocolProps> = ({ dashboardData }) => {
               const riskAmount = balance * riskPercentage;
               const profitTarget = riskAmount * rewardRatio;
               
-              if (Math.random() < winRate) {
-                // Win
-                balance += profitTarget;
-                totalProfit += profitTarget;
+              // Use expected value calculation instead of random
+              const expectedOutcome = profitTarget * winRate - riskAmount * (1 - winRate);
+              if (expectedOutcome > 0) {
+                // Expected win
+                balance += profitTarget * winRate;
+                totalProfit += profitTarget * winRate;
               } else {
-                // Loss
-                balance -= riskAmount;
-                totalProfit -= riskAmount;
+                // Expected loss
+                balance -= riskAmount * (1 - winRate);
+                totalProfit -= riskAmount * (1 - winRate);
               }
             }
           }

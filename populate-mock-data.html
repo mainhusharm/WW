@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Populate Mock Data for Dashboard Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log { background: #1e1e1e; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Populate Mock Data for Dashboard Test</h1>
+    
+    <div class="section">
+        <h2>This will populate localStorage with mock data to test the Dashboard component</h2>
+        <button onclick="populateMockData()">Populate Mock Data</button>
+        <div id="result" class="log"></div>
+    </div>
+    
+    <div class="section">
+        <h2>After populating data, go to your dashboard to test the save function</h2>
+        <p>1. Click "Populate Mock Data" above</p>
+        <p>2. Go to <a href="http://localhost:5175/dashboard" target="_blank">http://localhost:5175/dashboard</a></p>
+        <p>3. Check the browser console for save messages</p>
+        <p>4. Run the debug test again to verify data is being saved</p>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const element = document.getElementById('result');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            element.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+        }
+
+        function populateMockData() {
+            log('🔄 Populating localStorage with mock data...', 'info');
+            
+            try {
+                // Mock user data
+                const userData = {
+                    id: 'mock-user-123',
+                    email: 'mock@example.com',
+                    fullName: 'Mock User',
+                    name: 'Mock User',
+                    uniqueId: 'MOCK-12345'
+                };
+                
+                // Mock questionnaire data
+                const questionnaireData = {
+                    propFirm: 'Goat Funded Trader',
+                    accountType: 'Two-Step No-Time-Limit Challenge',
+                    accountSize: 100000,
+                    riskPercentage: 1.5,
+                    experience: 'Intermediate',
+                    hasAccount: 'yes',
+                    accountEquity: 100000,
+                    tradesPerDay: '1-2',
+                    tradingSession: 'any',
+                    cryptoAssets: ['BTC', 'ETH', 'SOL'],
+                    forexAssets: ['EURUSD', 'GBPUSD', 'USDJPY'],
+                    customForexPairs: ['EURGBP', 'AUDUSD'],
+                    riskRewardRatio: '2',
+                    accountNumber: 'GF-12345-67890'
+                };
+                
+                // Mock risk management plan
+                const riskPlanData = {
+                    dailyRiskAmount: 1000,
+                    riskAmount: 1500,
+                    accountSize: 100000,
+                    maxDrawdown: 2000,
+                    profitTarget: 5000,
+                    tradesToPass: 6,
+                    profitAmount: 7500,
+                    riskPercentage: 1.5,
+                    riskRewardRatio: 3,
+                    profitTargetPercentage: 5,
+                    tradesPerDay: '1-2',
+                    maxTradesPerDay: 2,
+                    tradingSession: 'any',
+                    sessionRecommendation: 'Flexible trading across all sessions',
+                    propFirm: 'Goat Funded Trader',
+                    accountType: 'Two-Step No-Time-Limit Challenge',
+                    hasAccount: 'yes',
+                    accountEquity: 100000,
+                    cryptoAssets: ['BTC', 'ETH', 'SOL'],
+                    forexAssets: ['EURUSD', 'GBPUSD', 'USDJPY'],
+                    dailyProfitTarget: 133.33,
+                    estimatedDaysToPass: 3,
+                    tradeByTradePlan: [
+                        { trade: 1, balance: 100000, riskAmount: 1500, profitTarget: 3000 },
+                        { trade: 2, balance: 103000, riskAmount: 1545, profitTarget: 3090 },
+                        { trade: 3, balance: 106090, riskAmount: 1591.35, profitTarget: 3182.7 }
+                    ]
+                };
+                
+                // Mock dashboard data
+                const dashboardData = {
+                    userProfile: {
+                        propFirm: questionnaireData.propFirm,
+                        accountType: questionnaireData.accountType,
+                        accountSize: questionnaireData.accountSize,
+                        riskPerTrade: `${questionnaireData.riskPercentage}%`,
+                        experience: questionnaireData.experience,
+                        uniqueId: userData.uniqueId
+                    },
+                    performance: {
+                        accountBalance: questionnaireData.accountSize,
+                        totalPnl: 2500.50,
+                        winRate: 75.5,
+                        totalTrades: 20
+                    },
+                    riskProtocol: {
+                        maxDailyRisk: riskPlanData.dailyRiskAmount,
+                        riskPerTrade: riskPlanData.riskAmount,
+                        maxDrawdown: riskPlanData.maxDrawdown
+                    }
+                };
+                
+                // Mock trading state
+                const tradingState = {
+                    initialEquity: questionnaireData.accountSize,
+                    currentEquity: questionnaireData.accountSize + 2500.50,
+                    trades: [
+                        {
+                            id: 'trade-1',
+                            signalId: 'signal-1',
+                            pair: 'EURUSD',
+                            direction: 'LONG',
+                            entryPrice: 1.0850,
+                            stopLoss: 1.0800,
+                            takeProfit: 1.0950,
+                            riskAmount: 1500,
+                            rewardAmount: 3000,
+                            status: 'closed',
+                            entryTime: new Date(Date.now() - 3600000),
+                            closeTime: new Date(),
+                            outcome: 'Target Hit',
+                            pnl: 3000,
+                            equityBefore: 100000,
+                            equityAfter: 103000
+                        }
+                    ],
+                    openPositions: [],
+                    riskSettings: {
+                        riskPerTrade: questionnaireData.riskPercentage,
+                        dailyLossLimit: 5,
+                        consecutiveLossesLimit: 3
+                    },
+                    performanceMetrics: {
+                        totalPnl: 2500.50,
+                        winRate: 75.5,
+                        totalTrades: 20,
+                        winningTrades: 15,
+                        losingTrades: 5,
+                        averageWin: 350.25,
+                        averageLoss: -200.10,
+                        profitFactor: 2.75,
+                        maxDrawdown: 500,
+                        currentDrawdown: 0,
+                        grossProfit: 5253.75,
+                        grossLoss: -2753.25,
+                        consecutiveWins: 3,
+                        consecutiveLosses: 0,
+                        sharpeRatio: 1.85
+                    },
+                    dailyStats: {
+                        pnl: 150.25,
+                        trades: 2,
+                        initialEquity: questionnaireData.accountSize
+                    }
+                };
+                
+                // Store all data in localStorage
+                localStorage.setItem('userData', JSON.stringify(userData));
+                localStorage.setItem('currentUser', JSON.stringify(userData));
+                localStorage.setItem('userEmail', userData.email);
+                localStorage.setItem('userUniqueId', userData.uniqueId);
+                localStorage.setItem('questionnaireAnswers', JSON.stringify(questionnaireData));
+                localStorage.setItem('riskManagementPlan', JSON.stringify(riskPlanData));
+                localStorage.setItem('dashboard_data', JSON.stringify(dashboardData));
+                localStorage.setItem('trading_state', JSON.stringify(tradingState));
+                localStorage.setItem('dashboard_selected_concept', 'concept1');
+                localStorage.setItem('questionnaire_completed', 'true');
+                localStorage.setItem('user_consent_accepted', 'true');
+                
+                log('✅ Mock user data stored in localStorage', 'success');
+                log('✅ Mock questionnaire data stored in localStorage', 'success');
+                log('✅ Mock risk management plan stored in localStorage', 'success');
+                log('✅ Mock dashboard data stored in localStorage', 'success');
+                log('✅ Mock trading state stored in localStorage', 'success');
+                log('✅ All mock data populated successfully!', 'success');
+                log('🎯 Now go to your dashboard to test the save function!', 'info');
+                
+            } catch (error) {
+                log(`❌ Error populating mock data: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

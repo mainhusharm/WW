@@ -14,6 +14,7 @@ import DashboardConcept3 from './DashboardConcept3';
 import DashboardConcept4 from './DashboardConcept4';
 import DashboardConcept5 from './DashboardConcept5';
 import { realTimeDataService } from '../services/realTimeDataService';
+import { supabaseApi } from '../lib/supabase';
 
 const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const { user } = useUser();
@@ -27,6 +28,112 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showConsentForm, setShowConsentForm] = useState(false);
   const [realTimeData, setRealTimeData] = useState<any>(null);
+
+  // Function to save dashboard data to Supabase
+  const saveDashboardToSupabase = async (dashboardData: any, tradingState: any, theme: string) => {
+    try {
+      console.log('Saving dashboard data to Supabase:', dashboardData);
+      
+      const supabaseDashboardData = {
+        id: crypto.randomUUID(),
+        user_id: user?.id || 'unknown',
+        user_email: user?.email || 'unknown@example.com',
+        user_name: user?.fullName || user?.name || 'Unknown User',
+        
+        // User Profile Data
+        prop_firm: dashboardData?.userProfile?.propFirm || null,
+        account_type: dashboardData?.userProfile?.accountType || null,
+        account_size: dashboardData?.userProfile?.accountSize ? parseFloat(dashboardData.userProfile.accountSize.toString()) : null,
+        risk_per_trade: dashboardData?.userProfile?.riskPerTrade ? parseFloat(dashboardData.userProfile.riskPerTrade.toString().replace('%', '')) : null,
+        experience: dashboardData?.userProfile?.experience || null,
+        unique_id: dashboardData?.userProfile?.uniqueId || null,
+        
+        // Performance Metrics
+        account_balance: dashboardData?.performance?.accountBalance ? parseFloat(dashboardData.performance.accountBalance.toString()) : null,
+        total_pnl: dashboardData?.performance?.totalPnl || 0,
+        win_rate: dashboardData?.performance?.winRate || 0,
+        total_trades: dashboardData?.performance?.totalTrades || 0,
+        winning_trades: tradingState?.performanceMetrics?.winningTrades || 0,
+        losing_trades: tradingState?.performanceMetrics?.losingTrades || 0,
+        average_win: tradingState?.performanceMetrics?.averageWin || 0,
+        average_loss: tradingState?.performanceMetrics?.averageLoss || 0,
+        profit_factor: tradingState?.performanceMetrics?.profitFactor || 0,
+        max_drawdown: tradingState?.performanceMetrics?.maxDrawdown || 0,
+        current_drawdown: tradingState?.performanceMetrics?.currentDrawdown || 0,
+        gross_profit: tradingState?.performanceMetrics?.grossProfit || 0,
+        gross_loss: tradingState?.performanceMetrics?.grossLoss || 0,
+        consecutive_wins: tradingState?.performanceMetrics?.consecutiveWins || 0,
+        consecutive_losses: tradingState?.performanceMetrics?.consecutiveLosses || 0,
+        sharpe_ratio: tradingState?.performanceMetrics?.sharpeRatio || null,
+        
+        // Risk Protocol
+        max_daily_risk: dashboardData?.riskProtocol?.maxDailyRisk ? parseFloat(dashboardData.riskProtocol.maxDailyRisk.toString()) : null,
+        risk_per_trade_amount: dashboardData?.riskProtocol?.riskPerTrade ? parseFloat(dashboardData.riskProtocol.riskPerTrade.toString()) : null,
+        max_drawdown_limit: dashboardData?.riskProtocol?.maxDrawdown ? parseFloat(dashboardData.riskProtocol.maxDrawdown.toString()) : null,
+        
+        // Trading State
+        initial_equity: tradingState?.initialEquity || null,
+        current_equity: tradingState?.currentEquity || null,
+        daily_pnl: tradingState?.dailyStats?.pnl || 0,
+        daily_trades: tradingState?.dailyStats?.trades || 0,
+        daily_initial_equity: tradingState?.dailyStats?.initialEquity || null,
+        
+        // Risk Settings
+        risk_per_trade_percentage: tradingState?.riskSettings?.riskPerTrade || null,
+        daily_loss_limit: tradingState?.riskSettings?.dailyLossLimit || null,
+        consecutive_losses_limit: tradingState?.riskSettings?.consecutiveLossesLimit || null,
+        
+        // Dashboard Settings
+        selected_theme: theme,
+        notifications_enabled: true,
+        auto_refresh: true,
+        refresh_interval: 5000,
+        language: 'en',
+        timezone: 'UTC',
+        
+        // Real-time Data
+        real_time_data: realTimeData,
+        last_signal: null,
+        market_status: 'open',
+        connection_status: 'online',
+        
+        // Trading Data
+        open_positions: tradingState?.openPositions || [],
+        trade_history: tradingState?.trades || [],
+        signals: [],
+        
+        // User Preferences
+        dashboard_layout: null,
+        widget_settings: null,
+        alert_settings: null,
+        
+        // Metadata
+        last_activity: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Try to update existing dashboard first, then create if not exists
+      try {
+        const existingDashboard = await supabaseApi.getUserDashboardByUserId(user?.id || 'unknown');
+        if (existingDashboard) {
+          const result = await supabaseApi.updateUserDashboard(existingDashboard.id, supabaseDashboardData);
+          console.log('✅ Dashboard data updated in Supabase:', result);
+          return result;
+        }
+      } catch (error) {
+        // Dashboard doesn't exist, create new one
+        console.log('Creating new dashboard...');
+      }
+
+      const result = await supabaseApi.createUserDashboard(supabaseDashboardData);
+      console.log('✅ Dashboard data saved to Supabase:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to save dashboard to Supabase:', error);
+      return null;
+    }
+  };
 
   // Check for consent on mount
   useEffect(() => {
@@ -148,21 +255,21 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
           userProfile: {
             propFirm: parsedQuestionnaire?.propFirm || 'Not Set',
             accountType: parsedQuestionnaire?.accountType || 'Not Set',
-            accountSize: accountValue || 100000,
-            riskPerTrade: `${parsedQuestionnaire?.riskPercentage || 1}%`,
-            experience: parsedQuestionnaire?.experience || 'intermediate',
+            accountSize: accountValue || 'Not Set',
+            riskPerTrade: parsedQuestionnaire?.riskPercentage ? `${parsedQuestionnaire.riskPercentage}%` : 'Not Set',
+            experience: parsedQuestionnaire?.experience || 'Not Set',
             uniqueId: user?.uniqueId || 'Not Set'
           },
           performance: {
-            accountBalance: accountValue || parsedRiskPlan?.accountSize || 100000,
+            accountBalance: accountValue || 'Not Set',
             totalPnl: 0,
             winRate: 0,
             totalTrades: 0
           },
           riskProtocol: {
-            maxDailyRisk: parsedRiskPlan?.dailyRiskAmount || 5000,
-            riskPerTrade: parsedRiskPlan?.riskAmount || 1000,
-            maxDrawdown: '10%'
+            maxDailyRisk: parsedRiskPlan?.dailyRiskAmount || 'Not Set',
+            riskPerTrade: parsedRiskPlan?.riskAmount || 'Not Set',
+            maxDrawdown: 'Not Set'
           }
         };
         
@@ -252,6 +359,14 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     };
     initializeData();
   }, [user, tradingPlan]);
+
+  // Save dashboard data to Supabase whenever it changes
+  useEffect(() => {
+    if (dashboardData && tradingState && user?.id) {
+      // Save to Supabase in background (don't block the UI)
+      saveDashboardToSupabase(dashboardData, tradingState, theme);
+    }
+  }, [dashboardData, tradingState, theme, user?.id]);
 
   // Persist data to localStorage on change
   useEffect(() => {

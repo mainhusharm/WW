@@ -52,7 +52,7 @@ const AICoachUpdated: React.FC = () => {
     const welcomeMessage: Message = {
       id: 'welcome',
       role: 'assistant',
-      content: `Hello ${user?.email?.split('@')[0] || 'Trader'}! I'm your AI Trading Coach powered by ${selectedModel}. I'm here to help you with trading strategies, risk management, and market analysis. What would you like to discuss today?`,
+      content: `Hello ${user?.name || user?.email?.split('@')[0] || 'Trader'}! I'm your AI Trading Coach powered by ${selectedModel}. I'm here to help you with trading strategies, risk management, and market analysis. What would you like to discuss today?`,
       timestamp: new Date()
     };
     setMessages([welcomeMessage]);

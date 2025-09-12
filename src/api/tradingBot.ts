@@ -29,7 +29,7 @@ class TradingBotAPI {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    this.baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
   }
 
   private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<BotResponse> {

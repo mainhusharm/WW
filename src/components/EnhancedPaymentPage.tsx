@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Lock, CreditCard, ArrowLeft, X, AlertTriangle, AlertCircle, Copy, CheckCircle } from 'lucide-react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { supabaseApi } from '../lib/supabase';
 // Stripe imports removed
 
 interface SelectedPlan {
@@ -241,6 +242,45 @@ export default function EnhancedPaymentPage() {
     }
   };
 
+  // Function to save payment data to Supabase
+  const savePaymentToSupabase = async (paymentData: any) => {
+    try {
+      console.log('Saving payment data to Supabase:', paymentData);
+      
+      const paymentMethod = finalPrice === 0 ? 'free_coupon' : selectedPaymentMethod;
+      
+      const supabasePaymentData = {
+        id: crypto.randomUUID(), // Generate unique ID
+        user_id: userData.id,
+        user_email: userData.email, // Add email from signup data
+        user_name: userData.fullName, // Add name from signup data
+        plan_name_payment: selectedPlan.name,
+        original_price: selectedPlan.price,
+        discount_amount: discount.toString(),
+        final_price: finalPrice,
+        coupon_code: couponApplied ? couponCode : null,
+        payment_method: paymentMethod,
+        transaction_id: paymentData.paymentId || paymentData.transactionId || `TXN-${Date.now()}`,
+        payment_status: 'completed',
+        payment_processor: paymentMethod === 'paypal' ? 'PayPal' : 
+                          paymentMethod === 'crypto' ? 'Cryptocurrency' : 
+                          paymentMethod === 'free_coupon' ? 'Free' : 'Unknown',
+        // Required fields for the table
+        crypto_transaction_hash: paymentMethod === 'crypto' ? (paymentData.transactionId || `CRYPTO-${Date.now()}`) : `NON-CRYPTO-${Date.now()}`,
+        crypto_from_address: paymentMethod === 'crypto' ? 'N/A' : 'N/A',
+        crypto_amount: paymentMethod === 'crypto' ? finalPrice.toString() : '0'
+      };
+
+      const result = await supabaseApi.createPaymentDetail(supabasePaymentData);
+      console.log('✅ Payment data saved to Supabase:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to save payment to Supabase:', error);
+      // Don't throw error - let the main flow continue
+      return null;
+    }
+  };
+
   // Handle successful payment
   const handlePaymentSuccess = async (paymentData: any) => {
     setLoading(true);
@@ -274,6 +314,9 @@ export default function EnhancedPaymentPage() {
       
       // Store in localStorage
       localStorage.setItem('payment_success_data', JSON.stringify(successData));
+      
+      // Save to Supabase (in background - don't block the main flow)
+      savePaymentToSupabase(paymentData);
       
       // Redirect to success page
       navigate('/successful-payment', {

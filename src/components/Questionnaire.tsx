@@ -7,6 +7,7 @@ import { propFirms } from '../data/propFirms';
 import api from '../api';
 import { logActivity } from '../api/activity';
 import { userFlowService } from '../services/userFlowService';
+import { supabaseApi, supabase } from '../lib/supabase';
 
 interface QuestionnaireAnswers {
   tradesPerDay: string;
@@ -20,7 +21,7 @@ interface QuestionnaireAnswers {
   accountSize: number | string;
   riskPercentage: number;
   riskRewardRatio: string;
-  accountScreenshot: string;
+  accountNumber: string;
 }
 
 const tradesPerDayOptions = [
@@ -79,7 +80,7 @@ const Questionnaire: React.FC = () => {
     accountSize: '',
     riskPercentage: 1,
     riskRewardRatio: '2',
-    accountScreenshot: '',
+    accountNumber: '',
   });
   const [customPair, setCustomPair] = useState('');
   const [customPairs, setCustomPairs] = useState<string[]>(() => {
@@ -87,8 +88,6 @@ const Questionnaire: React.FC = () => {
     return savedPairs ? JSON.parse(savedPairs) : [];
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [screenshot, setScreenshot] = useState<File | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string>('');
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
@@ -101,6 +100,42 @@ const Questionnaire: React.FC = () => {
       navigate('/payment');
     }
   }, [user, navigate]);
+
+  // Function to save questionnaire data to Supabase
+  const saveQuestionnaireToSupabase = async (questionnaireData: any) => {
+    try {
+      console.log('Saving questionnaire data to Supabase:', questionnaireData);
+      
+      const supabaseQuestionnaireData = {
+        id: crypto.randomUUID(),
+        user_id: user?.id || 'unknown',
+        user_email: user?.email || 'unknown@example.com',
+        user_name: user?.fullName || user?.name || 'Unknown User',
+        trades_per_day: questionnaireData.tradesPerDay,
+        trading_session: questionnaireData.tradingSession,
+        crypto_assets: questionnaireData.cryptoAssets || [],
+        forex_assets: questionnaireData.forexAssets || [],
+        custom_forex_pairs: customPairs || [],
+        has_account: questionnaireData.hasAccount,
+        account_equity: questionnaireData.hasAccount === 'yes' ? parseFloat(questionnaireData.accountEquity as string) : null,
+        prop_firm: questionnaireData.propFirm || null,
+        account_type: questionnaireData.accountType || null,
+        account_size: questionnaireData.accountSize ? parseFloat(questionnaireData.accountSize as string) : null,
+        risk_percentage: questionnaireData.riskPercentage,
+        risk_reward_ratio: questionnaireData.riskRewardRatio,
+        account_number: questionnaireData.accountNumber || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const result = await supabaseApi.createQuestionnaireDetail(supabaseQuestionnaireData);
+      console.log('✅ Questionnaire data saved to Supabase:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to save questionnaire to Supabase:', error);
+      return null;
+    }
+  };
 
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -125,50 +160,25 @@ const Questionnaire: React.FC = () => {
     }
 
     try {
-      // Save questionnaire answers to backend using centralized service
-      const customerDataService = await import('../services/customerDataService');
-      const success = await customerDataService.default.saveQuestionnaire(
-        user?.id || 'anonymous',
-        answers
-      );
-      
-      if (success) {
-        console.log('Questionnaire saved to backend successfully');
-        logActivity('questionnaire_submit', { answers });
-      } else {
-        console.warn('Failed to save questionnaire to backend, continuing with local storage');
-      }
-
-      // Store screenshot in database if available
-      if (screenshot && user?.id) {
+      // Save questionnaire answers to backend directly
+      if (user?.id) {
         try {
-          // Convert file to base64 for storage
-          const reader = new FileReader();
-          reader.onload = async () => {
-            const base64Data = reader.result as string;
-            
-            // Store screenshot in backend
-            const response = await fetch(`https://backend-gbhz.onrender.com/api/users/${user.id}/screenshot`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                screenshotUrl: base64Data
-              }),
-            });
-
-            if (response.ok) {
-              console.log('Screenshot stored in database successfully');
-            } else {
-              console.warn('Failed to store screenshot in database');
-            }
-          };
-          reader.readAsDataURL(screenshot);
-        } catch (error) {
-          console.warn('Error storing screenshot:', error);
+          const response = await api.post('/user/questionnaire', answers);
+          if (response.status === 200) {
+            console.log('Questionnaire saved to backend successfully');
+            logActivity('questionnaire_submit', { answers });
+          } else {
+            console.warn('Failed to save questionnaire to backend, continuing with local storage');
+          }
+        } catch (apiError) {
+          console.warn('API error saving questionnaire, continuing with local storage:', apiError);
         }
+      } else {
+        console.warn('No user ID available, skipping backend save');
       }
+
+      // Save questionnaire data to Supabase (in background - don't block the main flow)
+      saveQuestionnaireToSupabase(answers);
     } catch (error) {
       console.warn('Backend not available, continuing with local storage:', error);
       // Continue without backend - this is expected in demo/offline mode
@@ -217,7 +227,7 @@ const Questionnaire: React.FC = () => {
   };
 
   const isFormValid = () => {
-    const requiredFields = ['propFirm', 'accountType', 'accountSize', 'tradesPerDay', 'tradingSession'];
+    const requiredFields = ['propFirm', 'accountType', 'accountSize', 'tradesPerDay', 'tradingSession', 'accountNumber'];
     for (const field of requiredFields) {
       if (!answers[field as keyof QuestionnaireAnswers]) {
         console.log(`Validation failed: ${field} is missing`);
@@ -227,11 +237,6 @@ const Questionnaire: React.FC = () => {
 
     if (answers.hasAccount === 'yes' && !answers.accountEquity) {
       console.log('Validation failed: accountEquity is missing');
-      return false;
-    }
-
-    if (!screenshot) {
-      console.log('Validation failed: screenshot is missing');
       return false;
     }
 
@@ -439,59 +444,23 @@ const Questionnaire: React.FC = () => {
 
           <div>
             <label className="block mb-2 text-lg font-semibold text-gray-300">
-              Upload Account Screenshot <span className="text-red-400">*</span>
+              Prop Firm Account Number <span className="text-red-400">*</span>
             </label>
-            <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files ? e.target.files[0] : null;
-                  setScreenshot(file);
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                      setScreenshotPreview(e.target?.result as string);
-                    };
-                    reader.readAsDataURL(file);
-                  } else {
-                    setScreenshotPreview('');
-                  }
-                }}
-                className="hidden"
-                id="screenshot-upload"
-                required
-              />
-              <label htmlFor="screenshot-upload" className="cursor-pointer">
-                {screenshotPreview ? (
-                  <div className="space-y-4">
-                    <img 
-                      src={screenshotPreview} 
-                      alt="Account Screenshot Preview" 
-                      className="max-w-full max-h-48 mx-auto rounded-lg"
-                    />
-                    <p className="text-green-400">✓ Screenshot uploaded successfully</p>
-                    <p className="text-sm text-gray-400">Click to change screenshot</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="text-6xl text-gray-400">📷</div>
-                    <div>
-                      <p className="text-lg font-semibold text-white">Upload Account Screenshot</p>
-                      <p className="text-sm text-gray-400">Click here or drag and drop your screenshot</p>
-                    </div>
-                  </div>
-                )}
-              </label>
-            </div>
-            <div className="mt-3 p-3 bg-yellow-600/20 border border-yellow-600 rounded-lg">
-              <p className="text-yellow-300 text-sm font-semibold mb-2">⚠️ IMPORTANT REQUIREMENTS:</p>
+            <input
+              type="text"
+              value={answers.accountNumber}
+              onChange={(e) => setAnswers({ ...answers, accountNumber: e.target.value })}
+              className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              placeholder="Enter your prop firm account number"
+              required
+            />
+            <div className="mt-3 p-3 bg-blue-600/20 border border-blue-600 rounded-lg">
+              <p className="text-blue-300 text-sm font-semibold mb-2">ℹ️ IMPORTANT INFORMATION:</p>
               <ul className="text-xs text-gray-300 space-y-1">
-                <li>• Account number must be clearly visible</li>
-                <li>• Screenshot must show your trading platform/broker interface</li>
-                <li>• Image should be clear and readable</li>
-                <li>• This is required for account verification and support purposes</li>
-                <li>• Your screenshot will be securely stored and only accessible to support staff</li>
+                <li>• This account number must be from your prop firm that you are using to pass with our website</li>
+                <li>• This will be used for account verification and support purposes if you have any problems in the future</li>
+                <li>• Your account information will be securely stored and only accessible to support staff</li>
+                <li>• This helps us provide better assistance and verify your trading account status</li>
               </ul>
             </div>
           </div>

@@ -1,0 +1,78 @@
+Field Name,Data Type,Description,Category,Required,Default Value,Notes
+id,UUID,Primary Key,Basic,Yes,gen_random_uuid(),Auto-generated
+first_name,VARCHAR(100),User's first name,Profile,No,,From dashboard settings
+last_name,VARCHAR(100),User's last name,Profile,No,,From dashboard settings
+email,VARCHAR(255),User's email address,Profile,Yes,,Unique identifier
+phone,VARCHAR(20),User's phone number,Profile,No,,From dashboard settings
+country,VARCHAR(100),User's country,Profile,No,United States,From dashboard settings
+language,VARCHAR(50),User's preferred language,Profile,No,English,From dashboard settings
+bio,TEXT,User's biography,Profile,No,,From dashboard settings
+status,VARCHAR(20),User account status,Status,No,PENDING,PENDING/PROCESSING/COMPLETED/REJECTED/ACTIVE
+membership_tier,VARCHAR(20),User's membership level,Status,No,,free/premium/kickstarter
+account_type,VARCHAR(20),Account type,Status,No,,personal/business
+setup_complete,BOOLEAN,Whether setup is complete,Status,No,false,From user context
+is_temporary,BOOLEAN,Whether account is temporary,Status,No,false,From user context
+unique_id,VARCHAR(100),Unique identifier,Status,No,,From user context
+token,TEXT,Authentication token,Status,No,,From user context
+selected_plan,JSONB,Selected membership plan,Status,No,,JSON object
+trades_per_day,VARCHAR(10),Number of trades per day,Questionnaire,No,,1-2/3-5/6-10/10+
+trading_session,VARCHAR(20),Preferred trading session,Questionnaire,No,,asian/european/us/any
+has_account,VARCHAR(3),Whether user has existing account,Questionnaire,No,,yes/no
+account_equity,DECIMAL(15,2),Current account equity,Questionnaire,No,,If has_account = yes
+prop_firm,VARCHAR(100),Selected prop firm,Questionnaire,No,,From questionnaire
+account_type_questionnaire,VARCHAR(50),Account type from prop firm,Questionnaire,No,,From questionnaire
+account_size,DECIMAL(15,2),Account size in USD,Questionnaire,No,,From questionnaire
+risk_percentage,DECIMAL(5,2),Risk per trade percentage,Questionnaire,No,,0.5-2.5%
+risk_reward_ratio,VARCHAR(10),Preferred risk:reward ratio,Questionnaire,No,,1/2/3/4
+crypto_assets,TEXT[],Array of crypto symbols,Questionnaire,No,,['BTC','ETH',etc.]
+forex_assets,TEXT[],Array of forex pairs,Questionnaire,No,,['EURUSD','GBPUSD',etc.]
+account_screenshot,TEXT,Base64 encoded screenshot,Questionnaire,No,,Account verification
+screenshot_url,VARCHAR(500),URL to stored screenshot,Questionnaire,No,,If stored externally
+trading_experience,VARCHAR(50),User's trading experience,Questionnaire,No,,beginner/intermediate/advanced
+risk_tolerance,VARCHAR(20),User's risk tolerance,Questionnaire,No,,conservative/moderate/aggressive
+trading_goals,TEXT,User's trading goals,Questionnaire,No,,Free text description
+plan_name,VARCHAR(20),Risk management plan name,Risk Management,No,,Conservative/Balanced/Aggressive/Custom
+plan_description,TEXT,Risk management plan description,Risk Management,No,,Plan details
+is_active,BOOLEAN,Whether plan is active,Risk Management,No,true,Plan status
+version,VARCHAR(10),Plan version,Risk Management,No,1.0,Version control
+max_risk_per_trade,DECIMAL(5,2),Maximum risk per trade,Risk Management,No,,0.1-5.0%
+max_daily_loss,DECIMAL(5,2),Maximum daily loss,Risk Management,No,,1-10%
+max_weekly_loss,DECIMAL(5,2),Maximum weekly loss,Risk Management,No,,5-20%
+max_monthly_loss,DECIMAL(5,2),Maximum monthly loss,Risk Management,No,,10-30%
+max_position_size,DECIMAL(5,2),Maximum position size,Risk Management,No,,1-20%
+max_open_trades,INTEGER,Maximum open trades,Risk Management,No,,1-10
+stop_loss_type,VARCHAR(30),Stop loss type,Risk Management,No,,Fixed Percentage/ATR-based/Support/Resistance/Manual
+default_stop_loss,DECIMAL(5,2),Default stop loss,Risk Management,No,,0.5-10%
+take_profit_type,VARCHAR(30),Take profit type,Risk Management,No,,Fixed R:R Ratio/Multiple Targets/Trailing Stop/Manual
+default_risk_reward,DECIMAL(5,2),Default risk:reward ratio,Risk Management,No,,1.0-10.0
+max_consecutive_losses,INTEGER,Maximum consecutive losses,Risk Management,No,,1-10
+max_drawdown_percentage,DECIMAL(5,2),Maximum drawdown percentage,Risk Management,No,,5-30%
+recovery_mode,BOOLEAN,Recovery mode enabled,Risk Management,No,false,Advanced setting
+recovery_risk_reduction,DECIMAL(3,2),Recovery risk reduction,Risk Management,No,,0.1-1.0
+trades_to_pass,INTEGER,Number of trades needed to pass,Calculated,No,,Calculated value
+risk_amount,DECIMAL(15,2),Risk amount per trade,Calculated,No,,Calculated value
+profit_amount,DECIMAL(15,2),Profit target per trade,Calculated,No,,Calculated value
+profit_target,DECIMAL(15,2),Total profit target,Calculated,No,,Calculated value
+profit_target_percentage,DECIMAL(5,2),Profit target percentage,Calculated,No,,Calculated value
+daily_profit_target,DECIMAL(15,2),Daily profit target,Calculated,No,,Calculated value
+daily_risk_amount,DECIMAL(15,2),Daily risk amount,Calculated,No,,Calculated value
+estimated_days_to_pass,INTEGER,Estimated days to pass,Calculated,No,,Calculated value
+plan_data,JSONB,Complete plan data as JSON,Risk Management,No,,JSON object with all plan details
+risk_per_trade_setting,DECIMAL(5,2),Risk per trade setting,Dashboard Settings,No,1.0,From dashboard settings
+max_daily_risk_setting,DECIMAL(5,2),Max daily risk setting,Dashboard Settings,No,5.0,From dashboard settings
+max_drawdown_setting,DECIMAL(5,2),Max drawdown setting,Dashboard Settings,No,10.0,From dashboard settings
+stop_loss_default_setting,DECIMAL(10,2),Default stop loss setting,Dashboard Settings,No,50.0,From dashboard settings
+take_profit_default_setting,DECIMAL(10,2),Default take profit setting,Dashboard Settings,No,100.0,From dashboard settings
+risk_reward_ratio_setting,DECIMAL(5,2),Risk reward ratio setting,Dashboard Settings,No,2.0,From dashboard settings
+trading_preferences,JSONB,Trading preferences settings,Dashboard Settings,No,,JSON object with trading settings
+display_settings,JSONB,Display and theme settings,Dashboard Settings,No,,JSON object with display preferences
+notification_settings,JSONB,Notification preferences,Dashboard Settings,No,,JSON object with notification settings
+security_settings,JSONB,Security settings,Dashboard Settings,No,,JSON object with security preferences
+data_settings,JSONB,Data and export settings,Dashboard Settings,No,,JSON object with data preferences
+api_settings,JSONB,API and integration settings,Dashboard Settings,No,,JSON object with API settings
+currency,VARCHAR(3),User's currency,Dashboard Settings,No,USD,Currency preference
+timezone,VARCHAR(50),User's timezone,Dashboard Settings,No,America/New_York,Timezone preference
+auto_save,BOOLEAN,Auto-save enabled,Dashboard Settings,No,true,From dashboard settings
+created_at,TIMESTAMP WITH TIME ZONE,Record creation timestamp,Metadata,No,NOW(),Auto-generated
+updated_at,TIMESTAMP WITH TIME ZONE,Record update timestamp,Metadata,No,NOW(),Auto-updated
+plan_activated_at,TIMESTAMP WITH TIME ZONE,Plan activation timestamp,Metadata,No,,When plan was activated

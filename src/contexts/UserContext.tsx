@@ -85,8 +85,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 hasAccount: answers.hasAccount || 'no',
                 tradingExperience: answers.tradingExperience || 'intermediate'
               };
+              
+              // Also update the user's stored data with the questionnaire data
+              parsedUser.tradingData = tradingData;
+              console.log('Loaded questionnaire data for user:', tradingData);
             } catch (parseError) {
               console.warn('Could not parse questionnaire answers:', parseError);
+            }
+          } else {
+            // If no questionnaire data found, check if user has completed questionnaire
+            const questionnaireCompleted = localStorage.getItem('questionnaire_completed');
+            if (questionnaireCompleted === 'true') {
+              console.warn('Questionnaire marked as completed but no data found in localStorage');
             }
           }
           
@@ -100,14 +110,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
               if (profileResponse.data) {
                 const backendUserData = profileResponse.data;
                 
-                // Merge backend data with stored data, preserving local questionnaire data
+                // Merge backend data with stored data, preferring complete database data
+                const finalTradingData = tradingData && tradingData.accountSize && tradingData.propFirm 
+                  ? tradingData  // Use local data if it's complete
+                  : backendUserData.tradingData; // Otherwise use database data
+                
                 const mergedUserData = {
                   ...parsedUser,
                   ...backendUserData,
-                  tradingData: tradingData || backendUserData.tradingData, // Prefer local data
+                  tradingData: finalTradingData,
                   isAuthenticated: true,
                   token: activeToken,
-                  setupComplete: !!tradingData,
+                  setupComplete: !!finalTradingData,
                   rememberMe
                 };
                 
@@ -162,6 +176,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setupComplete: hasCompletedSetup,
             rememberMe
           };
+          
+          // Update the stored user data with the loaded questionnaire data
+          if (tradingData) {
+            userData.tradingData = tradingData;
+            // Also update the stored user data in localStorage
+            localStorage.setItem('current_user', JSON.stringify(userData));
+          }
           
           setUser(userData);
         }

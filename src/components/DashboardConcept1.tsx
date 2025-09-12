@@ -559,12 +559,6 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   const handleTabClick = (tabId: string) => {
     console.log('Clicked tab:', tabId);
     
-    // Handle external navigation for futures
-    if (tabId === 'futures') {
-      window.location.href = '/futures';
-      return;
-    }
-    
     setActiveTab(tabId);
     navigate(`/dashboard/${tabId}`);
   };
@@ -658,12 +652,8 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
     { id: 'profile', label: 'Profile', icon: '👤' },
     { id: 'risk', label: 'Risk Management', icon: '⚠️' },
     { id: 'trading', label: 'Trading', icon: '📈' },
-    { id: 'display', label: 'Display', icon: '🎨' },
     { id: 'notifications', label: 'Notifications', icon: '🔔' },
-    { id: 'security', label: 'Security', icon: '🔐' },
-    { id: 'data', label: 'Data & Export', icon: '💾' },
-    { id: 'api', label: 'API & Integrations', icon: '🔗' },
-    { id: 'screenshot', label: 'Screenshot', icon: '📷' }
+    { id: 'security', label: 'Security', icon: '🔐' }
   ];
 
   const renderSettings = () => (
@@ -715,6 +705,67 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
                   className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
                 />
               </div>
+              <div>
+                <label className="block text-cyan-300 text-sm font-medium mb-2">Email</label>
+                <input
+                  type="email"
+                  value={userSettings.profile?.email || user?.email || ''}
+                  disabled
+                  className="w-full bg-gray-800/50 border border-gray-600/30 rounded-lg px-4 py-3 text-gray-400 cursor-not-allowed"
+                />
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              </div>
+              <div>
+                <label className="block text-cyan-300 text-sm font-medium mb-2">Phone</label>
+                <input
+                  type="tel"
+                  value={userSettings.profile?.phone || ''}
+                  onChange={(e) => handleNestedSettingsUpdate('profile', 'phone', e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                  className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
+                />
+              </div>
+              <div>
+                <label className="block text-cyan-300 text-sm font-medium mb-2">Country</label>
+                <select
+                  value={userSettings.profile?.country || 'United States'}
+                  onChange={(e) => handleNestedSettingsUpdate('profile', 'country', e.target.value)}
+                  className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
+                >
+                  <option value="United States">United States</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="Canada">Canada</option>
+                  <option value="Australia">Australia</option>
+                  <option value="Germany">Germany</option>
+                  <option value="France">France</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-cyan-300 text-sm font-medium mb-2">Language</label>
+                <select
+                  value={userSettings.profile?.language || 'English'}
+                  onChange={(e) => handleNestedSettingsUpdate('profile', 'language', e.target.value)}
+                  className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
+                >
+                  <option value="English">English</option>
+                  <option value="Spanish">Spanish</option>
+                  <option value="French">French</option>
+                  <option value="German">German</option>
+                  <option value="Chinese">Chinese</option>
+                  <option value="Japanese">Japanese</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-6">
+              <label className="block text-cyan-300 text-sm font-medium mb-2">Bio</label>
+              <textarea
+                value={userSettings.profile?.bio || ''}
+                onChange={(e) => handleNestedSettingsUpdate('profile', 'bio', e.target.value)}
+                placeholder="Tell us about your trading experience..."
+                rows={3}
+                className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400 resize-none"
+              />
             </div>
           </div>
         )}
@@ -850,38 +901,6 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
           </div>
         )}
         
-        {activeSettingsTab === 'display' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-white border-b border-cyan-400/30 pb-2">Display & Theme</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-cyan-300 text-sm font-medium mb-2">Theme</label>
-                <select
-                  value={userSettings.display?.theme || 'dark'}
-                  onChange={(e) => handleNestedSettingsUpdate('display', 'theme', e.target.value)}
-                  className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
-                >
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                  <option value="auto">Auto</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-cyan-300 text-sm font-medium mb-2">Accent Color</label>
-                <select
-                  value={userSettings.display?.accentColor || 'cyan'}
-                  onChange={(e) => handleNestedSettingsUpdate('display', 'accentColor', e.target.value)}
-                  className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
-                >
-                  <option value="cyan">Cyan</option>
-                  <option value="blue">Blue</option>
-                  <option value="purple">Purple</option>
-                  <option value="green">Green</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
         
         {activeSettingsTab === 'security' && (
           <div className="space-y-6">
@@ -909,68 +928,7 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
           </div>
         )}
         
-        {activeSettingsTab === 'data' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-white border-b border-cyan-400/30 pb-2">Data & Export</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-cyan-300 text-sm font-medium mb-2">Export Format</label>
-                <select
-                  value={userSettings.data?.exportFormat || 'csv'}
-                  onChange={(e) => handleNestedSettingsUpdate('data', 'exportFormat', e.target.value)}
-                  className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
-                >
-                  <option value="csv">CSV</option>
-                  <option value="json">JSON</option>
-                  <option value="xlsx">Excel</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-cyan-300 text-sm font-medium mb-2">Data Retention</label>
-                <select
-                  value={userSettings.data?.dataRetention || '1year'}
-                  onChange={(e) => handleNestedSettingsUpdate('data', 'dataRetention', e.target.value)}
-                  className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
-                >
-                  <option value="1month">1 Month</option>
-                  <option value="6months">6 Months</option>
-                  <option value="1year">1 Year</option>
-                  <option value="forever">Forever</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
         
-        {activeSettingsTab === 'api' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-white border-b border-cyan-400/30 pb-2">API & Integrations</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-cyan-300 text-sm font-medium mb-2">API Key</label>
-                <input
-                  type="password"
-                  value={userSettings.api?.apiKey || ''}
-                  onChange={(e) => handleNestedSettingsUpdate('api', 'apiKey', e.target.value)}
-                  placeholder="Enter your API key"
-                  className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
-                />
-              </div>
-              <div>
-                <label className="block text-cyan-300 text-sm font-medium mb-2">Webhook URL</label>
-                <input
-                  type="url"
-                  value={userSettings.api?.webhookUrl || ''}
-                  onChange={(e) => handleNestedSettingsUpdate('api', 'webhookUrl', e.target.value)}
-                  placeholder="https://your-webhook-url.com"
-                  className="w-full bg-gray-900/50 border border-cyan-400/30 rounded-lg px-4 py-3 text-white focus:border-cyan-400"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeSettingsTab === 'screenshot' && <UserScreenshotTab />}
       </div>
     </div>
   );
@@ -1167,7 +1125,6 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   const sidebarTabs = [
     { id: 'overview', label: 'Overview', icon: <Layers className="w-5 h-5" /> },
     { id: 'signals', label: 'Signal Feed', icon: <Zap className="w-5 h-5" /> },
-    { id: 'futures', label: 'Futures', icon: <TrendingUp className="w-5 h-5" />, external: true },
     { id: 'rules', label: 'Prop Firm Rules', icon: <Shield className="w-5 h-5" /> },
     { id: 'analytics', label: 'Performance', icon: <PieChart className="w-5 h-5" /> },
     ...(hasJournalAccess ? [{ id: 'journal', label: 'Trade Journal', icon: <BookOpen className="w-5 h-5" /> }] : []),

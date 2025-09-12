@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -713,7 +714,7 @@ app.post('/api/auth/register', async (req, res) => {
           passwordHash,
           fullName: data.fullName,
           // selectedPlan: data.selectedPlan, // Temporarily commented out until DB is updated
-          questionnaireData: data.questionnaire,
+          questionnaireData: JSON.stringify(data.questionnaire),
           screenshotUrl: data.screenshot,
           riskManagementPlan: data.riskManagementPlan,
           status: 'PENDING',

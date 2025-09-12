@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Signup Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .hidden {
+            display: none;
+        }
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .debug-info pre {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Signup Form</h1>
+        <p>This form will test if data goes to Supabase from your signup form.</p>
+
+        <form id="debugForm">
+            <div class="form-group">
+                <label for="firstName">First Name *</label>
+                <input type="text" id="firstName" name="firstName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Last Name *</label>
+                <input type="text" id="lastName" name="lastName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone *</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+
+            <div class="form-group">
+                <label for="company">Company</label>
+                <input type="text" id="company" name="company">
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country *</label>
+                <select id="country" name="country" required>
+                    <option value="">Select Country</option>
+                    <option value="United States">United States</option>
+                    <option value="Canada">Canada</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="agreeToTerms" name="agreeToTerms" required>
+                    I agree to the Terms and Conditions *
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="agreeToMarketing" name="agreeToMarketing">
+                    I agree to receive marketing communications
+                </label>
+            </div>
+
+            <button type="submit">🚀 Test Signup</button>
+        </form>
+
+        <div id="status" class="status hidden"></div>
+        <div id="debugInfo" class="debug-info hidden">
+            <h3>📊 Debug Information:</h3>
+            <pre id="debugContent"></pre>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://bgejxnkyzjamroeikfkr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZWp4bmt5emphbXJvZWlrZmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5MzMxODYsImV4cCI6MjA3MTUwOTE4Nn0.BkU0y7VH6FNgSi4bCBA2gnrFXRI_37Gowv6r2SU6aPk';
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.classList.remove('hidden');
+        }
+
+        function hideStatus() {
+            document.getElementById('status').classList.add('hidden');
+        }
+
+        function showDebugInfo(data) {
+            const debugInfo = document.getElementById('debugInfo');
+            const debugContent = document.getElementById('debugContent');
+            debugContent.textContent = JSON.stringify(data, null, 2);
+            debugInfo.classList.remove('hidden');
+        }
+
+        function hideDebugInfo() {
+            document.getElementById('debugInfo').classList.add('hidden');
+        }
+
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        document.getElementById('debugForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            hideStatus();
+            hideDebugInfo();
+
+            try {
+                showStatus('🔄 Processing signup...', 'loading');
+
+                // Prepare user data (same as EnhancedSignupForm)
+                const userData = {
+                    firstName: formData.get('firstName'),
+                    lastName: formData.get('lastName'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone'),
+                    company: formData.get('company'),
+                    country: formData.get('country'),
+                    agreeToTerms: formData.get('agreeToTerms') === 'on',
+                    agreeToMarketing: formData.get('agreeToMarketing') === 'on',
+                    password: formData.get('password')
+                };
+
+                const selectedPlan = {
+                    name: 'Elite Plan',
+                    price: 1299,
+                    period: 'month',
+                    description: 'Complete MT5 bot development service'
+                };
+
+                // Create Supabase user data (same as in EnhancedSignupForm)
+                const supabaseUserData = {
+                    id: crypto.randomUUID(),
+                    first_name: userData.firstName,
+                    last_name: userData.lastName,
+                    email: userData.email,
+                    phone: userData.phone || null,
+                    company: userData.company || null,
+                    country: userData.country || null,
+                    language: 'English',
+                    password_hash: await hashPassword(userData.password),
+                    agree_to_terms: userData.agreeToTerms,
+                    agree_to_marketing: userData.agreeToMarketing,
+                    trading_experience_signup: 'beginner',
+                    trading_goals_signup: 'Make consistent profits',
+                    risk_tolerance_signup: 'moderate',
+                    preferred_markets: 'forex',
+                    trading_style: 'day',
+                    status: 'PENDING',
+                    membership_tier: 'free',
+                    account_type: 'personal',
+                    setup_complete: false,
+                    is_temporary: false,
+                    unique_id: `USER-${Date.now()}`,
+                    token: `TOKEN-${Date.now()}`,
+                    selected_plan: selectedPlan ? {
+                        name: selectedPlan.name,
+                        price: selectedPlan.price,
+                        period: selectedPlan.period,
+                        description: selectedPlan.description
+                    } : null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+
+                // Show debug info
+                showDebugInfo({
+                    formData: userData,
+                    supabaseData: supabaseUserData,
+                    selectedPlan: selectedPlan
+                });
+
+                // Try to save to Supabase
+                console.log('Attempting to save to Supabase...');
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/User%20details`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(supabaseUserData)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Supabase error:', response.status, response.statusText, errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('Supabase success:', result);
+
+                showStatus('✅ SUCCESS! Data saved to Supabase!', 'success');
+                
+                // Reset form
+                e.target.reset();
+
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`❌ ERROR: ${error.message}`, 'error');
+            }
+        });
+
+        // Auto-fill form with test data
+        function fillTestData() {
+            document.getElementById('firstName').value = 'Test';
+            document.getElementById('lastName').value = 'User';
+            document.getElementById('email').value = `test.user.${Date.now()}@example.com`;
+            document.getElementById('phone').value = '+1234567890';
+            document.getElementById('company').value = 'Test Company';
+            document.getElementById('country').value = 'United States';
+            document.getElementById('password').value = 'testpassword123';
+            document.getElementById('agreeToTerms').checked = true;
+            document.getElementById('agreeToMarketing').checked = false;
+        }
+
+        // Add test data button
+        const testDataBtn = document.createElement('button');
+        testDataBtn.textContent = '🧪 Fill Test Data';
+        testDataBtn.type = 'button';
+        testDataBtn.style.cssText = 'width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; margin-bottom: 20px; cursor: pointer;';
+        testDataBtn.onclick = fillTestData;
+        document.getElementById('debugForm').parentNode.insertBefore(testDataBtn, document.getElementById('debugForm'));
+    </script>
+</body>
+</html>

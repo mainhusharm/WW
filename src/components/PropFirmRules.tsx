@@ -27,11 +27,18 @@ const PropFirmRules: React.FC<PropFirmRulesProps> = ({ dashboardData }) => {
 
     if (questionnaireCompleted === 'true') {
       const answers = JSON.parse(localStorage.getItem('questionnaireAnswers') || '{}');
+      console.log('Questionnaire answers:', answers);
+      
+      // Find the prop firm from the answers
       const firm = propFirms.find(f => f.name === answers.propFirm);
       setSelectedPropFirm(firm);
       
-      // Fetch rules from API
-      fetchPropFirmRules(answers.propFirm || 'QuantTekel Instant');
+      // Use the accountType from questionnaire answers, not propFirm
+      const accountType = answers.accountType || answers.propFirm || 'QuantTekel Instant';
+      console.log('Fetching rules for account type:', accountType);
+      
+      // Fetch rules from API using the correct account type
+      fetchPropFirmRules(accountType);
     } else {
       setLoading(false);
     }
@@ -55,9 +62,24 @@ const PropFirmRules: React.FC<PropFirmRulesProps> = ({ dashboardData }) => {
     }
   };
 
-  // Use API rules if available, otherwise fallback to dashboardData or context
-  const propFirmData = apiRules || dashboardData?.propFirmRules || selectedPropFirm || propFirm;
+  // Use API rules if available, otherwise fallback to selectedPropFirm or context
+  const propFirmData = apiRules || selectedPropFirm || dashboardData?.propFirmRules || propFirm;
   const userProfile = dashboardData?.userProfile;
+  
+  // Get the current prop firm name and account type from questionnaire
+  const questionnaireAnswers = localStorage.getItem('questionnaireAnswers');
+  let currentPropFirmName = 'Unknown Prop Firm';
+  let currentAccountType = 'Challenge';
+  
+  if (questionnaireAnswers) {
+    try {
+      const answers = JSON.parse(questionnaireAnswers);
+      currentPropFirmName = answers.propFirm || 'Unknown Prop Firm';
+      currentAccountType = answers.accountType || 'Challenge';
+    } catch (error) {
+      console.error('Error parsing questionnaire answers:', error);
+    }
+  }
   
   if (loading) {
     return (
@@ -105,9 +127,7 @@ const PropFirmRules: React.FC<PropFirmRulesProps> = ({ dashboardData }) => {
   }
 
 
-  const currentPropFirmName = propFirmData?.name || (userProfile as any)?.propFirm || 'Unknown Prop Firm';
   const currentAccountSize = (userProfile as any)?.accountSize || accountConfig?.size || 10000;
-  const currentAccountType = propFirmData?.challengeType || (userProfile as any)?.accountType || accountConfig?.challengeType || 'Challenge';
 
 
   const ruleCategories = [
@@ -195,7 +215,7 @@ const PropFirmRules: React.FC<PropFirmRulesProps> = ({ dashboardData }) => {
       <div className="prop-firm-rules-header">
         <h1 className="prop-firm-rules-title">{currentPropFirmName} Rules</h1>
         <p className="prop-firm-rules-subtitle">
-          Account Size: ${currentAccountSize.toLocaleString()} • Challenge Type: {accountConfig?.challengeType || '2-step'}
+          Account Size: ${currentAccountSize.toLocaleString()} • Account Type: {currentAccountType}
         </p>
       </div>
 

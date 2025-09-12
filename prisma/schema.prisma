@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -26,10 +26,10 @@ model User {
   preferredMarkets     String?  @map("preferred_markets")
   tradingStyle         String?  @map("trading_style")
   agreeToMarketing     Boolean  @default(false) @map("agree_to_marketing")
-  questionnaireData    Json?    @map("questionnaire_data")
+  questionnaireData    String?  @map("questionnaire_data")
   screenshotUrl        String?  @map("screenshot_url")
   riskManagementPlan   String?  @map("risk_management_plan")
-  status               Status   @default(PENDING)
+  status               String   @default("PENDING")
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
   
@@ -65,9 +65,4 @@ model Payment {
   @@map("payments")
 }
 
-enum Status {
-  PENDING
-  PROCESSING
-  COMPLETED
-  REJECTED
-}
+// Status enum values: PENDING, PROCESSING, COMPLETED, REJECTED

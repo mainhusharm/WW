@@ -97,6 +97,8 @@ const MembershipPlans: React.FC = () => {
         'Multi account tracker',
         'Advanced trading journal',
         'Backtesting tools',
+        'AI Trading Coach (Nexus) - Personalized guidance',
+        'AI-powered market analysis and insights',
         'Instant access to new features'
       ]
     },
@@ -123,6 +125,9 @@ const MembershipPlans: React.FC = () => {
         'Advanced trading journal',
         'Professional backtesting suite',
         'Chart analysis tools',
+        'AI Trading Coach (Nexus) - Advanced personalized guidance',
+        'AI-powered market analysis and real-time insights',
+        'AI strategy optimization and recommendations',
         'Instant access to new features'
       ]
     }

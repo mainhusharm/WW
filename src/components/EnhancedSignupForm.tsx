@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { User, Mail, Lock, Phone, Building, CheckCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { getApiBaseUrl } from '../utils/environmentUtils';
+import { supabaseApi } from '../lib/supabase';
 
 interface SelectedPlan {
   name: string;
@@ -96,6 +97,55 @@ export default function EnhancedSignupForm() {
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Function to save user data to Supabase
+  const saveToSupabase = async (userData: any) => {
+    try {
+      console.log('Saving user data to Supabase:', userData);
+      
+      const supabaseUserData = {
+        id: crypto.randomUUID(), // Generate unique ID
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        email: userData.email,
+        phone: userData.phone || null,
+        company: userData.company || null,
+        country: userData.country || null,
+        language: 'English',
+        password_hash: userData.password, // Note: In production, hash this properly
+        agree_to_terms: userData.agreeToTerms,
+        agree_to_marketing: userData.agreeToMarketing,
+        trading_experience_signup: 'beginner', // Default value
+        trading_goals_signup: 'Make consistent profits', // Default value
+        risk_tolerance_signup: 'moderate', // Default value
+        preferred_markets: 'forex', // Default value
+        trading_style: 'day', // Default value
+        status: 'PENDING',
+        membership_tier: 'free',
+        account_type: 'personal',
+        setup_complete: false,
+        is_temporary: false,
+        unique_id: `USER-${Date.now()}`,
+        token: `TOKEN-${Date.now()}`,
+        selected_plan: selectedPlan ? {
+          name: selectedPlan.name,
+          price: selectedPlan.price,
+          period: selectedPlan.period,
+          description: selectedPlan.description
+        } : null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const result = await supabaseApi.createUserDetail(supabaseUserData);
+      console.log('✅ User data saved to Supabase:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to save to Supabase:', error);
+      // Don't throw error - let the main flow continue
+      return null;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -195,6 +245,19 @@ export default function EnhancedSignupForm() {
         
         // Store in sessionStorage for dashboard
         sessionStorage.setItem('userData', JSON.stringify(userData));
+
+        // Save to Supabase (in background - don't block the main flow)
+        saveToSupabase({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          company: formData.company,
+          country: formData.country,
+          agreeToTerms: formData.agreeToTerms,
+          agreeToMarketing: formData.agreeToMarketing,
+          password: formData.password
+        });
 
         // Navigate to payment page
         navigate('/payment-enhanced', {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { supabaseApi } from '../lib/supabase';
 
 interface QuestionnaireData {
   tradesPerDay: string;
@@ -120,37 +121,113 @@ export default function CustomerServiceDashboard() {
   const currentUserId = searchParams.get('userId') || localStorage.getItem('userId');
   const isNewUser = searchParams.get('new') === 'true';
 
-  // Load localStorage data
+  // Load users from localStorage as fallback
+  const loadUsersFromLocalStorage = useCallback(() => {
+    console.log('Loading users from localStorage as fallback...');
+    const localStorageUsers: User[] = [];
+    
+    // Check for common localStorage keys that might contain user data
+    const possibleKeys = [
+      'userData',
+      'user',
+      'currentUser',
+      'userProfile',
+      'customerData',
+      'enhancedCustomerData'
+    ];
+    
+    possibleKeys.forEach(key => {
+      try {
+        const data = localStorage.getItem(key);
+        if (data) {
+          const parsed = JSON.parse(data);
+          if (parsed.email) {
+            localStorageUsers.push({
+              id: parsed.id || parsed.uniqueId || Date.now().toString(),
+              email: parsed.email,
+              fullName: parsed.name || parsed.fullName || parsed.email.split('@')[0],
+              selectedPlan: parsed.selectedPlan || { name: 'premium', price: 499, period: 'monthly', description: 'Premium trading signals' },
+              questionnaireData: parsed.questionnaireData || parsed.tradingData || null,
+              cryptoAssets: parsed.cryptoAssets || [],
+              forexPairs: parsed.forexAssets || [],
+              otherForexPair: null,
+              screenshotUrl: parsed.screenshotUrl || parsed.accountScreenshot || null,
+              riskManagementPlan: parsed.riskManagementPlan || null,
+              tradingPreferences: parsed.tradingPreferences || {},
+              status: 'PENDING',
+              planActivatedAt: null,
+              createdAt: parsed.createdAt || new Date().toISOString(),
+              updatedAt: parsed.updatedAt || new Date().toISOString(),
+              payments: [],
+              trades: []
+            });
+          }
+        }
+      } catch (error) {
+        console.log(`Error parsing ${key}:`, error);
+      }
+    });
+    
+    console.log('Found localStorage users:', localStorageUsers);
+    return localStorageUsers;
+  }, []);
+
+  // Load localStorage data for selected user
   useEffect(() => {
     const loadLocalStorageData = () => {
-      const data = {
-        userId: localStorage.getItem('userId'),
-        userData: localStorage.getItem('userData'),
-        userEmail: localStorage.getItem('userEmail'),
-        userFullName: localStorage.getItem('userFullName'),
-        registrationTime: localStorage.getItem('registrationTime'),
-        questionnaireData: localStorage.getItem('questionnaireData'),
-        questionnaireAnswers: localStorage.getItem('questionnaireAnswers'),
-        riskManagementPlan: localStorage.getItem('riskManagementPlan'),
-        riskSettings: localStorage.getItem('riskSettings'),
-        screenshotUrl: localStorage.getItem('screenshotUrl'),
-        accountScreenshot: localStorage.getItem('accountScreenshot'),
-        tradingPreferences: localStorage.getItem('tradingPreferences'),
-        propFirmRules: localStorage.getItem('propFirmRules'),
-        userProfile: localStorage.getItem('userProfile'),
-        customerData: localStorage.getItem('customerData'),
-        enhancedCustomerData: localStorage.getItem('enhancedCustomerData'),
-      };
-      setLocalStorageData(data);
+      if (selectedUser) {
+        // Show selected user's actual data from database
+        const data = {
+          userId: selectedUser.id,
+          userData: selectedUser.email,
+          userEmail: selectedUser.email,
+          userFullName: selectedUser.fullName || selectedUser.email.split('@')[0],
+          registrationTime: selectedUser.createdAt,
+          questionnaireData: selectedUser.questionnaireData ? JSON.stringify(selectedUser.questionnaireData) : null,
+          questionnaireAnswers: selectedUser.questionnaireData ? JSON.stringify(selectedUser.questionnaireData) : null,
+          riskManagementPlan: selectedUser.riskManagementPlan ? JSON.stringify(selectedUser.riskManagementPlan) : null,
+          riskSettings: selectedUser.tradingPreferences ? JSON.stringify(selectedUser.tradingPreferences) : null,
+          screenshotUrl: selectedUser.screenshotUrl,
+          accountScreenshot: selectedUser.screenshotUrl,
+          tradingPreferences: selectedUser.tradingPreferences ? JSON.stringify(selectedUser.tradingPreferences) : null,
+          propFirmRules: null,
+          userProfile: selectedUser.questionnaireData ? JSON.stringify(selectedUser.questionnaireData) : null,
+          customerData: selectedUser.questionnaireData ? JSON.stringify(selectedUser.questionnaireData) : null,
+          enhancedCustomerData: selectedUser.questionnaireData ? JSON.stringify(selectedUser.questionnaireData) : null,
+        };
+        setLocalStorageData(data);
+      } else {
+        // Only show admin's localStorage if no user is selected (which should be rare)
+        const data = {
+          userId: localStorage.getItem('userId'),
+          userData: localStorage.getItem('userData'),
+          userEmail: localStorage.getItem('userEmail'),
+          userFullName: localStorage.getItem('userFullName'),
+          registrationTime: localStorage.getItem('registrationTime'),
+          questionnaireData: localStorage.getItem('questionnaireData'),
+          questionnaireAnswers: localStorage.getItem('questionnaireAnswers'),
+          riskManagementPlan: localStorage.getItem('riskManagementPlan'),
+          riskSettings: localStorage.getItem('riskSettings'),
+          screenshotUrl: localStorage.getItem('screenshotUrl'),
+          accountScreenshot: localStorage.getItem('accountScreenshot'),
+          tradingPreferences: localStorage.getItem('tradingPreferences'),
+          propFirmRules: localStorage.getItem('propFirmRules'),
+          userProfile: localStorage.getItem('userProfile'),
+          customerData: localStorage.getItem('customerData'),
+          enhancedCustomerData: localStorage.getItem('enhancedCustomerData'),
+        };
+        setLocalStorageData(data);
+      }
     };
 
     loadLocalStorageData();
-  }, []);
+  }, [selectedUser]);
 
   // Fetch users from API using CORS proxy
   const fetchUsers = useCallback(async () => {
     try {
       console.log('Starting fetchUsers...');
+      console.log('API_BASE:', API_BASE);
       setLoading(true);
       
       // Try the database users endpoint first (most reliable)
@@ -163,31 +240,73 @@ export default function CustomerServiceDashboard() {
 
         if (data.success && data.users && data.users.length > 0) {
           console.log('Found users in database:', data.users.length);
-          // Transform database users to match frontend structure
-          const transformedUsers = data.users.map((user: any) => ({
-            id: user.id.toString(),
-            email: user.email,
-            fullName: user.username || 'No name provided',
-            selectedPlan: { 
-              name: user.plan_type || 'premium',
-              price: 499,
-              period: 'monthly',
-              description: 'Premium trading signals'
-            },
-            questionnaireData: null,
-            cryptoAssets: [],
-            forexPairs: [],
-            otherForexPair: null,
-            screenshotUrl: null,
-            riskManagementPlan: null,
-            tradingPreferences: {},
-            status: 'PENDING',
-            planActivatedAt: null,
-            createdAt: user.created_at,
-            updatedAt: user.created_at,
-            payments: [],
-            trades: []
-          }));
+          
+          // Check if any database users have questionnaire data
+          const hasQuestionnaireData = data.users.some((user: any) => user.questionnaire_data || user.risk_management_plan);
+          
+          if (!hasQuestionnaireData) {
+            console.log('Database users have no questionnaire data, checking localStorage for test users...');
+            // Load test users from localStorage if database users don't have questionnaire data
+            const testUsers = loadLocalStorageData();
+            if (testUsers.length > 0) {
+              console.log('Found test users in localStorage:', testUsers.length);
+              setUsers(testUsers);
+              return;
+            }
+          }
+          
+          // Transform database users to match frontend structure and preserve questionnaire data
+          const transformedUsers = data.users.map((user: any) => {
+            // Parse questionnaire data if it exists
+            let questionnaireData = null;
+            let riskManagementPlan = null;
+            
+            try {
+              if (user.questionnaire_data) {
+                questionnaireData = typeof user.questionnaire_data === 'string' 
+                  ? JSON.parse(user.questionnaire_data) 
+                  : user.questionnaire_data;
+              }
+              
+              if (user.risk_management_plan) {
+                riskManagementPlan = typeof user.risk_management_plan === 'string'
+                  ? JSON.parse(user.risk_management_plan)
+                  : user.risk_management_plan;
+              }
+            } catch (parseError) {
+              console.warn('Error parsing user data for user', user.id, ':', parseError);
+            }
+            
+            return {
+              id: user.id.toString(),
+              email: user.email,
+              fullName: user.username || user.full_name || 'No name provided',
+              selectedPlan: { 
+                name: user.plan_type || 'premium',
+                price: 499,
+                period: 'monthly',
+                description: 'Premium trading signals'
+              },
+              questionnaireData: questionnaireData,
+              cryptoAssets: questionnaireData?.cryptoAssets || [],
+              forexPairs: questionnaireData?.forexAssets || [],
+              otherForexPair: null,
+              screenshotUrl: user.screenshot_url || null,
+              riskManagementPlan: riskManagementPlan,
+              tradingPreferences: questionnaireData ? {
+                tradingSession: questionnaireData.tradingSession,
+                tradesPerDay: questionnaireData.tradesPerDay,
+                riskTolerance: questionnaireData.riskTolerance,
+                tradingExperience: questionnaireData.tradingExperience
+              } : {},
+              status: user.status || 'PENDING',
+              planActivatedAt: null,
+              createdAt: user.created_at,
+              updatedAt: user.updated_at || user.created_at,
+              payments: [],
+              trades: []
+            };
+          });
           
           console.log('Transformed users:', transformedUsers);
           setUsers(transformedUsers);
@@ -204,9 +323,25 @@ export default function CustomerServiceDashboard() {
           return;
         } else {
           console.log('Database users endpoint returned no users or failed:', data);
+          // Try localStorage fallback if database has no users
+          const localStorageUsers = loadUsersFromLocalStorage();
+          if (localStorageUsers.length > 0) {
+            console.log('Using localStorage users as fallback:', localStorageUsers);
+            setUsers(localStorageUsers);
+            setError(null);
+            return;
+          }
         }
       } catch (dbError) {
         console.log('Database users endpoint failed, trying alternative...', dbError);
+        // Try localStorage fallback on database error
+        const localStorageUsers = loadUsersFromLocalStorage();
+        if (localStorageUsers.length > 0) {
+          console.log('Using localStorage users as fallback after database error:', localStorageUsers);
+          setUsers(localStorageUsers);
+          setError(null);
+          return;
+        }
       }
       
       // Try direct connection as fallback
@@ -235,7 +370,7 @@ export default function CustomerServiceDashboard() {
       try {
         console.log('Trying localStorage fallback...');
         const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const data: UsersResponse = { users };
+        const data: UsersResponse = { success: true, users };
         
         console.log('localStorage users:', users);
 
@@ -453,6 +588,22 @@ export default function CustomerServiceDashboard() {
               </button>
               <button
                 onClick={() => {
+                  const localStorageUsers = loadUsersFromLocalStorage();
+                  if (localStorageUsers.length > 0) {
+                    setUsers(localStorageUsers);
+                    setError(null);
+                    console.log('Loaded users from localStorage:', localStorageUsers);
+                  } else {
+                    console.log('No users found in localStorage');
+                    alert('No users found in localStorage. Please check if you have user data stored locally.');
+                  }
+                }}
+                className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                Load from localStorage
+              </button>
+              <button
+                onClick={() => {
                   console.log('Manual test - API_BASE:', API_BASE);
                   console.log('Manual test - Full URL:', `${API_BASE}/api/database/users`);
                   fetchUsers();
@@ -625,136 +776,176 @@ export default function CustomerServiceDashboard() {
                   )}
 
                   {/* Questionnaire Data */}
-                  {selectedUser.questionnaireData && (
-                    <div className="space-y-4">
-                      <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Questionnaire Responses</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Trades Per Day</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradesPerDay || 'Not specified'}</p>
+                  <div className="space-y-4">
+                    <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Questionnaire Responses</h3>
+                    {selectedUser.questionnaireData ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Trades Per Day</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradesPerDay || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Trading Session</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradingSession || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Has Trading Account</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.hasAccount || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Account Equity</label>
+                            <p className="mt-1 text-sm text-gray-900">${selectedUser.questionnaireData.accountEquity || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Prop Firm</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.propFirm || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Account Type</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.accountType || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Account Size</label>
+                            <p className="mt-1 text-sm text-gray-900">${selectedUser.questionnaireData.accountSize || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Risk Percentage</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.riskPercentage || 'Not specified'}%</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Risk-Reward Ratio</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.riskRewardRatio || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Trading Experience</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradingExperience || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Risk Tolerance</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.riskTolerance || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Trading Goals</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradingGoals || 'Not specified'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Trading Session</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradingSession || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Has Trading Account</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.hasAccount || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Account Equity</label>
-                          <p className="mt-1 text-sm text-gray-900">${selectedUser.questionnaireData.accountEquity || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Prop Firm</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.propFirm || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Account Type</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.accountType || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Account Size</label>
-                          <p className="mt-1 text-sm text-gray-900">${selectedUser.questionnaireData.accountSize || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Risk Percentage</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.riskPercentage || 'Not specified'}%</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Risk-Reward Ratio</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.riskRewardRatio || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Trading Experience</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradingExperience || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Risk Tolerance</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.riskTolerance || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Trading Goals</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.questionnaireData.tradingGoals || 'Not specified'}</p>
+                        
+                        {/* Crypto Assets */}
+                        {selectedUser.questionnaireData.cryptoAssets && selectedUser.questionnaireData.cryptoAssets.length > 0 && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Crypto Assets</label>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                              {selectedUser.questionnaireData.cryptoAssets.map((asset: string, index: number) => (
+                                <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  {asset}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Forex Assets */}
+                        {selectedUser.questionnaireData.forexAssets && selectedUser.questionnaireData.forexAssets.length > 0 && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Forex Assets</label>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                              {selectedUser.questionnaireData.forexAssets.map((asset: string, index: number) => (
+                                <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  {asset}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex">
+                          <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-yellow-800">
+                              No questionnaire data available
+                            </h3>
+                            <div className="mt-2 text-sm text-yellow-700">
+                              <p>This user has not completed the questionnaire yet or their data wasn't properly saved to the database.</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      
-                      {/* Crypto Assets */}
-                      {selectedUser.questionnaireData.cryptoAssets && selectedUser.questionnaireData.cryptoAssets.length > 0 && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Crypto Assets</label>
-                          <div className="mt-1 flex flex-wrap gap-2">
-                            {selectedUser.questionnaireData.cryptoAssets.map((asset: string, index: number) => (
-                              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                {asset}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Forex Assets */}
-                      {selectedUser.questionnaireData.forexAssets && selectedUser.questionnaireData.forexAssets.length > 0 && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Forex Assets</label>
-                          <div className="mt-1 flex flex-wrap gap-2">
-                            {selectedUser.questionnaireData.forexAssets.map((asset: string, index: number) => (
-                              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {asset}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* Risk Management Plan */}
-                  {selectedUser.riskManagementPlan && (
-                    <div className="space-y-4">
-                      <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Risk Management Plan</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Risk Per Trade</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.riskPerTrade || 'Not specified'}%</p>
+                  <div className="space-y-4">
+                    <h3 className="text-md font-semibold text-gray-800 border-b pb-2">Risk Management Plan</h3>
+                    {selectedUser.riskManagementPlan ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Risk Per Trade</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.riskPerTrade || 'Not specified'}%</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Daily Loss Limit</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.dailyLossLimit || 'Not specified'}%</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Maximum Loss</label>
+                            <p className="mt-1 text-sm text-gray-900">${selectedUser.riskManagementPlan.maxLoss || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Profit Target</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.profitTarget || 'Not specified'}%</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Trades to Pass</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.tradesToPass || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Risk Amount</label>
+                            <p className="mt-1 text-sm text-gray-900">${selectedUser.riskManagementPlan.riskAmount || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Profit Amount</label>
+                            <p className="mt-1 text-sm text-gray-900">${selectedUser.riskManagementPlan.profitAmount || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Consecutive Losses Limit</label>
+                            <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.consecutiveLossesLimit || 'Not specified'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Daily Loss Limit</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.dailyLossLimit || 'Not specified'}%</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Maximum Loss</label>
-                          <p className="mt-1 text-sm text-gray-900">${selectedUser.riskManagementPlan.maxLoss || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Profit Target</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.profitTarget || 'Not specified'}%</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Trades to Pass</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.tradesToPass || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Risk Amount</label>
-                          <p className="mt-1 text-sm text-gray-900">${selectedUser.riskManagementPlan.riskAmount || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Profit Amount</label>
-                          <p className="mt-1 text-sm text-gray-900">${selectedUser.riskManagementPlan.profitAmount || 'Not specified'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Consecutive Losses Limit</label>
-                          <p className="mt-1 text-sm text-gray-900">{selectedUser.riskManagementPlan.consecutiveLossesLimit || 'Not specified'}</p>
+                        {selectedUser.riskManagementPlan?.generatedAt && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Generated At</label>
+                            <p className="mt-1 text-sm text-gray-900">{formatDate(selectedUser.riskManagementPlan.generatedAt)}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex">
+                          <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-yellow-800">
+                              No risk management plan available
+                            </h3>
+                            <div className="mt-2 text-sm text-yellow-700">
+                              <p>This user has not generated a risk management plan yet or their data wasn't properly saved to the database.</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      {selectedUser.riskManagementPlan.generatedAt && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Generated At</label>
-                          <p className="mt-1 text-sm text-gray-900">{formatDate(selectedUser.riskManagementPlan.generatedAt)}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* Screenshots */}
                   {(selectedUser.screenshotUrl || selectedUser.questionnaireData?.accountScreenshot) && (
@@ -798,7 +989,9 @@ export default function CustomerServiceDashboard() {
             {localStorageData && (
               <div className="bg-white shadow rounded-lg">
                 <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-lg font-medium text-gray-900">localStorage Data</h2>
+                  <h2 className="text-lg font-medium text-gray-900">
+                    {selectedUser ? `User Data for ${selectedUser.email}` : 'localStorage Data'}
+                  </h2>
                 </div>
                 <div className="p-6 space-y-6">
                   {/* Basic localStorage Info */}

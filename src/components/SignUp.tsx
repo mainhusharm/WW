@@ -127,6 +127,8 @@ const SignUp = () => {
         setupComplete: false,
         selectedPlan,
         token: access_token,
+        // Initialize with empty trading data - will be populated by questionnaire
+        tradingData: null
       };
 
       login(userData, access_token);

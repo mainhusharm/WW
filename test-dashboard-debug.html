@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log { background: #1e1e1e; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Dashboard Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Check if Dashboard Component is Working</h2>
+        <p>This will test if the Dashboard component can save data to Supabase.</p>
+        <button onclick="testDashboardSave()">Test Dashboard Save</button>
+        <div id="test1-result" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Check User Context</h2>
+        <p>This will check if user data is available in localStorage.</p>
+        <button onclick="checkUserContext()">Check User Context</button>
+        <div id="test2-result" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Check Dashboard Data</h2>
+        <p>This will check if dashboard data is available in localStorage.</p>
+        <button onclick="checkDashboardData()">Check Dashboard Data</button>
+        <div id="test3-result" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Simulate Dashboard Save</h2>
+        <p>This will simulate what the Dashboard component should do.</p>
+        <button onclick="simulateDashboardSave()">Simulate Dashboard Save</button>
+        <div id="test4-result" class="log"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://bgejxnkyzjamroeikfkr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZWp4bmt5emphbXJvZWlrZmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5MzMxODYsImV4cCI6MjA3MTUwOTE4Nn0.BkU0y7VH6FNgSi4bCBA2gnrFXRI_37Gowv6r2SU6aPk';
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            element.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+        }
+
+        async function testDashboardSave() {
+            const resultDiv = document.getElementById('test1-result');
+            resultDiv.innerHTML = '';
+            
+            log('test1-result', '🧪 Testing Dashboard Save Function...', 'info');
+            
+            try {
+                // Simulate user data
+                const user = {
+                    id: 'debug-test-user-123',
+                    email: 'debug@example.com',
+                    fullName: 'Debug Test User'
+                };
+                
+                // Simulate dashboard data
+                const dashboardData = {
+                    userProfile: {
+                        propFirm: 'FTMO',
+                        accountType: 'Challenge',
+                        accountSize: 50000,
+                        riskPerTrade: '2%',
+                        experience: 'Beginner',
+                        uniqueId: 'DEBUG-12345'
+                    },
+                    performance: {
+                        accountBalance: 50000,
+                        totalPnl: 1000.50,
+                        winRate: 60.0,
+                        totalTrades: 15
+                    },
+                    riskProtocol: {
+                        maxDailyRisk: 500,
+                        riskPerTrade: 1000,
+                        maxDrawdown: 1000
+                    }
+                };
+                
+                // Simulate trading state
+                const tradingState = {
+                    initialEquity: 50000,
+                    currentEquity: 51000.50,
+                    trades: [],
+                    openPositions: [],
+                    riskSettings: {
+                        riskPerTrade: 2.0,
+                        dailyLossLimit: 5,
+                        consecutiveLossesLimit: 3
+                    },
+                    performanceMetrics: {
+                        totalPnl: 1000.50,
+                        winRate: 60.0,
+                        totalTrades: 15,
+                        winningTrades: 9,
+                        losingTrades: 6,
+                        averageWin: 200.25,
+                        averageLoss: -150.10,
+                        profitFactor: 1.5,
+                        maxDrawdown: 200,
+                        currentDrawdown: 0,
+                        grossProfit: 1802.25,
+                        grossLoss: -801.75,
+                        consecutiveWins: 2,
+                        consecutiveLosses: 0
+                    },
+                    dailyStats: {
+                        pnl: 50.25,
+                        trades: 1,
+                        initialEquity: 50000
+                    }
+                };
+                
+                const theme = 'concept1';
+                
+                log('test1-result', `📝 User: ${user.fullName} (${user.email})`, 'info');
+                log('test1-result', `📝 Prop Firm: ${dashboardData.userProfile.propFirm}`, 'info');
+                log('test1-result', `📝 Account Size: $${dashboardData.userProfile.accountSize}`, 'info');
+                log('test1-result', `📝 Total PnL: $${dashboardData.performance.totalPnl}`, 'info');
+                
+                // Prepare Supabase data
+                const supabaseData = {
+                    id: crypto.randomUUID(),
+                    user_id: user.id,
+                    user_email: user.email,
+                    user_name: user.fullName,
+                    prop_firm: dashboardData.userProfile.propFirm,
+                    account_type: dashboardData.userProfile.accountType,
+                    account_size: dashboardData.userProfile.accountSize,
+                    risk_per_trade: parseFloat(dashboardData.userProfile.riskPerTrade.replace('%', '')),
+                    experience: dashboardData.userProfile.experience,
+                    unique_id: dashboardData.userProfile.uniqueId,
+                    account_balance: dashboardData.performance.accountBalance,
+                    total_pnl: dashboardData.performance.totalPnl,
+                    win_rate: dashboardData.performance.winRate,
+                    total_trades: dashboardData.performance.totalTrades,
+                    winning_trades: tradingState.performanceMetrics.winningTrades,
+                    losing_trades: tradingState.performanceMetrics.losingTrades,
+                    average_win: tradingState.performanceMetrics.averageWin,
+                    average_loss: tradingState.performanceMetrics.averageLoss,
+                    profit_factor: tradingState.performanceMetrics.profitFactor,
+                    max_drawdown: tradingState.performanceMetrics.maxDrawdown,
+                    current_drawdown: tradingState.performanceMetrics.currentDrawdown,
+                    gross_profit: tradingState.performanceMetrics.grossProfit,
+                    gross_loss: tradingState.performanceMetrics.grossLoss,
+                    consecutive_wins: tradingState.performanceMetrics.consecutiveWins,
+                    consecutive_losses: tradingState.performanceMetrics.consecutiveLosses,
+                    max_daily_risk: dashboardData.riskProtocol.maxDailyRisk,
+                    risk_per_trade_amount: dashboardData.riskProtocol.riskPerTrade,
+                    max_drawdown_limit: dashboardData.riskProtocol.maxDrawdown,
+                    initial_equity: tradingState.initialEquity,
+                    current_equity: tradingState.currentEquity,
+                    daily_pnl: tradingState.dailyStats.pnl,
+                    daily_trades: tradingState.dailyStats.trades,
+                    daily_initial_equity: tradingState.dailyStats.initialEquity,
+                    risk_per_trade_percentage: tradingState.riskSettings.riskPerTrade,
+                    daily_loss_limit: tradingState.riskSettings.dailyLossLimit,
+                    consecutive_losses_limit: tradingState.riskSettings.consecutiveLossesLimit,
+                    selected_theme: theme,
+                    notifications_enabled: true,
+                    auto_refresh: true,
+                    refresh_interval: 5000,
+                    language: 'en',
+                    timezone: 'UTC',
+                    real_time_data: null,
+                    last_signal: null,
+                    market_status: 'open',
+                    connection_status: 'online',
+                    open_positions: tradingState.openPositions,
+                    trade_history: tradingState.trades,
+                    signals: [],
+                    dashboard_layout: null,
+                    widget_settings: null,
+                    alert_settings: null,
+                    last_activity: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                log('test1-result', '📤 Sending data to Supabase...', 'info');
+                
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/user%20dashboard`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(supabaseData)
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log('test1-result', `❌ Insert failed: ${response.status} ${response.statusText}`, 'error');
+                    log('test1-result', `Error details: ${errorText}`, 'error');
+                    return;
+                }
+                
+                const result = await response.json();
+                log('test1-result', '✅ SUCCESS! Dashboard data saved to Supabase!', 'success');
+                log('test1-result', `📊 Dashboard ID: ${result.id || 'N/A'}`, 'success');
+                
+            } catch (error) {
+                log('test1-result', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function checkUserContext() {
+            const resultDiv = document.getElementById('test2-result');
+            resultDiv.innerHTML = '';
+            
+            log('test2-result', '🔍 Checking User Context...', 'info');
+            
+            // Check for user data in localStorage
+            const userData = localStorage.getItem('userData');
+            const currentUser = localStorage.getItem('currentUser');
+            const userEmail = localStorage.getItem('userEmail');
+            const userUniqueId = localStorage.getItem('userUniqueId');
+            
+            if (userData) {
+                try {
+                    const parsed = JSON.parse(userData);
+                    log('test2-result', `✅ userData found: ${parsed.fullName || parsed.name || 'Unknown'} (${parsed.email || 'No email'})`, 'success');
+                } catch (e) {
+                    log('test2-result', `⚠️ userData found but invalid JSON: ${userData}`, 'error');
+                }
+            } else {
+                log('test2-result', '❌ No userData in localStorage', 'error');
+            }
+            
+            if (currentUser) {
+                try {
+                    const parsed = JSON.parse(currentUser);
+                    log('test2-result', `✅ currentUser found: ${parsed.fullName || parsed.name || 'Unknown'} (${parsed.email || 'No email'})`, 'success');
+                } catch (e) {
+                    log('test2-result', `⚠️ currentUser found but invalid JSON: ${currentUser}`, 'error');
+                }
+            } else {
+                log('test2-result', '❌ No currentUser in localStorage', 'error');
+            }
+            
+            if (userEmail) {
+                log('test2-result', `✅ userEmail found: ${userEmail}`, 'success');
+            } else {
+                log('test2-result', '❌ No userEmail in localStorage', 'error');
+            }
+            
+            if (userUniqueId) {
+                log('test2-result', `✅ userUniqueId found: ${userUniqueId}`, 'success');
+            } else {
+                log('test2-result', '❌ No userUniqueId in localStorage', 'error');
+            }
+        }
+
+        function checkDashboardData() {
+            const resultDiv = document.getElementById('test3-result');
+            resultDiv.innerHTML = '';
+            
+            log('test3-result', '🔍 Checking Dashboard Data...', 'info');
+            
+            // Check for dashboard data in localStorage
+            const dashboardData = localStorage.getItem('dashboard_data');
+            const tradingState = localStorage.getItem('trading_state');
+            const questionnaireData = localStorage.getItem('questionnaireAnswers');
+            const riskPlanData = localStorage.getItem('riskManagementPlan');
+            
+            if (dashboardData) {
+                try {
+                    const parsed = JSON.parse(dashboardData);
+                    log('test3-result', `✅ dashboard_data found: ${Object.keys(parsed).length} properties`, 'success');
+                } catch (e) {
+                    log('test3-result', `⚠️ dashboard_data found but invalid JSON`, 'error');
+                }
+            } else {
+                log('test3-result', '❌ No dashboard_data in localStorage', 'error');
+            }
+            
+            if (tradingState) {
+                try {
+                    const parsed = JSON.parse(tradingState);
+                    log('test3-result', `✅ trading_state found: ${parsed.trades?.length || 0} trades`, 'success');
+                } catch (e) {
+                    log('test3-result', `⚠️ trading_state found but invalid JSON`, 'error');
+                }
+            } else {
+                log('test3-result', '❌ No trading_state in localStorage', 'error');
+            }
+            
+            if (questionnaireData) {
+                try {
+                    const parsed = JSON.parse(questionnaireData);
+                    log('test3-result', `✅ questionnaireAnswers found: ${Object.keys(parsed).length} properties`, 'success');
+                } catch (e) {
+                    log('test3-result', `⚠️ questionnaireAnswers found but invalid JSON`, 'error');
+                }
+            } else {
+                log('test3-result', '❌ No questionnaireAnswers in localStorage', 'error');
+            }
+            
+            if (riskPlanData) {
+                try {
+                    const parsed = JSON.parse(riskPlanData);
+                    log('test3-result', `✅ riskManagementPlan found: ${Object.keys(parsed).length} properties`, 'success');
+                } catch (e) {
+                    log('test3-result', `⚠️ riskManagementPlan found but invalid JSON`, 'error');
+                }
+            } else {
+                log('test3-result', '❌ No riskManagementPlan in localStorage', 'error');
+            }
+        }
+
+        async function simulateDashboardSave() {
+            const resultDiv = document.getElementById('test4-result');
+            resultDiv.innerHTML = '';
+            
+            log('test4-result', '🧪 Simulating Dashboard Save...', 'info');
+            
+            // Check if we have user data
+            const userData = localStorage.getItem('userData');
+            const currentUser = localStorage.getItem('currentUser');
+            
+            if (!userData && !currentUser) {
+                log('test4-result', '❌ No user data found. Please sign up first!', 'error');
+                log('test4-result', '💡 Go to /signup-enhanced and create an account', 'info');
+                return;
+            }
+            
+            let user = null;
+            if (userData) {
+                try {
+                    user = JSON.parse(userData);
+                } catch (e) {
+                    log('test4-result', '⚠️ userData is invalid JSON', 'error');
+                }
+            }
+            
+            if (!user && currentUser) {
+                try {
+                    user = JSON.parse(currentUser);
+                } catch (e) {
+                    log('test4-result', '⚠️ currentUser is invalid JSON', 'error');
+                }
+            }
+            
+            if (!user) {
+                log('test4-result', '❌ No valid user data found', 'error');
+                return;
+            }
+            
+            log('test4-result', `✅ User found: ${user.fullName || user.name || 'Unknown'} (${user.email || 'No email'})`, 'success');
+            
+            // Check if we have dashboard data
+            const dashboardData = localStorage.getItem('dashboard_data');
+            const tradingState = localStorage.getItem('trading_state');
+            
+            if (!dashboardData && !tradingState) {
+                log('test4-result', '❌ No dashboard data found. Please visit the dashboard first!', 'error');
+                log('test4-result', '💡 Go to /dashboard and let it load', 'info');
+                return;
+            }
+            
+            log('test4-result', '✅ Dashboard data found, simulating save...', 'success');
+            
+            // Simulate the save function
+            try {
+                const supabaseData = {
+                    id: crypto.randomUUID(),
+                    user_id: user.id || user.uniqueId || 'unknown',
+                    user_email: user.email || 'unknown@example.com',
+                    user_name: user.fullName || user.name || 'Unknown User',
+                    prop_firm: 'Test Prop Firm',
+                    account_type: 'Test Account',
+                    account_size: 10000,
+                    total_pnl: 0,
+                    win_rate: 0,
+                    total_trades: 0,
+                    selected_theme: 'concept1',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/user%20dashboard`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(supabaseData)
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log('test4-result', `❌ Save failed: ${response.status} ${response.statusText}`, 'error');
+                    log('test4-result', `Error details: ${errorText}`, 'error');
+                    return;
+                }
+                
+                const result = await response.json();
+                log('test4-result', '✅ SUCCESS! Dashboard data saved to Supabase!', 'success');
+                log('test4-result', `📊 Dashboard ID: ${result.id || 'N/A'}`, 'success');
+                log('test4-result', '🎉 Your Dashboard component should work now!', 'success');
+                
+            } catch (error) {
+                log('test4-result', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

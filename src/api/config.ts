@@ -8,7 +8,7 @@ export const ENV_CONFIG = {
   isRender: window.location.hostname.includes('onrender.com'),
   apiBaseUrl: import.meta.env.PROD
     ? 'https://backend-gbhz.onrender.com'
-    : 'http://localhost:5001',
+    : 'http://localhost:3001',
   yfinanceServiceUrl: 'https://yfinance-service-kyce.onrender.com', // Use working yfinance service
   binanceServiceUrl: 'https://binance-service.onrender.com',
   telegramServiceUrl: 'https://yfinance-service-kyce.onrender.com/api/telegram',

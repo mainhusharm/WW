@@ -35,12 +35,12 @@ export const useDashboardData = () => {
           console.warn('Error parsing user data:', e);
         }
 
-        // Extract data with fallbacks
-        const propFirm = questionnaireData?.propFirm || riskPlanData?.propFirm || 'QuantTekel';
-        const accountType = questionnaireData?.accountType || riskPlanData?.accountType || 'QuantTekel Instant';
-        const experience = questionnaireData?.experience || riskPlanData?.experience || 'intermediate';
-        const accountSize = questionnaireData?.accountSize || riskPlanData?.accountSize || 10000;
-        const uniqueId = userData?.uniqueId || localStorage.getItem('userUniqueId') || '952244';
+        // Extract data with fallbacks - only use hardcoded values if no real data exists
+        const propFirm = questionnaireData?.propFirm || riskPlanData?.propFirm || 'Not Set';
+        const accountType = questionnaireData?.accountType || riskPlanData?.accountType || 'Not Set';
+        const experience = questionnaireData?.experience || riskPlanData?.experience || 'Not Set';
+        const accountSize = questionnaireData?.accountSize || riskPlanData?.accountSize || 'Not Set';
+        const uniqueId = userData?.uniqueId || localStorage.getItem('userUniqueId') || 'Not Set';
 
         const dashboardData = {
           userProfile: {

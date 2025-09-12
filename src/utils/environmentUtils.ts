@@ -26,7 +26,7 @@ export const getApiBaseUrl = (): string => {
   if (isProduction()) {
     return 'https://backend-gbhz.onrender.com';
   }
-  return 'http://localhost:5000';
+  return 'http://localhost:3001';
 };
 
 // Get appropriate CORS proxy based on environment

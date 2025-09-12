@@ -26,7 +26,7 @@ const isOriginAllowed = () => {
 
 // Get the appropriate API base URL
 export const getApiBaseUrl = () => {
-  if (!isBrowser) return 'http://localhost:5000';
+  if (!isBrowser) return 'http://localhost:3001';
   
   // If we're in production and origin is not allowed, use a different approach
   if (import.meta.env.PROD && !isOriginAllowed()) {
@@ -37,7 +37,7 @@ export const getApiBaseUrl = () => {
   // Default to the configured URL
   return import.meta.env.PROD 
     ? 'https://backend-gbhz.onrender.com'
-    : 'http://localhost:5000';
+    : 'http://localhost:3001';
 };
 
 // Make a CORS-safe request

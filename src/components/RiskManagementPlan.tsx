@@ -41,6 +41,9 @@ const RiskManagementPlan: React.FC = () => {
     let totalEarnings = 0;
     let currentBalance = accountSize;
     
+    // Calculate expected value per trade
+    const expectedValuePerTrade = (winRate / 100) * (riskRewardRatio - 1) - ((100 - winRate) / 100);
+    
     for (let day = 1; day <= tradingDays; day++) {
       const dailyTrades = Math.floor(tradesPerDay);
       let dailyEarnings = 0;
@@ -55,18 +58,19 @@ const RiskManagementPlan: React.FC = () => {
           riskAmount = currentBalance * (riskPercentage / 100);
         }
         
-        // Simulate trade outcome based on win rate
-        const isWin = Math.random() * 100 < winRate;
+        // Calculate expected outcome based on win rate (deterministic)
+        const expectedOutcome = riskAmount * expectedValuePerTrade;
         
-        if (isWin) {
-          // Win: gain risk amount * risk/reward ratio
-          const winAmount = riskAmount * riskRewardRatio;
+        if (expectedOutcome > 0) {
+          // Expected win: gain risk amount * risk/reward ratio * win rate
+          const winAmount = riskAmount * riskRewardRatio * (winRate / 100);
           dailyEarnings += winAmount;
           currentBalance += winAmount;
         } else {
-          // Loss: lose risk amount
-          dailyEarnings -= riskAmount;
-          currentBalance -= riskAmount;
+          // Expected loss: lose risk amount * loss rate
+          const lossAmount = riskAmount * ((100 - winRate) / 100);
+          dailyEarnings -= lossAmount;
+          currentBalance -= lossAmount;
         }
       }
       
