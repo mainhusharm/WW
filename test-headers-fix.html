@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Headers Error Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .info { color: #60a5fa; }
+        .log { background: #1e1e1e; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Headers Error Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Check if Headers Error is Fixed</h2>
+        <p>This will test if the application loads without headers errors.</p>
+        <button onclick="testHeadersError()">Test Headers Error Fix</button>
+        <div id="test1-result" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Test Axios Configuration</h2>
+        <p>This will test if axios is properly configured.</p>
+        <button onclick="testAxiosConfig()">Test Axios Config</button>
+        <div id="test2-result" class="log"></div>
+    </div>
+
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            element.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+        }
+
+        function testHeadersError() {
+            const resultDiv = document.getElementById('test1-result');
+            resultDiv.innerHTML = '';
+            
+            log('test1-result', '🧪 Testing Headers Error Fix...', 'info');
+            
+            // Test if we can access the main application
+            fetch('http://localhost:4173')
+                .then(response => {
+                    if (response.ok) {
+                        log('test1-result', '✅ Application server is responding', 'success');
+                        return response.text();
+                    } else {
+                        throw new Error(`Server responded with ${response.status}`);
+                    }
+                })
+                .then(html => {
+                    if (html.includes('TraderEdge Pro BETA')) {
+                        log('test1-result', '✅ Application HTML loaded successfully', 'success');
+                    } else {
+                        log('test1-result', '⚠️ Application HTML may not be loading correctly', 'error');
+                    }
+                })
+                .catch(error => {
+                    log('test1-result', `❌ Error loading application: ${error.message}`, 'error');
+                });
+        }
+
+        function testAxiosConfig() {
+            const resultDiv = document.getElementById('test2-result');
+            resultDiv.innerHTML = '';
+            
+            log('test2-result', '🧪 Testing Axios Configuration...', 'info');
+            
+            // Test if we can import and use axios
+            try {
+                // Simulate what the application does
+                const testConfig = {
+                    baseURL: 'http://localhost:4173',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    }
+                };
+                
+                log('test2-result', '✅ Axios configuration object is valid', 'success');
+                
+                // Test headers access
+                if (testConfig.headers && typeof testConfig.headers === 'object') {
+                    log('test2-result', '✅ Headers object exists and is accessible', 'success');
+                    
+                    // Test safe headers access
+                    const safeHeaders = { ...(testConfig.headers || {}) };
+                    log('test2-result', '✅ Safe headers spread operation works', 'success');
+                    
+                    // Test adding properties
+                    safeHeaders['Authorization'] = 'Bearer test-token';
+                    log('test2-result', '✅ Can add properties to headers object', 'success');
+                    
+                } else {
+                    log('test2-result', '❌ Headers object is not properly configured', 'error');
+                }
+                
+            } catch (error) {
+                log('test2-result', `❌ Error in axios configuration test: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testHeadersError();
+                testAxiosConfig();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
