@@ -148,7 +148,7 @@ const Questionnaire: React.FC = () => {
             const base64Data = reader.result as string;
             
             // Store screenshot in backend
-            const response = await fetch(`https://backend-bkt7.onrender.com/api/users/${user.id}/screenshot`, {
+            const response = await fetch(`https://backend-gbhz.onrender.com/api/users/${user.id}/screenshot`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

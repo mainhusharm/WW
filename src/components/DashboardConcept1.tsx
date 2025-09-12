@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TradingState, TradeOutcome, Signal, Trade, PerformanceMetrics } from '../trading/types';
 import { 
-  Layers, Zap, Shield, PieChart, BookOpen, GitBranch, Target, Cpu, Bell, Settings, LogOut, DollarSign, Activity, Award, MessageSquare 
+  Layers, Zap, Shield, PieChart, BookOpen, GitBranch, Target, Cpu, Bell, Settings, LogOut, DollarSign, Activity, Award, MessageSquare, TrendingUp
 } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import { useTradingPlan } from '../contexts/TradingPlanContext';
@@ -22,6 +22,7 @@ import RealAdminSignalsFeed from './RealAdminSignalsFeed';
 import EnhancedSignalsFeed from './EnhancedSignalsFeed';
 import PaymentBasedCustomerDatabase from './PaymentBasedCustomerDatabase';
 import PerformanceAnalytics from './PerformanceAnalytics';
+import EnhancedPerformanceAnalytics from './EnhancedPerformanceAnalytics';
 import MultiAccountTracker from './MultiAccountTracker';
 import NotificationCenter from './NotificationCenter';
 import PropFirmRules from './PropFirmRules';
@@ -557,6 +558,13 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
 
   const handleTabClick = (tabId: string) => {
     console.log('Clicked tab:', tabId);
+    
+    // Handle external navigation for futures
+    if (tabId === 'futures') {
+      window.location.href = '/futures';
+      return;
+    }
+    
     setActiveTab(tabId);
     navigate(`/dashboard/${tabId}`);
   };
@@ -1159,6 +1167,7 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   const sidebarTabs = [
     { id: 'overview', label: 'Overview', icon: <Layers className="w-5 h-5" /> },
     { id: 'signals', label: 'Signal Feed', icon: <Zap className="w-5 h-5" /> },
+    { id: 'futures', label: 'Futures', icon: <TrendingUp className="w-5 h-5" />, external: true },
     { id: 'rules', label: 'Prop Firm Rules', icon: <Shield className="w-5 h-5" /> },
     { id: 'analytics', label: 'Performance', icon: <PieChart className="w-5 h-5" /> },
     ...(hasJournalAccess ? [{ id: 'journal', label: 'Trade Journal', icon: <BookOpen className="w-5 h-5" /> }] : []),
@@ -1413,23 +1422,14 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
                   setActiveTab('ai-coach');
                 }}
               />}
-              {activeTab === 'analytics' && <PerformanceAnalytics tradingState={{ 
-                initialEquity: initialBalance,
-                currentEquity: currentEquity,
-                trades: userTrades,
-                openPositions: [],
-                riskSettings: {
-                  riskPerTrade: parseFloat(dashboardData?.riskParameters?.baseTradeRiskPct?.replace('%', '') || '1'),
-                  dailyLossLimit: 5,
-                  consecutiveLossesLimit: 3
-                },
-                performanceMetrics,
-                dailyStats: {
-                  pnl: userTrades.filter(t => new Date(t.entryTime).toDateString() === new Date().toDateString()).reduce((sum, t) => sum + (t.pnl || 0), 0),
-                  trades: userTrades.filter(t => new Date(t.entryTime).toDateString() === new Date().toDateString()).length,
-                  initialEquity: initialBalance
-                }
-              }} />}
+              {activeTab === 'analytics' && <EnhancedPerformanceAnalytics 
+                userTrades={userTrades}
+                currentAccountData={currentAccountData}
+                performanceMetrics={performanceMetrics}
+                lastTradeUpdate={userTrades.length > 0 ? userTrades[userTrades.length - 1]?.entryTime : undefined}
+                lastBalanceUpdate={new Date()}
+                isRealTimeEnabled={true}
+              />}
               {activeTab === 'journal' && renderJournal()}
               {activeTab === 'accounts' && hasMultiAccountAccess && <MultiAccountTracker />}
               {activeTab === 'rules' && <NewPropFirmRules />}

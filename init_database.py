@@ -9,7 +9,7 @@ import json
 def init_database():
     """Initialize the database"""
     
-    url = "https://backend-d4fm.onrender.com/api/init-db"
+    url = "https://backend-gbhz.onrender.com/api/init-db"
     
     print("Initializing database...")
     print(f"URL: {url}")

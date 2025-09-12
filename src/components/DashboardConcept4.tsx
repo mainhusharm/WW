@@ -7,6 +7,8 @@ import {
 import { useUser } from '../contexts/UserContext';
 import { useTradingPlan } from '../contexts/TradingPlanContext';
 import { useDashboardData } from './DashboardDataReader';
+import { userDataService } from '../services/userDataService';
+import { journalService } from '../services/journalService';
 import AdminSignalsFeed from './AdminSignalsFeed';
 import NewPropFirmRules from './NewPropFirmRules';
 
@@ -21,6 +23,7 @@ import RealAdminSignalsFeed from './RealAdminSignalsFeed';
 import NewSignalsFeed from './NewSignalsFeed';
 import TradingJournalDashboard from './TradingJournalDashboard';
 import PerformanceAnalytics from './PerformanceAnalytics';
+import EnhancedPerformanceAnalytics from './EnhancedPerformanceAnalytics';
 import MultiAccountTracker from './MultiAccountTracker';
 import NotificationCenter from './NotificationCenter';
 import AccountSettings from './AccountSettings';
@@ -248,6 +251,14 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
     tags: []
   });
   
+  // Account data state for real-time updates
+  const [currentAccountData, setCurrentAccountData] = useState({
+    accountBalance: 10000,
+    totalPnl: 0,
+    winRate: 0,
+    totalTrades: 0
+  });
+  
   // Save dashboard state for persistence
   useEffect(() => {
     if (user?.email) {
@@ -257,11 +268,82 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
       localStorage.setItem(`journal_entries_${user.email}`, JSON.stringify(journalEntries));
     }
   }, [activeTab, selectedTimezone, userSettings, journalEntries, user?.email]);
+
+  // Load journal entries
+  useEffect(() => {
+    const loadJournalEntries = async () => {
+      if (user?.email) {
+        try {
+          const entries = await journalService.getEntries(user.email);
+          setJournalEntries(entries);
+        } catch (error) {
+          console.error('Error loading journal entries:', error);
+        }
+      }
+    };
+
+    loadJournalEntries();
+  }, [user?.email]);
+
+  // Load account data from userDataService
+  useEffect(() => {
+    if (user?.email) {
+      // Initialize userDataService with user email
+      userDataService.setUserEmail(user.email);
+      
+      // Get account data (this will create default data if none exists)
+      const accountData = userDataService.getAccountData();
+      if (accountData) {
+        setCurrentAccountData(accountData);
+      }
+    }
+  }, [user?.email]);
+
+  // Refresh account data periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (user?.email) {
+        const accountData = userDataService.getAccountData();
+        if (accountData) {
+          setCurrentAccountData(accountData);
+        }
+      }
+    }, 2000); // Refresh every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [user?.email]);
+
+  // Force save data periodically to ensure persistence
+  useEffect(() => {
+    const saveInterval = setInterval(() => {
+      if (user?.email) {
+        userDataService.forceSave();
+      }
+    }, 5000); // Save every 5 seconds
+
+    return () => clearInterval(saveInterval);
+  }, [user?.email]);
+
+  // Save data when user leaves the page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (user?.email) {
+        userDataService.forceSave();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [user?.email]);
+
   const [userTrades, setUserTrades] = useState<Trade[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics>({
-    totalPnl: 0,
-    winRate: 0,
-    totalTrades: 0,
+    totalPnl: currentAccountData.totalPnl,
+    winRate: currentAccountData.winRate,
+    totalTrades: currentAccountData.totalTrades,
     winningTrades: 0,
     losingTrades: 0,
     averageWin: 0,
@@ -274,6 +356,32 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
     consecutiveWins: 0,
     consecutiveLosses: 0
   });
+
+  // Update performance metrics when currentAccountData changes
+  useEffect(() => {
+    setPerformanceMetrics(prev => ({
+      ...prev,
+      totalPnl: currentAccountData.totalPnl,
+      winRate: currentAccountData.winRate,
+      totalTrades: currentAccountData.totalTrades
+    }));
+  }, [currentAccountData]);
+
+  // Load user trades from localStorage
+  useEffect(() => {
+    if (user?.email) {
+      const savedTrades = localStorage.getItem(`userTrades_${user.email}`);
+      if (savedTrades) {
+        try {
+          const trades = JSON.parse(savedTrades);
+          setUserTrades(trades);
+          updatePerformanceMetrics(trades);
+        } catch (error) {
+          console.error('Error loading user trades:', error);
+        }
+      }
+    }
+  }, [user?.email]);
 
   // Update performance metrics based on trades
   const updatePerformanceMetrics = (trades: Trade[]) => {
@@ -381,8 +489,8 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
       closeTime: new Date(),
       outcome,
       pnl: actualPnl,
-      equityBefore: (tradingPlan?.userProfile?.initialBalance || 10000) + performanceMetrics.totalPnl,
-      equityAfter: (tradingPlan?.userProfile?.initialBalance || 10000) + performanceMetrics.totalPnl + actualPnl,
+      equityBefore: (tradingPlan?.userProfile?.initialBalance || 10000) + currentAccountData.totalPnl,
+      equityAfter: (tradingPlan?.userProfile?.initialBalance || 10000) + currentAccountData.totalPnl + actualPnl,
       notes: `Signal taken from dashboard - ${outcome}`
     };
     
@@ -390,28 +498,24 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
     setUserTrades(updatedTrades);
     updatePerformanceMetrics(updatedTrades);
     
+    // Update currentAccountData
+    setCurrentAccountData(prev => ({
+      ...prev,
+      totalPnl: prev.totalPnl + actualPnl,
+      totalTrades: prev.totalTrades + 1,
+      winRate: newTrade.outcome === 'win' 
+        ? ((prev.totalTrades * prev.winRate / 100) + 1) / (prev.totalTrades + 1) * 100
+        : (prev.totalTrades * prev.winRate / 100) / (prev.totalTrades + 1) * 100
+    }));
+    
     // Save to localStorage
-    localStorage.setItem('userTrades', JSON.stringify(updatedTrades));
+    localStorage.setItem(`userTrades_${user?.email}`, JSON.stringify(updatedTrades));
     
     // Call the original handler if provided
     if (handleMarkAsTaken) {
       handleMarkAsTaken(signal, outcome, actualPnl);
     }
   };
-
-  // Load user trades from localStorage on component mount
-  useEffect(() => {
-    const storedTrades = localStorage.getItem('userTrades');
-    if (storedTrades) {
-      try {
-        const trades = JSON.parse(storedTrades);
-        setUserTrades(trades);
-        // updatePerformanceMetrics will be called after the function is defined
-      } catch (error) {
-        console.error('Error parsing stored trades:', error);
-      }
-    }
-  }, []);
 
   // Update performance metrics when trades change
   useEffect(() => {
@@ -1048,7 +1152,7 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
   const initialBalance = hasAccount
     ? parseFloat(questionnaireAnswers.accountEquity)
     : parseFloat(questionnaireAnswers.accountSize) || dashboardData?.performance?.accountBalance || 10000;
-  const currentEquity = initialBalance + (tradingState?.performanceMetrics?.totalPnl || 0);
+  const currentEquity = initialBalance + currentAccountData.totalPnl;
   
   const stats = [
     {
@@ -1058,17 +1162,17 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
     },
     {
       label: 'Win Rate',
-      value: `${(tradingState?.performanceMetrics?.winRate || 0).toFixed(1)}%`,
+      value: `${currentAccountData.winRate.toFixed(1)}%`,
       icon: <Target className="w-8 h-8" />,
     },
     {
       label: 'Total Trades',
-      value: tradingState?.performanceMetrics?.totalTrades || 0,
+      value: currentAccountData.totalTrades,
       icon: <Activity className="w-8 h-8" />,
     },
     {
       label: 'Total P&L',
-      value: `${(tradingState?.performanceMetrics?.totalPnl || 0) >= 0 ? '+' : ''}$${(tradingState?.performanceMetrics?.totalPnl || 0).toFixed(2)}`,
+      value: `${currentAccountData.totalPnl >= 0 ? '+' : ''}$${currentAccountData.totalPnl.toFixed(2)}`,
       icon: <Award className="w-8 h-8" />,
     },
   ];
@@ -1676,23 +1780,14 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
                   window.location.href = `/ai-coach?signal=${signalData}`;
                 }}
               />}
-              {activeTab === 'analytics' && <PerformanceAnalytics tradingState={{ 
-                initialEquity: initialBalance,
-                currentEquity: currentEquity,
-                trades: userTrades,
-                openPositions: [],
-                riskSettings: {
-                  riskPerTrade: parseFloat(dashboardData?.riskParameters?.baseTradeRiskPct?.replace('%', '') || '1'),
-                  dailyLossLimit: 5,
-                  consecutiveLossesLimit: 3
-                },
-                performanceMetrics,
-                dailyStats: {
-                  pnl: userTrades.filter(t => new Date(t.entryTime).toDateString() === new Date().toDateString()).reduce((sum, t) => sum + (t.pnl || 0), 0),
-                  trades: userTrades.filter(t => new Date(t.entryTime).toDateString() === new Date().toDateString()).length,
-                  initialEquity: initialBalance
-                }
-              }} />}
+              {activeTab === 'analytics' && <EnhancedPerformanceAnalytics 
+                userTrades={userTrades}
+                currentAccountData={currentAccountData}
+                performanceMetrics={performanceMetrics}
+                lastTradeUpdate={userTrades.length > 0 ? userTrades[userTrades.length - 1]?.entryTime : undefined}
+                lastBalanceUpdate={new Date()}
+                isRealTimeEnabled={true}
+              />}
               {activeTab === 'journal' && renderJournal()}
               {activeTab === 'accounts' && hasMultiAccountAccess && <MultiAccountTracker />}
               {activeTab === 'rules' && <NewPropFirmRules />}

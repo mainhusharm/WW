@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://backend-bkt7.onrender.com"
+BACKEND_URL = "https://backend-gbhz.onrender.com"
 
 class WebSocketTester:
     def __init__(self):

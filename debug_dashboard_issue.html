@@ -36,7 +36,7 @@
             
             // Test 1: Check current database state
             try {
-                const response = await fetch('https://backend-d4fm.onrender.com/api/database/users');
+                const response = await fetch('https://backend-gbhz.onrender.com/api/database/users');
                 const data = await response.json();
                 
                 html += '<div class="debug-section success">';
@@ -61,7 +61,7 @@
                 const dashboardResponse = await fetch('https://traderedgepro.com/customer-service-dashboard');
                 const dashboardHtml = await dashboardResponse.text();
                 
-                if (dashboardHtml.includes('https://backend-d4fm.onrender.com')) {
+                if (dashboardHtml.includes('https://backend-gbhz.onrender.com')) {
                     html += '<div class="debug-section success">';
                     html += '<h3>✅ Dashboard API URL</h3>';
                     html += '<p>Dashboard is configured to call the correct backend API</p>';
@@ -113,7 +113,7 @@
             
             try {
                 const testEmail = `test${Date.now()}@example.com`;
-                const response = await fetch('https://backend-d4fm.onrender.com/api/auth/register', {
+                const response = await fetch('https://backend-gbhz.onrender.com/api/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

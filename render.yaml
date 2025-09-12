@@ -44,6 +44,6 @@ services:
     startCommand: npm run start
     envVars:
       - key: VITE_API_URL
-        value: https://backend-d4fm.onrender.com
+        value: https://backend-gbhz.onrender.com
       - key: NODE_ENV
         value: production

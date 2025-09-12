@@ -1,5 +1,5 @@
-// Quantum Admin Service - Real-time Database Integration with WebSocket
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5001';
+// Quantum Admin Service - REAL Database Integration (NO PREFILLED DATA)
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5002';
 const API_KEY = 'quantum_key_2025'; // API key for secure access
 
 export interface QuantumUser {

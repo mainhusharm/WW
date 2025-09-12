@@ -395,13 +395,15 @@ const SimpleSignalsFeed: React.FC<SimpleSignalsFeedProps> = ({
         const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
         const adminSignals = JSON.parse(localStorage.getItem('admin_signals') || '[]');
         const generatedSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+        const futuresSignals = JSON.parse(localStorage.getItem('futures_signals') || '[]');
         
         // Combine all signal sources
-        const allSignals = [...telegramMessages, ...adminSignals, ...generatedSignals];
+        const allSignals = [...telegramMessages, ...adminSignals, ...generatedSignals, ...futuresSignals];
         console.log('Loaded signals from localStorage:', {
           telegramMessages: telegramMessages.length,
           adminSignals: adminSignals.length,
           generatedSignals: generatedSignals.length,
+          futuresSignals: futuresSignals.length,
           total: allSignals.length
         });
         console.log('First few signals:', allSignals.slice(0, 3));

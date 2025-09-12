@@ -23,7 +23,7 @@ def test_registration():
     }
     
     # API endpoint
-    url = "https://backend-d4fm.onrender.com/api/auth/register"
+    url = "https://backend-gbhz.onrender.com/api/auth/register"
     
     print("Testing registration endpoint...")
     print(f"URL: {url}")

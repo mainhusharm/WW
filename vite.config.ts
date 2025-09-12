@@ -122,7 +122,7 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         '/api': {
-          target: env.VITE_API_URL || 'https://backend-8j0e.onrender.com',
+          target: env.VITE_API_URL || 'https://backend-gbhz.onrender.com',
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path,

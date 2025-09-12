@@ -33,7 +33,7 @@ const Footer = () => {
         if (window.location.hostname === 'localhost') {
           apiEndpoint = '/api/subscribe';
         } else {
-          apiEndpoint = 'https://backend-8j0e.onrender.com/api/subscribe';
+          apiEndpoint = 'https://backend-gbhz.onrender.com/api/subscribe';
         }
         await fetch(apiEndpoint, {
                     method: 'POST',

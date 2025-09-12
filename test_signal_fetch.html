@@ -33,14 +33,14 @@
             try {
                 // Test the backend health first
                 addResult('🔍 Testing backend health...', 'info');
-                const healthResponse = await fetch('https://backend-bkt7.onrender.com/health');
+                const healthResponse = await fetch('https://backend-gbhz.onrender.com/health');
                 const healthData = await healthResponse.json();
                 addResult(`✅ Backend health: ${healthData.message}`, 'success');
                 addResult(`📊 Signals count: ${healthData.signals_count}`, 'info');
                 
                 // Test signals endpoint
                 addResult('🔍 Testing signals endpoint...', 'info');
-                const signalsResponse = await fetch('https://backend-bkt7.onrender.com/api/signals');
+                const signalsResponse = await fetch('https://backend-gbhz.onrender.com/api/signals');
                 const signalsData = await signalsResponse.json();
                 
                 addResult(`✅ Signals endpoint working`, 'success');
@@ -71,7 +71,7 @@
                 // Test test/signals endpoint
                 addResult('🔍 Testing test/signals endpoint...', 'info');
                 try {
-                    const testResponse = await fetch('https://backend-bkt7.onrender.com/api/test/signals');
+                    const testResponse = await fetch('https://backend-gbhz.onrender.com/api/test/signals');
                     const testData = await testResponse.json();
                     addResult(`✅ Test signals endpoint working`, 'success');
                     addResult(`📊 Test signals count: ${testData.total_count || testData.signals?.length || 0}`, 'info');

@@ -44,7 +44,7 @@ const NewPropFirmRules: React.FC = () => {
       
       // If no saved rules, try to fetch from API
       console.log('Fetching prop firm rules from backend...');
-      const response = await fetch('https://backend-bkt7.onrender.com/api/test/prop-firm-rules?accountType=QuantTekel%20Instant', {
+      const response = await fetch('https://backend-gbhz.onrender.com/api/test/prop-firm-rules?accountType=QuantTekel%20Instant', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

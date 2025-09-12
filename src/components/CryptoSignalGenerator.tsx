@@ -767,7 +767,7 @@ const CryptoSignalGenerator: React.FC = () => {
         timeframe: signal.timeframe
       };
 
-      const response = await fetch('https://backend-bkt7.onrender.com/api/admin/create-signal', {
+      const response = await fetch('https://backend-gbhz.onrender.com/api/admin/create-signal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

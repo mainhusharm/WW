@@ -31,12 +31,12 @@ export const getApiBaseUrl = () => {
   // If we're in production and origin is not allowed, use a different approach
   if (import.meta.env.PROD && !isOriginAllowed()) {
     // Use working backend
-    return 'https://backend-d4fm.onrender.com';
+    return 'https://backend-gbhz.onrender.com';
   }
   
   // Default to the configured URL
   return import.meta.env.PROD 
-    ? 'https://backend-d4fm.onrender.com'
+    ? 'https://backend-gbhz.onrender.com'
     : 'http://localhost:5000';
 };
 
@@ -70,8 +70,8 @@ export const makeCorsSafeRequest = async (url: string, options: RequestInit = {}
 export const getAlternativeApiUrl = () => {
   // Try different backend URLs that might work
   const alternatives = [
-    'https://backend-d4fm.onrender.com',
-    'https://backend-bkt7.onrender.com',
+    'https://backend-gbhz.onrender.com',
+    'https://backend-gbhz.onrender.com',
     'https://trading-platform-api.onrender.com'
   ];
   

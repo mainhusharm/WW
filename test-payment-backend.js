@@ -1,7 +1,7 @@
 // Test script to verify Stripe and PayPal backend endpoints
 import https from 'https';
 
-const BACKEND_URL = 'https://backend-d4fm.onrender.com';
+const BACKEND_URL = 'https://backend-gbhz.onrender.com';
 
 // Helper function to make HTTP requests
 function makeRequest(url, options = {}) {

@@ -363,7 +363,7 @@ const generateSignals = async (assets) => {
     console.log(`Sending ${allSignals.length} new signals to the webhook.`);
     for (const signal of allSignals) {
       try {
-        await axios.post('https://backend-bkt7.onrender.com/api/webhook/signal', signal);
+        await axios.post('https://backend-gbhz.onrender.com/api/webhook/signal', signal);
       } catch (error) {
         console.error(`Error sending signal to webhook for ${signal.symbol}:`, error.message);
       }

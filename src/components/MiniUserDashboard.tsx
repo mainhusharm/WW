@@ -5,40 +5,17 @@ import {
   CreditCard, Award, Globe, Lock, Zap
 } from 'lucide-react';
 
-interface MiniUserData {
-  id: string;
-  uniqueId: string;
-  email: string;
-  name: string;
-  membershipTier: string;
-  status: 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'INACTIVE';
-  accountSize: number;
-  currentEquity: number;
-  totalPnl: number;
-  winRate: number;
-  totalTrades: number;
-  lastActive: string;
-  createdAt: string;
-  propFirm: string;
-  accountType: string;
-  tradingExperience: string;
-  riskTolerance: string;
-  paymentStatus: string;
-  isActive: boolean;
-  isVerified: boolean;
-  questionnaireData?: any;
-  riskManagementPlan?: any;
-}
+import { QuantumUser } from '../services/quantumAdminService';
 
 interface MiniUserDashboardProps {
-  user: MiniUserData;
-  onUpdate: (userId: string, updates: Partial<MiniUserData>) => void;
+  user: QuantumUser;
+  onUpdate: (userId: string, updates: Partial<QuantumUser>) => void;
   onClose: () => void;
 }
 
 const MiniUserDashboard: React.FC<MiniUserDashboardProps> = ({ user, onUpdate, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedData, setEditedData] = useState<MiniUserData>(user);
+  const [editedData, setEditedData] = useState<QuantumUser>(user);
   const [activeSection, setActiveSection] = useState<'overview' | 'account' | 'trading' | 'risk' | 'settings'>('overview');
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -58,7 +35,7 @@ const MiniUserDashboard: React.FC<MiniUserDashboardProps> = ({ user, onUpdate, o
     setIsEditing(false);
   };
 
-  const handleFieldChange = (field: keyof MiniUserData, value: any) => {
+  const handleFieldChange = (field: keyof QuantumUser, value: any) => {
     setEditedData(prev => ({ ...prev, [field]: value }));
   };
 

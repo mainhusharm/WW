@@ -65,6 +65,7 @@ import SignupForm from './components/SignupForm';
 import EnhancedSignupForm from './components/EnhancedSignupForm';
 import SignupRedirect from './components/SignupRedirect';
 import EnhancedPaymentPage from './components/EnhancedPaymentPage';
+import FuturesPage from './components/FuturesPage';
 
 // Global Error Boundary for the entire app
 class GlobalErrorBoundary extends Component<
@@ -254,6 +255,7 @@ const AppContent = () => {
             }
           />
         <Route path="/ai-coach" element={<ProtectedRoute><AICoach /></ProtectedRoute>} />
+        <Route path="/futures" element={<FuturesPage />} />
         <Route path="/lightning" element={<Lightning><LandingPage /></Lightning>} />
         <Route path="/animation-test" element={<AnimationTest />} />
         </Routes>

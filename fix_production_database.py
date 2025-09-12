@@ -15,7 +15,7 @@ def fix_production_database():
     # Let's try to trigger it by making a request to a health endpoint first
     try:
         # Test if the backend is responding
-        response = requests.get('https://backend-d4fm.onrender.com/health', timeout=10)
+        response = requests.get('https://backend-gbhz.onrender.com/health', timeout=10)
         print(f"✅ Backend health check: {response.status_code}")
         
         # Try to trigger database initialization by making a registration request
@@ -28,7 +28,7 @@ def fix_production_database():
         
         print("🔄 Triggering database initialization...")
         response = requests.post(
-            'https://backend-d4fm.onrender.com/api/auth/register',
+            'https://backend-gbhz.onrender.com/api/auth/register',
             json=test_data,
             headers={'Content-Type': 'application/json'},
             timeout=30

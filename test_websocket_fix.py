@@ -13,7 +13,7 @@ def test_websocket_endpoint():
     
     try:
         # Test Socket.IO endpoint
-        response = requests.get('https://backend-bkt7.onrender.com/socket.io/', 
+        response = requests.get('https://backend-gbhz.onrender.com/socket.io/', 
                               params={'EIO': '4', 'transport': 'polling'}, 
                               timeout=10)
         
@@ -37,7 +37,7 @@ def test_signal_endpoint():
     
     try:
         # Test signal creation endpoint
-        response = requests.post('https://backend-bkt7.onrender.com/api/admin/create-signal',
+        response = requests.post('https://backend-gbhz.onrender.com/api/admin/create-signal',
                                json={
                                    'pair': 'EURUSD',
                                    'direction': 'BUY',
