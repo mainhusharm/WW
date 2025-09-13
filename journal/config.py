@@ -59,7 +59,6 @@ class Config:
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
     
     # Backend Configuration
-    FLASK_ENV = os.getenv('FLASK_ENV', 'development')
     FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'true').lower() == 'true'
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001,http://localhost:3005').split(',')
     
@@ -89,12 +88,12 @@ class Config:
     @classmethod
     def is_production(cls):
         """Check if running in production mode"""
-        return cls.FLASK_ENV == 'production'
+        return not cls.FLASK_DEBUG
     
     @classmethod
     def is_development(cls):
         """Check if running in development mode"""
-        return cls.FLASK_ENV == 'development'
+        return cls.FLASK_DEBUG
     
     @classmethod
     def has_payment_keys(cls):
@@ -122,7 +121,6 @@ class Config:
 
 class ProductionConfig(Config):
     """Production configuration class"""
-    FLASK_ENV = 'production'
     FLASK_DEBUG = False
     
     # Override database URL from environment
