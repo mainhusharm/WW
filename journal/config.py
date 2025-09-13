@@ -37,6 +37,7 @@ class Config:
     
     # Database Configuration
     DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///instance/trading_bot.db')
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI', DATABASE_URL)
     DATABASE_PATH = os.getenv('DATABASE_PATH', './instance/trading_bot.db')
     
     # JWT & Security Configuration
