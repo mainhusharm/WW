@@ -5,17 +5,9 @@ services:
     name: trading-backend
     env: python3
     plan: starter
-    buildCommand: pip install -r requirements-minimal.txt
-    startCommand: python minimal_app.py
+    buildCommand: pip install Flask==2.2.2
+    startCommand: python3 minimal_app.py
     envVars:
-      - key: DATABASE_URL
-        value: sqlite:///instance/trading_bot.db
-      - key: ENCRYPTION_KEY
-        generateValue: true
-      - key: SECRET_KEY
-        generateValue: true
-      - key: FLASK_ENV
-        value: production
       - key: PORT
         value: 10000
 
