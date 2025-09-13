@@ -1,51 +1,31 @@
 #!/usr/bin/env python3
 """
-Minimal working Flask app to test basic functionality
+Minimal Flask App for Testing Render Deployment
 """
+
 from flask import Flask, jsonify
-from flask_cors import CORS
-from datetime import datetime
 import os
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
+# Create a minimal Flask app
 app = Flask(__name__)
-CORS(app)
-
-@app.route('/healthz')
-def health_check():
-    try:
-        return jsonify({
-            'status': 'healthy',
-            'database': 'connected',
-            'timestamp': datetime.utcnow().isoformat()
-        }), 200
-    except Exception as e:
-        return jsonify({
-            'status': 'unhealthy',
-            'database': 'disconnected',
-            'error': str(e),
-            'timestamp': datetime.utcnow().isoformat()
-        }), 500
-
-@app.route('/api/test')
-def test_api():
-    return jsonify({
-        'message': 'API is working',
-        'timestamp': datetime.utcnow().isoformat()
-    })
 
 @app.route('/')
 def index():
     return jsonify({
-        'message': 'Trading Journal Backend',
-        'status': 'running',
-        'timestamp': datetime.utcnow().isoformat()
+        "status": "ok",
+        "message": "Minimal app is running",
+        "service": "trading-backend"
+    })
+
+@app.route('/health')
+def health():
+    return jsonify({
+        "status": "ok",
+        "service": "trading-backend",
+        "version": "1.0.0"
     })
 
 if __name__ == '__main__':
-    print("Starting minimal Flask app...")
-    print(f"Environment: {os.getenv('FLASK_ENV', 'development')}")
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 Minimal app starting on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=False)

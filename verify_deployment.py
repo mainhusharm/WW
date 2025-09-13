@@ -64,7 +64,7 @@ def test_configuration():
     try:
         with open('render.yaml', 'r') as f:
             content = f.read()
-            if 'gunicorn --worker-class eventlet -w 1 app:application' in content:
+            if 'python minimal_app.py' in content:
                 print("✅ render.yaml has correct backend start command")
             else:
                 print("❌ render.yaml has incorrect backend start command")
