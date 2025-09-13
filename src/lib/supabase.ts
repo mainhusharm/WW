@@ -62,6 +62,62 @@ export interface Database {
           created_at: string
           updated_at: string
         }
+        Insert: {
+          id?: string
+          first_name: string
+          last_name: string
+          email: string
+          phone?: string | null
+          company?: string | null
+          country?: string | null
+          language?: string | null
+          password_hash?: string | null
+          agree_to_terms?: boolean
+          agree_to_marketing?: boolean
+          trading_experience_signup?: string | null
+          trading_goals_signup?: string | null
+          risk_tolerance_signup?: string | null
+          preferred_markets?: string | null
+          trading_style?: string | null
+          status?: string
+          membership_tier?: string | null
+          account_type?: string | null
+          setup_complete?: boolean
+          is_temporary?: boolean
+          unique_id?: string | null
+          token?: string | null
+          selected_plan?: any | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          first_name?: string
+          last_name?: string
+          email?: string
+          phone?: string | null
+          company?: string | null
+          country?: string | null
+          language?: string | null
+          password_hash?: string | null
+          agree_to_terms?: boolean
+          agree_to_marketing?: boolean
+          trading_experience_signup?: string | null
+          trading_goals_signup?: string | null
+          risk_tolerance_signup?: string | null
+          preferred_markets?: string | null
+          trading_style?: string | null
+          status?: string
+          membership_tier?: string | null
+          account_type?: string | null
+          setup_complete?: boolean
+          is_temporary?: boolean
+          unique_id?: string | null
+          token?: string | null
+          selected_plan?: any | null
+          created_at?: string
+          updated_at?: string
+        }
       },
       "payment details": {
         Row: {
@@ -130,92 +186,6 @@ export interface Database {
           company?: string | null
           phone?: string | null
           payment_data?: any | null
-          created_at?: string
-          updated_at?: string
-        }
-      },
-      "User details": {
-        Row: {
-          id: string
-          first_name: string
-          last_name: string
-          email: string
-          phone: string | null
-          company: string | null
-          country: string | null
-          language: string | null
-          password_hash: string | null
-          agree_to_terms: boolean
-          agree_to_marketing: boolean
-          trading_experience_signup: string | null
-          trading_goals_signup: string | null
-          risk_tolerance_signup: string | null
-          preferred_markets: string | null
-          trading_style: string | null
-          status: string
-          membership_tier: string | null
-          account_type: string | null
-          setup_complete: boolean
-          is_temporary: boolean
-          unique_id: string | null
-          token: string | null
-          selected_plan: any | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          first_name: string
-          last_name: string
-          email: string
-          phone?: string | null
-          company?: string | null
-          country?: string | null
-          language?: string | null
-          password_hash?: string | null
-          agree_to_terms?: boolean
-          agree_to_marketing?: boolean
-          trading_experience_signup?: string | null
-          trading_goals_signup?: string | null
-          risk_tolerance_signup?: string | null
-          preferred_markets?: string | null
-          trading_style?: string | null
-          status?: string
-          membership_tier?: string | null
-          account_type?: string | null
-          setup_complete?: boolean
-          is_temporary?: boolean
-          unique_id?: string | null
-          token?: string | null
-          selected_plan?: any | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          first_name?: string
-          last_name?: string
-          email?: string
-          phone?: string | null
-          company?: string | null
-          country?: string | null
-          language?: string | null
-          password_hash?: string | null
-          agree_to_terms?: boolean
-          agree_to_marketing?: boolean
-          trading_experience_signup?: string | null
-          trading_goals_signup?: string | null
-          risk_tolerance_signup?: string | null
-          preferred_markets?: string | null
-          trading_style?: string | null
-          status?: string
-          membership_tier?: string | null
-          account_type?: string | null
-          setup_complete?: boolean
-          is_temporary?: boolean
-          unique_id?: string | null
-          token?: string | null
-          selected_plan?: any | null
           created_at?: string
           updated_at?: string
         }
@@ -363,6 +333,265 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+      },
+      "questionnaire details": {
+        Row: {
+          id: string
+          user_id: string
+          user_email: string
+          user_name: string
+          trades_per_day: string
+          max_trades_per_day: number
+          trading_session: string
+          session_recommendation: string
+          prop_firm: string
+          account_type: string
+          has_account: string
+          account_equity: number
+          account_number: string | null
+          account_screenshot: string | null
+          screenshot_filename: string | null
+          screenshot_size: number | null
+          screenshot_type: string | null
+          crypto_assets: string[]
+          forex_assets: string[]
+          daily_profit_target: number
+          daily_risk_amount: number
+          estimated_days_to_pass: number
+          trade_by_trade_plan: any | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          user_email: string
+          user_name: string
+          trades_per_day: string
+          max_trades_per_day: number
+          trading_session: string
+          session_recommendation: string
+          prop_firm: string
+          account_type: string
+          has_account: string
+          account_equity: number
+          account_number?: string | null
+          account_screenshot?: string | null
+          screenshot_filename?: string | null
+          screenshot_size?: number | null
+          screenshot_type?: string | null
+          crypto_assets: string[]
+          forex_assets: string[]
+          daily_profit_target: number
+          daily_risk_amount: number
+          estimated_days_to_pass: number
+          trade_by_trade_plan?: any | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          user_email?: string
+          user_name?: string
+          trades_per_day?: string
+          max_trades_per_day?: number
+          trading_session?: string
+          session_recommendation?: string
+          prop_firm?: string
+          account_type?: string
+          has_account?: string
+          account_equity?: number
+          account_number?: string | null
+          account_screenshot?: string | null
+          screenshot_filename?: string | null
+          screenshot_size?: number | null
+          screenshot_type?: string | null
+          crypto_assets?: string[]
+          forex_assets?: string[]
+          daily_profit_target?: number
+          daily_risk_amount?: number
+          estimated_days_to_pass?: number
+          trade_by_trade_plan?: any | null
+          created_at?: string
+          updated_at?: string
+        }
+      },
+      "user dashboard": {
+        Row: {
+          id: string
+          user_id: string
+          user_email: string
+          user_name: string
+          prop_firm: string | null
+          account_type: string | null
+          account_size: number | null
+          risk_per_trade: number | null
+          experience: string | null
+          unique_id: string | null
+          account_balance: number | null
+          total_pnl: number
+          win_rate: number
+          total_trades: number
+          winning_trades: number
+          losing_trades: number
+          average_win: number
+          average_loss: number
+          profit_factor: number
+          max_drawdown: number
+          current_drawdown: number
+          gross_profit: number
+          gross_loss: number
+          consecutive_wins: number
+          consecutive_losses: number
+          sharpe_ratio: number | null
+          max_daily_risk: number | null
+          risk_per_trade_amount: number | null
+          max_drawdown_limit: number | null
+          initial_equity: number | null
+          current_equity: number | null
+          daily_pnl: number
+          daily_trades: number
+          daily_initial_equity: number | null
+          risk_per_trade_percentage: number | null
+          daily_loss_limit: number | null
+          consecutive_losses_limit: number | null
+          selected_theme: string
+          notifications_enabled: boolean
+          auto_refresh: boolean
+          refresh_interval: number
+          language: string
+          timezone: string
+          real_time_data: any | null
+          last_signal: any | null
+          market_status: string
+          connection_status: string
+          open_positions: any[]
+          trade_history: any[]
+          signals: any[]
+          dashboard_layout: any | null
+          widget_settings: any | null
+          alert_settings: any | null
+          last_activity: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          user_email: string
+          user_name: string
+          prop_firm?: string | null
+          account_type?: string | null
+          account_size?: number | null
+          risk_per_trade?: number | null
+          experience?: string | null
+          unique_id?: string | null
+          account_balance?: number | null
+          total_pnl?: number
+          win_rate?: number
+          total_trades?: number
+          winning_trades?: number
+          losing_trades?: number
+          average_win?: number
+          average_loss?: number
+          profit_factor?: number
+          max_drawdown?: number
+          current_drawdown?: number
+          gross_profit?: number
+          gross_loss?: number
+          consecutive_wins?: number
+          consecutive_losses?: number
+          sharpe_ratio?: number | null
+          max_daily_risk?: number | null
+          risk_per_trade_amount?: number | null
+          max_drawdown_limit?: number | null
+          initial_equity?: number | null
+          current_equity?: number | null
+          daily_pnl?: number
+          daily_trades?: number
+          daily_initial_equity?: number | null
+          risk_per_trade_percentage?: number | null
+          daily_loss_limit?: number | null
+          consecutive_losses_limit?: number | null
+          selected_theme?: string
+          notifications_enabled?: boolean
+          auto_refresh?: boolean
+          refresh_interval?: number
+          language?: string
+          timezone?: string
+          real_time_data?: any | null
+          last_signal?: any | null
+          market_status?: string
+          connection_status?: string
+          open_positions?: any[]
+          trade_history?: any[]
+          signals?: any[]
+          dashboard_layout?: any | null
+          widget_settings?: any | null
+          alert_settings?: any | null
+          last_activity?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          user_email?: string
+          user_name?: string
+          prop_firm?: string | null
+          account_type?: string | null
+          account_size?: number | null
+          risk_per_trade?: number | null
+          experience?: string | null
+          unique_id?: string | null
+          account_balance?: number | null
+          total_pnl?: number
+          win_rate?: number
+          total_trades?: number
+          winning_trades?: number
+          losing_trades?: number
+          average_win?: number
+          average_loss?: number
+          profit_factor?: number
+          max_drawdown?: number
+          current_drawdown?: number
+          gross_profit?: number
+          gross_loss?: number
+          consecutive_wins?: number
+          consecutive_losses?: number
+          sharpe_ratio?: number | null
+          max_daily_risk?: number | null
+          risk_per_trade_amount?: number | null
+          max_drawdown_limit?: number | null
+          initial_equity?: number | null
+          current_equity?: number | null
+          daily_pnl?: number
+          daily_trades?: number
+          daily_initial_equity?: number | null
+          risk_per_trade_percentage?: number | null
+          daily_loss_limit?: number | null
+          consecutive_losses_limit?: number | null
+          selected_theme?: string
+          notifications_enabled?: boolean
+          auto_refresh?: boolean
+          refresh_interval?: number
+          language?: string
+          timezone?: string
+          real_time_data?: any | null
+          last_signal?: any | null
+          market_status?: string
+          connection_status?: string
+          open_positions?: any[]
+          trade_history?: any[]
+          signals?: any[]
+          dashboard_layout?: any | null
+          widget_settings?: any | null
+          alert_settings?: any | null
+          last_activity?: string
+          created_at?: string
+          updated_at?: string
+        }
       }
     }
   }
@@ -374,6 +603,8 @@ export type PaymentDetails = Database['public']['Tables']['payment details']['Ro
 export type User = Database['public']['Tables']['users']['Row']
 export type QuestionnaireResponse = Database['public']['Tables']['questionnaire_responses']['Row']
 export type RiskManagementPlan = Database['public']['Tables']['risk_management_plans']['Row']
+export type QuestionnaireDetails = Database['public']['Tables']['questionnaire details']['Row']
+export type UserDashboard = Database['public']['Tables']['user dashboard']['Row']
 
 // API functions
 export const supabaseApi = {
