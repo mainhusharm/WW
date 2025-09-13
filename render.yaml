@@ -25,7 +25,7 @@ services:
     env: python3
     plan: starter
     buildCommand: pip install -r requirements-cors-proxy.txt
-    startCommand: python src/cors_proxy.py
+    startCommand: python cors_proxy.py
     envVars:
       - key: BACKEND_URL
         value: https://backend-gbhz.onrender.com
