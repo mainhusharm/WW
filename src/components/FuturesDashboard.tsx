@@ -49,7 +49,7 @@ const FUTURES_ASSETS = {
 
 const TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1d'];
 
-const FUTURES_SERVICE_URL = 'https://backend-gbhz.onrender.com';
+const FUTURES_SERVICE_URL = import.meta.env.DEV ? 'http://localhost:3001' : 'https://backend-qphz.onrender.com';
 
 // Real-time price simulation class
 class RealTimePriceSimulator {

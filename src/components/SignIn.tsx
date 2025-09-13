@@ -102,7 +102,7 @@ const SignIn = () => {
         }
       } else {
         // Try backend authentication
-        let apiEndpoint = 'https://backend-gbhz.onrender.com/api/auth/login';
+        let apiEndpoint = 'http://localhost:3001/api/auth/login';
         let response;
         let data;
         

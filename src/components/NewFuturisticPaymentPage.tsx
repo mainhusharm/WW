@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Lock, CreditCard, ArrowLeft, X, AlertTriangle, AlertCircle, Copy, CheckCircle, Zap, Sparkles, Shield, Cpu, Globe, Coins, Star } from 'lucide-react';
 // Stripe imports removed
-import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
+// PayPal imports removed
 import { PAYMENT_CONFIG } from '../config/payment';
 
 interface SelectedPlan {
@@ -124,80 +124,7 @@ const StripePaymentForm = ({
   );
 };
 
-// PayPal Payment Component
-const PayPalPaymentForm = ({ 
-  amount, 
-  onSuccess, 
-  onError, 
-  disabled 
-}: { 
-  amount: number; 
-  onSuccess: (paymentData: any) => void; 
-  onError: (error: string) => void;
-  disabled: boolean;
-}) => {
-  const [{ isPending }] = usePayPalScriptReducer();
-
-  const createOrder = (data: any, actions: any) => {
-    return actions.order.create({
-      purchase_units: [
-        {
-          amount: {
-            value: amount.toFixed(2),
-            currency_code: 'USD',
-          },
-        },
-      ],
-    });
-  };
-
-  const onApprove = async (data: any, actions: any) => {
-    try {
-      // Capture the PayPal payment
-      const details = await actions.order.capture();
-      
-      onSuccess({
-        method: 'paypal',
-        amount: amount,
-        paymentId: `paypal_${details.id}`,
-        status: 'COMPLETED',
-        timestamp: new Date().toISOString(),
-        payerEmail: details.payer?.email_address || 'unknown@example.com',
-        orderId: details.id,
-      });
-    } catch (error) {
-      onError('PayPal payment capture failed');
-    }
-  };
-
-  const onPayPalError = (err: any) => {
-    onError('PayPal payment failed');
-  };
-
-  if (isPending) {
-    return <div className="text-center py-4 text-white">Loading PayPal...</div>;
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="text-white text-sm mb-4">
-        Amount: ${amount.toFixed(2)}
-      </div>
-      <PayPalButtons
-        createOrder={createOrder}
-        onApprove={onApprove}
-        onError={onPayPalError}
-        disabled={disabled}
-        style={{
-          layout: 'vertical',
-          color: 'blue',
-          shape: 'rect',
-          label: 'paypal',
-        }}
-      />
-    </div>
-  );
-};
+// PayPal Payment Component removed
 
 export default function NewFuturisticPaymentPage() {
   const navigate = useNavigate();
@@ -209,7 +136,7 @@ export default function NewFuturisticPaymentPage() {
   const [couponMessage, setCouponMessage] = useState('');
   const [discount, setDiscount] = useState(0);
   const [finalPrice, setFinalPrice] = useState(0);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('paypal');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('stripe');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState('');
 
@@ -549,36 +476,7 @@ export default function NewFuturisticPaymentPage() {
 
                 {/* Payment Method Selection */}
                 <div className="space-y-4 mb-8">
-                  {/* PayPal */}
-                  <div
-                    className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 group ${
-                      selectedPaymentMethod === 'paypal'
-                        ? 'border-cyan-400 bg-cyan-500/20 shadow-lg shadow-cyan-500/20'
-                        : 'border-purple-400/30 hover:border-cyan-400/50 hover:bg-purple-500/10'
-                    }`}
-                    onClick={() => handlePaymentMethodSelect('paypal')}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                          <span className="text-white font-bold text-sm">PP</span>
-                        </div>
-                        <div>
-                          <div className="text-white font-bold text-lg">PayPal</div>
-                          <div className="text-cyan-200 text-sm">Pay with your PayPal account</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="text-cyan-200 text-sm mr-3">No additional fees</span>
-                        {selectedPaymentMethod === 'paypal' && (
-                          <div className="w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center">
-                            <Check className="w-4 h-4 text-black" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  {/* PayPal removed */}
 
                   {/* Stripe */}
                   <div
@@ -646,29 +544,7 @@ export default function NewFuturisticPaymentPage() {
                 {/* Payment Forms */}
                 {finalPrice > 0 && (
                   <div className="mb-8">
-                    {selectedPaymentMethod === 'paypal' && (
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-xl blur-sm"></div>
-                        <div className="relative bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-cyan-400/30">
-                          <h3 className="text-white font-bold text-lg mb-4 flex items-center">
-                            <Globe className="w-5 h-5 mr-2 text-cyan-400" />
-                            PayPal Payment
-                          </h3>
-                          <PayPalScriptProvider options={{
-                            clientId: PAYMENT_CONFIG.paypal.clientId,
-                            currency: PAYMENT_CONFIG.paypal.currency,
-                            intent: 'capture',
-                          }}>
-                            <PayPalPaymentForm
-                              amount={finalPrice}
-                              onSuccess={handlePaymentSuccess}
-                              onError={handlePaymentError}
-                              disabled={paymentProcessing}
-                            />
-                          </PayPalScriptProvider>
-                        </div>
-                      </div>
-                    )}
+                    {/* PayPal payment form removed */}
 
                     {selectedPaymentMethod === 'stripe' && (
                       <div className="relative">

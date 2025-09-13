@@ -31,12 +31,12 @@ export const getApiBaseUrl = () => {
   // If we're in production and origin is not allowed, use a different approach
   if (import.meta.env.PROD && !isOriginAllowed()) {
     // Use working backend
-    return 'https://backend-gbhz.onrender.com';
+    return 'http://localhost:3001';
   }
   
   // Default to the configured URL
   return import.meta.env.PROD 
-    ? 'https://backend-gbhz.onrender.com'
+    ? 'http://localhost:3001'
     : 'http://localhost:3001';
 };
 
@@ -70,8 +70,8 @@ export const makeCorsSafeRequest = async (url: string, options: RequestInit = {}
 export const getAlternativeApiUrl = () => {
   // Try different backend URLs that might work
   const alternatives = [
-    'https://backend-gbhz.onrender.com',
-    'https://backend-gbhz.onrender.com',
+    'http://localhost:3001',
+    'http://localhost:3001',
     'https://trading-platform-api.onrender.com'
   ];
   

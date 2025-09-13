@@ -21,7 +21,7 @@ class ProductionApiClient {
 
   constructor() {
     // Use direct API calls in production instead of CORS proxies
-    this.baseUrl = 'https://backend-gbhz.onrender.com';
+    this.baseUrl = 'http://localhost:3001';
     this.timeout = 10000; // 10 seconds
   }
 

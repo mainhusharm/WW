@@ -1,14 +1,14 @@
 export const config = {
   // API Configuration
   api: {
-    baseUrl: import.meta.env.VITE_API_URL || 'https://backend-gbhz.onrender.com',
+    baseUrl: import.meta.env.VITE_API_URL || 'https://backend-qphz.onrender.com',
     timeout: 30000,
     retries: 3,
   },
 
   // Forex Service Configuration
   forex: {
-    baseUrl: import.meta.env.VITE_API_URL || 'https://backend-gbhz.onrender.com',
+    baseUrl: import.meta.env.VITE_API_URL || 'https://backend-qphz.onrender.com',
     refreshInterval: 5000,
     maxSymbols: 20,
   },

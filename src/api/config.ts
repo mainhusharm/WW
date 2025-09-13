@@ -7,7 +7,7 @@ export const ENV_CONFIG = {
   isAmplify: window.location.hostname.includes('amplifyapp.com'),
   isRender: window.location.hostname.includes('onrender.com'),
   apiBaseUrl: import.meta.env.PROD
-    ? 'https://backend-gbhz.onrender.com'
+    ? 'https://backend-qphz.onrender.com'
     : 'http://localhost:3001',
   yfinanceServiceUrl: 'https://yfinance-service-kyce.onrender.com', // Use working yfinance service
   binanceServiceUrl: 'https://binance-service.onrender.com',
@@ -43,7 +43,7 @@ export const API_CONFIG = {
   binanceServiceUrl: 'https://binance-service.onrender.com',
 
   // Customer service
-  customerServiceUrl: import.meta.env.DEV ? 'http://localhost:3001' : 'https://backend-gbhz.onrender.com',
+  customerServiceUrl: import.meta.env.DEV ? 'http://localhost:3001' : 'https://backend-qphz.onrender.com',
 
   // Telegram service
   telegramServiceUrl: 'https://yfinance-service-kyce.onrender.com/api/telegram',

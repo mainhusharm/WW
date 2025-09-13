@@ -41,8 +41,7 @@ api.interceptors.request.use(
       
       // Add CORS mode for development
       if (config.method === 'post' || config.method === 'put' || config.method === 'patch') {
-        config.headers['Access-Control-Request-Method'] = config.method.toUpperCase();
-        config.headers['Access-Control-Request-Headers'] = 'Content-Type, Authorization';
+        // Remove unsafe headers - these are automatically handled by the browser
       }
     }
     

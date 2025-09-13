@@ -3,16 +3,26 @@ import { createClient } from '@supabase/supabase-js'
 // Supabase configuration with validation
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://bgejxnkyzjamroeikfkr.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZWp4bmt5emphbXJvZWlrZmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5MzMxODYsImV4cCI6MjA3MTUwOTE4Nn0.BkU0y7VH6FNgSi4bCBA2gnrFXRI_37Gowv6r2SU6aPk'
+const isSupabaseDisabled = import.meta.env.VITE_DISABLE_SUPABASE === 'true'
 
 // Validate configuration
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Missing Supabase configuration');
 }
 
+if (isSupabaseDisabled) {
+  console.log('⚠️ Supabase is disabled in development mode');
+}
+
 // Create Supabase client with robust error handling and production safeguards
 let supabase: any = null;
 
 try {
+  // If Supabase is disabled, create a mock client immediately
+  if (isSupabaseDisabled) {
+    throw new Error('Supabase disabled in development');
+  }
+  
   supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,
@@ -75,9 +85,10 @@ try {
 
 export { supabase };
 
-// Safe connection test with timeout
-if (typeof window !== 'undefined' && supabase) {
-  // Wait for DOM to be ready before testing connection
+// Disable automatic connection test in development to prevent 401 errors
+// The app will gracefully handle Supabase errors when needed
+if (typeof window !== 'undefined' && supabase && import.meta.env.PROD) {
+  // Only test connection in production
   const testConnection = () => {
     try {
       const connectionTest = Promise.race([
@@ -101,7 +112,7 @@ if (typeof window !== 'undefined' && supabase) {
     }
   };
 
-  // Test connection when DOM is ready
+  // Test connection when DOM is ready (production only)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', testConnection);
   } else {

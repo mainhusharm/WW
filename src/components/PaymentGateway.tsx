@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+// PayPal imports removed
 import { Bitcoin, Shield, Loader, CreditCard } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import api from '../api';
@@ -11,13 +11,13 @@ interface PaymentGatewayProps {
 
 const PaymentGateway: React.FC<PaymentGatewayProps> = ({ onPaymentSuccess, onPaymentError }) => {
   const { user } = useUser();
-  const [selectedMethod, setSelectedMethod] = useState<'paypal' | 'coingate'>('paypal');
+  const [selectedMethod, setSelectedMethod] = useState<'coingate'>('coingate');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(99);
   const [currency, setCurrency] = useState('USD');
   const [transactionHash, setTransactionHash] = useState('');
 
-  const CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID;
+  // PayPal CLIENT_ID removed
 
   const processCoinGatePayment = async () => {
     setIsProcessing(true);
@@ -45,34 +45,19 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({ onPaymentSuccess, onPay
     if (selectedMethod === 'coingate') {
       processCoinGatePayment();
     }
-    // For PayPal, the button itself handles the payment flow.
+    // PayPal payment flow removed
   };
 
   return (
-    <PayPalScriptProvider options={{ "clientId": CLIENT_ID, currency: currency }}>
-      <div className="max-w-2xl mx-auto p-6">
-        <div className="bg-gray-800 rounded-2xl border border-gray-700 p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Secure Payment</h2>
-            <p className="text-gray-400">Choose your preferred payment method</p>
-          </div>
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="bg-gray-800 rounded-2xl border border-gray-700 p-8">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white mb-2">Secure Payment</h2>
+          <p className="text-gray-400">Choose your preferred payment method</p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <button
-              onClick={() => setSelectedMethod('paypal')}
-              className={`p-6 rounded-xl border-2 transition-all ${
-                selectedMethod === 'paypal'
-                  ? 'border-blue-500 bg-blue-500/20'
-                  : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
-              }`}
-            >
-              <div className="flex items-center justify-center space-x-3 mb-4">
-                <CreditCard className={`w-8 h-8 ${selectedMethod === 'paypal' ? 'text-blue-400' : 'text-gray-400'}`} />
-                <span className="text-white font-semibold text-lg">PayPal</span>
-              </div>
-              <p className="text-sm text-gray-400 mb-2">Pay with your PayPal account</p>
-              <p className="text-xs text-gray-500">No additional fees</p>
-            </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          {/* PayPal option removed */}
             <button
               onClick={() => setSelectedMethod('coingate')}
               className={`p-6 rounded-xl border-2 transition-all ${
@@ -121,13 +106,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({ onPaymentSuccess, onPay
           </div>
 
           {/* Payment Details */}
-          {selectedMethod === 'paypal' && (
-            <div className="mb-8 p-4 bg-blue-600/20 border border-blue-600 rounded-lg">
-              <p className="text-sm text-gray-300 text-center">
-                You'll be redirected to PayPal to complete your payment.
-              </p>
-            </div>
-          )}
+          {/* PayPal payment details removed */}
           {selectedMethod === 'coingate' && (
             <div className="mb-8 p-4 bg-orange-600/20 border border-orange-600 rounded-lg">
               <div className="flex items-center space-x-2 text-orange-400 mb-2">
@@ -160,38 +139,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({ onPaymentSuccess, onPay
             </p>
           </div>
           {/* Payment Button */}
-          {selectedMethod === 'paypal' && (
-            <PayPalButtons
-              style={{ layout: "horizontal" }}
-              createOrder={(data, actions) => {
-                return actions.order.create({
-                  intent: 'CAPTURE',
-                  purchase_units: [{
-                    amount: {
-                      value: paymentAmount.toString(),
-                      currency_code: currency,
-                    },
-                  }],
-                });
-              }}
-              onApprove={(data, actions) => {
-                if (actions.order) {
-                  return actions.order.capture().then((details) => {
-                    onPaymentSuccess({
-                      paymentId: details.id,
-                      method: 'PayPal',
-                      amount: paymentAmount,
-                      currency,
-                    });
-                  });
-                }
-                return Promise.resolve();
-              }}
-              onError={(err) => {
-                onPaymentError("PayPal transaction failed.");
-              }}
-            />
-          )}
+          {/* PayPal payment button removed */}
           {selectedMethod === 'coingate' && (
             <button
               onClick={handlePayment}
@@ -218,7 +166,7 @@ const PaymentGateway: React.FC<PaymentGatewayProps> = ({ onPaymentSuccess, onPay
           </div>
         </div>
       </div>
-    </PayPalScriptProvider>
+    </div>
   );
 };
 

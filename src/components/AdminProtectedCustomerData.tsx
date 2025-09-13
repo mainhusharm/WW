@@ -143,7 +143,7 @@ const AdminProtectedCustomerData: React.FC = () => {
       console.log('📊 Fetching customer data from PostgreSQL database...');
       
       // Fetch customer data from the new enhanced API
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://backend-gbhz.onrender.com';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
       
       // First test if backend is available
       const healthResponse = await fetch(`${apiUrl}/health`, {
@@ -194,7 +194,7 @@ const AdminProtectedCustomerData: React.FC = () => {
       console.log('📊 Fetching system statistics from PostgreSQL database...');
       
       // Fetch stats from the new enhanced API
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://backend-gbhz.onrender.com';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/stats`, {
         method: 'GET',
         headers: {

@@ -22,10 +22,10 @@ async function testPaymentFixed() {
       discount_amount: '0',
       final_price: 1299,
       coupon_code: null,
-      payment_method: 'paypal',
+      payment_method: 'stripe',
       payment_status: 'completed',
-      transaction_id: 'PAYPAL-123456',
-      payment_processor: 'PayPal',
+      transaction_id: 'STRIPE-123456',
+      payment_processor: 'Stripe',
       // Required fields for the table with unique values
       crypto_transaction_hash: `NON-CRYPTO-${Date.now()}`,
       crypto_from_address: 'N/A',

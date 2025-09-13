@@ -20,7 +20,7 @@ interface PaymentIntegrationProps {
 }
 
 const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPaymentComplete }) => {
-  const [selectedMethod, setSelectedMethod] = useState('paypal');
+  const [selectedMethod, setSelectedMethod] = useState('crypto');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const [debugInfo, setDebugInfo] = useState('');
@@ -38,14 +38,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
   const [discountAmount, setDiscountAmount] = useState(0);
 
   const paymentMethods = [
-    {
-      id: 'paypal',
-      name: 'PayPal',
-      icon: <Shield className="w-6 h-6" />,
-      description: 'Pay with your PayPal account',
-      fees: 'No additional fees',
-      enabled: true
-    },
+    // PayPal removed
     // Stripe removed
     {
       id: 'crypto',
@@ -75,7 +68,7 @@ const CheckoutForm: React.FC<PaymentIntegrationProps> = ({ selectedPlan, onPayme
         apiEndpoint = '/api/validate-coupon';
       } else {
         // Production - call the backend directly
-        apiEndpoint = 'https://backend-gbhz.onrender.com/api/validate-coupon';
+        apiEndpoint = 'http://localhost:3001/api/validate-coupon';
       }
 
       console.log(`Calling API endpoint: ${apiEndpoint}`);

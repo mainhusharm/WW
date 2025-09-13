@@ -71,9 +71,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           if (questionnaireAnswers) {
             try {
               const answers = JSON.parse(questionnaireAnswers);
-              // Ensure account size is stored as exact number without rounding
-              tradingData = {
-                propFirm: answers.propFirm || '',
+              // Check if answers is valid and has required properties
+              if (answers && typeof answers === 'object') {
+                // Ensure account size is stored as exact number without rounding
+                tradingData = {
+                  propFirm: answers.propFirm || '',
                 accountType: answers.accountType || '',
                 accountSize: String(answers.accountSize), // Keep as string to preserve exact value
                 riskPerTrade: String(answers.riskPercentage || 1),
@@ -86,9 +88,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 tradingExperience: answers.tradingExperience || 'intermediate'
               };
               
-              // Also update the user's stored data with the questionnaire data
-              parsedUser.tradingData = tradingData;
-              console.log('Loaded questionnaire data for user:', tradingData);
+                // Also update the user's stored data with the questionnaire data
+                parsedUser.tradingData = tradingData;
+                console.log('Loaded questionnaire data for user:', tradingData);
+              }
             } catch (parseError) {
               console.warn('Could not parse questionnaire answers:', parseError);
             }

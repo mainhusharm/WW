@@ -47,24 +47,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept']
 }));
 
-// Add CORS preflight handler
-app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Origin, Accept');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '3600');
-  res.sendStatus(200);
-});
-
-// Add after_request handler for CORS
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Origin, Accept');
-  next();
-});
+// CORS is handled by the cors middleware above, no need for manual headers
 
 app.use(express.json());
 
@@ -497,149 +480,7 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
   }
 });
 
-// PayPal Order Creation
-app.post('/api/payment/paypal/create-order', async (req, res) => {
-  try {
-    const { amount, currency = 'USD', plan_name = 'Trading Plan', coupon_code = '' } = req.body;
-    
-    if (!amount) {
-      return res.status(400).json({ error: 'Amount is required' });
-    }
-
-    // PayPal configuration
-    const paypalClientId = process.env.PAYPAL_CLIENT_ID || process.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tprIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW';
-    const paypalClientSecret = process.env.PAYPAL_CLIENT_SECRET || process.env.VITE_PAYPAL_CLIENT_SECRET || 'EK3TSSwjQny6zybyX5Svwokawg9dhq1MdJd_AzpRanhaGrxLx0P6eqpWKewkVzINe2vpVRZFz4u9g-qr';
-    const paypalBaseUrl = 'https://api.sandbox.paypal.com';
-
-    // Get PayPal access token
-    const tokenResponse = await fetch(`${paypalBaseUrl}/v1/oauth2/token`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Accept-Language': 'en_US',
-        'Authorization': `Basic ${Buffer.from(`${paypalClientId}:${paypalClientSecret}`).toString('base64')}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'grant_type=client_credentials'
-    });
-
-    if (!tokenResponse.ok) {
-      throw new Error('Failed to get PayPal access token');
-    }
-
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.access_token;
-
-    // Create PayPal order
-    const orderData = {
-      intent: 'CAPTURE',
-      purchase_units: [{
-        description: `${plan_name}${coupon_code ? ` (Coupon: ${coupon_code})` : ''}`,
-        amount: {
-          currency_code: currency,
-          value: amount.toString()
-        }
-      }],
-      application_context: {
-        return_url: 'https://www.traderedgepro.com/payment-success',
-        cancel_url: 'https://www.traderedgepro.com/payment-cancelled'
-      }
-    };
-
-    const orderResponse = await fetch(`${paypalBaseUrl}/v2/checkout/orders`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(orderData)
-    });
-
-    if (!orderResponse.ok) {
-      const errorText = await orderResponse.text();
-      throw new Error(`PayPal order creation failed: ${errorText}`);
-    }
-
-    const order = await orderResponse.json();
-    
-    res.json({
-      order_id: order.id,
-      status: order.status,
-      links: order.links
-    });
-  } catch (error) {
-    console.error('PayPal order creation error:', error);
-    res.status(500).json({ 
-      error: 'Failed to create PayPal order', 
-      details: error.message 
-    });
-  }
-});
-
-// PayPal Order Capture
-app.post('/api/payment/paypal/capture-order', async (req, res) => {
-  try {
-    const { orderId } = req.body;
-    
-    if (!orderId) {
-      return res.status(400).json({ error: 'Order ID is required' });
-    }
-
-    // PayPal configuration
-    const paypalClientId = process.env.PAYPAL_CLIENT_ID || process.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tprIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW';
-    const paypalClientSecret = process.env.PAYPAL_CLIENT_SECRET || process.env.VITE_PAYPAL_CLIENT_SECRET || 'EK3TSSwjQny6zybyX5Svwokawg9dhq1MdJd_AzpRanhaGrxLx0P6eqpWKewkVzINe2vpVRZFz4u9g-qr';
-    const paypalBaseUrl = 'https://api.sandbox.paypal.com';
-
-    // Get PayPal access token
-    const tokenResponse = await fetch(`${paypalBaseUrl}/v1/oauth2/token`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Accept-Language': 'en_US',
-        'Authorization': `Basic ${Buffer.from(`${paypalClientId}:${paypalClientSecret}`).toString('base64')}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'grant_type=client_credentials'
-    });
-
-    if (!tokenResponse.ok) {
-      throw new Error('Failed to get PayPal access token');
-    }
-
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.access_token;
-
-    // Capture PayPal order
-    const captureResponse = await fetch(`${paypalBaseUrl}/v2/checkout/orders/${orderId}/capture`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!captureResponse.ok) {
-      const errorText = await captureResponse.text();
-      throw new Error(`PayPal order capture failed: ${errorText}`);
-    }
-
-    const captureData = await captureResponse.json();
-    
-    res.json({
-      order_id: captureData.id,
-      status: captureData.status,
-      payment_id: captureData.purchase_units[0].payments.captures[0].id,
-      amount: captureData.purchase_units[0].payments.captures[0].amount.value,
-      currency: captureData.purchase_units[0].payments.captures[0].amount.currency_code
-    });
-  } catch (error) {
-    console.error('PayPal order capture error:', error);
-    res.status(500).json({ 
-      error: 'Failed to capture PayPal order', 
-      details: error.message 
-    });
-  }
-});
+// PayPal routes removed
 
 // Update user status to COMPLETED after payment
 app.patch('/api/users/:userId/activate', async (req, res) => {
@@ -848,6 +689,71 @@ app.patch('/api/users/:id/status', async (req, res) => {
 });
 
 // Get user by ID endpoint
+// User profile endpoint
+app.get('/user/profile', async (req, res) => {
+  try {
+    // For now, return a default profile since we don't have authentication middleware
+    const defaultProfile = {
+      id: 'default_user',
+      email: 'user@example.com',
+      fullName: 'Default User',
+      membershipTier: 'basic',
+      setupComplete: true,
+      tradingData: null
+    };
+    
+    res.json(defaultProfile);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+// User progress endpoint
+app.post('/user/progress', async (req, res) => {
+  try {
+    const progressData = req.body;
+    
+    // For now, just acknowledge the save (since we don't have user authentication)
+    console.log('User progress saved:', progressData);
+    
+    res.json({ 
+      success: true, 
+      message: 'Progress saved successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error saving user progress:', error);
+    res.status(500).json({ error: 'Failed to save user progress' });
+  }
+});
+
+// Bulk API endpoint for futures data
+app.post('/api/bulk', async (req, res) => {
+  try {
+    const { symbols, timeframe } = req.body;
+    
+    // Mock futures data for development
+    const mockData = symbols.map(symbol => ({
+      symbol,
+      timeframe: timeframe || '1h',
+      price: (Math.random() * 1000 + 100).toFixed(2),
+      change: (Math.random() * 20 - 10).toFixed(2),
+      volume: Math.floor(Math.random() * 1000000),
+      timestamp: new Date().toISOString()
+    }));
+    
+    res.json({
+      success: true,
+      data: mockData,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching bulk data:', error);
+    res.status(500).json({ error: 'Failed to fetch bulk data' });
+  }
+});
+
 app.get('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;

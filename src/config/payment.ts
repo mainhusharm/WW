@@ -1,25 +1,34 @@
-// Payment configuration with environment variables - PayPal only
+// Payment configuration - Multiple providers
 export const PAYMENT_CONFIG = {
-  // Stripe removed
-  
-  // PayPal Configuration
-  paypal: {
-    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tprIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW',
-    secret: import.meta.env.VITE_PAYPAL_CLIENT_SECRET || 'EK3TSSwjQny6zybyX5Svwokawg9dhq1MdJd_AzpRanhaGrxLx0P6eqpWKewkVzINe2vpVRZFz4u9g-qr', // Only used on backend
+  // Stripe Configuration
+  stripe: {
+    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_stripe_key_here',                                                              
     currency: 'USD',
-    environment: 'sandbox' as const, // Change to 'live' for production
+  },
+
+  // Cryptomus Configuration
+  cryptomus: {
+    merchantId: import.meta.env.VITE_CRYPTOMUS_MERCHANT_ID || '',
+    currency: 'USD',
   },
   
   // Payment endpoints
-  // API Endpoints - PayPal only
   endpoints: {
-    paypal: {
-      createOrder: import.meta.env.PROD
-        ? 'https://www.traderedgepro.com/api/payment/paypal/create-order'
-        : 'http://localhost:3001/api/payment/paypal/create-order',
-      captureOrder: import.meta.env.PROD
-        ? 'https://www.traderedgepro.com/api/payment/paypal/capture-order'
-        : 'http://localhost:3001/api/payment/paypal/capture-order',
+    stripe: {
+      createPaymentIntent: import.meta.env.PROD
+        ? 'https://www.traderedgepro.com/api/payment/stripe/create-payment-intent'                                                                              
+        : 'http://localhost:3001/api/payment/stripe/create-payment-intent',
+    },
+    cryptomus: {
+      createInvoice: import.meta.env.PROD
+        ? 'https://www.traderedgepro.com/api/cryptomus/create-invoice'
+        : 'http://localhost:3001/api/cryptomus/create-invoice',
+      paymentInfo: import.meta.env.PROD
+        ? 'https://www.traderedgepro.com/api/cryptomus/payment-info'
+        : 'http://localhost:3001/api/cryptomus/payment-info',
+      services: import.meta.env.PROD
+        ? 'https://www.traderedgepro.com/api/cryptomus/services'
+        : 'http://localhost:3001/api/cryptomus/services',
     }
   },
   
@@ -29,22 +38,19 @@ export const PAYMENT_CONFIG = {
       name: 'Basic Plan',
       price: 29.99,
       features: ['Basic signals', 'Email support', 'Basic analytics'],
-      stripePriceId: 'price_basic_monthly',
-      paypalPlanId: 'P-BASIC-MONTHLY'
+      stripePriceId: 'price_basic_monthly'
     },
     pro: {
       name: 'Pro Plan',
       price: 79.99,
       features: ['Advanced signals', 'Priority support', 'Advanced analytics', 'Risk management'],
-      stripePriceId: 'price_pro_monthly',
-      paypalPlanId: 'P-PRO-MONTHLY'
+      stripePriceId: 'price_pro_monthly'
     },
     premium: {
       name: 'Premium Plan',
       price: 149.99,
       features: ['Premium signals', '24/7 support', 'AI coaching', 'Portfolio management'],
-      stripePriceId: 'price_premium_monthly',
-      paypalPlanId: 'P-PREMIUM-MONTHLY'
+      stripePriceId: 'price_premium_monthly'
     }
   }
 };

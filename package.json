@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.0.0",
-    "@paypal/react-paypal-js": "^8.0.0",
     "@prisma/client": "^5.7.0",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",

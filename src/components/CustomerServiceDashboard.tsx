@@ -114,7 +114,7 @@ export default function CustomerServiceDashboard() {
   const [userPayments, setUserPayments] = useState<Payment[]>([]);
 
   // Get API URL from environment variable - hardcoded for production fix
-  const API_BASE = 'https://backend-gbhz.onrender.com';
+  const API_BASE = 'http://localhost:3001';
   console.log('API_BASE URL:', API_BASE); // v2 - force deployment
 
   // Get current user from URL params or localStorage

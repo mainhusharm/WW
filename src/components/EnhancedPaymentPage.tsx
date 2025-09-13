@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Lock, CreditCard, ArrowLeft, X, AlertTriangle, AlertCircle, Copy, CheckCircle } from 'lucide-react';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+// PayPal imports removed
 import { supabaseApi } from '../lib/supabase';
+import CryptomusPayment from './CryptomusPayment';
 // Stripe imports removed
 
 interface SelectedPlan {
@@ -28,22 +29,18 @@ interface CouponResponse {
   error?: string;
 }
 
-// Payment Configuration - PayPal only
+// Payment Configuration - Stripe only
 const PAYMENT_CONFIG = {
-  paypal: {
-    clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tprIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW',
+  stripe: {
+    publishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_stripe_key_here',
     currency: 'USD',
-    environment: 'sandbox' as const, // Change to 'live' for production
   },
   // Use local backend for development
   endpoints: {
-    paypal: {
-      createOrder: import.meta.env.PROD
-        ? 'https://www.traderedgepro.com/api/payment/paypal/create-order'
-        : 'http://localhost:3001/api/payment/paypal/create-order',
-      captureOrder: import.meta.env.PROD
-        ? 'https://www.traderedgepro.com/api/payment/paypal/capture-order'
-        : 'http://localhost:3001/api/payment/paypal/capture-order',
+    stripe: {
+      createPaymentIntent: import.meta.env.PROD
+        ? 'https://www.traderedgepro.com/api/payment/stripe/create-payment-intent'
+        : 'http://localhost:3001/api/payment/stripe/create-payment-intent',
     }
   }
 };
@@ -118,7 +115,7 @@ export default function EnhancedPaymentPage() {
     setError(null);
 
     try {
-      const response = await fetch('https://backend-gbhz.onrender.com/api/validate-coupon', {
+      const response = await fetch('http://localhost:3001/api/validate-coupon', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -212,6 +209,9 @@ export default function EnhancedPaymentPage() {
         setShowPaymentForm(true);
         break;
       // Stripe removed
+      case 'cryptomus':
+        setShowPaymentForm(true);
+        break;
       case 'crypto':
         setShowCryptoVerification(true);
         break;
@@ -545,35 +545,36 @@ export default function EnhancedPaymentPage() {
 
             {/* Payment Options */}
             <div className="space-y-4 mb-6">
-              {/* PayPal */}
+              {/* PayPal removed */}
+              {/* Stripe removed */}
+
+              {/* Cryptomus */}
               <div
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  selectedPaymentMethod === 'paypal'
+                  selectedPaymentMethod === 'cryptomus'
                     ? 'border-blue-500 bg-blue-500/20'
                     : 'border-white/20 hover:border-white/40'
                 }`}
-                onClick={() => handlePaymentMethodSelect('paypal')}
+                onClick={() => handlePaymentMethodSelect('cryptomus')}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-3">
-                      <span className="text-white font-bold text-xs">PP</span>
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded flex items-center justify-center mr-3">
+                      <span className="text-white font-bold text-xs">₿</span>
                     </div>
                     <div>
-                      <div className="text-white font-medium">PayPal</div>
-                      <div className="text-white/70 text-sm">Pay with your PayPal account</div>
+                      <div className="text-white font-medium">Cryptomus</div>
+                      <div className="text-white/70 text-sm">BTC, USDT, ETH, BNB and more</div>
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-white/70 text-sm mr-2">No additional fees</span>
-                    {selectedPaymentMethod === 'paypal' && (
+                    <span className="text-white/70 text-sm mr-2">Instant verification</span>
+                    {selectedPaymentMethod === 'cryptomus' && (
                       <Check className="w-5 h-5 text-blue-400" />
                     )}
                   </div>
                 </div>
               </div>
-
-              {/* Stripe removed */}
 
               {/* Cryptocurrency */}
               <div
@@ -590,7 +591,7 @@ export default function EnhancedPaymentPage() {
                       <span className="text-white font-bold text-xs">₿</span>
                     </div>
                     <div>
-                      <div className="text-white font-medium">Cryptocurrency</div>
+                      <div className="text-white font-medium">Cryptocurrency (Legacy)</div>
                       <div className="text-white/70 text-sm">Ethereum (ETH), Solana (SOL)</div>
                     </div>
                   </div>
@@ -638,6 +639,27 @@ export default function EnhancedPaymentPage() {
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-200 mr-2"></div>
                   {paymentMessage}
                 </div>
+              </div>
+            )}
+
+            {/* Cryptomus Payment Form */}
+            {showPaymentForm && selectedPaymentMethod === 'cryptomus' && (
+              <div className="mb-6">
+                <h3 className="text-white font-semibold mb-4">Complete Crypto Payment</h3>
+                <CryptomusPayment
+                  amount={finalPrice}
+                  currency="USD"
+                  orderId={`order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`}
+                  customerEmail={userData.email}
+                  onSuccess={async (paymentData) => {
+                    console.log('Cryptomus payment successful', paymentData);
+                    await handlePaymentSuccess(paymentData);
+                  }}
+                  onError={(error) => {
+                    console.error('Cryptomus payment error:', error);
+                    handlePaymentError(error);
+                  }}
+                />
               </div>
             )}
 
