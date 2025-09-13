@@ -2,11 +2,11 @@
 services:
   # Backend API Service
   - type: web
-    name: trading-backend
+    name: flask-test-app
     env: python3
     plan: starter
     buildCommand: pip install Flask==2.2.2
-    startCommand: python3 minimal_app.py
+    startCommand: python3 simple_app.py
     envVars:
       - key: PORT
         value: 10000
