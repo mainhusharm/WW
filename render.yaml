@@ -18,11 +18,11 @@ services:
 
   # Backend API Service
   - type: web
-    name: trading-platform-api
+    name: backend
     env: python3
     plan: starter
-    buildCommand: pip install -r requirements-render.txt && python3 setup_backend_database.py
-    startCommand: gunicorn --worker-class eventlet -w 1 wsgi_socketio:application
+    buildCommand: cd journal && pip install -r requirements.txt
+    startCommand: cd journal && python run.py
     envVars:
       - key: DATABASE_URL
         value: postgresql://trading_platform_db_njpj_user:tojdQxxj9hFRoKJkZS9y6i4kziBtvXCV@dpg-d2v9i7er433s73f0878g-a.oregon-postgres.render.com/trading_platform_db_njpj
@@ -35,6 +35,19 @@ services:
       - key: PORT
         value: 10000
 
+  # Frontend API Proxy Service
+  - type: web
+    name: frontend-api-proxy
+    env: python3
+    plan: starter
+    buildCommand: pip install flask flask-cors requests
+    startCommand: python src/cors_proxy.py
+    envVars:
+      - key: BACKEND_URL
+        value: https://backend-gbhz.onrender.com
+      - key: PORT
+        value: 5001
+
   # Frontend Service
   - type: web
     name: trading-platform-frontend
@@ -44,6 +57,6 @@ services:
     startCommand: npm run start
     envVars:
       - key: VITE_API_URL
-        value: https://backend-gbhz.onrender.com
+        value: https://frontend-api-proxy-gbhz.onrender.com
       - key: NODE_ENV
         value: production
