@@ -4,7 +4,10 @@ WSGI Configuration for Socket.IO Support
 This file configures the Flask app with Socket.IO for production deployment
 """
 
-from app import app, socketio
+from journal import create_app, socketio
+
+# Create the Flask app
+app = create_app()
 
 # Export the Socket.IO WSGI app for gunicorn
 application = socketio.WSGIApp(socketio, app)
