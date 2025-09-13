@@ -2,7 +2,7 @@
 services:
   # Backend API Service
   - type: web
-    name: backend
+    name: trading-backend
     env: python3
     plan: starter
     buildCommand: pip install -r requirements.txt
@@ -21,26 +21,26 @@ services:
 
   # Frontend API Proxy Service
   - type: web
-    name: frontend-api-proxy
+    name: trading-cors-proxy
     env: python3
     plan: starter
     buildCommand: pip install -r requirements-cors-proxy.txt
     startCommand: python cors_proxy.py
     envVars:
       - key: BACKEND_URL
-        value: https://backend-gbhz.onrender.com
+        value: https://trading-backend-gbhz.onrender.com
       - key: PORT
         value: 5001
 
   # Frontend Service
   - type: web
-    name: trading-platform-frontend
+    name: trading-frontend
     env: node
     plan: starter
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     envVars:
       - key: VITE_API_URL
-        value: https://frontend-api-proxy-gbhz.onrender.com
+        value: https://trading-cors-proxy-gbhz.onrender.com
       - key: NODE_ENV
         value: production
