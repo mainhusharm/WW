@@ -21,8 +21,8 @@ services:
     name: backend
     env: python3
     plan: starter
-    buildCommand: pip install -r journal/requirements.txt
-    startCommand: gunicorn --worker-class eventlet -w 1 wsgi_socketio:application
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --worker-class eventlet -w 1 app:application
     envVars:
       - key: DATABASE_URL
         value: postgresql://trading_platform_db_njpj_user:tojdQxxj9hFRoKJkZS9y6i4kziBtvXCV@dpg-d2v9i7er433s73f0878g-a.oregon-postgres.render.com/trading_platform_db_njpj
