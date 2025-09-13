@@ -178,18 +178,44 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     }
   };
 
-  // Global error handler
+  // Enhanced global error handler for production environment
   useEffect(() => {
     const handleError = (error: ErrorEvent) => {
       console.error('Global error caught:', error);
+      
+      // Check for headers-related errors (common in production)
       if (error.message?.includes('Cannot read properties of undefined') || 
-          error.message?.includes('headers')) {
+          error.message?.includes('headers') ||
+          error.message?.includes('TypeError') ||
+          error.filename?.includes('index-') ||
+          error.filename?.includes('vendor-')) {
+        console.error('❌ Production headers error detected, switching to fallback');
         setCriticalError(true);
+        setSupabaseAvailable(false);
       }
     };
 
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      
+      // Check for Supabase-related errors
+      if (event.reason?.message?.includes('headers') ||
+          event.reason?.message?.includes('fetch') ||
+          event.reason?.message?.includes('network')) {
+        console.error('❌ Supabase network error detected, switching to fallback');
+        setSupabaseAvailable(false);
+        event.preventDefault(); // Prevent the error from crashing the app
+      }
+    };
+
+    // Add both error handlers
     window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
   }, []);
 
   // Check for consent on mount
@@ -265,13 +291,20 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         setIsLoading(true);
         const stateKey = `trading_state_${user.email}`;
         
-        // Try to load data from Supabase first
+        // Try to load data from Supabase first with enhanced error handling
         try {
           console.log('Loading dashboard data from Supabase...');
+          
+          // Check if supabaseApi is available and properly initialized
+          if (!supabaseApi || typeof supabaseApi.getUserDashboardByUserId !== 'function') {
+            throw new Error('Supabase API not properly initialized');
+          }
+          
           const supabasePromise = supabaseApi.getUserDashboardByUserId(user.id || user.email);
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Supabase timeout')), 5000)
+            setTimeout(() => reject(new Error('Supabase timeout')), 3000)
           );
+          
           const existingDashboard = await Promise.race([supabasePromise, timeoutPromise]);
           
           if (existingDashboard && existingDashboard.id) {

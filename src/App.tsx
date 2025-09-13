@@ -1,5 +1,6 @@
 import { useEffect, Suspense, Component, ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary';
 // Import CORS fix to apply it globally
 import './utils/corsFix';
 import LandingPage from './components/LandingPage';
@@ -193,17 +194,21 @@ const AppContent = () => {
         <Route
           path="/dashboard/:tab"
           element={
-            <ProtectedRoute>
-              <Dashboard onLogout={handleLogout} />
-            </ProtectedRoute>
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <Dashboard onLogout={handleLogout} />
+              </ProtectedRoute>
+            </ErrorBoundary>
           }
         />
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
-              <Dashboard onLogout={handleLogout} />
-            </ProtectedRoute>
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <Dashboard onLogout={handleLogout} />
+              </ProtectedRoute>
+            </ErrorBoundary>
           }
         />
         <Route path="/admin" element={<AdminMpinLogin />} />
