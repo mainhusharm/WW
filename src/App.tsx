@@ -121,6 +121,15 @@ class GlobalErrorBoundary extends Component<
   }
 }
 
+// Redirect component for root path
+const RootRedirect = () => {
+  useEffect(() => {
+    window.location.replace('/home');
+  }, []);
+  
+  return <div>Redirecting to home...</div>;
+};
+
 const AppContent = () => {
   const { logout: userLogout } = useUser();
   const { logout: adminLogout } = useAdmin();
@@ -162,7 +171,7 @@ const AppContent = () => {
     <div className="min-h-screen" style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}>
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/" element={<RootRedirect />} />
           <Route path="/home" element={<ProductionLandingPage />} />
           <Route path="/3d" element={<Enhanced3DLandingPage />} />
           <Route path="/classic" element={<LandingPage />} />
