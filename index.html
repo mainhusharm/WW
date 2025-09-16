@@ -8,9 +8,38 @@
     
     <!-- Immediate redirect for root path -->
     <script>
+      // More aggressive redirect logic
+      console.log('Current URL:', window.location.href);
+      console.log('Current pathname:', window.location.pathname);
+      console.log('Current hostname:', window.location.hostname);
+      
       // Check if we're on the root path and redirect immediately
-      if (window.location.pathname === '/' || window.location.pathname === '') {
-        window.location.replace('/home');
+      if (window.location.pathname === '/' || 
+          window.location.pathname === '' || 
+          window.location.href.endsWith('/') ||
+          window.location.href === window.location.origin) {
+        console.log('Redirecting to /home...');
+        // Try multiple redirect methods
+        try {
+          window.location.replace('/home');
+        } catch (e) {
+          console.log('Replace failed, trying href...');
+          window.location.href = '/home';
+        }
+      }
+    </script>
+    
+    <!-- Meta refresh as absolute fallback -->
+    <script>
+      // Add meta refresh only if on root path
+      if (window.location.pathname === '/' || 
+          window.location.pathname === '' || 
+          window.location.href.endsWith('/') ||
+          window.location.href === window.location.origin) {
+        const meta = document.createElement('meta');
+        meta.setAttribute('http-equiv', 'refresh');
+        meta.setAttribute('content', '0; url=/home');
+        document.head.appendChild(meta);
       }
     </script>
     <meta name="description" content="TraderEdge Pro - Professional Trading Signals Platform with AI-powered analysis and real-time market data" />
