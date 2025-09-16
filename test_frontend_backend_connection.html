@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend-Backend Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Frontend-Backend Connection Test</h1>
+    <p>This page tests the connection between your frontend and backend to debug signal flow issues.</p>
+    
+    <div id="results"></div>
+    
+    <button onclick="testBackendHealth()">Test Backend Health</button>
+    <button onclick="testSignalEndpoints()">Test Signal Endpoints</button>
+    <button onclick="testCreateSignal()">Test Create Signal</button>
+    <button onclick="testGetSignals()">Test Get Signals</button>
+    <button onclick="clearResults()">Clear Results</button>
+
+    <script>
+        const BACKEND_URL = 'https://backend-u4hy.onrender.com';
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+
+        async function testBackendHealth() {
+            addResult('🔍 Testing backend health...', 'info');
+            try {
+                const response = await fetch(`${BACKEND_URL}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Backend Health: ${response.status}<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ Backend Health Failed: ${response.status}<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Backend Health Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSignalEndpoints() {
+            addResult('🔍 Testing signal endpoints...', 'info');
+            
+            // Test GET /api/signals
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/signals`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ GET /api/signals: ${response.status}<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ GET /api/signals Failed: ${response.status}<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ GET /api/signals Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCreateSignal() {
+            addResult('🔍 Testing signal creation...', 'info');
+            
+            const testSignal = {
+                symbol: 'BTC/USD',
+                side: 'buy',
+                entry_price: 45000.0,
+                stop_loss: 44000.0,
+                take_profit: 46000.0,
+                risk_tier: 'medium',
+                analysis: 'Test signal from frontend connection test',
+                confidence: 85
+            };
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/signals`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testSignal)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ POST /api/signals: ${response.status}<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ POST /api/signals Failed: ${response.status}<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ POST /api/signals Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGetSignals() {
+            addResult('🔍 Testing signal retrieval...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/signals`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ GET /api/signals: ${response.status}<br>Found ${data.count || data.signals?.length || 0} signals<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                } else {
+                    addResult(`❌ GET /api/signals Failed: ${response.status}<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ GET /api/signals Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run health check on page load
+        window.onload = function() {
+            addResult('🚀 Frontend-Backend Connection Test Loaded', 'info');
+            testBackendHealth();
+        };
+    </script>
+</body>
+</html>

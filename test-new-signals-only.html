@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Signals Only Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        .critical { color: #ff6b6b; font-weight: bold; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        button.danger { background: #dc2626; }
+        button.danger:hover { background: #b91c1c; }
+        button.success { background: #059669; }
+        button.success:hover { background: #047857; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .signal-display {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .signal-item {
+            background: #2a2a2a;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #4ade80;
+        }
+        .signal-item.new {
+            border-left-color: #fbbf24;
+            background: #2a2a2a;
+        }
+        .signal-item.old {
+            border-left-color: #6b7280;
+            background: #1a1a1a;
+            opacity: 0.6;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.new { background: #fbbf24; }
+        .status-indicator.old { background: #6b7280; }
+        .admin-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .admin-links a {
+            color: #60a5fa;
+            text-decoration: none;
+            padding: 8px 12px;
+            border: 1px solid #60a5fa;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .admin-links a:hover {
+            background: #60a5fa;
+            color: #1a1a1a;
+        }
+    </style>
+</head>
+<body>
+    <h1>🆕 New Signals Only Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Clean Test Instructions:</h3>
+        <ol>
+            <li><strong>STEP 1:</strong> Click "🧹 CLEAR EVERYTHING" below to remove all old signals</li>
+            <li><strong>STEP 2:</strong> Click "🔄 Start Monitoring" to watch for new signals</li>
+            <li><strong>STEP 3:</strong> Go to admin dashboard and generate NEW signals</li>
+            <li><strong>STEP 4:</strong> Come back here and see ONLY the new signals</li>
+        </ol>
+        <p><strong>This test will only show signals generated AFTER you clear everything!</strong></p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button class="danger" onclick="clearEverything()">🧹 CLEAR EVERYTHING</button>
+        <button class="success" onclick="startMonitoring()">🔄 Start Monitoring</button>
+        <button onclick="stopMonitoring()">⏹️ Stop Monitoring</button>
+        <button onclick="checkNewSignals()">🔍 Check New Signals</button>
+        <button onclick="exportNewSignals()">📤 Export New Signals</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Admin Dashboard Links</h2>
+        <div class="admin-links">
+            <a href="http://localhost:5175/admin" target="_blank">Main Admin Dashboard</a>
+            <a href="http://localhost:5175/admin#forex" target="_blank">Forex Tab (Manual Signals)</a>
+            <a href="http://localhost:5175/admin#forex-data" target="_blank">Forex Data Tab (Real Analysis)</a>
+            <a href="http://localhost:5175/admin#crypto" target="_blank">Crypto Tab</a>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>New Signals (Generated After Clear)</h2>
+        <div id="newSignalsDisplay">
+            <div class="signal-item old">
+                <span class="status-indicator old"></span>
+                <strong>No new signals yet. Clear everything first, then generate new signals from admin dashboard.</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Monitoring Status</h2>
+        <div id="monitoringStatus">
+            <span class="status-indicator old"></span>
+            <span>Monitoring not started</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click "Start Monitoring" to begin tracking new signals</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let newSignalsDisplay = document.getElementById('newSignalsDisplay');
+        let monitoringStatus = document.getElementById('monitoringStatus');
+        let monitoringInterval = null;
+        let clearTimestamp = null;
+        let newSignals = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function updateMonitoringStatus(isActive) {
+            if (isActive) {
+                monitoringStatus.innerHTML = '<span class="status-indicator new"></span><span>🔄 Monitoring active - watching for new signals</span>';
+            } else {
+                monitoringStatus.innerHTML = '<span class="status-indicator old"></span><span>⏹️ Monitoring stopped</span>';
+            }
+        }
+        
+        function updateNewSignalsDisplay() {
+            if (newSignals.length === 0) {
+                newSignalsDisplay.innerHTML = `
+                    <div class="signal-item old">
+                        <span class="status-indicator old"></span>
+                        <strong>No new signals yet. Clear everything first, then generate new signals from admin dashboard.</strong>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `<h3>Found ${newSignals.length} NEW signals (generated after clear):</h3>`;
+            
+            newSignals.forEach((signal, index) => {
+                const isNew = signal.timestamp > clearTimestamp;
+                html += `
+                    <div class="signal-item ${isNew ? 'new' : 'old'}">
+                        <span class="status-indicator ${isNew ? 'new' : 'old'}"></span>
+                        <strong>Signal ${index + 1}:</strong><br>
+                        <strong>From:</strong> ${signal.from || 'Unknown'}<br>
+                        <strong>Time:</strong> ${new Date(signal.timestamp).toLocaleString()}<br>
+                        <strong>ID:</strong> ${signal.id}<br>
+                        <strong>Content:</strong><br>
+                        <pre style="white-space: pre-wrap; margin-top: 5px;">${signal.text || signal.content || 'No content'}</pre>
+                    </div>
+                `;
+            });
+            
+            newSignalsDisplay.innerHTML = html;
+        }
+        
+        function checkForNewSignals() {
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            
+            // Combine all signals
+            const allSignals = [...telegramMessages, ...adminSignals];
+            
+            // Filter for new signals (after clear timestamp)
+            const newSignalsFound = allSignals.filter(signal => {
+                const signalTime = new Date(signal.timestamp).getTime();
+                return clearTimestamp && signalTime > clearTimestamp;
+            });
+            
+            if (newSignalsFound.length > newSignals.length) {
+                const newlyAdded = newSignalsFound.slice(newSignals.length);
+                newlyAdded.forEach(signal => {
+                    log(`🆕 NEW SIGNAL DETECTED: ${signal.from || 'Unknown'} - ${signal.text?.substring(0, 50) || 'No content'}...`, 'success');
+                });
+                newSignals = newSignalsFound;
+                updateNewSignalsDisplay();
+            }
+        }
+        
+        window.clearEverything = function() {
+            log('🧹 CLEARING EVERYTHING - Removing all old signals...', 'critical');
+            
+            // Clear all signal-related localStorage
+            const signalKeys = [
+                'telegram_messages',
+                'admin_generated_signals', 
+                'user_signals',
+                'forexBotStatus',
+                'crypto_prices',
+                'crypto_prices_timestamp'
+            ];
+            
+            signalKeys.forEach(key => {
+                localStorage.removeItem(key);
+                log(`  - Cleared ${key}`, 'warning');
+            });
+            
+            // Reset tracking
+            clearTimestamp = Date.now();
+            newSignals = [];
+            
+            log('✅ ALL OLD SIGNALS CLEARED!', 'success');
+            log('🕐 Clear timestamp set - only signals after this time will be tracked', 'info');
+            
+            updateNewSignalsDisplay();
+        };
+        
+        window.startMonitoring = function() {
+            if (monitoringInterval) {
+                log('⚠️ Monitoring already started', 'warning');
+                return;
+            }
+            
+            if (!clearTimestamp) {
+                log('❌ Please clear everything first to set a baseline timestamp', 'error');
+                return;
+            }
+            
+            log('🔄 Starting monitoring for new signals...', 'info');
+            log('Watching for signals generated after clear timestamp', 'info');
+            
+            monitoringInterval = setInterval(() => {
+                checkForNewSignals();
+            }, 2000);
+            
+            updateMonitoringStatus(true);
+            log('✅ Monitoring started - watching every 2 seconds', 'success');
+        };
+        
+        window.stopMonitoring = function() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                updateMonitoringStatus(false);
+                log('⏹️ Monitoring stopped', 'info');
+            } else {
+                log('⚠️ Monitoring not started', 'warning');
+            }
+        };
+        
+        window.checkNewSignals = function() {
+            log('🔍 Checking for new signals...', 'info');
+            checkForNewSignals();
+            
+            if (newSignals.length > 0) {
+                log(`✅ Found ${newSignals.length} new signals`, 'success');
+            } else {
+                log('❌ No new signals found', 'warning');
+            }
+        };
+        
+        window.exportNewSignals = function() {
+            if (newSignals.length === 0) {
+                log('❌ No new signals to export', 'warning');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(newSignals, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `new_signals_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            log(`✅ Exported ${newSignals.length} new signals`, 'success');
+        };
+        
+        // Listen for signal events
+        window.addEventListener('newSignalSent', (event) => {
+            log(`📡 Received newSignalSent event from: ${event.detail.from}`, 'info');
+            checkForNewSignals();
+        });
+        
+        window.addEventListener('newSignalGenerated', (event) => {
+            log(`📡 Received newSignalGenerated event from: ${event.detail.from}`, 'info');
+            checkForNewSignals();
+        });
+        
+        // Auto-run initial check
+        log('🚀 New Signals Only Test initialized', 'info');
+        log('This test will only show signals generated AFTER you clear everything', 'info');
+        log('Click "CLEAR EVERYTHING" first, then start monitoring', 'info');
+        updateNewSignalsDisplay();
+    </script>
+</body>
+</html>

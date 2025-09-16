@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraderEdge Pro - Admin Signal Creator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #06b6d4, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .form-container {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.8);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #06b6d4;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #06b6d4, #3b82f6);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+        }
+        
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+        }
+        
+        .recent-signals {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+        }
+        
+        .signal-item {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .signal-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .signal-pair {
+            font-weight: bold;
+            color: #06b6d4;
+        }
+        
+        .signal-direction {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .signal-direction.buy {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        .signal-direction.sell {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        
+        .signal-details {
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #1e293b;
+            border-top: 3px solid #06b6d4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Admin Signal Creator</h1>
+            <p>Create and send signals to user dashboard</p>
+        </div>
+        
+        <div id="statusMessage"></div>
+        
+        <div class="form-container">
+            <form id="signalForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pair">Trading Pair</label>
+                        <select id="pair" required>
+                            <option value="EURUSD">EUR/USD</option>
+                            <option value="GBPUSD">GBP/USD</option>
+                            <option value="USDJPY">USD/JPY</option>
+                            <option value="AUDUSD">AUD/USD</option>
+                            <option value="USDCAD">USD/CAD</option>
+                            <option value="NZDUSD">NZD/USD</option>
+                            <option value="EURJPY">EUR/JPY</option>
+                            <option value="GBPJPY">GBP/JPY</option>
+                            <option value="BTCUSD">BTC/USD</option>
+                            <option value="ETHUSD">ETH/USD</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="direction">Direction</label>
+                        <select id="direction" required>
+                            <option value="LONG">LONG (Buy)</option>
+                            <option value="SHORT">SHORT (Sell)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="entry">Entry Price</label>
+                        <input type="number" id="entry" step="0.00001" required placeholder="e.g., 1.0850">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="stopLoss">Stop Loss</label>
+                        <input type="number" id="stopLoss" step="0.00001" required placeholder="e.g., 1.0800">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="takeProfit">Take Profit</label>
+                        <input type="number" id="takeProfit" step="0.00001" required placeholder="e.g., 1.0950">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confidence">Confidence (%)</label>
+                        <input type="number" id="confidence" min="1" max="100" value="85" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="timeframe">Timeframe</label>
+                    <select id="timeframe">
+                        <option value="1m">1 Minute</option>
+                        <option value="5m">5 Minutes</option>
+                        <option value="15m">15 Minutes</option>
+                        <option value="1h" selected>1 Hour</option>
+                        <option value="4h">4 Hours</option>
+                        <option value="1d">1 Day</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="analysis">Analysis</label>
+                    <textarea id="analysis" rows="4" placeholder="Enter your analysis here...">Strong momentum detected. ICT concepts: Order Block, Fair Value Gap. Price respecting institutional levels. Good probability setup - consider normal position size.</textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    🚀 Send Signal
+                </button>
+            </form>
+        </div>
+        
+        <div class="recent-signals">
+            <h3>Recent Signals</h3>
+            <div id="recentSignals">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading recent signals...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://backend-bkt7.onrender.com';
+        
+        // Show status message
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `
+                <div class="status-message status-${type}">
+                    ${message}
+                </div>
+            `;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Load recent signals
+        async function loadRecentSignals() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/signals`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const signals = data.signals || [];
+                
+                displayRecentSignals(signals.slice(0, 5)); // Show last 5 signals
+                
+            } catch (error) {
+                console.error('Error loading recent signals:', error);
+                document.getElementById('recentSignals').innerHTML = `
+                    <div class="status-error">
+                        Failed to load recent signals: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Display recent signals
+        function displayRecentSignals(signals) {
+            const container = document.getElementById('recentSignals');
+            
+            if (signals.length === 0) {
+                container.innerHTML = '<p>No signals created yet.</p>';
+                return;
+            }
+            
+            const signalsHTML = signals.map(signal => {
+                const direction = signal.direction || signal.side || 'LONG';
+                const isBuy = direction.toUpperCase().includes('LONG') || direction.toUpperCase().includes('BUY');
+                const directionClass = isBuy ? 'buy' : 'sell';
+                
+                return `
+                    <div class="signal-item">
+                        <div class="signal-header">
+                            <div class="signal-pair">${signal.pair || signal.symbol || 'N/A'}</div>
+                            <div class="signal-direction ${directionClass}">${direction}</div>
+                        </div>
+                        <div class="signal-details">
+                            Entry: ${signal.entry_price || signal.entry || 'N/A'} | 
+                            SL: ${signal.stop_loss || signal.stopLoss || 'N/A'} | 
+                            TP: ${signal.take_profit || signal.takeProfit || 'N/A'} | 
+                            Confidence: ${signal.confidence || 85}%
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = signalsHTML;
+        }
+        
+        // Handle form submission
+        document.getElementById('signalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<div class="spinner"></div> Sending...';
+                
+                const formData = {
+                    pair: document.getElementById('pair').value,
+                    direction: document.getElementById('direction').value,
+                    entry: document.getElementById('entry').value,
+                    stopLoss: document.getElementById('stopLoss').value,
+                    takeProfit: document.getElementById('takeProfit').value,
+                    confidence: parseInt(document.getElementById('confidence').value),
+                    analysis: document.getElementById('analysis').value,
+                    ictConcepts: ['Order Block', 'Fair Value Gap', 'Liquidity Sweep'],
+                    market: document.getElementById('pair').value.includes('BTC') || document.getElementById('pair').value.includes('ETH') ? 'crypto' : 'forex',
+                    timeframe: document.getElementById('timeframe').value
+                };
+                
+                const response = await fetch(`${BACKEND_URL}/api/admin/create-signal`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                showStatus(`✅ Signal sent successfully! Signal ID: ${result.signal_id}`, 'success');
+                
+                // Reset form
+                document.getElementById('signalForm').reset();
+                document.getElementById('confidence').value = '85';
+                document.getElementById('timeframe').value = '1h';
+                
+                // Reload recent signals
+                loadRecentSignals();
+                
+            } catch (error) {
+                console.error('Error sending signal:', error);
+                showStatus(`❌ Failed to send signal: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+        
+        // Load recent signals on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRecentSignals();
+        });
+    </script>
+</body>
+</html>

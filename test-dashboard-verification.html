@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard Data Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-user {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .user-data {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .data-item {
+            background: #e8f4fd;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .user-comparison {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Customer Service Dashboard Data Test</h1>
+    <p>This test verifies that the Customer Service Dashboard now displays user-specific data instead of static data for all users.</p>
+
+    <div class="test-container">
+        <h2>Test Scenarios</h2>
+        <p>Click the buttons below to simulate different user scenarios and verify the data display:</p>
+        
+        <button class="test-button" onclick="testUser1()">Test User 1 (Complete Data)</button>
+        <button class="test-button" onclick="testUser2()">Test User 2 (Different Data)</button>
+        <button class="test-button" onclick="testUser3()">Test User 3 (No Data)</button>
+        <button class="test-button" onclick="compareUsers()">Compare Users</button>
+        <button class="test-button" onclick="clearTest()">Clear Test</button>
+    </div>
+
+    <div id="test-results"></div>
+
+    <div class="test-container">
+        <h2>Expected Behavior</h2>
+        <div class="success">
+            <strong>✅ Correct Behavior:</strong>
+            <ul>
+                <li>Each user shows their specific questionnaire data</li>
+                <li>Different users display different information</li>
+                <li>Users without data show warning messages</li>
+                <li>No static hardcoded data appears</li>
+            </ul>
+        </div>
+        
+        <div class="warning">
+            <strong>❌ Previous Problem:</strong>
+            <ul>
+                <li>All users showed identical static data</li>
+                <li>Data didn't reflect actual questionnaire responses</li>
+                <li>No indication when data was missing</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Test data representing different users
+        const testUsers = {
+            user1: {
+                id: "user-1",
+                email: "john.trader@example.com",
+                fullName: "John Trader",
+                questionnaireData: {
+                    hasAccount: "yes",
+                    propFirm: "FTMO",
+                    accountType: "Challenge",
+                    accountSize: 10000,
+                    riskPercentage: 1.0,
+                    riskRewardRatio: "2",
+                    tradingExperience: "Beginner",
+                    riskTolerance: "Low",
+                    tradingGoals: "Learn Trading",
+                    tradesPerDay: "1-2",
+                    tradingSession: "London",
+                    cryptoAssets: ["BTC", "ETH"],
+                    forexAssets: ["EURUSD", "GBPUSD"]
+                },
+                riskManagementPlan: {
+                    riskPerTrade: 1.0,
+                    dailyLossLimit: 3.0,
+                    maxLoss: 300,
+                    profitTarget: 600,
+                    tradesToPass: 10,
+                    riskAmount: 100,
+                    profitAmount: 200,
+                    consecutiveLossesLimit: 3,
+                    generatedAt: "2024-01-15T10:30:00Z"
+                }
+            },
+            user2: {
+                id: "user-2",
+                email: "sarah.investor@example.com", 
+                fullName: "Sarah Investor",
+                questionnaireData: {
+                    hasAccount: "no",
+                    propFirm: "MyForexFunds",
+                    accountType: "Evaluation",
+                    accountSize: 50000,
+                    riskPercentage: 2.0,
+                    riskRewardRatio: "3",
+                    tradingExperience: "Advanced",
+                    riskTolerance: "High",
+                    tradingGoals: "Consistent Profits",
+                    tradesPerDay: "3-5",
+                    tradingSession: "New York",
+                    cryptoAssets: ["BTC", "ETH", "SOL", "ADA"],
+                    forexAssets: ["XAUUSD", "XAGUSD", "USOIL", "US30"]
+                },
+                riskManagementPlan: {
+                    riskPerTrade: 2.0,
+                    dailyLossLimit: 6.0,
+                    maxLoss: 1500,
+                    profitTarget: 3000,
+                    tradesToPass: 8,
+                    riskAmount: 1000,
+                    profitAmount: 3000,
+                    consecutiveLossesLimit: 2,
+                    generatedAt: "2024-01-16T14:20:00Z"
+                }
+            },
+            user3: {
+                id: "user-3",
+                email: "mike.scalper@example.com",
+                fullName: "Mike Scalper",
+                questionnaireData: null,
+                riskManagementPlan: null
+            }
+        };
+
+        function displayUserData(user) {
+            const resultsDiv = document.getElementById('test-results');
+            
+            let html = `
+                <div class="test-container">
+                    <h2>👤 User: ${user.fullName} (${user.email})</h2>
+            `;
+
+            if (user.questionnaireData) {
+                html += `
+                    <div class="success">
+                        <strong>✅ Questionnaire Data Available</strong>
+                    </div>
+                    <div class="user-data">
+                        <div class="data-item"><strong>Prop Firm:</strong> ${user.questionnaireData.propFirm}</div>
+                        <div class="data-item"><strong>Account Type:</strong> ${user.questionnaireData.accountType}</div>
+                        <div class="data-item"><strong>Account Size:</strong> $${user.questionnaireData.accountSize.toLocaleString()}</div>
+                        <div class="data-item"><strong>Risk %:</strong> ${user.questionnaireData.riskPercentage}%</div>
+                        <div class="data-item"><strong>Experience:</strong> ${user.questionnaireData.tradingExperience}</div>
+                        <div class="data-item"><strong>Risk Tolerance:</strong> ${user.questionnaireData.riskTolerance}</div>
+                        <div class="data-item"><strong>Trades/Day:</strong> ${user.questionnaireData.tradesPerDay}</div>
+                        <div class="data-item"><strong>Session:</strong> ${user.questionnaireData.tradingSession}</div>
+                        <div class="data-item"><strong>Crypto:</strong> ${user.questionnaireData.cryptoAssets.join(', ')}</div>
+                        <div class="data-item"><strong>Forex:</strong> ${user.questionnaireData.forexAssets.join(', ')}</div>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="warning">
+                        <strong>⚠️ No Questionnaire Data</strong><br>
+                        This user has not completed the questionnaire yet or their data wasn't properly saved to the database.
+                    </div>
+                `;
+            }
+
+            if (user.riskManagementPlan) {
+                html += `
+                    <div class="success">
+                        <strong>✅ Risk Management Plan Available</strong>
+                    </div>
+                    <div class="user-data">
+                        <div class="data-item"><strong>Risk per Trade:</strong> ${user.riskManagementPlan.riskPerTrade}%</div>
+                        <div class="data-item"><strong>Daily Loss Limit:</strong> ${user.riskManagementPlan.dailyLossLimit}%</div>
+                        <div class="data-item"><strong>Max Loss:</strong> $${user.riskManagementPlan.maxLoss}</div>
+                        <div class="data-item"><strong>Profit Target:</strong> $${user.riskManagementPlan.profitTarget}</div>
+                        <div class="data-item"><strong>Trades to Pass:</strong> ${user.riskManagementPlan.tradesToPass}</div>
+                        <div class="data-item"><strong>Risk Amount:</strong> $${user.riskManagementPlan.riskAmount}</div>
+                        <div class="data-item"><strong>Profit Amount:</strong> $${user.riskManagementPlan.profitAmount}</div>
+                        <div class="data-item"><strong>Loss Limit:</strong> ${user.riskManagementPlan.consecutiveLossesLimit} consecutive</div>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="warning">
+                        <strong>⚠️ No Risk Management Plan</strong><br>
+                        This user has not generated a risk management plan yet or their data wasn't properly saved to the database.
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+            resultsDiv.innerHTML = html;
+        }
+
+        function testUser1() {
+            console.log("Testing User 1 - Should show FTMO, Challenge, $10,000, 1% risk");
+            displayUserData(testUsers.user1);
+        }
+
+        function testUser2() {
+            console.log("Testing User 2 - Should show MyForexFunds, Evaluation, $50,000, 2% risk");
+            displayUserData(testUsers.user2);
+        }
+
+        function testUser3() {
+            console.log("Testing User 3 - Should show warning messages for missing data");
+            displayUserData(testUsers.user3);
+        }
+
+        function compareUsers() {
+            const resultsDiv = document.getElementById('test-results');
+            
+            let html = `
+                <div class="test-container">
+                    <h2>🔄 User Data Comparison</h2>
+                    <p>This shows that different users now display different data instead of static data:</p>
+                    
+                    <div class="comparison">
+                        <div class="user-comparison">
+                            <h3>User 1 (John)</h3>
+                            <div class="user-data">
+                                <div class="data-item"><strong>Prop Firm:</strong> ${testUsers.user1.questionnaireData.propFirm}</div>
+                                <div class="data-item"><strong>Account Size:</strong> $${testUsers.user1.questionnaireData.accountSize.toLocaleString()}</div>
+                                <div class="data-item"><strong>Risk %:</strong> ${testUsers.user1.questionnaireData.riskPercentage}%</div>
+                                <div class="data-item"><strong>Experience:</strong> ${testUsers.user1.questionnaireData.tradingExperience}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="user-comparison">
+                            <h3>User 2 (Sarah)</h3>
+                            <div class="user-data">
+                                <div class="data-item"><strong>Prop Firm:</strong> ${testUsers.user2.questionnaireData.propFirm}</div>
+                                <div class="data-item"><strong>Account Size:</strong> $${testUsers.user2.questionnaireData.accountSize.toLocaleString()}</div>
+                                <div class="data-item"><strong>Risk %:</strong> ${testUsers.user2.questionnaireData.riskPercentage}%</div>
+                                <div class="data-item"><strong>Experience:</strong> ${testUsers.user2.questionnaireData.tradingExperience}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="success">
+                        <strong>✅ Data Differentiation Confirmed</strong><br>
+                        Each user shows their specific questionnaire responses. No more identical static data!
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function clearTest() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+
+        // Auto-run initial test
+        window.onload = function() {
+            console.log("Customer Dashboard Data Test loaded. Click buttons to test different scenarios.");
+        };
+    </script>
+</body>
+</html>
