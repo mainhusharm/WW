@@ -271,8 +271,6 @@ const AppContent = () => {
         <Route path="/futures" element={<FuturesPage />} />
         <Route path="/lightning" element={<Lightning><LandingPage /></Lightning>} />
         <Route path="/animation-test" element={<AnimationTest />} />
-        {/* Catch-all route to redirect any unmatched paths to /home */}
-        <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </Suspense>
       {/* Show footer on all pages except dashboards */}
