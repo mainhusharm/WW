@@ -42,6 +42,8 @@ import AdminProtectedRoute from './components/AdminProtectedRoute';
 import { UserProvider, useUser } from './contexts/UserContext';
 import { TradingPlanProvider, useTradingPlan } from './contexts/TradingPlanContext';
 import { AdminProvider, useAdmin } from './contexts/AdminContext';
+import { SubscriptionProvider } from './contexts/SubscriptionContext';
+import SubscriptionProtectedRoute from './components/SubscriptionProtectedRoute';
 import { clearState } from './trading/dataStorage';
 import Features from './components/Features';
 import About from './components/About';
@@ -122,7 +124,7 @@ class GlobalErrorBoundary extends Component<
 }
 
 const AppContent = () => {
-  const { logout: userLogout } = useUser();
+  const { logout: userLogout, user } = useUser();
   const { logout: adminLogout } = useAdmin();
   const { resetPlan } = useTradingPlan();
   const navigate = useNavigate();
@@ -199,7 +201,9 @@ const AppContent = () => {
           element={
             <ErrorBoundary>
               <ProtectedRoute>
-                <Dashboard onLogout={handleLogout} />
+                <SubscriptionProtectedRoute>
+                  <Dashboard onLogout={handleLogout} />
+                </SubscriptionProtectedRoute>
               </ProtectedRoute>
             </ErrorBoundary>
           }
@@ -209,7 +213,9 @@ const AppContent = () => {
           element={
             <ErrorBoundary>
               <ProtectedRoute>
-                <Dashboard onLogout={handleLogout} />
+                <SubscriptionProtectedRoute>
+                  <Dashboard onLogout={handleLogout} />
+                </SubscriptionProtectedRoute>
               </ProtectedRoute>
             </ErrorBoundary>
           }
@@ -287,9 +293,11 @@ function App() {
         <AdminProvider>
           <UserProvider>
             <TradingPlanProvider>
-              <Router>
-                <AppContent />
-              </Router>
+              <SubscriptionProvider userId={localStorage.getItem('user_id') || 'anonymous'}>
+                <Router>
+                  <AppContent />
+                </Router>
+              </SubscriptionProvider>
             </TradingPlanProvider>
           </UserProvider>
         </AdminProvider>

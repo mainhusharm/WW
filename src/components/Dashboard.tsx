@@ -4,6 +4,8 @@ import { openTrade, closeTrade } from '../trading/tradeManager';
 import { isDailyLossLimitReached } from '../trading/riskManager';
 import { useUser } from '../contexts/UserContext';
 import { useTradingPlan } from '../contexts/TradingPlanContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import SubscriptionStatus from './SubscriptionStatus';
 import api from '../api';
 import ConsentForm from './ConsentForm';
 import FuturisticBackground from './FuturisticBackground';
@@ -22,6 +24,7 @@ import unifiedDashboardService from '../services/unifiedDashboardService';
 const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const { user } = useUser();
   const { tradingPlan } = useTradingPlan();
+  const { access } = useSubscription();
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('dashboard_selected_concept');
     return savedTheme || 'concept1';
@@ -765,6 +768,11 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
         onAccept={handleConsentAccept}
         onDecline={handleConsentDecline}
       />
+      
+      {/* Subscription Status */}
+      <div className="fixed top-4 left-4 z-40 max-w-sm">
+        <SubscriptionStatus />
+      </div>
       <div className="theme-switcher fixed top-4 right-4 z-50">
         <select 
           onChange={(e) => {

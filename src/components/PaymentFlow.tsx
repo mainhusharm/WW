@@ -3,6 +3,8 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { TrendingUp, ArrowLeft } from 'lucide-react';
 import PaymentIntegration from './PaymentIntegration';
 import { useUser } from '../contexts/UserContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import PlanSelection from './PlanSelection';
 import api from '../api';
 
 const PaymentFlow = () => {
@@ -10,22 +12,16 @@ const PaymentFlow = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { user, setUser } = useUser();
+  const { createSubscription, availablePlans } = useSubscription();
+  
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('pro');
+  const [showPlanSelection, setShowPlanSelection] = useState(false);
   
   // Get selected plan from location state or URL parameters
   const selectedPlan = location.state?.selectedPlan || (() => {
     const planName = searchParams.get('plan')?.toLowerCase() || 'pro';
-    const planPrice = parseInt(searchParams.get('price') || '599');
-    
-    // Define plans similar to MT5PaymentPage
-    const plans = {
-      starter: { name: "Starter", price: 299, period: "month" },
-      pro: { name: "Pro", price: 599, period: "month" },
-      elite: { name: "Elite", price: 1299, period: "month" },
-      institutional: { name: "Institutional", price: 2499, period: "month" }
-    };
-    
-    const plan = plans[planName as keyof typeof plans] || plans.pro;
-    return { ...plan, price: planPrice || plan.price };
+    const plan = availablePlans.find(p => p.id === planName) || availablePlans.find(p => p.id === 'pro');
+    return plan;
   })();
 
   useEffect(() => {
@@ -44,6 +40,9 @@ const PaymentFlow = () => {
         // Handle free coupon checkout - bypass API call
         if (paymentToken === 'free_coupon_checkout' || (parsedDetails && parsedDetails.method === 'free_coupon')) {
           console.log('Processing free coupon checkout - bypassing payment verification');
+          
+          // Create subscription for the selected plan
+          await createSubscription(selectedPlan.id);
           
           // Update user membership directly for free coupons
           setUser({
@@ -97,6 +96,9 @@ const PaymentFlow = () => {
         const response = await api.post('/payment/verify-payment', requestData);
 
         if (response.status === 200) {
+          // Create subscription for the selected plan
+          await createSubscription(selectedPlan.id);
+          
           setUser({
             ...user,
             membershipTier: selectedPlan?.name?.toLowerCase() || 'basic' as 'basic' | 'professional' | 'institutional' | 'elite',
