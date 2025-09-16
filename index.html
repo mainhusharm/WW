@@ -5,6 +5,14 @@
     <base href="/" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Immediate redirect for root path -->
+    <script>
+      // Check if we're on the root path and redirect immediately
+      if (window.location.pathname === '/' || window.location.pathname === '') {
+        window.location.replace('/home');
+      }
+    </script>
     <meta name="description" content="TraderEdge Pro - Professional Trading Signals Platform with AI-powered analysis and real-time market data" />
     <meta name="keywords" content="trading, signals, forex, crypto, AI trading, market analysis" />
     <meta name="author" content="TraderEdge Pro" />
