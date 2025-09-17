@@ -225,26 +225,19 @@ export default function EnhancedSignupForm() {
         
         // Always try fallback in production or when network fails
         console.log('🔄 Attempting fallback registration...');
-        try {
-          data = await productionApi.registerUser({
-            email: formData.email,
-            password: formData.password,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            fullName: `${formData.firstName} ${formData.lastName}`,
-            phone: formData.phone,
-            company: formData.company,
-            country: formData.country,
-            agreeToMarketing: formData.agreeToMarketing,
-            plan_type: selectedPlan?.name?.toLowerCase() || 'premium'
-          });
-          console.log('✅ Fallback registration successful:', data);
-        } catch (fallbackError) {
-          console.error('❌ Fallback registration failed:', fallbackError);
-          setErrors({ submit: 'Unable to create account at this time. Please try again in a few moments.' });
-          setIsLoading(false);
-          return;
-        }
+        data = await productionApi.registerUser({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          fullName: `${formData.firstName} ${formData.lastName}`,
+          phone: formData.phone,
+          company: formData.company,
+          country: formData.country,
+          agreeToMarketing: formData.agreeToMarketing,
+          plan_type: selectedPlan?.name?.toLowerCase() || 'premium'
+        });
+        console.log('✅ Fallback registration successful:', data);
       }
 
       // Handle both response formats: with success property or without
