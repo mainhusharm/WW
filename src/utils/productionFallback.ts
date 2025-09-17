@@ -168,21 +168,22 @@ export const productionApi = {
       },
       {
         success: true,
-        data: {
-          access_token: `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          user: {
-            id: `user_${Date.now()}`,
-            email: userData.email,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            fullName: `${userData.firstName} ${userData.lastName}`,
-            phone: userData.phone,
-            company: userData.company,
-            country: userData.country,
-            plan_type: userData.plan_type || 'premium',
-            agreeToMarketing: userData.agreeToMarketing || false,
-            created_at: new Date().toISOString()
-          }
+        access_token: `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        user: {
+          id: `user_${Date.now()}`,
+          user_id: `user_${Date.now()}`,
+          email: userData.email,
+          username: `${userData.firstName} ${userData.lastName}`,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          fullName: `${userData.firstName} ${userData.lastName}`,
+          phone: userData.phone,
+          company: userData.company,
+          country: userData.country,
+          plan_type: userData.plan_type || 'premium',
+          agreeToMarketing: userData.agreeToMarketing || false,
+          status: 'active',
+          created_at: new Date().toISOString()
         }
       },
       'User registration endpoint unavailable'

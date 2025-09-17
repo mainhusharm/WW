@@ -23,10 +23,21 @@ export const getEnvironment = (): 'development' | 'production' | 'render' => {
 
 // Get appropriate API base URL based on environment
 export const getApiBaseUrl = (): string => {
-  if (isProduction()) {
-    return 'http://localhost:3000'; // Temporarily use localhost for testing
+  const hostname = window.location.hostname;
+  
+  if (hostname.includes('onrender.com')) {
+    // Use the CORS proxy service from render.yaml
+    return 'https://trading-cors-proxy-gbhz.onrender.com';
+  } else if (hostname.includes('traderedgepro.com')) {
+    // For custom domain, use the API subdomain or same domain with different port
+    return 'https://api.traderedgepro.com';
+  } else if (isDevelopment()) {
+    // Development environment - use local enhanced signup handler
+    return 'http://localhost:5001';
   }
-  return 'http://localhost:3001';
+  
+  // Fallback for development
+  return 'http://localhost:5001';
 };
 
 // Get appropriate CORS proxy based on environment
@@ -59,6 +70,31 @@ export const getSafeHeaders = (originalHeaders: Record<string, string> | undefin
   safeHeaders['Content-Type'] = 'application/json';
   
   return safeHeaders;
+};
+
+// Get fallback API configuration for when backend is unavailable
+export const getFallbackApiConfig = () => {
+  return {
+    useLocalStorage: true,
+    mockResponses: true,
+    enableOfflineMode: true
+  };
+};
+
+// Check if backend is available
+export const checkBackendHealth = async (): Promise<boolean> => {
+  try {
+    const apiUrl = getApiBaseUrl();
+    const response = await fetch(`${apiUrl}/api/health`, {
+      method: 'GET',
+      headers: getSafeHeaders(),
+      mode: 'cors'
+    });
+    return response.ok;
+  } catch (error) {
+    console.warn('Backend health check failed:', error);
+    return false;
+  }
 };
 
 // Log environment info

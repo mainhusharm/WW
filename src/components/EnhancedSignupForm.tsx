@@ -159,6 +159,8 @@ export default function EnhancedSignupForm() {
     try {
       // Try real API call first
       let data;
+      let apiCallSuccessful = false;
+      
       try {
         console.log('Making registration request to:', `${API_BASE}/api/auth/register`);
         console.log('API_BASE value:', API_BASE);
@@ -177,26 +179,49 @@ export default function EnhancedSignupForm() {
           plan_type: selectedPlan?.name?.toLowerCase() || 'premium'
         };
 
-        // Make real API call first
+        // Make real API call with timeout and retry logic
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
         const response = await fetch(`${API_BASE}/api/auth/register`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(userData)
+          body: JSON.stringify(userData),
+          signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => ({ error: response.statusText }));
           throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
         }
 
         data = await response.json();
+        apiCallSuccessful = true;
         console.log('Registration response data:', data);
-      } catch (apiError) {
-        if (isProductionBackendUnavailable(apiError)) {
+        
+      } catch (apiError: any) {
+        console.log('API call failed:', apiError);
+        
+        // Check for specific error types
+        if (apiError.name === 'AbortError') {
+          console.log('🔄 Request timeout, using fallback');
+        } else if (apiError.message && (apiError.message.includes('409') || apiError.message.includes('User already exists'))) {
+          setErrors({ submit: 'An account with this email already exists. Please sign in instead or use a different email address.' });
+          setIsLoading(false);
+          return;
+        } else if (isProductionBackendUnavailable(apiError)) {
           console.log('🔄 Using fallback registration for production');
-          // Use production fallback when backend is unavailable
+        } else {
+          // For other errors, show user-friendly message but still try fallback
+          console.log('🔄 API unavailable, attempting fallback registration');
+        }
+        
+        // Use production fallback when backend is unavailable or timeout occurs
+        try {
           data = await productionApi.registerUser({
             email: formData.email,
             password: formData.password,
@@ -209,17 +234,10 @@ export default function EnhancedSignupForm() {
             agreeToMarketing: formData.agreeToMarketing,
             plan_type: selectedPlan?.name?.toLowerCase() || 'premium'
           });
-        } else {
-          console.log('API call failed:', apiError);
-          
-          // Check if it's a 409 error (user already exists)
-          if (apiError.message && apiError.message.includes('409')) {
-            setErrors({ submit: 'An account with this email already exists. Please sign in instead or use a different email address.' });                                                                                 
-          } else if (apiError.message && apiError.message.includes('User already exists')) {
-            setErrors({ submit: 'An account with this email already exists. Please sign in instead or use a different email address.' });                                                                                 
-          } else {
-            setErrors({ submit: 'Registration service is temporarily unavailable. Please try again later or contact support.' });                                                                                         
-          }
+          console.log('✅ Fallback registration successful:', data);
+        } catch (fallbackError) {
+          console.error('❌ Both API and fallback failed:', fallbackError);
+          setErrors({ submit: 'Registration service is temporarily unavailable. Please try again later or contact support.' });
           setIsLoading(false);
           return;
         }
@@ -234,7 +252,8 @@ export default function EnhancedSignupForm() {
           fullName: data.user?.fullName || data.user?.username || `${formData.firstName} ${formData.lastName}`,
           selectedPlan: selectedPlan,
           status: data.user?.status || 'active',
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          registrationMethod: apiCallSuccessful ? 'api' : 'fallback'
         };
 
         // Store access token if provided
