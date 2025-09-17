@@ -114,69 +114,37 @@ export default function EnhancedPaymentPage() {
     setLoading(true);
     setError(null);
 
-    try {
-      // Get API base URL from environment utils
-      const API_BASE = import.meta.env.PROD 
-        ? 'https://trading-cors-proxy-gbhz.onrender.com'
-        : 'http://localhost:5001';
+    // Simple fallback coupon validation - no API calls
+    const fallbackCoupons = {
+      'FREE100': { discount: selectedPlan.price, final_price: 0, message: 'Free access granted!' },
+      'SAVE50': { discount: selectedPlan.price * 0.5, final_price: selectedPlan.price * 0.5, message: '50% discount applied!' },
+      'SAVE25': { discount: selectedPlan.price * 0.25, final_price: selectedPlan.price * 0.75, message: '25% discount applied!' },
+      'WELCOME20': { discount: selectedPlan.price * 0.2, final_price: selectedPlan.price * 0.8, message: '20% welcome discount applied!' },
+      'STUDENT': { discount: selectedPlan.price * 0.3, final_price: selectedPlan.price * 0.7, message: '30% student discount applied!' },
+      'EARLY': { discount: selectedPlan.price * 0.4, final_price: selectedPlan.price * 0.6, message: '40% early bird discount applied!' }
+    };
 
-      const response = await fetch(`${API_BASE}/api/validate-coupon`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          coupon_code: couponCode,
-          plan_id: selectedPlan.name.toLowerCase(),
-          original_price: selectedPlan.price
-        }),
-      });
+    // Simulate loading delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data: CouponResponse = await response.json();
-
-      if (data.valid) {
-        setCouponApplied(true);
-        setCouponMessage(data.message || 'Coupon applied successfully!');
-        setDiscount(data.discount_amount || 0);
-        setFinalPrice(data.final_price || 0);
-        setError(null);
-      } else {
-        setError(data.error || 'Invalid coupon code');
-        setCouponApplied(false);
-        setCouponMessage('');
-        setDiscount(0);
-        setFinalPrice(selectedPlan.price);
-      }
-    } catch (error) {
-      console.error('Coupon validation error:', error);
-      
-      // Fallback coupon validation for common codes
-      const fallbackCoupons = {
-        'FREE100': { discount: selectedPlan.price, final_price: 0, message: 'Free access granted!' },
-        'SAVE50': { discount: selectedPlan.price * 0.5, final_price: selectedPlan.price * 0.5, message: '50% discount applied!' },
-        'SAVE25': { discount: selectedPlan.price * 0.25, final_price: selectedPlan.price * 0.75, message: '25% discount applied!' },
-        'WELCOME20': { discount: selectedPlan.price * 0.2, final_price: selectedPlan.price * 0.8, message: '20% welcome discount applied!' }
-      };
-
-      const fallbackCoupon = fallbackCoupons[couponCode as keyof typeof fallbackCoupons];
-      
-      if (fallbackCoupon) {
-        setCouponApplied(true);
-        setCouponMessage(fallbackCoupon.message);
-        setDiscount(fallbackCoupon.discount);
-        setFinalPrice(fallbackCoupon.final_price);
-        setError(null);
-        console.log('✅ Fallback coupon applied:', couponCode);
-      } else {
-        setError('Coupon validation service unavailable. Please try again later.');
-      }
-    } finally {
-      setLoading(false);
+    const fallbackCoupon = fallbackCoupons[couponCode as keyof typeof fallbackCoupons];
+    
+    if (fallbackCoupon) {
+      setCouponApplied(true);
+      setCouponMessage(fallbackCoupon.message);
+      setDiscount(fallbackCoupon.discount);
+      setFinalPrice(fallbackCoupon.final_price);
+      setError(null);
+      console.log('✅ Coupon applied:', couponCode);
+    } else {
+      setError('Invalid coupon code. Try: FREE100, SAVE50, SAVE25, WELCOME20, STUDENT, or EARLY');
+      setCouponApplied(false);
+      setCouponMessage('');
+      setDiscount(0);
+      setFinalPrice(selectedPlan.price);
     }
+
+    setLoading(false);
   };
 
   const handleRemoveCoupon = () => {
