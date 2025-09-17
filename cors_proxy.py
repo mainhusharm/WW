@@ -262,6 +262,71 @@ def create_cryptomus_invoice():
         print(f"❌ Error creating Cryptomus invoice: {str(e)}")
         return jsonify({"error": f"Server error: {str(e)}"}), 500
 
+@app.route('/api/validate-coupon', methods=['POST', 'OPTIONS'])
+def validate_coupon():
+    """Validate coupon codes"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.get_json()
+        coupon_code = data.get('coupon_code', '').upper()
+        plan_id = data.get('plan_id', '')
+        original_price = data.get('original_price', 0)
+        
+        if not coupon_code:
+            return jsonify({"valid": False, "error": "Coupon code required"}), 400
+        
+        # Define available coupons
+        coupons = {
+            'FREE100': {
+                'discount_percent': 100,
+                'message': 'Free access granted! Enjoy your premium subscription.'
+            },
+            'SAVE50': {
+                'discount_percent': 50,
+                'message': '50% discount applied! Great savings on your subscription.'
+            },
+            'SAVE25': {
+                'discount_percent': 25,
+                'message': '25% discount applied! Thank you for choosing us.'
+            },
+            'WELCOME20': {
+                'discount_percent': 20,
+                'message': '20% welcome discount applied! Welcome to TraderEdgePro.'
+            },
+            'STUDENT': {
+                'discount_percent': 30,
+                'message': '30% student discount applied!'
+            },
+            'EARLY': {
+                'discount_percent': 40,
+                'message': '40% early bird discount applied!'
+            }
+        }
+        
+        if coupon_code in coupons:
+            coupon = coupons[coupon_code]
+            discount_amount = original_price * (coupon['discount_percent'] / 100)
+            final_price = max(0, original_price - discount_amount)
+            
+            return jsonify({
+                "valid": True,
+                "discount_amount": discount_amount,
+                "final_price": final_price,
+                "message": coupon['message'],
+                "discount_percent": coupon['discount_percent']
+            }), 200
+        else:
+            return jsonify({
+                "valid": False,
+                "error": "Invalid coupon code. Please check and try again."
+            }), 200
+            
+    except Exception as e:
+        print(f"❌ Error validating coupon: {str(e)}")
+        return jsonify({"valid": False, "error": f"Server error: {str(e)}"}), 500
+
 @app.route('/api/proxy/<path:url>', methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 def proxy_request(url):
     """Generic proxy for external API requests"""
