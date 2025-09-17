@@ -48,15 +48,32 @@ export const isProductionBackendUnavailable = (error: any): boolean => {
   if (!import.meta.env.PROD) return false;
   
   // Only trigger fallback for specific network/CORS errors, not for 4xx/5xx responses
-  return (
+  const isNetworkError = (
     error?.code === 'ERR_NETWORK' ||
     error?.code === 'ERR_FAILED' ||
+    error?.name === 'AbortError' ||
+    error?.name === 'TypeError' ||
     error?.message?.includes('CORS') ||
     error?.message?.includes('blocked') ||
     error?.message?.includes('Failed to fetch') ||
     error?.message?.includes('Connection refused') ||
+    error?.message?.includes('net::') ||
     (error?.response?.status === 0 && error?.code === 'ERR_NETWORK')
   );
+  
+  // Don't use fallback for HTTP error responses (4xx, 5xx)
+  const isHttpError = error?.message?.includes('HTTP') && (
+    error?.message?.includes('400') ||
+    error?.message?.includes('401') ||
+    error?.message?.includes('403') ||
+    error?.message?.includes('404') ||
+    error?.message?.includes('409') ||
+    error?.message?.includes('500') ||
+    error?.message?.includes('502') ||
+    error?.message?.includes('503')
+  );
+  
+  return isNetworkError && !isHttpError;
 };
 
 // Safe API call with fallback

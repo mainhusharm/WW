@@ -181,7 +181,7 @@ export default function EnhancedSignupForm() {
 
         // Make real API call with timeout and retry logic
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
         const response = await fetch(`${API_BASE}/api/auth/register`, {
           method: 'POST',
@@ -196,31 +196,35 @@ export default function EnhancedSignupForm() {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: response.statusText }));
+          
+          // Handle specific HTTP errors
+          if (response.status === 409) {
+            setErrors({ submit: 'An account with this email already exists. Please sign in instead or use a different email address.' });
+            setIsLoading(false);
+            return;
+          }
+          
           throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
         }
 
         data = await response.json();
         apiCallSuccessful = true;
-        console.log('Registration response data:', data);
+        console.log('✅ Registration successful via API:', data);
         
       } catch (apiError: any) {
         console.log('API call failed:', apiError);
         
-        // Check for specific error types
+        // Handle specific error cases
         if (apiError.name === 'AbortError') {
           console.log('🔄 Request timeout, using fallback');
-        } else if (apiError.message && (apiError.message.includes('409') || apiError.message.includes('User already exists'))) {
+        } else if (apiError.message && apiError.message.includes('409')) {
           setErrors({ submit: 'An account with this email already exists. Please sign in instead or use a different email address.' });
           setIsLoading(false);
           return;
-        } else if (isProductionBackendUnavailable(apiError)) {
-          console.log('🔄 Using fallback registration for production');
-        } else {
-          // For other errors, show user-friendly message but still try fallback
-          console.log('🔄 API unavailable, attempting fallback registration');
         }
         
-        // Use production fallback when backend is unavailable or timeout occurs
+        // Always try fallback in production or when network fails
+        console.log('🔄 Attempting fallback registration...');
         try {
           data = await productionApi.registerUser({
             email: formData.email,
@@ -236,19 +240,19 @@ export default function EnhancedSignupForm() {
           });
           console.log('✅ Fallback registration successful:', data);
         } catch (fallbackError) {
-          console.error('❌ Both API and fallback failed:', fallbackError);
-          setErrors({ submit: 'Registration service is temporarily unavailable. Please try again later or contact support.' });
+          console.error('❌ Fallback registration failed:', fallbackError);
+          setErrors({ submit: 'Unable to create account at this time. Please try again in a few moments.' });
           setIsLoading(false);
           return;
         }
       }
 
       // Handle both response formats: with success property or without
-      if (data.success || data.access_token) {
+      if (data && (data.success || data.access_token)) {
         // Store user data in localStorage
         const userData = {
-          id: data.user?.id || data.user?.user_id,
-          email: data.user?.email,
+          id: data.user?.id || data.user?.user_id || `user_${Date.now()}`,
+          email: data.user?.email || formData.email,
           fullName: data.user?.fullName || data.user?.username || `${formData.firstName} ${formData.lastName}`,
           selectedPlan: selectedPlan,
           status: data.user?.status || 'active',
@@ -290,11 +294,11 @@ export default function EnhancedSignupForm() {
           }
         });
       } else {
-        setErrors({ submit: data.error || data.msg || 'Failed to create account' });
+        setErrors({ submit: data?.error || data?.msg || 'Failed to create account. Please try again.' });
       }
     } catch (error) {
       console.error('Registration error:', error);
-      setErrors({ submit: 'Network error. Please try again.' });
+      setErrors({ submit: 'Network error. Please check your connection and try again.' });
     } finally {
       setIsLoading(false);
     }
