@@ -1076,58 +1076,67 @@ const FuturesPage: React.FC = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
-      const response = await fetch(`http://localhost:5002/get_futures_prices?tickers=${tickers}`, {
-        method: 'GET',
+      const response = await fetch(`http://localhost:10003/api/bulk`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          symbols: Object.values(futuresTickers),
+          timeframe: selectedTimeframe,
+          range: '1d'
+        }),
         signal: controller.signal
       });
       
       clearTimeout(timeoutId);
       
       if (response.ok) {
-        const data = await response.json();
-        console.log('yfinance response:', data);
+        const result = await response.json();
+        console.log('Futures data service response:', result);
         console.log('futuresNames mapping:', futuresNames);
 
-        const newPrices: FuturesPrice[] = Object.entries(data)
-          .filter(([, priceData]: [string, any]) => priceData && priceData.regularMarketPrice)
-          .map(([symbol, priceData]: [string, any]) => {
-            const assetName = Object.keys(futuresTickers).find(key => futuresTickers[key as keyof typeof futuresTickers] === symbol) || symbol;
-            const displayName = futuresNames[assetName as keyof typeof futuresNames] || priceData.shortName || assetName;
-            const price = priceData.regularMarketPrice;
-            
-            console.log(`Mapping ${symbol}: assetName=${assetName}, displayName=${displayName}, shortName=${priceData.shortName}`);
-            
-            // Update price history for technical analysis
-            updatePriceHistory(assetName, price);
-            
-            return {
-              symbol: assetName, // Display name like 'SP500'
-              ticker: symbol, // Original ticker like 'ES=F'
-              name: displayName, // Proper display name like 'E-Mini S&P 500 Sep 25'
-              price: price,
-              change: priceData.regularMarketChange,
-              changePercent: priceData.regularMarketChangePercent,
-              volume: priceData.regularMarketVolume,
-              lastUpdate: new Date().toLocaleTimeString(),
-              high24h: priceData.regularMarketDayHigh,
-              low24h: priceData.regularMarketDayLow,
-              previousRate: price - priceData.regularMarketChange
-            };
-          });
+        if (result.success && result.data) {
+          const newPrices: FuturesPrice[] = result.data
+            .filter((priceData: any) => priceData && priceData.price)
+            .map((priceData: any) => {
+              const assetName = Object.keys(futuresTickers).find(key => futuresTickers[key as keyof typeof futuresTickers] === priceData.symbol) || priceData.symbol;
+              const displayName = futuresNames[assetName as keyof typeof futuresNames] || priceData.name || assetName;
+              const price = priceData.price;
+              
+              console.log(`Mapping ${priceData.symbol}: assetName=${assetName}, displayName=${displayName}, name=${priceData.name}`);
+              
+              // Update price history for technical analysis
+              updatePriceHistory(assetName, price);
+              
+              return {
+                symbol: assetName, // Display name like 'SP500'
+                ticker: priceData.symbol, // Original ticker like 'ES=F'
+                name: displayName, // Proper display name like 'E-Mini S&P 500 Sep 25'
+                price: price,
+                change: priceData.change,
+                changePercent: priceData.changePercent,
+                volume: priceData.volume,
+                lastUpdate: new Date().toLocaleTimeString(),
+                high24h: priceData.high24h,
+                low24h: priceData.low24h,
+                previousRate: price - priceData.change
+              };
+            });
 
-        if (newPrices.length > 0) {
-          setPrices(newPrices);
-          savePricesToStorage(newPrices);
-          setLastPriceUpdate(new Date().toLocaleTimeString());
-          setConnectionStatus('connected');
-          setLastUpdate(new Date());
-          addActivityLog('price_update', `Updated prices for ${newPrices.length} assets`, newPrices);
-          addNotification(`Updated ${newPrices.length} futures prices`, 'success');
+          if (newPrices.length > 0) {
+            setPrices(newPrices);
+            savePricesToStorage(newPrices);
+            setLastPriceUpdate(new Date().toLocaleTimeString());
+            setConnectionStatus('connected');
+            setLastUpdate(new Date());
+            addActivityLog('price_update', `Updated prices for ${newPrices.length} assets`, newPrices);
+            addNotification(`Updated ${newPrices.length} futures prices`, 'success');
+          } else {
+            throw new Error('No price data received from API');
+          }
         } else {
-          throw new Error('No price data received from API');
+          throw new Error('Invalid API response');
         }
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1139,9 +1148,9 @@ const FuturesPage: React.FC = () => {
       let errorMessage = 'Failed to fetch real-time prices';
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          errorMessage = 'Request timeout - yfinance API not responding';
+          errorMessage = 'Request timeout - futures data service not responding';
         } else if (error.message.includes('Failed to fetch')) {
-          errorMessage = 'Cannot connect to yfinance API on port 5002';
+          errorMessage = 'Cannot connect to futures data service on port 10003';
         } else {
           errorMessage = `API Error: ${error.message}`;
         }
@@ -1166,7 +1175,7 @@ const FuturesPage: React.FC = () => {
       setIsGenerating(true);
       addActivityLog('system', `Generating ${selectedTimeframe} signal for ${selectedAsset}...`);
       
-      const response = await fetch('http://localhost:5001/api/forex/generate-signal', {
+      const response = await fetch('http://localhost:10003/api/forex/generate-signal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1223,7 +1232,7 @@ const FuturesPage: React.FC = () => {
   useEffect(() => {
     // Add initial activity logs
     addActivityLog('system', '🚀 Futures trading system initialized with forex bot integration');
-    addActivityLog('info', 'Fetching real-time data from yfinance API...');
+    addActivityLog('info', 'Fetching real-time data from futures data service...');
     
     // Clear any existing prices to ensure fresh data
     setPrices([]);
@@ -1231,7 +1240,7 @@ const FuturesPage: React.FC = () => {
     // Load signals from storage
     loadSignals();
     
-    // Fetch real-time data from yfinance API
+    // Fetch real-time data from futures data service
     fetchFuturesPrices();
     
     // Auto-start the bot system immediately
@@ -1324,30 +1333,30 @@ const FuturesPage: React.FC = () => {
       {/* Notifications */}
       {notifications.length > 0 && (
         <div className="fixed top-4 right-4 z-50 space-y-2">
-          {notifications.map(notification => (
-            <div
-              key={notification.id}
-              className={`px-4 py-3 rounded-lg shadow-lg backdrop-blur-md border transition-all duration-300 ${
-                notification.type === 'success' 
-                  ? 'bg-green-500/20 border-green-500/30 text-green-300'
-                  : notification.type === 'error'
-                  ? 'bg-red-500/20 border-red-500/30 text-red-300'
-                  : notification.type === 'warning'
-                  ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-300'
-                  : 'bg-blue-500/20 border-blue-500/30 text-blue-300'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${
-                  notification.type === 'success' ? 'bg-green-400' :
-                  notification.type === 'error' ? 'bg-red-400' :
-                  notification.type === 'warning' ? 'bg-yellow-400' : 'bg-blue-400'
-                }`}></div>
-                <span className="text-sm font-medium">{notification.message}</span>
-              </div>
+        {notifications.map(notification => (
+          <div
+            key={notification.id}
+            className={`px-4 py-3 rounded-lg shadow-lg backdrop-blur-md border transition-all duration-300 ${
+              notification.type === 'success' 
+                ? 'bg-green-500/20 border-green-500/30 text-green-300'
+                : notification.type === 'error'
+                ? 'bg-red-500/20 border-red-500/30 text-red-300'
+                : notification.type === 'warning'
+                ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-300'
+                : 'bg-blue-500/20 border-blue-500/30 text-blue-300'
+            }`}
+          >
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${
+                notification.type === 'success' ? 'bg-green-400' :
+                notification.type === 'error' ? 'bg-red-400' :
+                notification.type === 'warning' ? 'bg-yellow-400' : 'bg-blue-400'
+              }`}></div>
+              <span className="text-sm font-medium">{notification.message}</span>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+      </div>
       )}
       {/* Futuristic Header */}
       <div className="relative overflow-hidden">
@@ -1585,12 +1594,12 @@ const FuturesPage: React.FC = () => {
                   <div className="text-center py-12">
                     <div className="text-6xl mb-4">📊</div>
                     <p className="text-gray-400 text-lg">No real-time prices available</p>
-                    <p className="text-sm text-gray-500 mt-2">Make sure the yfinance API service is running on port 5002</p>
+                    <p className="text-sm text-gray-500 mt-2">Make sure the futures data service is running on port 10003</p>
                     <div className="mt-4 flex justify-center space-x-2">
                       <button
                         onClick={fetchFuturesPrices}
                         disabled={isLoading}
-                        className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center"
+                        className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
                       >
                         <RefreshCw className={`w-4 h-4 inline mr-1 ${isLoading ? 'animate-spin' : ''}`} />
                         {isLoading ? 'Fetching...' : 'Retry Fetch'}
