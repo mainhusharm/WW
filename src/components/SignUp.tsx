@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { TrendingUp, ArrowLeft, Eye, EyeOff, AlertCircle, CheckCircle, User, Mail, Lock, Database, Shield, Phone, Building, Globe } from 'lucide-react';
+import { TrendingUp, ArrowLeft, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle, User, Mail, Lock, Database, Shield, Phone, Building, Globe } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import Header from './Header';
 import TemporaryAccountNotice from './TemporaryAccountNotice';
