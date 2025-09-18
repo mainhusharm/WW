@@ -16,18 +16,18 @@ export const PAYMENT_CONFIG = {
   endpoints: {
     stripe: {
       createPaymentIntent: import.meta.env.PROD
-        ? 'https://www.traderedgepro.com/api/payment/stripe/create-payment-intent'                                                                              
+        ? 'https://backend-topb.onrender.com/api/payment/stripe/create-payment-intent'
         : 'http://localhost:3001/api/payment/stripe/create-payment-intent',
     },
     cryptomus: {
       createInvoice: import.meta.env.PROD
-        ? 'https://www.traderedgepro.com/api/cryptomus/create-invoice'
+        ? 'https://backend-topb.onrender.com/api/cryptomus/create-invoice'
         : 'http://localhost:3001/api/cryptomus/create-invoice',
       paymentInfo: import.meta.env.PROD
-        ? 'https://www.traderedgepro.com/api/cryptomus/payment-info'
+        ? 'https://backend-topb.onrender.com/api/cryptomus/payment-info'
         : 'http://localhost:3001/api/cryptomus/payment-info',
       services: import.meta.env.PROD
-        ? 'https://www.traderedgepro.com/api/cryptomus/services'
+        ? 'https://backend-topb.onrender.com/api/cryptomus/services'
         : 'http://localhost:3001/api/cryptomus/services',
     }
   },

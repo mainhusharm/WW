@@ -39,7 +39,7 @@ const PAYMENT_CONFIG = {
   endpoints: {
     stripe: {
       createPaymentIntent: import.meta.env.PROD
-        ? 'https://www.traderedgepro.com/api/payment/stripe/create-payment-intent'
+        ? 'https://backend-topb.onrender.com/api/payment/stripe/create-payment-intent'
         : 'http://localhost:3001/api/payment/stripe/create-payment-intent',
     }
   }

@@ -26,11 +26,11 @@ export const getApiBaseUrl = (): string => {
   const hostname = window.location.hostname;
   
   if (hostname.includes('onrender.com')) {
-    // Use the CORS proxy service from render.yaml
-    return 'https://trading-cors-proxy-gbhz.onrender.com';
+    // Use the main backend service
+    return 'https://backend-topb.onrender.com';
   } else if (hostname.includes('traderedgepro.com')) {
-    // For custom domain, use the API subdomain or same domain with different port
-    return 'https://api.traderedgepro.com';
+    // For custom domain, use the main backend service
+    return 'https://backend-topb.onrender.com';
   } else if (isDevelopment()) {
     // Development environment - use local enhanced signup handler
     return 'http://localhost:5001';

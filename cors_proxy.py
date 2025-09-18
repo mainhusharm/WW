@@ -20,7 +20,7 @@ CORS(app, origins=['*'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
 # Configuration
 DATABASE_PATH = "trading_bots.db"
-BACKEND_URL = os.getenv('BACKEND_URL', 'https://trading-backend-gbhz.onrender.com')
+BACKEND_URL = os.getenv('BACKEND_URL', 'https://backend-topb.onrender.com')
 PORT = int(os.getenv('PORT', 5001))
 
 def get_db_connection():
