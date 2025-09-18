@@ -163,7 +163,7 @@ const Questionnaire: React.FC = () => {
       // Save questionnaire answers to backend directly
       if (user?.id) {
         try {
-          const response = await api.post('/user/questionnaire', answers);
+          const response = await api.post(`/api/users/${user.id}/questionnaire`, answers);
           if (response.status === 200) {
             console.log('Questionnaire saved to backend successfully');
             logActivity('questionnaire_submit', { answers });

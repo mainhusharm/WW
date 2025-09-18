@@ -7,7 +7,7 @@ import {
 import { useUser } from '../contexts/UserContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useTradingPlan } from '../contexts/TradingPlanContext';
-import { useDashboardData } from './DashboardDataReader';
+import { useDatabaseData } from '../hooks/useDatabaseData';
 import { userDataService } from '../services/userDataService';
 import { journalService } from '../services/journalService';
 import AdminSignalsFeed from './AdminSignalsFeed';
@@ -47,7 +47,7 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
   const { user } = useUser();
   const { access } = useSubscription();
   const { tradingPlan, propFirm, accountConfig, accounts, selectedAccountId, selectAccount, loading: tradingPlanLoading } = useTradingPlan();
-  const { dashboardData: localStorageData, loading: localStorageLoading } = useDashboardData();
+  const { dashboardData: databaseData, loading: databaseLoading, error: databaseError } = useDatabaseData();
 
   const [dashboardData, setDashboardData] = useState(initialDashboardData);
   const [isLoading, setIsLoading] = useState(true);
@@ -540,6 +540,19 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
     return () => clearInterval(statusTimer);
   }, [selectedTimezone, currentTime]);
 
+
+  // Load dashboard data from database
+  useEffect(() => {
+    if (databaseData) {
+      setDashboardData(databaseData);
+      setIsLoading(false);
+    } else if (databaseError) {
+      console.error('Error loading dashboard data from database:', databaseError);
+      setIsLoading(false);
+    } else if (databaseLoading) {
+      setIsLoading(true);
+    }
+  }, [databaseData, databaseError, databaseLoading]);
 
   useEffect(() => {
     if (tab) setActiveTab(tab);
@@ -1110,27 +1123,37 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
     </div>
   );
 
-  // Use subscription-based feature access
-  const hasJournalAccess = access.canAccessJournal;
-  const hasMultiAccountAccess = access.canAccessMultiAccount;
-  const hasSignalsAccess = access.canAccessSignals;
-  const hasAIAccess = access.canAccessAI;
-  const hasBacktestingAccess = access.canAccessBacktesting;
-  const hasCommunityAccess = access.canAccessCommunity;
+  // Use membership tier-based feature access (same as DashboardConcept1)
+  const hasProAccess = user && ['pro', 'professional', 'elite', 'enterprise'].includes(user.membershipTier || '');
+  const hasJournalAccess = hasProAccess;
+  const hasMultiAccountAccess = hasProAccess;
+  const hasSignalsAccess = true; // Always available in DashboardConcept1
+  const hasAIAccess = true; // Always available in DashboardConcept1
+  const hasBacktestingAccess = hasProAccess;
+  const hasCommunityAccess = true; // Always available in DashboardConcept1
 
-  const sidebarTabs = [
+  // Define all possible tabs (same structure as DashboardConcept1)
+  const allTabs = [
     { id: 'overview', label: 'Overview', icon: <Layers className="w-5 h-5" /> },
-    ...(hasSignalsAccess ? [{ id: 'signals', label: 'Signal Feed', icon: <Zap className="w-5 h-5" /> }] : []),
+    { id: 'signals', label: 'Signal Feed', icon: <Zap className="w-5 h-5" /> },
     { id: 'rules', label: 'Prop Firm Rules', icon: <Shield className="w-5 h-5" /> },
     { id: 'analytics', label: 'Performance', icon: <PieChart className="w-5 h-5" /> },
     ...(hasJournalAccess ? [{ id: 'journal', label: 'Trade Journal', icon: <BookOpen className="w-5 h-5" /> }] : []),
     ...(hasMultiAccountAccess ? [{ id: 'accounts', label: 'Multi-Account', icon: <GitBranch className="w-5 h-5" /> }] : []),
     { id: 'risk-protocol', label: 'Risk Protocol', icon: <Target className="w-5 h-5" /> },
-    ...(hasAIAccess ? [{ id: 'ai-coach', label: 'AI Coach', icon: <Cpu className="w-5 h-5" /> }] : []),
+    { id: 'ai-coach', label: 'AI Coach', icon: <Cpu className="w-5 h-5" /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="w-5 h-5" /> },
-    ...(hasCommunityAccess ? [{ id: 'support', label: 'Community', icon: <MessageSquare className="w-5 h-5" /> }] : []),
+    { id: 'support', label: 'Support', icon: <MessageSquare className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
   ];
+
+  // Hide tabs with specific values (-1, 2, 3, 4)
+  // Assuming these refer to tab indices or specific tab IDs
+  const hiddenTabValues = [-1, 2, 3, 4];
+  const sidebarTabs = allTabs.filter((tab, index) => {
+    // Filter out tabs at specific indices or with specific IDs
+    return !hiddenTabValues.includes(index) && !hiddenTabValues.includes(parseInt(tab.id)) && !hiddenTabValues.includes(tab.id);
+  });
 
   // Calculate current equity from questionnaire data and performance
   const questionnaireAnswers = JSON.parse(localStorage.getItem('questionnaireAnswers') || '{}');
@@ -1555,7 +1578,7 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
         <div className="main-content">
             <div className="container mx-auto">
               {activeTab === 'overview' && renderOverview()}
-              {activeTab === 'signals' && hasSignalsAccess && <RealAdminSignalsFeed 
+              {activeTab === 'signals' && <RealAdminSignalsFeed 
                 onMarkAsTaken={handleMarkAsTaken}
                 onAddToJournal={(signal) => {
                   console.log('Adding signal to journal:', signal);
@@ -1579,24 +1602,6 @@ const DashboardConcept3: React.FC<DashboardConcept3Props> = ({ onLogout, trading
                   window.location.href = `/ai-coach?signal=${signalData}`;
                 }}
               />}
-              {activeTab === 'signals' && !hasSignalsAccess && (
-                <div className="min-h-screen flex items-center justify-center bg-gray-900">
-                  <div className="text-center max-w-md mx-auto p-6">
-                    <div className="w-16 h-16 bg-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">Signals Not Available</h2>
-                    <p className="text-gray-300 mb-6">
-                      Trading signals are not included in your current plan. Upgrade to access real-time trading signals.
-                    </p>
-                    <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                      Upgrade Plan
-                    </button>
-                  </div>
-                </div>
-              )}
               {activeTab === 'analytics' && <EnhancedPerformanceAnalytics 
                 userTrades={userTrades}
                 currentAccountData={currentAccountData}

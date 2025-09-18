@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, Target, Clock, DollarSign, TrendingUp, TrendingDown, CheckCircle, XCircle } from 'lucide-react';
+import { useUser } from '../contexts/UserContext';
+import { useDatabaseData } from '../hooks/useDatabaseData';
 
 interface PropFirmRule {
   name: string;
@@ -14,6 +16,8 @@ interface PropFirmRule {
 }
 
 const NewPropFirmRules: React.FC = () => {
+  const { user } = useUser();
+  const { dashboardData } = useDatabaseData();
   const [rules, setRules] = useState<PropFirmRule | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +47,9 @@ const NewPropFirmRules: React.FC = () => {
       }
       
       // If no saved rules, try to fetch from API
-      console.log('Fetching prop firm rules from backend...');
-      const response = await fetch('http://localhost:3001/api/test/prop-firm-rules?accountType=QuantTekel%20Instant', {
+      const accountType = dashboardData?.userProfile?.accountType || 'QuantTekel Instant';
+      console.log('Fetching prop firm rules from backend for account type:', accountType);
+      const response = await fetch(`http://localhost:3001/api/test/prop-firm-rules?accountType=${encodeURIComponent(accountType)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -100,8 +105,10 @@ const NewPropFirmRules: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchPropFirmRules();
-  }, []);
+    if (dashboardData?.userProfile?.accountType) {
+      fetchPropFirmRules();
+    }
+  }, [dashboardData?.userProfile?.accountType]);
 
   if (loading) {
     return (

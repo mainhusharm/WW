@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, AlertTriangle, FileText, CheckCircle, X } from 'lucide-react';
+import { useUser } from '../contexts/UserContext';
 
 interface ConsentFormProps {
   isOpen: boolean;
@@ -10,15 +11,55 @@ interface ConsentFormProps {
 const ConsentForm: React.FC<ConsentFormProps> = ({ isOpen, onAccept, onDecline }) => {
   const [hasAgreed, setHasAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useUser();
 
-  const handleAccept = () => {
-    if (hasAgreed) {
+  const handleAccept = async () => {
+    if (hasAgreed && user?.email) {
       setIsSubmitting(true);
-      localStorage.setItem('user_consent_accepted', 'true');
-      setTimeout(() => {
-        onAccept();
-        setIsSubmitting(false);
-      }, 1000);
+      
+      try {
+        // Save consent to database
+        if (user.id) {
+          const response = await fetch(`/api/users/${user.id}/consent`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              consent_accepted: true
+            })
+          });
+          
+          if (!response.ok) {
+            console.error('Failed to save consent to database');
+          }
+        }
+        
+        // Use user-specific consent key
+        const consentKey = `user_consent_accepted_${user.email}`;
+        const visitKey = `user_has_visited_${user.email}`;
+        
+        localStorage.setItem(consentKey, 'true');
+        localStorage.setItem(visitKey, 'true');
+        
+        setTimeout(() => {
+          onAccept();
+          setIsSubmitting(false);
+        }, 1000);
+      } catch (error) {
+        console.error('Error saving consent:', error);
+        // Still proceed with localStorage fallback
+        const consentKey = `user_consent_accepted_${user.email}`;
+        const visitKey = `user_has_visited_${user.email}`;
+        
+        localStorage.setItem(consentKey, 'true');
+        localStorage.setItem(visitKey, 'true');
+        
+        setTimeout(() => {
+          onAccept();
+          setIsSubmitting(false);
+        }, 1000);
+      }
     }
   };
 

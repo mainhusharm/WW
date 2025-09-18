@@ -303,7 +303,11 @@ const DatabaseDashboard: React.FC = () => {
               { id: 'charts', label: 'Charts', icon: TrendingUp },
               { id: 'bot-status', label: 'Bot Status', icon: Activity },
               { id: 'raw-data', label: 'Raw Data', icon: Database }
-            ].map((tab) => (
+            ].filter((tab, index) => {
+              // Hide tabs with specific values (-1, 2, 3, 4)
+              const hiddenTabValues = [-1, 2, 3, 4];
+              return !hiddenTabValues.includes(index) && !hiddenTabValues.includes(parseInt(tab.id)) && !hiddenTabValues.includes(tab.id);
+            }).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}

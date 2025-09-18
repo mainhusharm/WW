@@ -54,6 +54,44 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
   const [isLoading, setIsLoading] = useState(true);
   const { tab } = useParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Use localStorage data if available, otherwise fall back to context data
+    if (!localStorageLoading && localStorageData) {
+      setDashboardData(localStorageData);
+      setIsLoading(false);
+    } else if (!tradingPlanLoading && tradingPlan && propFirm && accountConfig) {
+      const accountValue = tradingPlan.userProfile.hasAccount === 'yes'
+        ? tradingPlan.userProfile.accountEquity
+        : accountConfig.size;
+
+      const newData = {
+        userProfile: {
+          propFirm: propFirm.name || 'Not Set',
+          accountType: accountConfig.challengeType || 'Not Set',
+          accountSize: accountValue || 10000,
+          experience: tradingPlan.userProfile.experience || 'Not Set',
+          uniqueId: user?.uniqueId || 'Not Set',
+        },
+        performance: {
+          accountBalance: accountValue || 10000,
+          totalPnl: tradingState?.performanceMetrics.totalPnl || 0,
+          winRate: tradingState?.performanceMetrics.winRate || 0,
+          totalTrades: tradingState?.performanceMetrics.totalTrades || 0,
+        },
+        riskProtocol: {
+          maxDailyRisk: tradingPlan.riskParameters.maxDailyRisk || 5000,
+          riskPerTrade: tradingPlan.riskParameters.baseTradeRisk || 1000,
+          maxDrawdown: tradingPlan.propFirmCompliance.totalDrawdownLimit || '10%',
+        },
+      };
+      setDashboardData(newData);
+      setIsLoading(false);
+    } else if (!tradingPlanLoading && !localStorageLoading) {
+      // Handle case where both context and localStorage are loaded but data is missing
+      setIsLoading(false);
+    }
+  }, [tradingPlan, propFirm, accountConfig, user, tradingState, tradingPlanLoading, localStorageData, localStorageLoading]);
   const [activeTab, setActiveTab] = useState(() => {
     // Restore active tab from localStorage if available
     if (typeof window !== 'undefined' && user?.email) {
@@ -1131,8 +1169,12 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
   const hasProAccess = user && ['pro', 'professional', 'elite', 'enterprise'].includes(user.membershipTier || '');
   const hasJournalAccess = hasProAccess;
   const hasMultiAccountAccess = hasProAccess;
+  const hasSignalsAccess = true; // Always available in DashboardConcept1
+  const hasAIAccess = true; // Always available in DashboardConcept1
+  const hasCommunityAccess = true; // Always available in DashboardConcept1
 
-  const sidebarTabs = [
+  // Define all possible tabs (same structure as DashboardConcept1)
+  const allTabs = [
     { id: 'overview', label: 'Overview', icon: <Layers className="w-5 h-5" /> },
     { id: 'signals', label: 'Signal Feed', icon: <Zap className="w-5 h-5" /> },
     { id: 'rules', label: 'Prop Firm Rules', icon: <Shield className="w-5 h-5" /> },
@@ -1145,6 +1187,14 @@ const DashboardConcept4: React.FC<DashboardConcept4Props> = ({ onLogout, trading
     { id: 'support', label: 'Support', icon: <MessageSquare className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
   ];
+
+  // Hide tabs with specific values (-1, 2, 3, 4)
+  // Assuming these refer to tab indices or specific tab IDs
+  const hiddenTabValues = [-1, 2, 3, 4];
+  const sidebarTabs = allTabs.filter((tab, index) => {
+    // Filter out tabs at specific indices or with specific IDs
+    return !hiddenTabValues.includes(index) && !hiddenTabValues.includes(parseInt(tab.id)) && !hiddenTabValues.includes(tab.id);
+  });
 
   // Calculate current equity from questionnaire data and performance
   const questionnaireAnswers = JSON.parse(localStorage.getItem('questionnaireAnswers') || '{}');

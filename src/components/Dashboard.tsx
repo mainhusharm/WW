@@ -222,12 +222,43 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     };
   }, []);
 
-  // Check for consent on mount
+  // Check for consent on mount - only show for new users who haven't consented
   useEffect(() => {
-    const consentGiven = localStorage.getItem('user_consent_accepted');
-    if (!consentGiven && user?.setupComplete) {
-      setShowConsentForm(true);
-    }
+    const checkConsent = async () => {
+      if (user?.email && user?.id) {
+        const consentKey = `user_consent_accepted_${user.email}`;
+        const consentGiven = localStorage.getItem(consentKey);
+        const visitKey = `user_has_visited_${user.email}`;
+        const hasVisited = localStorage.getItem(visitKey);
+        
+        // Mark user as having visited (for existing users who sign in)
+        if (!hasVisited) {
+          localStorage.setItem(visitKey, 'true');
+        }
+        
+        // Check database for consent status if not in localStorage
+        if (!consentGiven && !hasVisited) {
+          try {
+            const response = await fetch(`/api/users/${user.id}`);
+            if (response.ok) {
+              const userData = await response.json();
+              if (userData.success && userData.user.consent_accepted) {
+                // User has already consented in database, update localStorage
+                localStorage.setItem(consentKey, 'true');
+                return; // Don't show consent form
+              }
+            }
+          } catch (error) {
+            console.error('Error checking consent status:', error);
+          }
+          
+          // Only show consent form for new users who haven't consented
+          setShowConsentForm(true);
+        }
+      }
+    };
+    
+    checkConsent();
   }, [user]);
 
   // Initialize real-time data service

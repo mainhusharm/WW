@@ -1418,7 +1418,11 @@ The EA should be ready for live trading after thorough testing.`;
               { id: 'downloads', label: 'Downloads', icon: Download, color: 'from-indigo-500 to-purple-500', desc: 'Files & resources' },
               { id: 'settings', label: 'Settings', icon: Settings, color: 'from-gray-500 to-gray-600', desc: 'Preferences' },
               { id: 'profile', label: 'Profile', icon: User, color: 'from-pink-500 to-rose-500', desc: 'Account settings' }
-            ].map((tab) => (
+            ].filter((tab, index) => {
+              // Hide tabs with specific values (-1, 2, 3, 4)
+              const hiddenTabValues = [-1, 2, 3, 4];
+              return !hiddenTabValues.includes(index) && !hiddenTabValues.includes(parseInt(tab.id)) && !hiddenTabValues.includes(tab.id);
+            }).map((tab) => (
               <li key={tab.id}>
                 <button
                   onClick={() => switchTab(tab.id)}

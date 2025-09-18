@@ -1195,7 +1195,8 @@ const DashboardConcept2: React.FC<DashboardConcept2Props> = ({ onLogout, trading
   const hasJournalAccess = hasProAccess;
   const hasMultiAccountAccess = hasProAccess;
 
-  const sidebarTabs = [
+  // Define all possible tabs
+  const allTabs = [
     { id: 'overview', label: 'Overview', icon: <Layers className="w-5 h-5" /> },
     { id: 'signals', label: 'Signal Feed', icon: <Zap className="w-5 h-5" /> },
     { id: 'rules', label: 'Prop Firm Rules', icon: <Shield className="w-5 h-5" /> },
@@ -1208,6 +1209,14 @@ const DashboardConcept2: React.FC<DashboardConcept2Props> = ({ onLogout, trading
     { id: 'support', label: 'Support', icon: <MessageSquare className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
   ];
+
+  // Hide tabs with specific values (-1, 2, 3, 4)
+  // Assuming these refer to tab indices or specific tab IDs
+  const hiddenTabValues = [-1, 2, 3, 4];
+  const sidebarTabs = allTabs.filter((tab, index) => {
+    // Filter out tabs at specific indices or with specific IDs
+    return !hiddenTabValues.includes(index) && !hiddenTabValues.includes(parseInt(tab.id)) && !hiddenTabValues.includes(tab.id);
+  });
 
   // Calculate current equity from questionnaire data and performance
   const questionnaireAnswers = JSON.parse(localStorage.getItem('questionnaireAnswers') || '{}');
