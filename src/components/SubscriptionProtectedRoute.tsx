@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { useUser } from '../contexts/UserContext';
+import { SubscriptionService } from '../services/subscriptionService';
 import SubscriptionExpiredPopup from './SubscriptionExpiredPopup';
 
 interface SubscriptionProtectedRouteProps {
@@ -14,6 +16,7 @@ const SubscriptionProtectedRoute: React.FC<SubscriptionProtectedRouteProps> = ({
   fallbackComponent
 }) => {
   const { access, isLoading, shouldShowDiscountPopup, renewSubscription } = useSubscription();
+  const { user } = useUser();
   const [showExpiredPopup, setShowExpiredPopup] = useState(false);
 
   useEffect(() => {
@@ -49,27 +52,36 @@ const SubscriptionProtectedRoute: React.FC<SubscriptionProtectedRouteProps> = ({
 
   // Check if user has access to dashboard
   if (!access.canAccessDashboard) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
+    // Only show access restricted if user actually had a subscription that expired
+    const subscriptionService = SubscriptionService.getInstance();
+    const shouldShowRestricted = subscriptionService.shouldShowAccessRestricted(user?.id || '');
+    
+    if (shouldShowRestricted) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-900">
+          <div className="text-center max-w-md mx-auto p-6">
+            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Access Restricted</h2>
+            <p className="text-gray-300 mb-6">
+              Your subscription has expired. Please renew your subscription to continue using TraderEdge Pro.
+            </p>
+            <button
+              onClick={() => setShowExpiredPopup(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              View Plans
+            </button>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Access Restricted</h2>
-          <p className="text-gray-300 mb-6">
-            Your subscription has expired. Please renew your subscription to continue using TraderEdge Pro.
-          </p>
-          <button
-            onClick={() => setShowExpiredPopup(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            View Plans
-          </button>
         </div>
-      </div>
-    );
+      );
+    } else {
+      // For new users without subscription, show basic dashboard
+      return <>{children}</>;
+    }
   }
 
   // Check specific feature requirements

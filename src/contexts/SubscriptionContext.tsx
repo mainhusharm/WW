@@ -24,7 +24,7 @@ interface SubscriptionProviderProps {
 export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ children, userId }) => {
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [access, setAccess] = useState<PlanAccess>({
-    canAccessDashboard: false,
+    canAccessDashboard: true, // Allow basic access for new users
     canAccessSignals: false,
     canAccessJournal: false,
     canAccessAI: false,
@@ -32,7 +32,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     canAccessBacktesting: false,
     canAccessMultiAccount: false,
     remainingDays: 0,
-    isExpired: true,
+    isExpired: false, // Not expired for new users
     expiredFeatures: []
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +40,7 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
 
   const subscriptionService = SubscriptionService.getInstance();
 
-  const refreshSubscription = () => {
+  const refreshSubscription = async () => {
     if (!userId) return;
 
     setIsLoading(true);
@@ -52,8 +52,8 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
     const currentSubscription = subscriptionService.getSubscription(userId);
     setSubscription(currentSubscription);
     
-    // Check access
-    const currentAccess = subscriptionService.checkAccess(userId);
+    // Check access (now async)
+    const currentAccess = await subscriptionService.checkAccess(userId);
     setAccess(currentAccess);
     
     // Check if should show discount popup

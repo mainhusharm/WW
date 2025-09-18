@@ -916,6 +916,108 @@ def update_dashboard(user_id):
             "error": f"Failed to update dashboard: {str(e)}"
         }), 500
 
+@app.route('/api/users/<int:user_id>/features', methods=['GET'])
+def get_user_features(user_id):
+    """Get user's feature access based on their plan"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get user's plan and payment status
+        cursor.execute("""
+            SELECT plan_type, payment_status, payment_amount, payment_date
+            FROM users 
+            WHERE id = %s AND is_active = true
+        """, (user_id,))
+        
+        user = cursor.fetchone()
+        conn.close()
+        
+        if not user:
+            return jsonify({
+                "success": False,
+                "error": "User not found"
+            }), 404
+        
+        plan_type = user['plan_type']
+        payment_status = user['payment_status']
+        
+        # Define plan features mapping
+        plan_features = {
+            'free': {
+                'canAccessDashboard': True,
+                'canAccessSignals': False,
+                'canAccessJournal': False,
+                'canAccessAI': False,
+                'canAccessCommunity': False,
+                'canAccessBacktesting': False,
+                'canAccessMultiAccount': False,
+                'features': []
+            },
+            'kickstarter': {
+                'canAccessDashboard': True,
+                'canAccessSignals': True,
+                'canAccessJournal': False,
+                'canAccessAI': False,
+                'canAccessCommunity': False,
+                'canAccessBacktesting': False,
+                'canAccessMultiAccount': False,
+                'features': ['trading_signals', 'risk_management_plan', 'risk_calculator', 'phase_tracking', 'prop_firm_analyzer']
+            },
+            'starter': {
+                'canAccessDashboard': True,
+                'canAccessSignals': True,
+                'canAccessJournal': False,
+                'canAccessAI': False,
+                'canAccessCommunity': False,
+                'canAccessBacktesting': False,
+                'canAccessMultiAccount': False,
+                'features': ['trading_signals', 'risk_management_plan', 'risk_calculator', 'phase_tracking', 'prop_firm_analyzer', 'email_support', 'auto_lot_calculator']
+            },
+            'pro': {
+                'canAccessDashboard': True,
+                'canAccessSignals': True,
+                'canAccessJournal': True,
+                'canAccessAI': True,
+                'canAccessCommunity': True,
+                'canAccessBacktesting': True,
+                'canAccessMultiAccount': True,
+                'features': ['trading_signals', 'advanced_journal', 'ai_coach', 'private_community', 'backtesting_tools', 'multi_account_tracker', 'priority_support']
+            },
+            'enterprise': {
+                'canAccessDashboard': True,
+                'canAccessSignals': True,
+                'canAccessJournal': True,
+                'canAccessAI': True,
+                'canAccessCommunity': True,
+                'canAccessBacktesting': True,
+                'canAccessMultiAccount': True,
+                'features': ['trading_signals', 'advanced_journal', 'ai_coach_advanced', 'private_community', 'professional_backtesting', 'multi_account_tracker', 'priority_support_24_7', 'ai_analysis_realtime']
+            }
+        }
+        
+        # Get features for the plan, default to free if plan not found
+        user_features = plan_features.get(plan_type, plan_features['free'])
+        
+        # If payment is not completed, restrict to free features
+        if payment_status != 'completed':
+            user_features = plan_features['free']
+        
+        return jsonify({
+            "success": True,
+            "features": user_features,
+            "plan_type": plan_type,
+            "payment_status": payment_status,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting user features: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Failed to get user features: {str(e)}"
+        }), 500
+
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
     """Get user statistics"""
@@ -1369,7 +1471,7 @@ def register():
         email = data.get('email')
         password = data.get('password')
         username = data.get('username', 'New User')
-        plan_type = data.get('plan_type', 'premium')
+        plan_type = data.get('plan_type', 'free')
         
         print(f"Processing registration for email: {email}, plan: {plan_type}")
         

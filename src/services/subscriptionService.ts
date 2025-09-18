@@ -175,11 +175,53 @@ export class SubscriptionService {
   }
 
   // Check user's access based on their subscription
-  checkAccess(userId: string): PlanAccess {
+  async checkAccess(userId: string): Promise<PlanAccess> {
     const subscription = this.getSubscription(userId);
     const now = new Date();
     
-    if (!subscription || !subscription.isActive || subscription.status !== 'active') {
+    // If no subscription exists, check backend for user features
+    if (!subscription) {
+      try {
+        // Check backend for user features based on plan and payment
+        const response = await fetch(`/api/users/${userId}/features`);
+        if (response.ok) {
+          const featureData = await response.json();
+          if (featureData.success) {
+            return {
+              canAccessDashboard: featureData.features.canAccessDashboard,
+              canAccessSignals: featureData.features.canAccessSignals,
+              canAccessJournal: featureData.features.canAccessJournal,
+              canAccessAI: featureData.features.canAccessAI,
+              canAccessCommunity: featureData.features.canAccessCommunity,
+              canAccessBacktesting: featureData.features.canAccessBacktesting,
+              canAccessMultiAccount: featureData.features.canAccessMultiAccount,
+              remainingDays: featureData.payment_status === 'completed' ? 999 : 0,
+              isExpired: false,
+              expiredFeatures: []
+            };
+          }
+        }
+      } catch (error) {
+        console.log('Could not check backend features, using default access');
+      }
+      
+      // Default access for new users without payment
+      return {
+        canAccessDashboard: true,
+        canAccessSignals: false,
+        canAccessJournal: false,
+        canAccessAI: false,
+        canAccessCommunity: false,
+        canAccessBacktesting: false,
+        canAccessMultiAccount: false,
+        remainingDays: 0,
+        isExpired: false,
+        expiredFeatures: []
+      };
+    }
+    
+    // If subscription exists but is not active or expired, restrict access
+    if (!subscription.isActive || subscription.status !== 'active') {
       return {
         canAccessDashboard: false,
         canAccessSignals: false,
@@ -213,6 +255,49 @@ export class SubscriptionService {
       isExpired,
       expiredFeatures
     };
+  }
+
+  // Get features based on plan type
+  getPlanFeatures(planType: string): PlanAccess {
+    const plan = SUBSCRIPTION_PLANS[planType];
+    if (!plan) {
+      // Default to basic access if plan not found
+      return {
+        canAccessDashboard: true,
+        canAccessSignals: false,
+        canAccessJournal: false,
+        canAccessAI: false,
+        canAccessCommunity: false,
+        canAccessBacktesting: false,
+        canAccessMultiAccount: false,
+        remainingDays: 0,
+        isExpired: false,
+        expiredFeatures: []
+      };
+    }
+
+    // Map plan features to access permissions
+    const features = plan.features;
+    return {
+      canAccessDashboard: true, // All paid users get dashboard access
+      canAccessSignals: features.includes('trading_signals'),
+      canAccessJournal: features.includes('advanced_journal'),
+      canAccessAI: features.includes('ai_coach') || features.includes('ai_coach_advanced'),
+      canAccessCommunity: features.includes('private_community'),
+      canAccessBacktesting: features.includes('backtesting_tools') || features.includes('professional_backtesting'),
+      canAccessMultiAccount: features.includes('multi_account_tracker'),
+      remainingDays: 999, // Unlimited for paid users
+      isExpired: false,
+      expiredFeatures: []
+    };
+  }
+
+  // Check if user should see "Access Restricted" message
+  shouldShowAccessRestricted(userId: string): boolean {
+    const subscription = this.getSubscription(userId);
+    
+    // Only show access restricted if user had a subscription that expired
+    return subscription !== null && subscription.status === 'expired';
   }
 
   // Get available plans for expired users (with discount)
