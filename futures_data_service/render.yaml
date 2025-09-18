@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: futures-data-service
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        value: https://www.traderedgepro.com,https://traderedgepro.com,https://traderedgepro.onrender.com,https://frontend-01uh.onrender.com,https://frontend-zwwl.onrender.com
+    healthCheckPath: /health
+    autoDeploy: false

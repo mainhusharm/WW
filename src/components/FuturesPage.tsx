@@ -4,6 +4,26 @@ import {
   Bot, Zap, Activity, Globe, Play, Pause, Target, BarChart3, Database, RefreshCw
 } from 'lucide-react';
 
+// Environment-aware API configuration
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    // Production environment detection
+    if (hostname.includes('onrender.com') || hostname.includes('traderedgepro.com')) {
+      return 'https://futures-data-service.onrender.com';
+    }
+    
+    // Local development
+    return 'http://localhost:10003';
+  }
+  
+  // Fallback for server-side rendering
+  return 'http://localhost:10003';
+};
+
+const FUTURES_API_BASE = getApiBaseUrl();
+
 interface FuturesPrice {
   symbol: string;
   ticker: string;
@@ -1076,7 +1096,7 @@ const FuturesPage: React.FC = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
-      const response = await fetch(`http://localhost:10003/api/bulk`, {
+      const response = await fetch(`${FUTURES_API_BASE}/api/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1175,7 +1195,7 @@ const FuturesPage: React.FC = () => {
       setIsGenerating(true);
       addActivityLog('system', `Generating ${selectedTimeframe} signal for ${selectedAsset}...`);
       
-      const response = await fetch('http://localhost:10003/api/forex/generate-signal', {
+      const response = await fetch(`${FUTURES_API_BASE}/api/forex/generate-signal`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1560,8 +1580,8 @@ const FuturesPage: React.FC = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white flex items-center">
                 <div className={`w-3 h-3 rounded-full mr-3 ${
-                  connectionStatus === 'connected' ? 'bg-green-400 animate-pulse' :
-                  connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' :
+                  connectionStatus === 'connected' ? 'bg-green-400 animate-pulse' : 
+                  connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' : 
                   'bg-red-400'
                 }`}></div>
                 Real-time Prices
