@@ -76,7 +76,7 @@ def initialize_database():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Create users table
+        # Create users table with all integrated data
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -91,17 +91,92 @@ def initialize_database():
                 phone VARCHAR(20),
                 company VARCHAR(200),
                 country VARCHAR(50),
+                
+                -- Trading Experience & Goals (from questionnaire)
                 trading_experience VARCHAR(50),
                 trading_goals TEXT,
                 risk_tolerance VARCHAR(50),
                 preferred_markets VARCHAR(100),
                 trading_style VARCHAR(50),
-                agree_to_marketing BOOLEAN DEFAULT false,
+                
+                -- Account Information (from questionnaire)
+                account_type VARCHAR(50),
+                prop_firm VARCHAR(100),
+                account_size DECIMAL(15,2) DEFAULT 0,
+                account_equity DECIMAL(15,2) DEFAULT 0,
+                account_currency VARCHAR(3) DEFAULT 'USD',
+                broker_name VARCHAR(100),
+                broker_platform VARCHAR(100),
+                
+                -- Risk Management (from questionnaire)
+                risk_percentage DECIMAL(5,2) DEFAULT 0,
+                risk_reward_ratio VARCHAR(20),
+                max_daily_loss_percentage DECIMAL(5,2) DEFAULT 0,
+                max_weekly_loss_percentage DECIMAL(5,2) DEFAULT 0,
+                max_monthly_loss_percentage DECIMAL(5,2) DEFAULT 0,
+                
+                -- Payment Details (from payment page)
                 plan_type VARCHAR(50) DEFAULT 'free',
+                payment_status VARCHAR(50) DEFAULT 'pending',
+                payment_method VARCHAR(50),
+                payment_amount DECIMAL(10,2) DEFAULT 0,
+                payment_date TIMESTAMP WITH TIME ZONE,
+                transaction_id VARCHAR(255),
+                payment_provider VARCHAR(50),
+                payment_provider_id VARCHAR(255),
+                payment_intent_id VARCHAR(255),
+                currency VARCHAR(3) DEFAULT 'USD',
+                
+                -- Billing Information (from payment page)
+                billing_country VARCHAR(50),
+                billing_state VARCHAR(50),
+                billing_city VARCHAR(100),
+                billing_address TEXT,
+                billing_postal_code VARCHAR(20),
+                company_name VARCHAR(200),
+                tax_id VARCHAR(50),
+                vat_number VARCHAR(50),
+                
+                -- User Dashboard Details (from dashboard)
+                account_balance DECIMAL(12,2) DEFAULT 0,
+                total_pnl DECIMAL(12,2) DEFAULT 0,
+                win_rate DECIMAL(5,2) DEFAULT 0,
+                total_trades INTEGER DEFAULT 0,
+                winning_trades INTEGER DEFAULT 0,
+                losing_trades INTEGER DEFAULT 0,
+                max_drawdown DECIMAL(12,2) DEFAULT 0,
+                current_drawdown DECIMAL(12,2) DEFAULT 0,
+                consecutive_wins INTEGER DEFAULT 0,
+                consecutive_losses INTEGER DEFAULT 0,
+                average_win DECIMAL(12,2) DEFAULT 0,
+                average_loss DECIMAL(12,2) DEFAULT 0,
+                profit_factor DECIMAL(8,2) DEFAULT 0,
+                gross_profit DECIMAL(12,2) DEFAULT 0,
+                gross_loss DECIMAL(12,2) DEFAULT 0,
+                sharpe_ratio DECIMAL(8,2),
+                sortino_ratio DECIMAL(8,2),
+                calmar_ratio DECIMAL(8,2),
+                
+                -- Prop Firm Rules (from questionnaire)
+                prop_firm_rules JSONB DEFAULT '{}',
+                rule_violations JSONB DEFAULT '[]',
+                compliance_status VARCHAR(20) DEFAULT 'compliant',
+                
+                -- Additional Questionnaire Data
+                questionnaire_data JSONB DEFAULT '{}',
+                data_capture_complete BOOLEAN DEFAULT false,
+                
+                -- User Preferences
+                agree_to_marketing BOOLEAN DEFAULT false,
                 unique_id VARCHAR(50) UNIQUE,
+                
+                -- Timestamps
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP WITH TIME ZONE,
+                last_active TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                
+                -- Account Status
                 is_active BOOLEAN DEFAULT true,
                 is_verified BOOLEAN DEFAULT false,
                 verification_token VARCHAR(255),
@@ -286,18 +361,24 @@ def get_all_users():
         
         cursor.execute("""
             SELECT 
-                u.id, u.uuid, u.username, u.email, u.plan_type, u.created_at, u.last_login,
-                u.is_active, u.is_verified,
-                cd.customer_uuid, cd.membership_tier, cd.account_status, cd.payment_status,
-                cd.payment_method, cd.payment_amount, cd.payment_date, cd.account_type,
-                cd.prop_firm, cd.account_size, cd.trading_experience, cd.risk_tolerance,
-                cd.trading_goals, cd.questionnaire_data, cd.admin_verified, cd.admin_notes,
-                cd.data_capture_complete, cd.created_at as customer_created_at,
-                cd.updated_at as customer_updated_at, cd.last_active
-            FROM users u
-            LEFT JOIN customer_data cd ON u.id = cd.user_id
-            WHERE u.is_active = true
-            ORDER BY u.created_at DESC
+                id, uuid, username, email, plan_type, created_at, last_login, last_active,
+                is_active, is_verified, first_name, last_name, full_name, phone, company, country,
+                trading_experience, trading_goals, risk_tolerance, preferred_markets, trading_style,
+                account_type, prop_firm, account_size, account_equity, account_currency,
+                broker_name, broker_platform, risk_percentage, risk_reward_ratio,
+                max_daily_loss_percentage, max_weekly_loss_percentage, max_monthly_loss_percentage,
+                payment_status, payment_method, payment_amount, payment_date, transaction_id,
+                payment_provider, payment_provider_id, payment_intent_id, currency,
+                billing_country, billing_state, billing_city, billing_address, billing_postal_code,
+                company_name, tax_id, vat_number, account_balance, total_pnl, win_rate,
+                total_trades, winning_trades, losing_trades, max_drawdown, current_drawdown,
+                consecutive_wins, consecutive_losses, average_win, average_loss, profit_factor,
+                gross_profit, gross_loss, sharpe_ratio, sortino_ratio, calmar_ratio,
+                prop_firm_rules, rule_violations, compliance_status, questionnaire_data,
+                data_capture_complete, agree_to_marketing, unique_id, updated_at
+            FROM users
+            WHERE is_active = true
+            ORDER BY created_at DESC
         """)
         
         users = cursor.fetchall()
@@ -314,37 +395,84 @@ def get_all_users():
                 except:
                     pass
             
-            # Format for frontend
+            # Format for frontend with all integrated data
             customer_data = {
                 'id': user_dict['id'],
                 'customer_id': user_dict['id'],
-                'unique_id': f"CUS-{user_dict['id']:03d}",
+                'unique_id': user_dict.get('unique_id', f"CUS-{user_dict['id']:03d}"),
                 'email': user_dict['email'],
                 'name': user_dict['username'],
-                'phone': '',
-                'membership_tier': user_dict.get('membership_tier', user_dict['plan_type']),
+                'phone': user_dict.get('phone', ''),
+                'first_name': user_dict.get('first_name', ''),
+                'last_name': user_dict.get('last_name', ''),
+                'company': user_dict.get('company', ''),
+                'country': user_dict.get('country', ''),
+                
+                # Payment Details
+                'plan_type': user_dict.get('plan_type', 'free'),
                 'payment_status': user_dict.get('payment_status', 'pending'),
                 'payment_method': user_dict.get('payment_method', 'unknown'),
                 'payment_amount': float(user_dict.get('payment_amount', 0)),
                 'payment_date': user_dict.get('payment_date', ''),
-                'join_date': user_dict['created_at'].isoformat(),
-                'last_active': user_dict.get('last_active', user_dict['created_at']).isoformat(),
-                'status': 'active' if user_dict['is_active'] else 'inactive',
-                'questionnaire_data': user_dict.get('questionnaire_data', {}),
+                'transaction_id': user_dict.get('transaction_id', ''),
+                'currency': user_dict.get('currency', 'USD'),
+                
+                # Billing Information
+                'billing_country': user_dict.get('billing_country', ''),
+                'billing_state': user_dict.get('billing_state', ''),
+                'billing_city': user_dict.get('billing_city', ''),
+                'billing_address': user_dict.get('billing_address', ''),
+                'company_name': user_dict.get('company_name', ''),
+                
+                # Account Information
                 'account_type': user_dict.get('account_type', 'standard'),
                 'prop_firm': user_dict.get('prop_firm', 'unknown'),
                 'account_size': float(user_dict.get('account_size', 0)),
+                'account_equity': float(user_dict.get('account_equity', 0)),
+                'account_currency': user_dict.get('account_currency', 'USD'),
+                'broker_name': user_dict.get('broker_name', ''),
+                'broker_platform': user_dict.get('broker_platform', ''),
+                
+                # Trading Information
                 'trading_experience': user_dict.get('trading_experience', 'beginner'),
-                'risk_tolerance': user_dict.get('risk_tolerance', 'low'),
+                'trading_style': user_dict.get('trading_style', ''),
                 'trading_goals': user_dict.get('trading_goals', 'learning'),
-                'ip_address': '192.168.1.100',
-                'signup_source': 'website',
-                'referral_code': '',
+                'risk_tolerance': user_dict.get('risk_tolerance', 'low'),
+                'risk_percentage': float(user_dict.get('risk_percentage', 0)),
+                'preferred_markets': user_dict.get('preferred_markets', ''),
+                
+                # Dashboard Data
+                'account_balance': float(user_dict.get('account_balance', 0)),
+                'total_pnl': float(user_dict.get('total_pnl', 0)),
+                'win_rate': float(user_dict.get('win_rate', 0)),
+                'total_trades': user_dict.get('total_trades', 0),
+                'winning_trades': user_dict.get('winning_trades', 0),
+                'losing_trades': user_dict.get('losing_trades', 0),
+                'max_drawdown': float(user_dict.get('max_drawdown', 0)),
+                'current_drawdown': float(user_dict.get('current_drawdown', 0)),
+                'consecutive_wins': user_dict.get('consecutive_wins', 0),
+                'consecutive_losses': user_dict.get('consecutive_losses', 0),
+                'profit_factor': float(user_dict.get('profit_factor', 0)),
+                'sharpe_ratio': user_dict.get('sharpe_ratio'),
+                'sortino_ratio': user_dict.get('sortino_ratio'),
+                'calmar_ratio': user_dict.get('calmar_ratio'),
+                
+                # Prop Firm Rules
+                'prop_firm_rules': user_dict.get('prop_firm_rules', {}),
+                'rule_violations': user_dict.get('rule_violations', []),
+                'compliance_status': user_dict.get('compliance_status', 'compliant'),
+                
+                # Additional Data
+                'questionnaire_data': user_dict.get('questionnaire_data', {}),
                 'data_capture_complete': user_dict.get('data_capture_complete', False),
-                'admin_verified': user_dict.get('admin_verified', False),
-                'admin_notes': user_dict.get('admin_notes', 'User from database'),
+                'agree_to_marketing': user_dict.get('agree_to_marketing', False),
+                
+                # Timestamps
+                'join_date': user_dict['created_at'].isoformat(),
+                'last_active': user_dict.get('last_active', user_dict['created_at']).isoformat(),
+                'status': 'active' if user_dict['is_active'] else 'inactive',
                 'created_at': user_dict['created_at'].isoformat(),
-                'updated_at': user_dict.get('customer_updated_at', user_dict['created_at']).isoformat()
+                'updated_at': user_dict.get('updated_at', user_dict['created_at']).isoformat()
             }
             users_list.append(customer_data)
         
@@ -470,17 +598,23 @@ def get_user(user_id):
         
         cursor.execute("""
             SELECT 
-                u.id, u.uuid, u.username, u.email, u.plan_type, u.created_at, u.last_login,
-                u.is_active, u.is_verified,
-                cd.customer_uuid, cd.membership_tier, cd.account_status, cd.payment_status,
-                cd.payment_method, cd.payment_amount, cd.payment_date, cd.account_type,
-                cd.prop_firm, cd.account_size, cd.trading_experience, cd.risk_tolerance,
-                cd.trading_goals, cd.questionnaire_data, cd.admin_verified, cd.admin_notes,
-                cd.data_capture_complete, cd.created_at as customer_created_at,
-                cd.updated_at as customer_updated_at, cd.last_active
-            FROM users u
-            LEFT JOIN customer_data cd ON u.id = cd.user_id
-            WHERE u.id = %s AND u.is_active = true
+                id, uuid, username, email, plan_type, created_at, last_login, last_active,
+                is_active, is_verified, first_name, last_name, full_name, phone, company, country,
+                trading_experience, trading_goals, risk_tolerance, preferred_markets, trading_style,
+                account_type, prop_firm, account_size, account_equity, account_currency,
+                broker_name, broker_platform, risk_percentage, risk_reward_ratio,
+                max_daily_loss_percentage, max_weekly_loss_percentage, max_monthly_loss_percentage,
+                payment_status, payment_method, payment_amount, payment_date, transaction_id,
+                payment_provider, payment_provider_id, payment_intent_id, currency,
+                billing_country, billing_state, billing_city, billing_address, billing_postal_code,
+                company_name, tax_id, vat_number, account_balance, total_pnl, win_rate,
+                total_trades, winning_trades, losing_trades, max_drawdown, current_drawdown,
+                consecutive_wins, consecutive_losses, average_win, average_loss, profit_factor,
+                gross_profit, gross_loss, sharpe_ratio, sortino_ratio, calmar_ratio,
+                prop_firm_rules, rule_violations, compliance_status, questionnaire_data,
+                data_capture_complete, agree_to_marketing, unique_id, updated_at
+            FROM users
+            WHERE id = %s AND is_active = true
         """, (user_id,))
         
         user = cursor.fetchone()
@@ -525,27 +659,42 @@ def update_questionnaire(user_id):
                 "error": "User not found"
             }), 404
         
-        # Update customer data with questionnaire
+        # Update users table with questionnaire data
         cursor.execute("""
-            UPDATE customer_data 
+            UPDATE users 
             SET 
                 account_type = %s,
                 prop_firm = %s,
                 account_size = %s,
+                account_equity = %s,
                 trading_experience = %s,
+                trading_style = %s,
                 risk_tolerance = %s,
                 trading_goals = %s,
+                risk_percentage = %s,
+                risk_reward_ratio = %s,
+                max_daily_loss_percentage = %s,
+                max_weekly_loss_percentage = %s,
+                max_monthly_loss_percentage = %s,
                 questionnaire_data = %s,
                 data_capture_complete = true,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = %s
+                updated_at = CURRENT_TIMESTAMP,
+                last_active = CURRENT_TIMESTAMP
+            WHERE id = %s
         """, (
             data.get('account_type'),
             data.get('prop_firm'),
             data.get('account_size', 0),
+            data.get('account_equity', 0),
             data.get('trading_experience'),
+            data.get('trading_style'),
             data.get('risk_tolerance'),
             data.get('trading_goals'),
+            data.get('risk_percentage', 0),
+            data.get('risk_reward_ratio'),
+            data.get('max_daily_loss_percentage', 0),
+            data.get('max_weekly_loss_percentage', 0),
+            data.get('max_monthly_loss_percentage', 0),
             json.dumps(data.get('questionnaire_data', {})),
             user_id
         ))
@@ -575,6 +724,196 @@ def update_questionnaire(user_id):
         return jsonify({
             "success": False,
             "error": f"Failed to update questionnaire: {str(e)}"
+        }), 500
+
+@app.route('/api/users/<int:user_id>/payment', methods=['POST'])
+def update_payment(user_id):
+    """Update user payment data"""
+    try:
+        data = request.get_json()
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if user exists
+        cursor.execute("SELECT id FROM users WHERE id = %s AND is_active = true", (user_id,))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({
+                "success": False,
+                "error": "User not found"
+            }), 404
+        
+        # Update users table with payment data
+        cursor.execute("""
+            UPDATE users 
+            SET 
+                plan_type = %s,
+                payment_status = %s,
+                payment_method = %s,
+                payment_amount = %s,
+                payment_date = %s,
+                transaction_id = %s,
+                payment_provider = %s,
+                payment_provider_id = %s,
+                payment_intent_id = %s,
+                currency = %s,
+                billing_country = %s,
+                billing_state = %s,
+                billing_city = %s,
+                billing_address = %s,
+                billing_postal_code = %s,
+                company_name = %s,
+                tax_id = %s,
+                vat_number = %s,
+                updated_at = CURRENT_TIMESTAMP,
+                last_active = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (
+            data.get('plan_type'),
+            data.get('payment_status', 'completed'),
+            data.get('payment_method'),
+            data.get('payment_amount', 0),
+            data.get('payment_date'),
+            data.get('transaction_id'),
+            data.get('payment_provider'),
+            data.get('payment_provider_id'),
+            data.get('payment_intent_id'),
+            data.get('currency', 'USD'),
+            data.get('billing_country'),
+            data.get('billing_state'),
+            data.get('billing_city'),
+            data.get('billing_address'),
+            data.get('billing_postal_code'),
+            data.get('company_name'),
+            data.get('tax_id'),
+            data.get('vat_number'),
+            user_id
+        ))
+        
+        # Log activity
+        cursor.execute("""
+            INSERT INTO user_activities (user_id, activity_type, activity_data, ip_address)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            user_id,
+            'payment_updated',
+            json.dumps(data),
+            request.remote_addr
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "message": "Payment updated successfully",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }), 200
+        
+    except Exception as e:
+        print(f"Error updating payment: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Failed to update payment: {str(e)}"
+        }), 500
+
+@app.route('/api/users/<int:user_id>/dashboard', methods=['POST'])
+def update_dashboard(user_id):
+    """Update user dashboard data"""
+    try:
+        data = request.get_json()
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if user exists
+        cursor.execute("SELECT id FROM users WHERE id = %s AND is_active = true", (user_id,))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({
+                "success": False,
+                "error": "User not found"
+            }), 404
+        
+        # Update users table with dashboard data
+        cursor.execute("""
+            UPDATE users 
+            SET 
+                account_balance = %s,
+                total_pnl = %s,
+                win_rate = %s,
+                total_trades = %s,
+                winning_trades = %s,
+                losing_trades = %s,
+                max_drawdown = %s,
+                current_drawdown = %s,
+                consecutive_wins = %s,
+                consecutive_losses = %s,
+                average_win = %s,
+                average_loss = %s,
+                profit_factor = %s,
+                gross_profit = %s,
+                gross_loss = %s,
+                sharpe_ratio = %s,
+                sortino_ratio = %s,
+                calmar_ratio = %s,
+                prop_firm_rules = %s,
+                rule_violations = %s,
+                compliance_status = %s,
+                updated_at = CURRENT_TIMESTAMP,
+                last_active = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (
+            data.get('account_balance', 0),
+            data.get('total_pnl', 0),
+            data.get('win_rate', 0),
+            data.get('total_trades', 0),
+            data.get('winning_trades', 0),
+            data.get('losing_trades', 0),
+            data.get('max_drawdown', 0),
+            data.get('current_drawdown', 0),
+            data.get('consecutive_wins', 0),
+            data.get('consecutive_losses', 0),
+            data.get('average_win', 0),
+            data.get('average_loss', 0),
+            data.get('profit_factor', 0),
+            data.get('gross_profit', 0),
+            data.get('gross_loss', 0),
+            data.get('sharpe_ratio'),
+            data.get('sortino_ratio'),
+            data.get('calmar_ratio'),
+            json.dumps(data.get('prop_firm_rules', {})),
+            json.dumps(data.get('rule_violations', [])),
+            data.get('compliance_status', 'compliant'),
+            user_id
+        ))
+        
+        # Log activity
+        cursor.execute("""
+            INSERT INTO user_activities (user_id, activity_type, activity_data, ip_address)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            user_id,
+            'dashboard_updated',
+            json.dumps(data),
+            request.remote_addr
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "message": "Dashboard updated successfully",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }), 200
+        
+    except Exception as e:
+        print(f"Error updating dashboard: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Failed to update dashboard: {str(e)}"
         }), 500
 
 @app.route('/api/stats', methods=['GET'])
