@@ -29,7 +29,6 @@ import PropFirmRules from './PropFirmRules';
 import NewPropFirmRules from './NewPropFirmRules';
 import RiskManagementPlan from './RiskManagementPlan';
 import LiveChatWidget from './LiveChatWidget';
-import ConsentForm from './ConsentForm';
 import UserScreenshotTab from './UserScreenshotTab';
 import UserSupportDashboard from './UserSupportDashboard';
 import AICoach from './AICoach';
@@ -116,11 +115,6 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [selectedNewsDate, setSelectedNewsDate] = useState(new Date());
   const [selectedCurrency, setSelectedCurrency] = useState('ALL');
-  const [showConsentForm, setShowConsentForm] = useState(() => {
-    // Check if user has already accepted the simplified consent
-    const consentAccepted = localStorage.getItem('user_consent_accepted') === 'true';
-    return !consentAccepted;
-  });
   
   // Settings state
   const [userSettings, setUserSettings] = useState(() => {
@@ -639,14 +633,6 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
     }
   };
 
-  const handleConsentAccept = () => {
-    setShowConsentForm(false);
-  };
-
-  const handleConsentDecline = () => {
-    // Redirect user away or show alternative action
-    onLogout();
-  };
 
   const settingsTabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
@@ -1227,11 +1213,6 @@ const DashboardConcept1: React.FC<DashboardConcept1Props> = ({ onLogout, trading
 
   return (
     <>
-      <ConsentForm 
-        isOpen={showConsentForm}
-        onAccept={handleConsentAccept}
-        onDecline={handleConsentDecline}
-      />
       <style>{`
         .concept1 { background: radial-gradient(ellipse at center, #0a0a1f 0%, #000000 100%); position: relative; overflow: hidden; width: 100%; height: 100vh; display: flex; }
         .neural-grid { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px); background-size: 50px 50px; animation: grid-move 20s linear infinite; }

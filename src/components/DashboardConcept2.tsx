@@ -29,7 +29,6 @@ import PropFirmRules from './PropFirmRules';
 import NewPropFirmRules from './NewPropFirmRules';
 import RiskManagementPlan from './RiskManagementPlan';
 import LiveChatWidget from './LiveChatWidget';
-import ConsentForm from './ConsentForm';
 import UserScreenshotTab from './UserScreenshotTab';
 import UserSupportDashboard from './UserSupportDashboard';
 import AICoach from './AICoach';

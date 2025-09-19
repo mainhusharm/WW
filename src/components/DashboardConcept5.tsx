@@ -14,7 +14,6 @@ import NotificationCenter from './NotificationCenter';
 import PropFirmRules from './PropFirmRules';
 import RiskManagementPlan from './RiskManagementPlan';
 import LiveChatWidget from './LiveChatWidget';
-import ConsentForm from './ConsentForm';
 import UserScreenshotTab from './UserScreenshotTab';
 import ForexData from './ForexData';
 import CryptoDashboard from './CryptoDashboard';
@@ -93,10 +92,6 @@ const DashboardConcept5: React.FC<DashboardConcept5Props> = ({ onLogout, trading
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [selectedNewsDate, setSelectedNewsDate] = useState(new Date());
   const [selectedCurrency, setSelectedCurrency] = useState('ALL');
-  const [showConsentForm, setShowConsentForm] = useState(() => {
-    const consentAccepted = localStorage.getItem('user_consent_accepted') === 'true';
-    return !consentAccepted;
-  });
 
   // Save active tab to localStorage when it changes
   useEffect(() => {
@@ -159,15 +154,6 @@ const DashboardConcept5: React.FC<DashboardConcept5Props> = ({ onLogout, trading
     return <div>Loading Dashboard Data...</div>;
   }
 
-  const handleConsentAccept = () => {
-    localStorage.setItem('user_consent_accepted', 'true');
-    setShowConsentForm(false);
-  };
-
-  const handleConsentDecline = () => {
-    localStorage.setItem('user_consent_accepted', 'false');
-    setShowConsentForm(false);
-  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -298,11 +284,6 @@ const DashboardConcept5: React.FC<DashboardConcept5Props> = ({ onLogout, trading
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <ConsentForm 
-        isOpen={showConsentForm}
-        onAccept={handleConsentAccept}
-        onDecline={handleConsentDecline}
-      />
       
       {/* Header */}
       <header className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-40">
