@@ -239,7 +239,7 @@ def futures_prices():
         }), 500
 
 @app.route('/api/futures/generate-signal', methods=['POST'])
-def generate_signal():
+def generate_signal_legacy():
     """Generate a futures trading signal"""
     try:
         data = request.get_json()
@@ -284,6 +284,27 @@ def get_signals():
             'error': str(e)
         }), 500
 
+@app.route('/api/futures/signals', methods=['POST'])
+def create_signal():
+    """Generate a new futures trading signal"""
+    try:
+        data = request.get_json() or {}
+        asset = data.get('asset', 'SP500')
+        timeframe = data.get('timeframe', '1m')
+        
+        # Generate signal
+        signal = generate_futures_signal(asset, timeframe)
+        
+        # Emit to all connected clients
+        socketio.emit('new_signal', signal)
+        
+        return jsonify(signal), 200
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -309,7 +330,7 @@ def handle_subscribe_futures():
 
 if __name__ == '__main__':
     print("🚀 Starting Futures Trading Backend...")
-    print("🌐 Server running on http://localhost:5001")
+    print("🌐 Server running on http://localhost:10003")
     print("📊 Futures data available at /api/futures/prices")
-    print("🎯 Signal generation at /api/futures/generate-signal")
-    socketio.run(app, host='0.0.0.0', port=5001, debug=True)
+    print("🎯 Signal generation at /api/futures/signals")
+    socketio.run(app, host='0.0.0.0', port=10003, debug=True)

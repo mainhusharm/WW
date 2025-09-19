@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '../contexts/UserContext';
 import { 
-  Bot, Zap, Activity, Globe, Play, Pause, Target, BarChart3, Database, RefreshCw
+  Bot, Zap, Activity, Globe, Play, Pause, Target, BarChart3, Database, RefreshCw, Brain
 } from 'lucide-react';
 
 // Environment-aware API configuration
@@ -90,7 +90,7 @@ const FuturesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAnalysisRunning, setIsAnalysisRunning] = useState(false);
-  const [isSignalGenerationActive, setIsSignalGenerationActive] = useState(false);
+  const [isSignalGenerationActive, setIsSignalGenerationActive] = useState(true);
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
   const [lastPriceUpdate, setLastPriceUpdate] = useState<string>('');
   const [systemHeartbeat, setSystemHeartbeat] = useState<number>(0);
@@ -767,74 +767,7 @@ const FuturesPage: React.FC = () => {
     });
   };
 
-  // Real-time Signal Generation System (extracted from forex bot)
-  const startSignalGeneration = useCallback(() => {
-    if (isSignalGenerationActive) return;
-    
-    setIsSignalGenerationActive(true);
-    addActivityLog('system', '🚀 Started continuous signal generation system');
-    addNotification('Signal generation started - analyzing markets every 30 seconds', 'success');
-    
-    // Generate signals every 30 seconds
-    signalGenerationIntervalRef.current = setInterval(() => {
-      if (!isSignalGenerationActive) return;
-      
-      // Analyze each price for potential signals
-      prices.forEach(price => {
-        if (selectedAsset !== 'all' && price.symbol !== selectedAsset) return;
-        
-        // Get price history for technical analysis
-        const priceHistory = getPriceHistory(price.symbol);
-        if (priceHistory.length < 20) return;
-        
-        // Generate signal
-        const signal = generateSignal(price.symbol, price);
-        
-        if (signal) {
-          // Add to signals list (only if signal has complete data)
-          if (signal.name && signal.symbol && signal.ticker) {
-            setSignals(prev => [signal, ...prev.slice(0, 99)]); // Keep last 100 signals
-          } else {
-            console.error('Signal missing required data:', signal);
-          }
-          
-          // Update stats
-          setStats(prev => ({
-            ...prev,
-            totalSignals: prev.totalSignals + 1,
-            liveSignals: prev.liveSignals + 1,
-            activeSignals: prev.activeSignals + 1,
-            bosCount: prev.bosCount + (signal.confirmations?.some(c => c.name.includes('BOS')) ? 1 : 0),
-            chochCount: prev.chochCount + (signal.confirmations?.some(c => c.name.includes('CHoCH')) ? 1 : 0)
-          }));
-          
-          // Add to activity log
-          addActivityLog('signal_generated', `🎯 Generated ${signal.direction} signal for ${signal.symbol} (${signal.confidence}% confidence)`, signal);
-          
-          // Send to dashboard feed
-          sendToDashboardFeed(signal);
-          
-          // Store in localStorage
-          const existingSignals = JSON.parse(localStorage.getItem('futures_signals') || '[]');
-          existingSignals.unshift(signal);
-          localStorage.setItem('futures_signals', JSON.stringify(existingSignals.slice(0, 100)));
-        }
-      });
-      
-    }, 30000); // Every 30 seconds
-  }, [isSignalGenerationActive, prices, selectedAsset]);
-
-  const stopSignalGeneration = useCallback(() => {
-    if (!isSignalGenerationActive) return;
-    
-    setIsSignalGenerationActive(false);
-    if (signalGenerationIntervalRef.current) {
-      clearInterval(signalGenerationIntervalRef.current);
-      signalGenerationIntervalRef.current = null;
-    }
-    addActivityLog('system', '🛑 Stopped signal generation system');
-    addNotification('Signal generation stopped', 'warning');
-  }, [isSignalGenerationActive]);
+  // Signal generation is now handled by the dedicated signals page
 
   // Price history storage for technical analysis
   const getPriceHistory = (symbol: string): number[] => {
@@ -1049,6 +982,7 @@ const FuturesPage: React.FC = () => {
     addActivityLog('system', '⏹️ Analysis stopped by user');
     addNotification('Analysis stopped', 'warning');
   }, []);
+
 
   const getActivityIcon = (type: ActivityLog['type']) => {
     switch (type) {
@@ -1280,11 +1214,8 @@ const FuturesPage: React.FC = () => {
         startAnalysis();
       }, 30000);
       
-      // Set up continuous signal generation every 60 seconds
-      signalGenerationIntervalRef.current = setInterval(() => {
-        addActivityLog('system', '🎯 Scheduled signal generation cycle triggered');
-        startSignalGeneration();
-      }, 60000);
+      // Signal generation is now handled by the dedicated signals page
+      addActivityLog('info', 'ℹ️ Signal generation moved to dedicated signals page');
     }, 2000); // Wait 2 seconds for initial data load
     
     // Refresh prices every 30 seconds
@@ -1392,6 +1323,38 @@ const FuturesPage: React.FC = () => {
               Advanced futures market analysis with real-time data and AI-powered signals
             </p>
             
+            {/* Navigation to Signals Page */}
+            <div className="mb-8">
+              <div className="bg-gradient-to-r from-purple-800/50 to-pink-800/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg">
+                      <Brain className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">Futures Bot Signals</h2>
+                      <p className="text-purple-300">Dedicated page for all futures bot signals</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
+                    <span className="text-sm text-gray-300">Signals Active</span>
+                  </div>
+                </div>
+                
+                {/* Navigation Button */}
+                <div className="flex space-x-4">
+                  <a
+                    href="/futures-signals"
+                    className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Brain className="w-5 h-5" />
+                    <span>Open Signals Page</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+            
             {/* Enhanced Control Panel with Forex Bot Integration */}
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-cyan-500/30">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1490,22 +1453,7 @@ const FuturesPage: React.FC = () => {
                         </span>
                       </div>
                       <div className="flex space-x-2">
-                        <button
-                          onClick={startSignalGeneration}
-                          disabled={isSignalGenerationActive}
-                          className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white text-xs py-2 px-3 rounded transition-all flex items-center justify-center"
-                        >
-                          <Play className="w-3 h-3 mr-1" />
-                          Start
-                        </button>
-                        <button
-                          onClick={stopSignalGeneration}
-                          disabled={!isSignalGenerationActive}
-                          className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white text-xs py-2 px-3 rounded transition-all flex items-center justify-center"
-                        >
-                          <Pause className="w-3 h-3 mr-1" />
-                          Stop
-                        </button>
+                        <span className="text-xs text-gray-400">Signals handled by dedicated page</span>
                       </div>
                     </div>
                   </div>
@@ -1699,13 +1647,13 @@ const FuturesPage: React.FC = () => {
                   <p className="text-gray-400 text-lg">No signals generated yet</p>
                   <p className="text-sm text-gray-500 mt-2">Start the forex bot system or generate manual signals above</p>
                   <div className="mt-4 flex justify-center space-x-2">
-                    <button
-                      onClick={startSignalGeneration}
+                    <a
+                      href="/futures-signals"
                       className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
                     >
-                      <Play className="w-4 h-4 inline mr-1" />
-                      Start Bot
-                    </button>
+                      <Brain className="w-4 h-4 inline mr-1" />
+                      Go to Signals Page
+                    </a>
                     <button
                       onClick={startAnalysis}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"

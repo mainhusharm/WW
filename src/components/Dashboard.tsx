@@ -7,7 +7,6 @@ import { useTradingPlan } from '../contexts/TradingPlanContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import SubscriptionStatus from './SubscriptionStatus';
 import api from '../api';
-import ConsentForm from './ConsentForm';
 import FuturisticBackground from './FuturisticBackground';
 import FuturisticCursor from './FuturisticCursor';
 import DashboardFallback from './DashboardFallback';
@@ -32,7 +31,6 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [tradingState, setTradingState] = useState<TradingState | null>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showConsentForm, setShowConsentForm] = useState(false);
   const [realTimeData, setRealTimeData] = useState<any>(null);
   const [supabaseAvailable, setSupabaseAvailable] = useState(true);
   const [criticalError, setCriticalError] = useState(false);
@@ -222,44 +220,6 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     };
   }, []);
 
-  // Check for consent on mount - only show for new users who haven't consented
-  useEffect(() => {
-    const checkConsent = async () => {
-      if (user?.email && user?.id) {
-        const consentKey = `user_consent_accepted_${user.email}`;
-        const consentGiven = localStorage.getItem(consentKey);
-        const visitKey = `user_has_visited_${user.email}`;
-        const hasVisited = localStorage.getItem(visitKey);
-        
-        // Mark user as having visited (for existing users who sign in)
-        if (!hasVisited) {
-          localStorage.setItem(visitKey, 'true');
-        }
-        
-        // Check database for consent status if not in localStorage
-        if (!consentGiven && !hasVisited) {
-          try {
-            const response = await fetch(`/api/users/${user.id}`);
-            if (response.ok) {
-              const userData = await response.json();
-              if (userData.success && userData.user.consent_accepted) {
-                // User has already consented in database, update localStorage
-                localStorage.setItem(consentKey, 'true');
-                return; // Don't show consent form
-              }
-            }
-          } catch (error) {
-            console.error('Error checking consent status:', error);
-          }
-          
-          // Only show consent form for new users who haven't consented
-          setShowConsentForm(true);
-        }
-      }
-    };
-    
-    checkConsent();
-  }, [user]);
 
   // Initialize real-time data service
   useEffect(() => {
@@ -644,13 +604,6 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     }
   }, [tradingState?.currentEquity, tradingState?.performanceMetrics?.totalPnl, user?.id]);
 
-  const handleConsentAccept = () => {
-    setShowConsentForm(false);
-  };
-
-  const handleConsentDecline = () => {
-    onLogout();
-  };
 
   const handleMarkAsTaken = (signal: Signal, outcome: TradeOutcome, pnl?: number) => {
     if (tradingState) {
@@ -794,11 +747,6 @@ const Dashboard = ({ onLogout }: { onLogout: () => void }) => {
     <div className="min-h-screen bg-gray-950 font-inter relative">
       <FuturisticBackground />
       <FuturisticCursor />
-      <ConsentForm 
-        isOpen={showConsentForm}
-        onAccept={handleConsentAccept}
-        onDecline={handleConsentDecline}
-      />
       
       {/* Subscription Status */}
       <div className="fixed top-4 left-4 z-40 max-w-sm">

@@ -213,8 +213,8 @@ const Questionnaire: React.FC = () => {
       localStorage.setItem('completed_steps', JSON.stringify(completedSteps));
     }
 
-    // Always navigate to risk management plan regardless of backend status
-    navigate('/risk-management-plan', { 
+    // Always navigate to consent form first, then to risk management plan
+    navigate('/consent-form', { 
       state: { 
         fromQuestionnaire: true,
         questionnaireData: answers,

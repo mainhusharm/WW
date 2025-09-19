@@ -23,7 +23,9 @@ import MT5Signup from './components/MT5Signup';
 import MT5Signin from './components/MT5Signin';
 import MT5CustomerServiceDashboard from './components/MT5CustomerServiceDashboard';
 import MT5AdminDashboard from './components/MT5AdminDashboard';
+import FuturesSignalsPage from './components/FuturesSignalsPage';
 import Questionnaire from './components/Questionnaire';
+import ConsentFormPage from './components/ConsentFormPage';
 import PropFirmSelection from './components/PropFirmSelection';
 import AccountConfiguration from './components/AccountConfiguration';
 import RiskConfiguration from './components/RiskConfiguration';
@@ -188,6 +190,7 @@ const AppContent = () => {
         <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
         <Route path="/successful-payment" element={<SuccessfulPaymentPage />} />
         <Route path="/questionnaire" element={<Questionnaire />} />
+        <Route path="/consent-form" element={<ConsentFormPage />} />
         <Route path="/risk-management" element={<RiskManagementPage />} />
         <Route path="/risk-management-plan" element={<RiskManagementPlan />} />
         <Route path="/comprehensive-risk-plan" element={<ComprehensiveRiskPlan />} />
@@ -275,6 +278,7 @@ const AppContent = () => {
           />
         <Route path="/ai-coach" element={<ProtectedRoute><AICoach /></ProtectedRoute>} />
         <Route path="/futures" element={<FuturesPage />} />
+        <Route path="/futures-signals" element={<FuturesSignalsPage />} />
         <Route path="/lightning" element={<Lightning><LandingPage /></Lightning>} />
         <Route path="/animation-test" element={<AnimationTest />} />
         </Routes>
