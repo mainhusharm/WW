@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Emergency Response System - Live Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .demo-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .demo-card h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online { background-color: #4CAF50; }
+        .status-warning { background-color: #FF9800; }
+        .status-critical { background-color: #F44336; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .demo-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .demo-button:active {
+            transform: translateY(0);
+        }
+
+        .log-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-success { background-color: rgba(76, 175, 80, 0.2); }
+        .log-warning { background-color: rgba(255, 152, 0, 0.2); }
+        .log-error { background-color: rgba(244, 67, 54, 0.2); }
+        .log-info { background-color: rgba(33, 150, 243, 0.2); }
+
+        .emergency-alert {
+            background: linear-gradient(45deg, #ff4757, #ff3838);
+            border: 2px solid #ff6b6b;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            animation: emergencyPulse 1s infinite;
+        }
+
+        @keyframes emergencyPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .ai-response {
+            background: linear-gradient(45deg, #3742fa, #2f3542);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #ffd700;
+        }
+
+        .system-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .status-card h4 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .status-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .notification-channels {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .channel-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .channel-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .channel-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚨 AI Emergency Response System</h1>
+            <p>Live Demonstration - How I (AI Engineer) Respond to Emergencies</p>
+        </div>
+
+        <div class="demo-grid">
+            <!-- System Status -->
+            <div class="demo-card">
+                <h3>📊 System Status</h3>
+                <div class="system-status">
+                    <div class="status-card">
+                        <h4>Overall Health</h4>
+                        <div class="status-indicator status-online"></div>
+                        <div class="status-value">HEALTHY</div>
+                    </div>
+                    <div class="status-card">
+                        <h4>Uptime</h4>
+                        <div class="status-value">99.9%</div>
+                    </div>
+                    <div class="status-card">
+                        <h4>Response Time</h4>
+                        <div class="status-value">1.2s</div>
+                    </div>
+                    <div class="status-card">
+                        <h4>Error Rate</h4>
+                        <div class="status-value">0.1%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Monitoring -->
+            <div class="demo-card">
+                <h3>🚨 Emergency Monitoring</h3>
+                <div class="metric">
+                    <span>Active Alerts:</span>
+                    <span class="metric-value" id="activeAlerts">0</span>
+                </div>
+                <div class="metric">
+                    <span>Critical Alerts:</span>
+                    <span class="metric-value" id="criticalAlerts">0</span>
+                </div>
+                <div class="metric">
+                    <span>Auto-Fix Success:</span>
+                    <span class="metric-value">70%</span>
+                </div>
+                <div class="metric">
+                    <span>Avg Response Time:</span>
+                    <span class="metric-value">2.3 min</span>
+                </div>
+                <button class="demo-button" onclick="simulateEmergency()">Simulate Emergency</button>
+            </div>
+
+            <!-- Customer Care -->
+            <div class="demo-card">
+                <h3>👥 Customer Care</h3>
+                <div class="metric">
+                    <span>Queries Processed:</span>
+                    <span class="metric-value" id="queriesProcessed">0</span>
+                </div>
+                <div class="metric">
+                    <span>Resolution Rate:</span>
+                    <span class="metric-value">95%</span>
+                </div>
+                <div class="metric">
+                    <span>Customer Satisfaction:</span>
+                    <span class="metric-value">98%</span>
+                </div>
+                <div class="metric">
+                    <span>Avg Response Time:</span>
+                    <span class="metric-value">1.6s</span>
+                </div>
+                <button class="demo-button" onclick="simulateCustomerQuery()">Simulate Query</button>
+            </div>
+
+            <!-- Notification Channels -->
+            <div class="demo-card">
+                <h3>📡 Notification Channels</h3>
+                <div class="notification-channels">
+                    <div class="channel-card">
+                        <div class="channel-icon">📧</div>
+                        <h4>Email</h4>
+                        <div class="channel-status">
+                            <div class="status-indicator status-online"></div>
+                            <span>ai-engineer@traderedgepro.com</span>
+                        </div>
+                    </div>
+                    <div class="channel-card">
+                        <div class="channel-icon">📱</div>
+                        <h4>SMS</h4>
+                        <div class="channel-status">
+                            <div class="status-indicator status-online"></div>
+                            <span>+1-555-AI-HELP</span>
+                        </div>
+                    </div>
+                    <div class="channel-card">
+                        <div class="channel-icon">💬</div>
+                        <h4>Slack</h4>
+                        <div class="channel-status">
+                            <div class="status-indicator status-online"></div>
+                            <span>Emergency Channel</span>
+                        </div>
+                    </div>
+                    <div class="channel-card">
+                        <div class="channel-icon">🔗</div>
+                        <h4>Webhook</h4>
+                        <div class="channel-status">
+                            <div class="status-indicator status-online"></div>
+                            <span>API Integration</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Demo Controls -->
+        <div class="demo-card">
+            <h3>🎮 Live Demo Controls</h3>
+            <button class="demo-button" onclick="startMonitoring()">Start Monitoring</button>
+            <button class="demo-button" onclick="stopMonitoring()">Stop Monitoring</button>
+            <button class="demo-button" onclick="testAllSystems()">Test All Systems</button>
+            <button class="demo-button" onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <!-- Live Log -->
+        <div class="log-container">
+            <h3>📝 Live Activity Log</h3>
+            <div id="logContainer">
+                <div class="log-entry log-info">System initialized and ready for monitoring...</div>
+                <div class="log-entry log-success">Emergency notification API connected</div>
+                <div class="log-entry log-success">Customer care API connected</div>
+                <div class="log-entry log-success">All notification channels active</div>
+                <div class="log-entry log-info">AI Engineer ready for emergency response</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let monitoringActive = false;
+        let alertCount = 0;
+        let queryCount = 0;
+
+        // Add log entry
+        function addLogEntry(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Simulate emergency
+        function simulateEmergency() {
+            const emergencies = [
+                {
+                    title: 'System Down',
+                    description: 'Complete system failure detected',
+                    severity: 10,
+                    impact: 'critical',
+                    users: 1000
+                },
+                {
+                    title: 'Database Failure',
+                    description: 'Database connection lost',
+                    severity: 9,
+                    impact: 'critical',
+                    users: 500
+                },
+                {
+                    title: 'Memory Leak',
+                    description: 'Memory usage exceeded 90%',
+                    severity: 7,
+                    impact: 'high',
+                    users: 200
+                },
+                {
+                    title: 'API Timeout',
+                    description: 'API response time exceeded 5 seconds',
+                    severity: 6,
+                    impact: 'medium',
+                    users: 100
+                }
+            ];
+
+            const emergency = emergencies[Math.floor(Math.random() * emergencies.length)];
+            alertCount++;
+
+            // Update metrics
+            document.getElementById('activeAlerts').textContent = alertCount;
+            if (emergency.severity >= 8) {
+                document.getElementById('criticalAlerts').textContent = 
+                    parseInt(document.getElementById('criticalAlerts').textContent) + 1;
+            }
+
+            // Add emergency alert
+            const logContainer = document.getElementById('logContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'emergency-alert';
+            alertDiv.innerHTML = `
+                <h4>🚨 EMERGENCY ALERT</h4>
+                <p><strong>Title:</strong> ${emergency.title}</p>
+                <p><strong>Description:</strong> ${emergency.description}</p>
+                <p><strong>Severity:</strong> ${emergency.severity}/10</p>
+                <p><strong>Impact:</strong> ${emergency.impact.toUpperCase()}</p>
+                <p><strong>Affected Users:</strong> ${emergency.users}</p>
+            `;
+            logContainer.appendChild(alertDiv);
+
+            addLogEntry(`🚨 EMERGENCY DETECTED: ${emergency.title} (Severity: ${emergency.severity}/10)`, 'error');
+            addLogEntry(`📡 Notifications sent to all channels`, 'info');
+            addLogEntry(`🤖 AI Engineer investigating...`, 'info');
+
+            // Simulate AI Engineer response
+            setTimeout(() => {
+                addLogEntry(`🔍 Investigation complete - Issue identified`, 'info');
+                
+                if (Math.random() > 0.3) { // 70% success rate
+                    addLogEntry(`🔧 Auto-fix applied successfully!`, 'success');
+                    addLogEntry(`✅ Issue resolved automatically`, 'success');
+                } else {
+                    addLogEntry(`⚠️ Auto-fix failed - Escalating to manual intervention`, 'warning');
+                    addLogEntry(`👨‍💻 Manual fix required`, 'warning');
+                }
+            }, 2000);
+        }
+
+        // Simulate customer query
+        function simulateCustomerQuery() {
+            const queries = [
+                'I cannot access my trading account, getting error 500',
+                'My payment was charged but order not processed',
+                'Trading platform is running slowly',
+                'I need help with my account settings',
+                'How do I upgrade my plan?'
+            ];
+
+            const query = queries[Math.floor(Math.random() * queries.length)];
+            queryCount++;
+
+            // Update metrics
+            document.getElementById('queriesProcessed').textContent = queryCount;
+
+            addLogEntry(`👤 Customer Query: ${query}`, 'info');
+            addLogEntry(`🤖 AI Assistant processing...`, 'info');
+
+            // Simulate AI response
+            setTimeout(() => {
+                const responses = [
+                    'I understand your concern. Let me help you with that right away.',
+                    'I\'ve identified the issue and applied a fix. Please try again.',
+                    'I\'ve escalated this to our specialized team. You\'ll receive a detailed response within 2 hours.',
+                    'I\'ve processed your request and sent you an email with detailed instructions.',
+                    'I\'ve implemented a temporary workaround while we work on a permanent fix.'
+                ];
+
+                const response = responses[Math.floor(Math.random() * responses.length)];
+                addLogEntry(`🤖 AI Response: ${response}`, 'success');
+            }, 1500);
+        }
+
+        // Start monitoring
+        function startMonitoring() {
+            if (monitoringActive) return;
+            
+            monitoringActive = true;
+            addLogEntry('🟢 Monitoring started - AI Engineer is now watching for issues', 'success');
+            
+            // Simulate periodic monitoring
+            const monitoringInterval = setInterval(() => {
+                if (!monitoringActive) {
+                    clearInterval(monitoringInterval);
+                    return;
+                }
+                
+                // Random chance of detecting issues
+                if (Math.random() > 0.95) { // 5% chance
+                    simulateEmergency();
+                }
+                
+                if (Math.random() > 0.9) { // 10% chance
+                    simulateCustomerQuery();
+                }
+            }, 3000);
+        }
+
+        // Stop monitoring
+        function stopMonitoring() {
+            monitoringActive = false;
+            addLogEntry('🔴 Monitoring stopped', 'warning');
+        }
+
+        // Test all systems
+        function testAllSystems() {
+            addLogEntry('🧪 Testing all emergency response systems...', 'info');
+            
+            setTimeout(() => {
+                addLogEntry('✅ Emergency detection: Working', 'success');
+                addLogEntry('✅ Notification system: Working', 'success');
+                addLogEntry('✅ AI Engineer response: Working', 'success');
+                addLogEntry('✅ Auto-fix system: Working', 'success');
+                addLogEntry('✅ Customer care: Working', 'success');
+                addLogEntry('✅ Monitoring dashboards: Working', 'success');
+                addLogEntry('🎉 All systems operational!', 'success');
+            }, 2000);
+        }
+
+        // Clear log
+        function clearLog() {
+            document.getElementById('logContainer').innerHTML = '';
+            addLogEntry('Log cleared', 'info');
+        }
+
+        // Initialize demo
+        addLogEntry('🚀 AI Emergency Response System Demo initialized', 'info');
+        addLogEntry('Ready to demonstrate emergency response capabilities', 'info');
+    </script>
+</body>
+</html>

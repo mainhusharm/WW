@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Redirect</title>
+    <script>
+        // Test the redirect logic
+        console.log('Current pathname:', window.location.pathname);
+        if (window.location.pathname === '/' || window.location.pathname === '') {
+            console.log('Redirecting to /home...');
+            window.location.replace('/home');
+        } else {
+            console.log('Not on root path, no redirect needed');
+        }
+    </script>
+</head>
+<body>
+    <h1>Redirect Test</h1>
+    <p>Current path: <span id="path"></span></p>
+    <p>If you see this and the path is "/", the redirect should happen automatically.</p>
+    
+    <script>
+        document.getElementById('path').textContent = window.location.pathname;
+    </script>
+</body>
+</html>

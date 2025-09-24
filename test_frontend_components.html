@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Components Database Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Frontend Components Database Test</h1>
+    <p>This page tests all frontend components to ensure data flows correctly to PostgreSQL database.</p>
+
+    <!-- Enhanced Signup Test -->
+    <div class="test-section">
+        <h2>📝 Enhanced Signup Test</h2>
+        <form id="signupForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="firstName">First Name:</label>
+                    <input type="text" id="firstName" value="Test" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name:</label>
+                    <input type="text" id="lastName" value="User" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" value="" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone:</label>
+                    <input type="tel" id="phone" value="+1234567890">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="company">Company:</label>
+                    <input type="text" id="company" value="Test Company">
+                </div>
+                <div class="form-group">
+                    <label for="country">Country:</label>
+                    <select id="country">
+                        <option value="US">United States</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="CA">Canada</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="agreeToTerms" checked> I agree to the terms and conditions
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="agreeToMarketing" checked> I agree to receive marketing emails
+                </label>
+            </div>
+            <button type="submit" class="test-button">Test Enhanced Signup</button>
+        </form>
+        <div id="signupResult" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Enhanced Payment Test -->
+    <div class="test-section">
+        <h2>💳 Enhanced Payment Test</h2>
+        <form id="paymentForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="userId">User ID:</label>
+                    <input type="text" id="userId" value="" required>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">User Email:</label>
+                    <input type="email" id="userEmail" value="" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="planName">Plan Name:</label>
+                    <input type="text" id="planName" value="Pro Plan" required>
+                </div>
+                <div class="form-group">
+                    <label for="originalPrice">Original Price:</label>
+                    <input type="number" id="originalPrice" value="29.99" step="0.01" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="finalPrice">Final Price:</label>
+                    <input type="number" id="finalPrice" value="29.99" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method:</label>
+                    <select id="paymentMethod">
+                        <option value="stripe">Stripe</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="crypto">Cryptocurrency</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="transactionId">Transaction ID:</label>
+                    <input type="text" id="transactionId" value="" required>
+                </div>
+                <div class="form-group">
+                    <label for="paymentStatus">Payment Status:</label>
+                    <select id="paymentStatus">
+                        <option value="completed">Completed</option>
+                        <option value="pending">Pending</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="test-button">Test Enhanced Payment</button>
+        </form>
+        <div id="paymentResult" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Questionnaire Test -->
+    <div class="test-section">
+        <h2>📋 Questionnaire Test</h2>
+        <form id="questionnaireForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="qUserId">User ID:</label>
+                    <input type="text" id="qUserId" value="" required>
+                </div>
+                <div class="form-group">
+                    <label for="qUserEmail">User Email:</label>
+                    <input type="email" id="qUserEmail" value="" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tradesPerDay">Trades Per Day:</label>
+                    <select id="tradesPerDay">
+                        <option value="1-3">1-3</option>
+                        <option value="4-6">4-6</option>
+                        <option value="7-10">7-10</option>
+                        <option value="10+">10+</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tradingSession">Trading Session:</label>
+                    <select id="tradingSession">
+                        <option value="London">London</option>
+                        <option value="New York">New York</option>
+                        <option value="Tokyo">Tokyo</option>
+                        <option value="Sydney">Sydney</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="hasAccount">Has Trading Account:</label>
+                    <select id="hasAccount">
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="accountEquity">Account Equity:</label>
+                    <input type="number" id="accountEquity" value="10000" step="1000">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="propFirm">Prop Firm:</label>
+                    <input type="text" id="propFirm" value="FTMO">
+                </div>
+                <div class="form-group">
+                    <label for="accountType">Account Type:</label>
+                    <select id="accountType">
+                        <option value="Challenge">Challenge</option>
+                        <option value="Live">Live</option>
+                        <option value="Demo">Demo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="riskPercentage">Risk Percentage:</label>
+                    <input type="number" id="riskPercentage" value="2" step="0.1" min="0" max="10">
+                </div>
+                <div class="form-group">
+                    <label for="riskRewardRatio">Risk:Reward Ratio:</label>
+                    <select id="riskRewardRatio">
+                        <option value="1:1">1:1</option>
+                        <option value="1:2">1:2</option>
+                        <option value="1:3">1:3</option>
+                        <option value="1:4">1:4</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="test-button">Test Questionnaire</button>
+        </form>
+        <div id="questionnaireResult" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Dashboard Test -->
+    <div class="test-section">
+        <h2>📊 Dashboard Test</h2>
+        <form id="dashboardForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dUserId">User ID:</label>
+                    <input type="text" id="dUserId" value="" required>
+                </div>
+                <div class="form-group">
+                    <label for="dUserEmail">User Email:</label>
+                    <input type="email" id="dUserEmail" value="" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="currentEquity">Current Equity:</label>
+                    <input type="number" id="currentEquity" value="10000" step="100">
+                </div>
+                <div class="form-group">
+                    <label for="initialEquity">Initial Equity:</label>
+                    <input type="number" id="initialEquity" value="10000" step="100">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="totalPnl">Total P&L:</label>
+                    <input type="number" id="totalPnl" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="winRate">Win Rate (%):</label>
+                    <input type="number" id="winRate" value="0" step="0.1" min="0" max="100">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="totalTrades">Total Trades:</label>
+                    <input type="number" id="totalTrades" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="winningTrades">Winning Trades:</label>
+                    <input type="number" id="winningTrades" value="0" min="0">
+                </div>
+            </div>
+            <button type="submit" class="test-button">Test Dashboard Save</button>
+            <button type="button" class="test-button" onclick="testDashboardGet()">Test Dashboard Get</button>
+        </form>
+        <div id="dashboardResult" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- API Health Check -->
+    <div class="test-section">
+        <h2>🏥 API Health Check</h2>
+        <button class="test-button" onclick="testApiHealth()">Check API Health</button>
+        <div id="healthResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://backend-gbhz.onrender.com/api';
+        
+        // Generate unique IDs for testing
+        function generateUniqueId() {
+            return 'test_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        function generateUniqueEmail() {
+            return 'testuser' + Date.now() + '@example.com';
+        }
+        
+        function showResult(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result ' + (isSuccess ? 'success' : 'error');
+            element.innerHTML = message;
+        }
+        
+        // Enhanced Signup Test
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = generateUniqueEmail();
+            document.getElementById('email').value = email;
+            
+            const userData = {
+                id: generateUniqueId(),
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                email: email,
+                phone: document.getElementById('phone').value,
+                company: document.getElementById('company').value,
+                country: document.getElementById('country').value,
+                language: 'English',
+                password_hash: 'test_password_hash',
+                agree_to_terms: document.getElementById('agreeToTerms').checked,
+                agree_to_marketing: document.getElementById('agreeToMarketing').checked,
+                trading_experience_signup: 'beginner',
+                trading_goals_signup: 'Make consistent profits',
+                risk_tolerance_signup: 'moderate',
+                preferred_markets: 'forex',
+                trading_style: 'day',
+                status: 'PENDING',
+                membership_tier: 'free',
+                account_type: 'personal',
+                setup_complete: false,
+                is_temporary: false,
+                unique_id: 'USER-' + Date.now(),
+                token: 'TOKEN-' + Date.now(),
+                selected_plan: {
+                    name: 'Pro Plan',
+                    price: 29.99,
+                    period: 'monthly',
+                    description: 'Professional trading signals'
+                },
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('signupResult', `✅ Enhanced signup successful!<br>Response: ${JSON.stringify(result, null, 2)}`);
+                    // Store user ID for other tests
+                    localStorage.setItem('testUserId', userData.id);
+                    localStorage.setItem('testUserEmail', userData.email);
+                } else {
+                    showResult('signupResult', `❌ Enhanced signup failed!<br>Status: ${response.status}<br>Response: ${JSON.stringify(result, null, 2)}`, false);
+                }
+            } catch (error) {
+                showResult('signupResult', `❌ Enhanced signup error: ${error.message}`, false);
+            }
+        });
+        
+        // Enhanced Payment Test
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userId = localStorage.getItem('testUserId') || generateUniqueId();
+            const userEmail = localStorage.getItem('testUserEmail') || generateUniqueEmail();
+            
+            document.getElementById('userId').value = userId;
+            document.getElementById('userEmail').value = userEmail;
+            
+            const paymentData = {
+                id: generateUniqueId(),
+                user_id: userId,
+                user_email: userEmail,
+                user_name: 'Test User',
+                plan_name_payment: document.getElementById('planName').value,
+                original_price: parseFloat(document.getElementById('originalPrice').value),
+                discount_amount: '0.00',
+                final_price: parseFloat(document.getElementById('finalPrice').value),
+                coupon_code: null,
+                payment_method: document.getElementById('paymentMethod').value,
+                transaction_id: 'TXN-' + Date.now(),
+                payment_status: document.getElementById('paymentStatus').value,
+                payment_provider: document.getElementById('paymentMethod').value === 'stripe' ? 'Stripe' : 'Other',
+                crypto_transaction_hash: 'NON-CRYPTO-' + Date.now(),
+                crypto_from_address: 'N/A',
+                crypto_amount: '0',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/payments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('paymentResult', `✅ Enhanced payment successful!<br>Response: ${JSON.stringify(result, null, 2)}`);
+                } else {
+                    showResult('paymentResult', `❌ Enhanced payment failed!<br>Status: ${response.status}<br>Response: ${JSON.stringify(result, null, 2)}`, false);
+                }
+            } catch (error) {
+                showResult('paymentResult', `❌ Enhanced payment error: ${error.message}`, false);
+            }
+        });
+        
+        // Questionnaire Test
+        document.getElementById('questionnaireForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userId = localStorage.getItem('testUserId') || generateUniqueId();
+            const userEmail = localStorage.getItem('testUserEmail') || generateUniqueEmail();
+            
+            document.getElementById('qUserId').value = userId;
+            document.getElementById('qUserEmail').value = userEmail;
+            
+            const questionnaireData = {
+                id: generateUniqueId(),
+                user_id: userId,
+                user_email: userEmail,
+                user_name: 'Test User',
+                trades_per_day: document.getElementById('tradesPerDay').value,
+                trading_session: document.getElementById('tradingSession').value,
+                crypto_assets: ['BTC', 'ETH'],
+                forex_assets: ['EUR/USD', 'GBP/USD'],
+                custom_forex_pairs: [],
+                has_account: document.getElementById('hasAccount').value,
+                account_equity: parseFloat(document.getElementById('accountEquity').value),
+                prop_firm: document.getElementById('propFirm').value,
+                account_type: document.getElementById('accountType').value,
+                account_size: parseFloat(document.getElementById('accountEquity').value),
+                risk_percentage: parseFloat(document.getElementById('riskPercentage').value),
+                risk_reward_ratio: document.getElementById('riskRewardRatio').value,
+                account_number: '12345',
+                trading_experience: 'intermediate',
+                risk_tolerance: 'moderate',
+                trading_goals: 'Consistent profits',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/questionnaire`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(questionnaireData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('questionnaireResult', `✅ Questionnaire successful!<br>Response: ${JSON.stringify(result, null, 2)}`);
+                } else {
+                    showResult('questionnaireResult', `❌ Questionnaire failed!<br>Status: ${response.status}<br>Response: ${JSON.stringify(result, null, 2)}`, false);
+                }
+            } catch (error) {
+                showResult('questionnaireResult', `❌ Questionnaire error: ${error.message}`, false);
+            }
+        });
+        
+        // Dashboard Test
+        document.getElementById('dashboardForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userId = localStorage.getItem('testUserId') || generateUniqueId();
+            const userEmail = localStorage.getItem('testUserEmail') || generateUniqueEmail();
+            
+            document.getElementById('dUserId').value = userId;
+            document.getElementById('dUserEmail').value = userEmail;
+            
+            const dashboardData = {
+                id: generateUniqueId(),
+                user_id: userId,
+                user_email: userEmail,
+                user_name: 'Test User',
+                current_equity: parseFloat(document.getElementById('currentEquity').value),
+                initial_equity: parseFloat(document.getElementById('initialEquity').value),
+                total_pnl: parseFloat(document.getElementById('totalPnl').value),
+                win_rate: parseFloat(document.getElementById('winRate').value),
+                total_trades: parseInt(document.getElementById('totalTrades').value),
+                winning_trades: parseInt(document.getElementById('winningTrades').value),
+                losing_trades: parseInt(document.getElementById('totalTrades').value) - parseInt(document.getElementById('winningTrades').value),
+                average_win: 0,
+                average_loss: 0,
+                profit_factor: 0,
+                max_drawdown: 0,
+                current_drawdown: 0,
+                gross_profit: 0,
+                gross_loss: 0,
+                consecutive_wins: 0,
+                consecutive_losses: 0,
+                sharpe_ratio: 0,
+                account_balance: parseFloat(document.getElementById('currentEquity').value),
+                daily_pnl: 0,
+                daily_trades: 0,
+                last_activity: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/dashboard`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dashboardData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('dashboardResult', `✅ Dashboard save successful!<br>Response: ${JSON.stringify(result, null, 2)}`);
+                } else {
+                    showResult('dashboardResult', `❌ Dashboard save failed!<br>Status: ${response.status}<br>Response: ${JSON.stringify(result, null, 2)}`, false);
+                }
+            } catch (error) {
+                showResult('dashboardResult', `❌ Dashboard save error: ${error.message}`, false);
+            }
+        });
+        
+        // Dashboard Get Test
+        async function testDashboardGet() {
+            const userId = localStorage.getItem('testUserId') || document.getElementById('dUserId').value;
+            
+            if (!userId) {
+                showResult('dashboardResult', `❌ Please save dashboard data first or enter a user ID`, false);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/dashboard?user_id=${userId}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('dashboardResult', `✅ Dashboard get successful!<br>Response: ${JSON.stringify(result, null, 2)}`);
+                } else {
+                    showResult('dashboardResult', `❌ Dashboard get failed!<br>Status: ${response.status}<br>Response: ${JSON.stringify(result, null, 2)}`, false);
+                }
+            } catch (error) {
+                showResult('dashboardResult', `❌ Dashboard get error: ${error.message}`, false);
+            }
+        }
+        
+        // API Health Check
+        async function testApiHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('healthResult', `✅ API health check successful!<br>Response: ${JSON.stringify(result, null, 2)}`);
+                } else {
+                    showResult('healthResult', `❌ API health check failed!<br>Status: ${response.status}<br>Response: ${JSON.stringify(result, null, 2)}`, false);
+                }
+            } catch (error) {
+                showResult('healthResult', `❌ API health check error: ${error.message}`, false);
+            }
+        }
+        
+        // Initialize with unique values
+        document.addEventListener('DOMContentLoaded', function() {
+            const uniqueEmail = generateUniqueEmail();
+            document.getElementById('email').value = uniqueEmail;
+            document.getElementById('userEmail').value = uniqueEmail;
+            document.getElementById('qUserEmail').value = uniqueEmail;
+            document.getElementById('dUserEmail').value = uniqueEmail;
+            
+            const uniqueId = generateUniqueId();
+            document.getElementById('userId').value = uniqueId;
+            document.getElementById('qUserId').value = uniqueId;
+            document.getElementById('dUserId').value = uniqueId;
+            
+            document.getElementById('transactionId').value = 'TXN-' + Date.now();
+        });
+    </script>
+</body>
+</html>

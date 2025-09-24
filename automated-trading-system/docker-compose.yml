@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  forex-data-service:
+    build: ../forex_data_service
+    ports:
+      - "5009:5009"
+    environment:
+      - PORT=5009
+      - FLASK_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5009/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  trading-signal-bot:
+    build: ../trading-signal-bot
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - NODE_ENV=production
+    depends_on:
+      - forex-data-service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  automated-trading-system:
+    build: .
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+      - NODE_ENV=production
+      - FOREX_DATA_SERVICE_URL=http://forex-data-service:5009
+      - TRADING_BOT_URL=http://trading-signal-bot:3005
+    depends_on:
+      - forex-data-service
+      - trading-signal-bot
+    restart: unless-stopped
+    volumes:
+      - ./config.json:/app/config.json
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

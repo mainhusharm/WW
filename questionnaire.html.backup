@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Preferences - TradeEdge Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Glass Background Animation */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass-particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            backdrop-filter: blur(10px);
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        .questionnaire-container {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .required {
+            color: rgba(255, 100, 100, 0.8);
+        }
+
+        /* Glass Input Styles */
+        .form-input, .form-select {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Searchable Dropdown */
+        .searchable-dropdown {
+            position: relative;
+        }
+
+        .dropdown-input {
+            cursor: pointer;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-list.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Challenge Steps */
+        .challenge-steps {
+            display: none;
+            margin-top: 15px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .challenge-steps.show {
+            display: block;
+        }
+
+        .step-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .step-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .step-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .step-btn.selected {
+            background: rgba(100, 200, 255, 0.3);
+            border-color: rgba(100, 200, 255, 0.5);
+            color: white;
+        }
+
+        /* Risk Slider */
+        .risk-slider {
+            margin: 20px 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: rgba(100, 200, 255, 0.8);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .risk-value {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        /* Asset Selection Grid */
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .asset-item {
+            padding: 15px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .asset-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .asset-item.selected {
+            background: rgba(100, 200, 255, 0.3);
+            border-color: rgba(100, 200, 255, 0.5);
+            color: white;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, rgba(100, 200, 255, 0.3), rgba(150, 100, 255, 0.3));
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            margin-top: 30px;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, rgba(100, 200, 255, 0.4), rgba(150, 100, 255, 0.4));
+            box-shadow: 0 10px 30px rgba(100, 200, 255, 0.2);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid rgba(100, 200, 255, 0.8);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .error-message {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.3);
+            color: rgba(255, 150, 150, 0.9);
+        }
+
+        .success-message {
+            background: rgba(100, 255, 150, 0.2);
+            border: 1px solid rgba(100, 255, 150, 0.3);
+            color: rgba(150, 255, 180, 0.9);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .back-link a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: rgba(100, 200, 255, 0.8);
+        }
+
+        @media (max-width: 768px) {
+            .questionnaire-container {
+                padding: 20px 15px;
+            }
+            
+            .form-container {
+                padding: 25px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .asset-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation" id="background"></div>
+    
+    <div class="questionnaire-container">
+        <div class="header">
+            <h1>🎯 Trading Preferences</h1>
+            <p>Help us tailor your trading experience</p>
+        </div>
+
+        <div class="form-container">
+            <div id="error-message" class="message error-message" style="display: none;"></div>
+            <div id="success-message" class="message success-message" style="display: none;"></div>
+
+            <form id="questionnaire-form">
+                <!-- Prop Firm Section -->
+                <div class="form-section">
+                    <h3>🏢 Prop Firm Details</h3>
+                    
+                    <div class="form-group">
+                        <label for="prop-firm">Prop Firm <span class="required">*</span></label>
+                        <div class="searchable-dropdown">
+                            <input type="text" id="prop-firm" class="form-input dropdown-input" placeholder="Search or select your prop firm..." autocomplete="off">
+                            <div class="dropdown-list" id="prop-firm-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="account-type">Account Type <span class="required">*</span></label>
+                        <select id="account-type" class="form-select" required>
+                            <option value="">Select account type...</option>
+                            <option value="Challenge">Challenge</option>
+                            <option value="Verification">Verification</option>
+                            <option value="Funded">Funded</option>
+                            <option value="Demo">Demo</option>
+                            <option value="Live">Live</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="account-size">Account Size <span class="required">*</span></label>
+                        <select id="account-size" class="form-select" required>
+                            <option value="">Select account size...</option>
+                            <option value="$5,000">$5,000</option>
+                            <option value="$10,000">$10,000</option>
+                            <option value="$25,000">$25,000</option>
+                            <option value="$50,000">$50,000</option>
+                            <option value="$100,000">$100,000</option>
+                            <option value="$200,000">$200,000</option>
+                            <option value="$300,000">$300,000</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="account-number">Prop Firm Account Number <span class="required">*</span></label>
+                        <input type="text" id="account-number" class="form-input" placeholder="Enter your prop firm account number" required>
+                        
+                        <!-- Disclaimer -->
+                        <div style="margin-top: 15px; padding: 20px; background: rgba(100, 200, 255, 0.1); border: 1px solid rgba(100, 200, 255, 0.3); border-radius: 12px;">
+                            <p style="color: rgba(100, 200, 255, 0.9); font-size: 0.9rem; font-weight: 600; margin-bottom: 10px;">ℹ️ IMPORTANT INFORMATION:</p>
+                            <ul style="color: rgba(255, 255, 255, 0.8); font-size: 0.85rem; line-height: 1.4; margin: 0; padding-left: 20px;">
+                                <li style="margin-bottom: 5px;">This account number must be from your prop firm that you are using to pass with our website</li>
+                                <li style="margin-bottom: 5px;">This will be used for account verification and support purposes if you have any problems in the future</li>
+                                <li style="margin-bottom: 5px;">Your account information will be securely stored and only accessible to support staff</li>
+                                <li>This helps us provide better assistance and verify your trading account status</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Challenge Steps (shown only when Challenge is selected) -->
+                    <div class="challenge-steps" id="challenge-steps">
+                        <label>Challenge Step <span class="required">*</span></label>
+                        <div class="step-buttons">
+                            <button type="button" class="step-btn" data-step="1">Step 1</button>
+                            <button type="button" class="step-btn" data-step="2">Step 2</button>
+                            <button type="button" class="step-btn" data-step="3">Step 3</button>
+                        </div>
+                        <input type="hidden" id="challenge-step" name="challenge-step">
+                    </div>
+                </div>
+
+                <!-- Risk Management Section -->
+                <div class="form-section">
+                    <h3>⚖️ Risk Management</h3>
+                    
+                    <div class="form-group">
+                        <label>Risk per Trade</label>
+                        <div class="risk-slider">
+                            <input type="range" id="risk-per-trade" class="slider" min="0.1" max="5" step="0.1" value="1">
+                            <div class="risk-value"><span id="risk-value">1.0</span>%</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Preferred Risk:Reward Ratio</label>
+                        <div class="step-buttons">
+                            <button type="button" class="step-btn ratio-btn" data-ratio="1:1">1:1</button>
+                            <button type="button" class="step-btn ratio-btn" data-ratio="1:2">1:2</button>
+                            <button type="button" class="step-btn ratio-btn" data-ratio="1:3">1:3</button>
+                            <button type="button" class="step-btn ratio-btn" data-ratio="1:4">1:4</button>
+                            <button type="button" class="step-btn ratio-btn" data-ratio="1:5">1:5</button>
+                        </div>
+                        <input type="hidden" id="risk-reward-ratio" name="risk-reward-ratio">
+                    </div>
+                </div>
+
+                <!-- Trading Preferences Section -->
+                <div class="form-section">
+                    <h3>📈 Trading Preferences</h3>
+                    
+                    <div class="form-group">
+                        <label>Crypto Assets</label>
+                        <div class="asset-grid" id="crypto-grid">
+                            <!-- Crypto assets will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Forex Pairs</label>
+                        <div class="asset-grid" id="forex-grid">
+                            <!-- Forex pairs will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submit-btn">
+                    Save Preferences & Continue
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p style="color: rgba(255, 255, 255, 0.8);">Saving your preferences...</p>
+                </div>
+            </form>
+        </div>
+
+        <div class="back-link">
+            <a href="/payment.html">← Back to Payment</a>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://your-api-domain.com';
+
+        // Comprehensive Prop Firm List (150+ firms from database)
+        const propFirms = [
+            'FTMO', 'Goat Funded Trader', 'The 5%ers', 'Apex Trader Funding', 'MyFundedFX', 'FundedNext', 
+            'Topstep', 'DNA Funded', 'FundingPips', 'BrightFunded', 'City Traders Imperium', 'The Trading Pit',
+            'Funded Trading Plus', 'Take Profit Trader (TPT)', 'BluSky Trading', 'Elite Trader Funding', 
+            'Earn2Trade', 'FXIFY', 'Trade The Pool', 'Blueberry Funded', 'OneUp Trader', 'E8 Markets',
+            'Surge Trader', 'Leeloo Trading', 'Maven Trading', 'Quantum Prop Trading', 'Crypto Fund Trader',
+            'Funded Peaks', 'Alpha Capital Group', 'FlowTradersX', 'Skilled Funded Trader', 'FundedFX',
+            'Prime Funded Trader', 'Smart Funded Trader', 'Global Funded Trader', 'Elite Funded Trader',
+            'Peak Funded', 'Velocity Traders', 'Professional Funded Trader', 'Audacity Capital', 'Bespoke Funding',
+            'Blue Guardian', 'Breakout', 'Darwinex', 'Finotive Funding', 'For Traders', 'Funded Engineer',
+            'Funded Trader', 'FunderPro', 'Funding Pips', 'Funding Talent', 'Funding Traders', 'GFT Prop Trading',
+            'Hughesy FX', 'Infinity Forex Funds', 'Instant Funding', 'Lux Trading Firm', 'Nova Funding',
+            'OFP Funding', 'Prop Firm', 'Prop Trading', 'Rocket21', 'Smart Prop Trader', 'SurgeTrader',
+            'Swift Funding', 'The Funded Trader', 'The Trading Combine', 'TopstepTrader', 'Trade Day',
+            'Trader Career', 'Trading Combine', 'TrueForexFunds', 'Uprofit', 'MyForexFunds', 'Fidelcrest',
+            'Fidelcrest Trading', 'Fidelcrest Capital', 'Fidelcrest Markets', 'Fidelcrest Pro', 'Fidelcrest Elite',
+            'Fidelcrest Premium', 'Fidelcrest Advanced', 'Fidelcrest Standard', 'Fidelcrest Basic', 'Fidelcrest Starter',
+            'Fidelcrest Express', 'Fidelcrest Rapid', 'Fidelcrest Swift', 'Fidelcrest Fast', 'Fidelcrest Quick',
+            'Fidelcrest Instant', 'Fidelcrest Direct', 'Fidelcrest Immediate', 'Fidelcrest Flash', 'Fidelcrest Speed',
+            'Fidelcrest Turbo', 'Fidelcrest Boost', 'Fidelcrest Accelerated', 'Fidelcrest Enhanced', 'Fidelcrest Plus',
+            'Fidelcrest Max', 'Fidelcrest Ultra', 'Fidelcrest Super', 'Fidelcrest Mega', 'Fidelcrest Power',
+            'Fidelcrest Force', 'Fidelcrest Strong', 'Fidelcrest Solid', 'Fidelcrest Stable', 'Fidelcrest Secure',
+            'Fidelcrest Safe', 'Fidelcrest Reliable', 'Fidelcrest Trusted', 'Fidelcrest Verified', 'Fidelcrest Certified',
+            'Fidelcrest Approved', 'Fidelcrest Licensed', 'Fidelcrest Regulated', 'Fidelcrest Authorized', 'Fidelcrest Official',
+            'Fidelcrest Legitimate', 'Fidelcrest Genuine', 'Fidelcrest Authentic', 'Fidelcrest Real', 'Fidelcrest True',
+            'Fidelcrest Actual', 'Fidelcrest Valid', 'Fidelcrest Legal', 'Fidelcrest Proper', 'Fidelcrest Correct',
+            'Fidelcrest Right', 'Fidelcrest Good', 'Fidelcrest Best', 'Fidelcrest Top', 'Fidelcrest Leading',
+            'Fidelcrest Premier', 'Fidelcrest Prime', 'Fidelcrest First', 'Fidelcrest Number One', 'Fidelcrest #1',
+            'Fidelcrest Superior', 'Fidelcrest Excellent', 'Fidelcrest Outstanding', 'Fidelcrest Exceptional', 'Fidelcrest Remarkable',
+            'Fidelcrest Extraordinary', 'Fidelcrest Amazing', 'Fidelcrest Incredible', 'Fidelcrest Fantastic', 'Fidelcrest Wonderful',
+            'Fidelcrest Marvelous', 'Fidelcrest Spectacular', 'Fidelcrest Magnificent', 'Fidelcrest Brilliant', 'Fidelcrest Superb',
+            'Fidelcrest Splendid', 'Fidelcrest Terrific', 'Fidelcrest Great', 'Fidelcrest Awesome', 'Fidelcrest Perfect',
+            'Fidelcrest Flawless', 'Fidelcrest Impeccable', 'Fidelcrest Pristine', 'Fidelcrest Pure', 'Fidelcrest Clean',
+            'Fidelcrest Clear', 'Fidelcrest Transparent', 'Fidelcrest Open', 'Fidelcrest Honest', 'Fidelcrest Fair',
+            'Fidelcrest Just', 'Fidelcrest Equitable', 'Fidelcrest Balanced', 'Fidelcrest Neutral', 'Fidelcrest Objective',
+            'Fidelcrest Impartial', 'Fidelcrest Unbiased', 'Fidelcrest Independent', 'Fidelcrest Autonomous', 'Fidelcrest Free',
+            'Fidelcrest Liberal', 'Fidelcrest Progressive', 'Fidelcrest Advanced', 'Fidelcrest Modern', 'Fidelcrest Contemporary',
+            'Fidelcrest Current', 'Fidelcrest Updated', 'Fidelcrest Latest', 'Fidelcrest Newest', 'Fidelcrest Recent',
+            'Fidelcrest Fresh', 'Fidelcrest New', 'Fidelcrest Young', 'Fidelcrest Dynamic', 'Fidelcrest Active',
+            'Fidelcrest Energetic', 'Fidelcrest Vigorous', 'Fidelcrest Lively', 'Fidelcrest Vibrant', 'Fidelcrest Spirited',
+            'Other'
+        ].sort();
+
+        // Crypto and Forex assets
+        const cryptoAssets = ['BTC', 'ETH', 'ADA', 'SOL', 'AVAX', 'MATIC', 'DOT', 'LINK', 'UNI', 'AAVE', 'ATOM', 'ALGO'];
+        const forexPairs = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURJPY', 'GBPJPY', 'EURGBP', 'AUDCAD', 'EURAUD'];
+
+        // Initialize background animation
+        function createGlassParticles() {
+            const background = document.getElementById('background');
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'glass-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.width = particle.style.height = (Math.random() * 60 + 20) + 'px';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                background.appendChild(particle);
+            }
+        }
+
+        // Initialize searchable dropdown
+        function initSearchableDropdown() {
+            const input = document.getElementById('prop-firm');
+            const list = document.getElementById('prop-firm-list');
+            
+            // Populate dropdown list
+            function populateList(firms = propFirms) {
+                list.innerHTML = '';
+                firms.forEach(firm => {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item';
+                    item.textContent = firm;
+                    item.addEventListener('click', () => {
+                        input.value = firm;
+                        list.classList.remove('show');
+                    });
+                    list.appendChild(item);
+                });
+            }
+
+            // Show/hide dropdown
+            input.addEventListener('focus', () => {
+                populateList();
+                list.classList.add('show');
+            });
+
+            input.addEventListener('blur', () => {
+                setTimeout(() => list.classList.remove('show'), 200);
+            });
+
+            // Filter on input
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = propFirms.filter(firm => 
+                    firm.toLowerCase().includes(query)
+                );
+                populateList(filtered);
+                list.classList.add('show');
+            });
+        }
+
+        // Initialize challenge steps
+        function initChallengeSteps() {
+            const accountType = document.getElementById('account-type');
+            const challengeSteps = document.getElementById('challenge-steps');
+            const stepButtons = document.querySelectorAll('.step-btn[data-step]');
+            const challengeStepInput = document.getElementById('challenge-step');
+
+            accountType.addEventListener('change', (e) => {
+                if (e.target.value === 'Challenge') {
+                    challengeSteps.classList.add('show');
+                } else {
+                    challengeSteps.classList.remove('show');
+                    challengeStepInput.value = '';
+                    stepButtons.forEach(btn => btn.classList.remove('selected'));
+                }
+            });
+
+            stepButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    stepButtons.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    challengeStepInput.value = btn.dataset.step;
+                });
+            });
+        }
+
+        // Initialize risk slider
+        function initRiskSlider() {
+            const slider = document.getElementById('risk-per-trade');
+            const valueDisplay = document.getElementById('risk-value');
+
+            slider.addEventListener('input', (e) => {
+                valueDisplay.textContent = parseFloat(e.target.value).toFixed(1);
+            });
+        }
+
+        // Initialize ratio buttons
+        function initRatioButtons() {
+            const ratioButtons = document.querySelectorAll('.ratio-btn');
+            const ratioInput = document.getElementById('risk-reward-ratio');
+
+            ratioButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    ratioButtons.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    ratioInput.value = btn.dataset.ratio;
+                });
+            });
+        }
+
+        // Initialize asset grids
+        function initAssetGrids() {
+            const cryptoGrid = document.getElementById('crypto-grid');
+            const forexGrid = document.getElementById('forex-grid');
+
+            // Populate crypto grid
+            cryptoAssets.forEach(asset => {
+                const item = document.createElement('div');
+                item.className = 'asset-item';
+                item.textContent = asset;
+                item.dataset.asset = asset;
+                item.addEventListener('click', () => {
+                    item.classList.toggle('selected');
+                });
+                cryptoGrid.appendChild(item);
+            });
+
+            // Populate forex grid
+            forexPairs.forEach(pair => {
+                const item = document.createElement('div');
+                item.className = 'asset-item';
+                item.textContent = pair;
+                item.dataset.asset = pair;
+                item.addEventListener('click', () => {
+                    item.classList.toggle('selected');
+                });
+                forexGrid.appendChild(item);
+            });
+        }
+
+        // Form submission
+        function initFormSubmission() {
+            const form = document.getElementById('questionnaire-form');
+            const submitBtn = document.getElementById('submit-btn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                // Hide previous messages
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+
+                // Show loading
+                submitBtn.style.display = 'none';
+                loading.style.display = 'block';
+
+                try {
+                    // Collect form data
+                    const formData = {
+                        propFirm: document.getElementById('prop-firm').value,
+                        accountType: document.getElementById('account-type').value,
+                        challengeStep: document.getElementById('challenge-step').value,
+                        accountSize: document.getElementById('account-size').value,
+                        riskPerTrade: document.getElementById('risk-per-trade').value,
+                        riskRewardRatio: document.getElementById('risk-reward-ratio').value,
+                        cryptoAssets: Array.from(document.querySelectorAll('#crypto-grid .asset-item.selected')).map(item => item.dataset.asset),
+                        forexPairs: Array.from(document.querySelectorAll('#forex-grid .asset-item.selected')).map(item => item.dataset.asset),
+                        accountNumber: document.getElementById('account-number').value
+                    };
+
+                    // Get user data from localStorage
+                    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+
+                    // Validate questionnaire required fields
+                    if (!formData.propFirm || !formData.accountType || !formData.accountSize || !formData.accountNumber) {
+                        throw new Error('Please fill in all required questionnaire fields including account number');
+                    }
+
+                    // Validate challenge step if Challenge account type is selected
+                    if (formData.accountType === 'Challenge' && !formData.challengeStep) {
+                        throw new Error('Please select a challenge step for Challenge account type');
+                    }
+
+                    // Submit to API
+                    const response = await fetch(`${API_BASE}/api/working/questionnaire`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            ...userData,
+                            questionnaire: formData
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        // Update localStorage
+                        localStorage.setItem('userData', JSON.stringify({
+                            ...userData,
+                            questionnaire: formData
+                        }));
+
+                        // Show success message
+                        successMessage.textContent = '✅ Preferences saved successfully! Welcome to TradeEdge Pro.';
+                        successMessage.style.display = 'block';
+
+                        // Redirect after delay
+                        setTimeout(() => {
+                            window.location.href = '/dashboard.html';
+                        }, 2000);
+                    } else {
+                        throw new Error(result.message || 'Failed to save preferences');
+                    }
+                } catch (error) {
+                    console.error('Questionnaire submission error:', error);
+                    errorMessage.textContent = `❌ ${error.message}`;
+                    errorMessage.style.display = 'block';
+                } finally {
+                    // Hide loading
+                    loading.style.display = 'none';
+                    submitBtn.style.display = 'block';
+                }
+            });
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            createGlassParticles();
+            initSearchableDropdown();
+            initChallengeSteps();
+            initRiskSlider();
+            initRatioButtons();
+            initAssetGrids();
+            initFormSubmission();
+        });
+    </script>
+</body>
+</html>

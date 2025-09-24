@@ -1,0 +1,94 @@
+// AI Engineer System Configuration
+// Environment variables for the AI Engineer system
+
+export const AI_ENGINEER_CONFIG = {
+  // Service Ports
+  LIVE_METRICS_API_PORT: process.env.VITE_LIVE_METRICS_API_PORT || 3008,
+  EMERGENCY_API_PORT: process.env.VITE_EMERGENCY_API_PORT || 3007,
+  CUSTOMER_CARE_API_PORT: process.env.VITE_CUSTOMER_CARE_API_PORT || 3006,
+  FRONTEND_PORT: process.env.VITE_FRONTEND_PORT || 5175,
+
+  // API Base URLs
+  LIVE_METRICS_API_URL: process.env.VITE_LIVE_METRICS_API_URL || 'http://localhost:3008',
+  EMERGENCY_API_URL: process.env.VITE_EMERGENCY_API_URL || 'http://localhost:3007',
+  CUSTOMER_CARE_API_URL: process.env.VITE_CUSTOMER_CARE_API_URL || 'http://localhost:3006',
+
+  // Monitoring Configuration
+  MONITORING_INTERVAL: parseInt(process.env.VITE_MONITORING_INTERVAL) || 2000,
+  ALERT_CHECK_INTERVAL: parseInt(process.env.VITE_ALERT_CHECK_INTERVAL) || 1000,
+  METRICS_UPDATE_INTERVAL: parseInt(process.env.VITE_METRICS_UPDATE_INTERVAL) || 1000,
+
+  // Emergency Thresholds (Critical)
+  CPU_CRITICAL_THRESHOLD: parseInt(process.env.VITE_CPU_CRITICAL_THRESHOLD) || 90,
+  MEMORY_CRITICAL_THRESHOLD: parseInt(process.env.VITE_MEMORY_CRITICAL_THRESHOLD) || 95,
+  DISK_CRITICAL_THRESHOLD: parseInt(process.env.VITE_DISK_CRITICAL_THRESHOLD) || 90,
+  RESPONSE_TIME_CRITICAL_THRESHOLD: parseInt(process.env.VITE_RESPONSE_TIME_CRITICAL_THRESHOLD) || 5000,
+  ERROR_RATE_CRITICAL_THRESHOLD: parseInt(process.env.VITE_ERROR_RATE_CRITICAL_THRESHOLD) || 10,
+
+  // Emergency Thresholds (High Priority)
+  CPU_HIGH_THRESHOLD: parseInt(process.env.VITE_CPU_HIGH_THRESHOLD) || 80,
+  MEMORY_HIGH_THRESHOLD: parseInt(process.env.VITE_MEMORY_HIGH_THRESHOLD) || 85,
+  DISK_HIGH_THRESHOLD: parseInt(process.env.VITE_DISK_HIGH_THRESHOLD) || 80,
+  RESPONSE_TIME_HIGH_THRESHOLD: parseInt(process.env.VITE_RESPONSE_TIME_HIGH_THRESHOLD) || 3000,
+  ERROR_RATE_HIGH_THRESHOLD: parseInt(process.env.VITE_ERROR_RATE_HIGH_THRESHOLD) || 5,
+
+  // Emergency Thresholds (Medium Priority)
+  CPU_MEDIUM_THRESHOLD: parseInt(process.env.VITE_CPU_MEDIUM_THRESHOLD) || 70,
+  MEMORY_MEDIUM_THRESHOLD: parseInt(process.env.VITE_MEMORY_MEDIUM_THRESHOLD) || 75,
+  DISK_MEDIUM_THRESHOLD: parseInt(process.env.VITE_DISK_MEDIUM_THRESHOLD) || 70,
+  RESPONSE_TIME_MEDIUM_THRESHOLD: parseInt(process.env.VITE_RESPONSE_TIME_MEDIUM_THRESHOLD) || 2000,
+  ERROR_RATE_MEDIUM_THRESHOLD: parseInt(process.env.VITE_ERROR_RATE_MEDIUM_THRESHOLD) || 2,
+
+  // Notification Channels
+  EMAIL_NOTIFICATIONS: process.env.VITE_EMAIL_NOTIFICATIONS === 'true',
+  SMS_NOTIFICATIONS: process.env.VITE_SMS_NOTIFICATIONS === 'true',
+  SLACK_NOTIFICATIONS: process.env.VITE_SLACK_NOTIFICATIONS === 'true',
+  WEBHOOK_NOTIFICATIONS: process.env.VITE_WEBHOOK_NOTIFICATIONS === 'true',
+
+  // Emergency Contacts
+  EMERGENCY_EMAIL: process.env.VITE_EMERGENCY_EMAIL || 'ai-engineer@traderedgepro.com',
+  EMERGENCY_SMS: process.env.VITE_EMERGENCY_SMS || '+1-555-AI-HELP',
+  SLACK_WEBHOOK_URL: process.env.VITE_SLACK_WEBHOOK_URL || 'https://hooks.slack.com/services/ai-emergency-alerts',
+  API_WEBHOOK_URL: process.env.VITE_API_WEBHOOK_URL || 'https://api.traderedgepro.com/emergency/notify',
+
+  // AI Configuration
+  AI_RESPONSE_TIME_TARGET: parseInt(process.env.VITE_AI_RESPONSE_TIME_TARGET) || 2000,
+  AI_RESOLUTION_RATE_TARGET: parseInt(process.env.VITE_AI_RESOLUTION_RATE_TARGET) || 95,
+  AI_ESCALATION_THRESHOLD: parseInt(process.env.VITE_AI_ESCALATION_THRESHOLD) || 3,
+
+  // System Health
+  SYSTEM_HEALTH_CHECK_INTERVAL: parseInt(process.env.VITE_SYSTEM_HEALTH_CHECK_INTERVAL) || 5000,
+  SERVICE_HEALTH_CHECK_INTERVAL: parseInt(process.env.VITE_SERVICE_HEALTH_CHECK_INTERVAL) || 10000,
+
+  // Customer Care
+  CUSTOMER_CARE_AVAILABLE: process.env.VITE_CUSTOMER_CARE_AVAILABLE !== 'false',
+  CHAT_RESPONSE_TIME_TARGET: parseInt(process.env.VITE_CHAT_RESPONSE_TIME_TARGET) || 2000,
+  QUERY_RESOLUTION_RATE: parseInt(process.env.VITE_QUERY_RESOLUTION_RATE) || 95,
+
+  // Development Mode
+  DEVELOPMENT_MODE: process.env.VITE_DEVELOPMENT_MODE !== 'false',
+  DEBUG_MONITORING: process.env.VITE_DEBUG_MONITORING === 'true',
+  SIMULATE_ALERTS: process.env.VITE_SIMULATE_ALERTS === 'true',
+};
+
+// Service URLs
+export const SERVICE_URLS = {
+  LIVE_METRICS: `${AI_ENGINEER_CONFIG.LIVE_METRICS_API_URL}/api/metrics`,
+  EMERGENCY_STATUS: `${AI_ENGINEER_CONFIG.EMERGENCY_API_URL}/api/emergency/status`,
+  CUSTOMER_CARE_STATS: `${AI_ENGINEER_CONFIG.CUSTOMER_CARE_API_URL}/api/stats`,
+  HEALTH_CHECK: {
+    LIVE_METRICS: `${AI_ENGINEER_CONFIG.LIVE_METRICS_API_URL}/health`,
+    EMERGENCY: `${AI_ENGINEER_CONFIG.EMERGENCY_API_URL}/health`,
+    CUSTOMER_CARE: `${AI_ENGINEER_CONFIG.CUSTOMER_CARE_API_URL}/health`,
+  }
+};
+
+// Frontend URLs
+export const FRONTEND_URLS = {
+  LIVE_EMERGENCY_MONITORING: `http://localhost:${AI_ENGINEER_CONFIG.FRONTEND_PORT}/live-emergency-monitoring`,
+  AI_ASSISTANT_DASHBOARD: `http://localhost:${AI_ENGINEER_CONFIG.FRONTEND_PORT}/ai-assistant-dashboard`,
+  HELP_CONTACT: `http://localhost:${AI_ENGINEER_CONFIG.FRONTEND_PORT}/help-contact`,
+  MAIN_DASHBOARD: `http://localhost:${AI_ENGINEER_CONFIG.FRONTEND_PORT}`,
+};
+
+export default AI_ENGINEER_CONFIG;

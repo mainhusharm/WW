@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Immediate CORS Fix - Customer Service Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .code {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            border-left: 4px solid #007bff;
+        }
+        .user-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .user-card h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .user-card p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-processing {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Immediate CORS Fix - Customer Service Dashboard</h1>
+        <p>This page demonstrates the working customer service dashboard using CORS proxy solutions.</p>
+        
+        <div class="test-section warning">
+            <h3>⚠️ Current Problem</h3>
+            <p>The backend at <code>https://node-backend-g1mk.onrender.com</code> is not sending proper CORS headers, causing the customer service dashboard to fail.</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Test Different Solutions</h3>
+            <button onclick="testDirectBackend()">Test Direct Backend (Should Fail)</button>
+            <button onclick="testCorsAnywhere()">Test with CORS Anywhere</button>
+            <button onclick="testAllOrigins()">Test with All-Origins</button>
+            <button onclick="loadCustomerData()">Load Customer Data (Working Solution)</button>
+        </div>
+
+        <div class="test-section">
+            <h3>💡 Frontend Code Fix</h3>
+            <p>To fix the customer service dashboard immediately, update your frontend code:</p>
+            <div class="code">
+// Instead of:
+const response = await fetch('https://node-backend-g1mk.onrender.com/api/users');
+
+// Use one of these working solutions:
+const response = await fetch('https://cors-anywhere.herokuapp.com/https://node-backend-g1mk.onrender.com/api/users');
+// OR
+const response = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://node-backend-g1mk.onrender.com/api/users'));
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>👥 Customer Data (Working Solution)</h3>
+            <button onclick="loadCustomerData()">Load Customer Data</button>
+            <div id="customer-data"></div>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://node-backend-g1mk.onrender.com';
+        const FRONTEND_URL = window.location.origin;
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-section ${type}`;
+            resultDiv.innerHTML = `<pre>${message}</pre>`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        async function testDirectBackend() {
+            try {
+                addResult('Testing direct backend connection (should fail with CORS)...', 'info');
+                const response = await fetch(`${BACKEND_URL}/api/users`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Direct backend successful!\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ Direct backend failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Direct backend error (expected): ${error.message}`, 'error');
+            }
+        }
+
+        async function testCorsAnywhere() {
+            try {
+                addResult('Testing with CORS Anywhere proxy...', 'info');
+                const response = await fetch(`https://cors-anywhere.herokuapp.com/${BACKEND_URL}/api/users`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ CORS Anywhere successful!\nUsers found: ${data.count}\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ CORS Anywhere failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ CORS Anywhere error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAllOrigins() {
+            try {
+                addResult('Testing with All-Origins proxy...', 'info');
+                const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`${BACKEND_URL}/api/users`)}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ All-Origins successful!\nUsers found: ${data.count}\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ All-Origins failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ All-Origins error: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadCustomerData() {
+            try {
+                addResult('Loading customer data using working CORS proxy...', 'info');
+                
+                // Use All-Origins proxy which is more reliable
+                const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`${BACKEND_URL}/api/users`)}`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    addResult(`✅ Customer data loaded successfully!\nUsers found: ${data.count}`, 'success');
+                    
+                    // Display customer data in a nice format
+                    const customerDataDiv = document.getElementById('customer-data');
+                    customerDataDiv.innerHTML = '<h4>Customer Data:</h4>';
+                    
+                    data.users.forEach(user => {
+                        const userCard = document.createElement('div');
+                        userCard.className = 'user-card';
+                        userCard.innerHTML = `
+                            <h4>${user.fullName || 'No Name'}</h4>
+                            <p><strong>Email:</strong> ${user.email}</p>
+                            <p><strong>ID:</strong> ${user.id}</p>
+                            <p><strong>Status:</strong> <span class="status status-${user.status.toLowerCase()}">${user.status}</span></p>
+                            <p><strong>Created:</strong> ${new Date(user.createdAt).toLocaleString()}</p>
+                        `;
+                        customerDataDiv.appendChild(userCard);
+                    });
+                } else {
+                    addResult(`❌ Failed to load customer data: ${data.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Error loading customer data: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addResult('🚀 Running CORS tests...', 'info');
+                testDirectBackend();
+                setTimeout(testCorsAnywhere, 2000);
+                setTimeout(testAllOrigins, 4000);
+                setTimeout(loadCustomerData, 6000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

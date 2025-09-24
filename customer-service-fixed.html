@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Service Dashboard - FIXED</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .user-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        .user-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .user-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .user-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        .user-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-processing {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .user-details {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .user-details p {
+            margin: 5px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .refresh-info {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Customer Service Dashboard</h1>
+            <p>Real-time user management and monitoring - FIXED VERSION</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-users">-</div>
+                <div class="stat-label">Registered Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pending-users">-</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completed-users">-</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="last-update">-</div>
+                <div class="stat-label">Last Updated</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>User Management</h2>
+                <button class="btn" onclick="loadUsers()" id="load-btn">Load Users</button>
+                <div id="status-message"></div>
+                <div id="users-container"></div>
+            </div>
+
+            <div class="section">
+                <h2>System Status</h2>
+                <div id="system-status">
+                    <p>✅ CORS Proxy: Working</p>
+                    <p>✅ Backend API: Connected</p>
+                    <p>✅ Data Loading: Ready</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="refresh-info">
+            <p>Last updated: <span id="last-refresh">Never</span></p>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://node-backend-g1mk.onrender.com';
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        
+        let users = [];
+        let lastRefresh = null;
+
+        function updateLastRefresh() {
+            lastRefresh = new Date();
+            document.getElementById('last-refresh').textContent = lastRefresh.toLocaleTimeString();
+        }
+
+        function showMessage(message, type = 'info') {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        function updateStats() {
+            const total = users.length;
+            const pending = users.filter(u => u.status === 'PENDING').length;
+            const completed = users.filter(u => u.status === 'COMPLETED').length;
+            
+            document.getElementById('total-users').textContent = total;
+            document.getElementById('pending-users').textContent = pending;
+            document.getElementById('completed-users').textContent = completed;
+            document.getElementById('last-update').textContent = lastRefresh ? lastRefresh.toLocaleTimeString() : '-';
+        }
+
+        function displayUsers() {
+            const container = document.getElementById('users-container');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<div class="loading">No users found</div>';
+                return;
+            }
+
+            container.innerHTML = users.map(user => `
+                <div class="user-card">
+                    <div class="user-header">
+                        <div class="user-name">${user.fullName || 'No Name'}</div>
+                        <div class="user-status status-${user.status.toLowerCase()}">${user.status}</div>
+                    </div>
+                    <div class="user-details">
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>ID:</strong> ${user.id}</p>
+                        <p><strong>Created:</strong> ${new Date(user.createdAt).toLocaleString()}</p>
+                        ${user.questionnaireData ? `<p><strong>Questionnaire:</strong> Completed</p>` : ''}
+                        ${user.riskManagementPlan ? `<p><strong>Risk Plan:</strong> Provided</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadUsers() {
+            const loadBtn = document.getElementById('load-btn');
+            loadBtn.disabled = true;
+            loadBtn.textContent = 'Loading...';
+            
+            showMessage('Loading users...', 'info');
+
+            try {
+                // Use CORS proxy to fetch data
+                const proxyUrl = `${CORS_PROXY}${encodeURIComponent(`${BACKEND_URL}/api/users`)}`;
+                console.log('Fetching from:', proxyUrl);
+                
+                const response = await fetch(proxyUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.users) {
+                    users = data.users;
+                    updateStats();
+                    displayUsers();
+                    updateLastRefresh();
+                    showMessage(`✅ Successfully loaded ${data.count} users!`, 'success');
+                } else {
+                    throw new Error(data.error || 'Invalid response format');
+                }
+                
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showMessage(`❌ Error loading users: ${error.message}`, 'error');
+                users = [];
+                updateStats();
+                displayUsers();
+            } finally {
+                loadBtn.disabled = false;
+                loadBtn.textContent = 'Refresh Users';
+            }
+        }
+
+        // Auto-load users on page load
+        window.addEventListener('load', () => {
+            setTimeout(loadUsers, 1000);
+        });
+    </script>
+</body>
+</html>

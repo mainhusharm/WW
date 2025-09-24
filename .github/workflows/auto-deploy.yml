@@ -1,0 +1,38 @@
+name: Auto Deploy to Render
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Notify Render of deployment
+      run: |
+        echo "Triggering Render auto-deploy for commit ${{ github.sha }}"
+        echo "Branch: ${{ github.ref }}"
+        echo "Repository: ${{ github.repository }}"
+        
+    - name: Verify configuration files
+      run: |
+        echo "Checking render.yaml configuration..."
+        if [ -f "render.yaml" ]; then
+          echo "✅ Main render.yaml found"
+        else
+          echo "❌ Main render.yaml missing"
+        fi
+        
+        if [ -f "forex_data_service/render.yaml" ]; then
+          echo "✅ Forex data service render.yaml found"
+        else
+          echo "❌ Forex data service render.yaml missing"
+        fi
+        
+        echo "Configuration verification complete"

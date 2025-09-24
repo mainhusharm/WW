@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Customer Service Dashboard Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+        .feature-list {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #4ade80;
+        }
+        .data-preview {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #fbbf24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Enhanced Customer Service Dashboard Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li><strong>Click "Generate Test Data"</strong> to populate localStorage with sample questionnaire and risk management data</li>
+            <li><strong>Click "Open Customer Dashboard"</strong> to view the enhanced dashboard</li>
+            <li><strong>Verify all data sections</strong> are displayed properly</li>
+            <li><strong>Check screenshots</strong> are displayed (if URLs are valid)</li>
+            <li><strong>Test localStorage clearing</strong> functionality</li>
+        </ol>
+    </div>
+    
+    <div class="feature-list">
+        <h3>✅ Enhanced Features:</h3>
+        <ul>
+            <li><strong>Comprehensive Questionnaire Data:</strong> All question responses displayed in organized sections</li>
+            <li><strong>Risk Management Plan:</strong> Complete risk management details with calculations</li>
+            <li><strong>Screenshot Display:</strong> Both profile and account screenshots with error handling</li>
+            <li><strong>localStorage Integration:</strong> Shows all stored data from multiple sources</li>
+            <li><strong>Organized Layout:</strong> Clean, sectioned display for easy navigation</li>
+            <li><strong>Asset Tags:</strong> Crypto and Forex assets displayed as colored tags</li>
+            <li><strong>JSON Previews:</strong> Raw data displayed in formatted JSON blocks</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="generateTestData()">📊 Generate Test Data</button>
+        <button onclick="openCustomerDashboard()">🚀 Open Customer Dashboard</button>
+        <button onclick="clearTestData()">🗑️ Clear Test Data</button>
+        <button onclick="showLocalStorageData()">👁️ Show localStorage Data</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Generated Test Data Preview</h2>
+        <div id="dataPreview" class="data-preview">Click "Generate Test Data" to see sample data</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click test buttons to see what's happening</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let dataPreviewDiv = document.getElementById('dataPreview');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        window.generateTestData = function() {
+            log('📊 Generating comprehensive test data...', 'info');
+            
+            // Generate comprehensive questionnaire data
+            const questionnaireData = {
+                tradesPerDay: '3-5',
+                tradingSession: 'London + New York',
+                cryptoAssets: ['BTC', 'ETH', 'ADA', 'SOL'],
+                forexAssets: ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD'],
+                hasAccount: 'yes',
+                accountEquity: 25000,
+                propFirm: 'FTMO',
+                accountType: 'Challenge',
+                accountSize: 100000,
+                riskPercentage: 2.0,
+                riskRewardRatio: '1:2',
+                accountScreenshot: 'https://via.placeholder.com/400x300/4ade80/ffffff?text=Account+Screenshot',
+                tradingExperience: 'Intermediate (2-5 years)',
+                riskTolerance: 'Moderate',
+                tradingGoals: 'Consistent monthly profits',
+                updatedAt: new Date().toISOString()
+            };
+            
+            // Generate risk management plan
+            const riskManagementPlan = {
+                riskPerTrade: 2.0,
+                dailyLossLimit: 5.0,
+                maxLoss: 10000,
+                profitTarget: 10.0,
+                tradesToPass: 5,
+                riskAmount: 2000,
+                profitAmount: 4000,
+                consecutiveLossesLimit: 3,
+                propFirmRules: {
+                    provider: 'FTMO',
+                    model: 'Challenge',
+                    maxLoss: '10%',
+                    profitTarget: '10%',
+                    dailyLossLimit: '5%'
+                },
+                generatedAt: new Date().toISOString()
+            };
+            
+            // Generate user profile data
+            const userProfile = {
+                id: 'test-user-123',
+                email: 'test@example.com',
+                fullName: 'John Doe',
+                membershipTier: 'professional',
+                accountType: 'personal',
+                riskTolerance: 'moderate',
+                isAuthenticated: true,
+                setupComplete: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            // Generate customer data
+            const customerData = {
+                profile: userProfile,
+                questionnaire: questionnaireData,
+                riskManagement: riskManagementPlan,
+                signals: {
+                    wins: 15,
+                    losses: 5,
+                    winRate: 75.0
+                },
+                trades: [],
+                activityLog: [],
+                accountMeta: {
+                    accountType: 'Challenge',
+                    accountSize: 100000,
+                    equity: 25000
+                }
+            };
+            
+            // Store all data in localStorage
+            localStorage.setItem('userId', userProfile.id);
+            localStorage.setItem('userEmail', userProfile.email);
+            localStorage.setItem('userFullName', userProfile.fullName);
+            localStorage.setItem('registrationTime', userProfile.createdAt);
+            localStorage.setItem('questionnaireData', JSON.stringify(questionnaireData));
+            localStorage.setItem('questionnaireAnswers', JSON.stringify(questionnaireData));
+            localStorage.setItem('riskManagementPlan', JSON.stringify(riskManagementPlan));
+            localStorage.setItem('riskSettings', JSON.stringify(riskManagementPlan));
+            localStorage.setItem('screenshotUrl', 'https://via.placeholder.com/400x300/3b82f6/ffffff?text=Profile+Screenshot');
+            localStorage.setItem('accountScreenshot', questionnaireData.accountScreenshot);
+            localStorage.setItem('tradingPreferences', JSON.stringify({
+                preferredPairs: ['EUR/USD', 'GBP/USD'],
+                tradingStyle: 'Swing Trading',
+                timeframes: ['H1', 'H4', 'D1']
+            }));
+            localStorage.setItem('propFirmRules', JSON.stringify(riskManagementPlan.propFirmRules));
+            localStorage.setItem('userProfile', JSON.stringify(userProfile));
+            localStorage.setItem('customerData', JSON.stringify(customerData));
+            localStorage.setItem('enhancedCustomerData', JSON.stringify(customerData));
+            
+            // Display preview
+            dataPreviewDiv.innerHTML = `
+                <h4>Generated Data Preview:</h4>
+                <p><strong>User:</strong> ${userProfile.fullName} (${userProfile.email})</p>
+                <p><strong>Prop Firm:</strong> ${questionnaireData.propFirm} - ${questionnaireData.accountType}</p>
+                <p><strong>Account Size:</strong> $${questionnaireData.accountSize.toLocaleString()}</p>
+                <p><strong>Risk Per Trade:</strong> ${riskManagementPlan.riskPerTrade}%</p>
+                <p><strong>Crypto Assets:</strong> ${questionnaireData.cryptoAssets.join(', ')}</p>
+                <p><strong>Forex Assets:</strong> ${questionnaireData.forexAssets.join(', ')}</p>
+                <p><strong>Screenshots:</strong> Profile + Account screenshots</p>
+            `;
+            
+            log('✅ Test data generated successfully!', 'success');
+            log('  - Questionnaire data stored', 'info');
+            log('  - Risk management plan stored', 'info');
+            log('  - User profile stored', 'info');
+            log('  - Screenshots configured', 'info');
+            log('  - All localStorage keys populated', 'info');
+        };
+        
+        window.openCustomerDashboard = function() {
+            log('🚀 Opening Customer Service Dashboard...', 'info');
+            
+            // Open in new tab
+            const dashboardUrl = '/customer-service-dashboard';
+            window.open(dashboardUrl, '_blank');
+            
+            log('✅ Customer Service Dashboard opened in new tab', 'success');
+            log('  - Check the User Details section for questionnaire data', 'info');
+            log('  - Check the Risk Management section for risk plan', 'info');
+            log('  - Check the Screenshots section for images', 'info');
+            log('  - Check the localStorage Data section for raw data', 'info');
+        };
+        
+        window.clearTestData = function() {
+            log('🗑️ Clearing test data...', 'info');
+            
+            // Clear all test-related localStorage
+            const keysToRemove = [
+                'userId', 'userEmail', 'userFullName', 'registrationTime',
+                'questionnaireData', 'questionnaireAnswers', 'riskManagementPlan',
+                'riskSettings', 'screenshotUrl', 'accountScreenshot',
+                'tradingPreferences', 'propFirmRules', 'userProfile',
+                'customerData', 'enhancedCustomerData'
+            ];
+            
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+            });
+            
+            dataPreviewDiv.innerHTML = 'Test data cleared. Click "Generate Test Data" to create new data.';
+            
+            log('✅ Test data cleared successfully!', 'success');
+            log('  - All test localStorage keys removed', 'info');
+        };
+        
+        window.showLocalStorageData = function() {
+            log('👁️ Displaying current localStorage data...', 'info');
+            
+            const relevantKeys = [
+                'userId', 'userEmail', 'userFullName', 'registrationTime',
+                'questionnaireData', 'questionnaireAnswers', 'riskManagementPlan',
+                'riskSettings', 'screenshotUrl', 'accountScreenshot',
+                'tradingPreferences', 'propFirmRules', 'userProfile',
+                'customerData', 'enhancedCustomerData'
+            ];
+            
+            let hasData = false;
+            relevantKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    hasData = true;
+                    log(`  ${key}: ${value.length > 100 ? value.substring(0, 100) + '...' : value}`, 'info');
+                }
+            });
+            
+            if (!hasData) {
+                log('  No relevant data found in localStorage', 'warning');
+                log('  Click "Generate Test Data" to populate localStorage', 'info');
+            } else {
+                log('✅ localStorage data displayed above', 'success');
+            }
+        };
+        
+        // Auto-run initial check
+        log('🚀 Enhanced Customer Service Dashboard Test initialized', 'info');
+        log('This test verifies the enhanced dashboard with comprehensive questionnaire and risk management data', 'info');
+        showLocalStorageData();
+    </script>
+</body>
+</html>
