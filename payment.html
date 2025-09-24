@@ -510,7 +510,7 @@
 
     <script>
         // API Configuration
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://your-api-domain.com';
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'https://your-api-domain.com';
 
         // Cryptomus supported currencies
         const supportedCurrencies = [
@@ -643,7 +643,7 @@
                 };
 
                 // Submit payment to API
-                const response = await fetch(`${API_BASE}/api/working/payment`, {
+                const response = await fetch(`${API_BASE}/api/payment/verify-payment`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

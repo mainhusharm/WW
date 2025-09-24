@@ -1,5 +1,6 @@
 import requests
 import json
+import time
 
 API_BASE_URL = "http://localhost:8080"
 REGISTER_URL = f"{API_BASE_URL}/api/user/register"
@@ -11,7 +12,7 @@ def test_user_registration():
     test_user = {
         "firstName": "Test",
         "lastName": "User",
-        "email": "testuser@example.com",
+        "email": f"testuser_{int(time.time())}@example.com",
         "phone": "1234567890",
         "password": "password123",
         "company": "Test Inc.",

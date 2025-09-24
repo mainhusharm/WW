@@ -9,26 +9,40 @@ user_bp = Blueprint('user_bp', __name__)
 
 @user_bp.route('/register', methods=['POST'])
 def register():
+    print("🔍 Starting user registration process...")
     data = request.get_json()
     if not data:
+        print("❌ No JSON data in request")
         return jsonify({"msg": "Missing JSON in request"}), 400
 
+    print(f"📝 Received registration data: {data}")
+    
     email = data.get('email')
     password = data.get('password')
     first_name = data.get('firstName') # Corrected from first_name
     last_name = data.get('lastName') # Corrected from last_name
 
     if not email or not password or not first_name or not last_name:
+        print(f"❌ Missing required fields - email: {email}, password: {bool(password)}, first_name: {first_name}, last_name: {last_name}")
         return jsonify({"msg": "Missing required fields"}), 400
 
-    if User.query.filter_by(email=email).first():
-        return jsonify({"msg": "Email already registered"}), 409
+    print(f"🔍 Checking if email {email} already exists...")
+    try:
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            print(f"❌ Email {email} already registered")
+            return jsonify({"msg": "Email already registered"}), 409
+        print(f"✅ Email {email} is available")
+    except Exception as e:
+        print(f"❌ Error checking existing user: {str(e)}")
+        return jsonify({"msg": "Database error checking existing user"}), 500
 
     # In a real app, you would hash the password
     # from werkzeug.security import generate_password_hash
     # password_hash = generate_password_hash(password)
     password_hash = password # Storing plain text for now, but this is NOT secure
 
+    print(f"👤 Creating new user object for {email}...")
     new_user = User(
         username=email,
         email=email,
@@ -40,10 +54,34 @@ def register():
         country=data.get('country'),
         agree_to_marketing=data.get('agree_to_marketing', False)
     )
-    db.session.add(new_user)
-    db.session.commit()
-
-    return jsonify({"msg": "User registered successfully"}), 201
+    
+    print(f"📊 User object created: {new_user}")
+    
+    try:
+        print("💾 Adding user to database session...")
+        db.session.add(new_user)
+        print("✅ User added to session successfully")
+        
+        print("🔄 Committing transaction to database...")
+        db.session.commit()
+        print(f"✅ Successfully committed new user {email} to the database with ID: {new_user.id}")
+        
+        # Verify the user was actually saved
+        print("🔍 Verifying user was saved...")
+        saved_user = User.query.filter_by(email=email).first()
+        if saved_user:
+            print(f"✅ Verification successful - user found in database with ID: {saved_user.id}")
+        else:
+            print("❌ Verification failed - user not found in database after commit")
+            
+        return jsonify({"msg": "User registered successfully", "user_id": new_user.id}), 201
+    except Exception as e:
+        print(f"❌ Database commit failed for user {email}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        print("🔄 Database session rolled back")
+        return jsonify({"msg": "Database error, registration failed."}), 500
 
 @user_bp.route('/health', methods=['GET'])
 def health_check():
