@@ -643,7 +643,7 @@
                 };
 
                 // Submit payment to API
-                const response = await fetch(`${API_BASE}/api/payment/verify-payment`, {
+                const response = await fetch(`${API_BASE}/api/simple/payments`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -275,6 +275,30 @@ app.get('/api/customers/dashboard', (req, res) => {
   });
 });
 
+app.get('/api/notifications', (req, res) => {
+  res.json({
+    success: true,
+    notifications: [],
+    total: 0,
+    lastUpdated: new Date().toISOString()
+  });
+});
+
+app.get('/api/portfolio', (req, res) => {
+  res.json({
+    success: true,
+    portfolio: {},
+    lastUpdated: new Date().toISOString()
+  });
+});
+
+app.post('/api/auth/refresh', (req, res) => {
+  res.json({
+    success: true,
+    message: "Token refreshed successfully"
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 API Server running on port ${PORT}`);

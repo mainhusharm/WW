@@ -32,9 +32,6 @@ def handle_payments():
     """Handle payment data from frontend components"""
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "POST,OPTIONS")
         return response, 200
     
     try:
@@ -101,9 +98,6 @@ def handle_questionnaire():
     """Handle questionnaire data from frontend components"""
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "POST,OPTIONS")
         return response, 200
     
     try:
@@ -193,9 +187,6 @@ def handle_dashboard():
     """Handle dashboard data from frontend components"""
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "GET,POST,OPTIONS")
         return response, 200
     
     if request.method == 'GET':
@@ -336,9 +327,6 @@ def handle_dashboard_equity():
     """Handle dashboard equity updates"""
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "PUT,OPTIONS")
         return response, 200
     
     try:

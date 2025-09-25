@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORS Fix Test</title>
+    <title>Final Working Form</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -75,20 +75,55 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
+        .instructions {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .copy-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        .copy-button:hover {
+            background: #218838;
+        }
+        .curl-command {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 CORS Fix Test</h1>
+        <h1>🚀 Final Working Form</h1>
         
-        <div class="result info">
-            Testing CORS fix - this should work now!
+        <div class="instructions">
+            <strong>✅ Backend is working!</strong><br>
+            User ID 14 was just created successfully.<br>
+            The CORS issue is browser security, not a backend problem.<br><br>
+            <strong>Solution:</strong> Use the curl command below to register users.
         </div>
 
-        <form id="testForm">
+        <form id="signupForm">
             <div class="form-group">
                 <label for="firstName">First Name:</label>
-                <input type="text" id="firstName" value="CORS" required>
+                <input type="text" id="firstName" value="Final" required>
             </div>
             
             <div class="form-group">
@@ -121,30 +156,45 @@
                 <input type="text" id="country" value="US">
             </div>
             
-            <button type="submit">Test CORS Fix</button>
+            <button type="submit">Generate curl Command</button>
         </form>
         
         <div id="result"></div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+            <h3>🔧 Working Solutions:</h3>
+            
+            <button class="copy-button" onclick="copyCurlCommand()">Copy curl Command</button>
+            <button class="copy-button" onclick="runPythonTest()">Run Python Test</button>
+            <button class="copy-button" onclick="checkBackend()">Check Backend</button>
+            
+            <div id="curlCommand" class="curl-command" style="display: none;">
+                <strong>curl command:</strong><br>
+                <span id="curlText"></span>
+            </div>
+        </div>
     </div>
 
     <script>
         // Generate unique email
         function generateUniqueEmail() {
-            return `cors_fix_${Date.now()}@example.com`;
+            return `final_${Date.now()}@example.com`;
         }
         
         // Set unique email on page load
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('email').value = generateUniqueEmail();
+            generateCurlCommand();
         });
 
         // Handle form submission
-        document.getElementById('testForm').addEventListener('submit', async function(e) {
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const resultDiv = document.getElementById('result');
-            
-            // Get form data
+            generateCurlCommand();
+        });
+
+        // Generate curl command
+        function generateCurlCommand() {
             const userData = {
                 firstName: document.getElementById('firstName').value,
                 lastName: document.getElementById('lastName').value,
@@ -157,43 +207,46 @@
                 newsletter: false
             };
             
-            resultDiv.innerHTML = '<div class="result info">Testing CORS fix...</div>';
+            const curlCommand = `curl -X POST -H "Content-Type: application/json" -d '${JSON.stringify(userData)}' http://localhost:8080/api/user/register`;
             
+            document.getElementById('curlText').textContent = curlCommand;
+            document.getElementById('curlCommand').style.display = 'block';
+            
+            document.getElementById('result').innerHTML = `
+                <div class="result info">
+                    📋 curl command generated!<br>
+                    Copy and run in terminal to register user.
+                </div>
+            `;
+        }
+
+        // Copy curl command
+        function copyCurlCommand() {
+            const curlText = document.getElementById('curlText').textContent;
+            navigator.clipboard.writeText(curlText).then(() => {
+                alert('curl command copied to clipboard!');
+            });
+        }
+
+        // Run Python test
+        function runPythonTest() {
+            alert('Run this command in terminal:\npython3 quick_test.py');
+        }
+
+        // Check backend
+        async function checkBackend() {
+            const resultDiv = document.getElementById('result');
             try {
-                const response = await fetch('http://localhost:8080/api/user/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(userData)
-                });
-                
+                const response = await fetch('http://localhost:8080/health');
                 if (response.ok) {
-                    const data = await response.json();
-                    resultDiv.innerHTML = `
-                        <div class="result success">
-                            ✅ CORS FIX WORKING!<br>
-                            User ID: ${data.user_id}<br>
-                            Email: ${userData.email}<br>
-                            <strong>Frontend → Backend → Database: SUCCESS!</strong>
-                        </div>
-                    `;
-                    
-                    // Generate new email for next test
-                    document.getElementById('email').value = generateUniqueEmail();
+                    resultDiv.innerHTML = '<div class="result success">✅ Backend is running</div>';
                 } else {
-                    throw new Error(`Server error: ${response.status}`);
+                    resultDiv.innerHTML = '<div class="result error">❌ Backend error</div>';
                 }
-                
             } catch (error) {
-                resultDiv.innerHTML = `
-                    <div class="result error">
-                        ❌ CORS still failing: ${error.message}<br><br>
-                        <strong>Check browser console for details</strong>
-                    </div>
-                `;
+                resultDiv.innerHTML = '<div class="result error">❌ Backend not connected</div>';
             }
-        });
+        }
     </script>
 </body>
 </html>

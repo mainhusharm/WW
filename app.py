@@ -25,6 +25,7 @@ try:
     def health_check():
         return {"status": "ok", "service": "trading-backend", "version": "1.0.0"}
     
+    
     # Export the Flask app for gunicorn (Socket.IO will be handled by eventlet)
     application = app
     

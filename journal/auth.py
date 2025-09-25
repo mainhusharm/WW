@@ -19,9 +19,6 @@ logging.basicConfig(level=logging.INFO)
 def test_auth():
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS,PATCH")
         return response, 200
     return jsonify({"message": "Auth blueprint is working", "method": request.method}), 200
 
@@ -36,10 +33,6 @@ def register():
     # Handle CORS preflight request
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "POST,OPTIONS")
-        response.headers.add('Access-Control-Max-Age', "3600")
         logging.info("Returning OPTIONS response")
         return response, 200
     
@@ -47,9 +40,6 @@ def register():
     if request.method != 'POST':
         logging.error(f"Invalid method {request.method} for register endpoint")
         response = jsonify({"error": "Method not allowed", "allowed_methods": ["POST", "OPTIONS"]})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "POST,OPTIONS")
         return response, 405
         
     try:
@@ -136,10 +126,6 @@ def login():
     # Handle CORS preflight request
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS,PATCH")
-        response.headers.add('Access-Control-Max-Age', "3600")
         return response, 200
         
     data = request.get_json()
@@ -180,10 +166,6 @@ def profile():
     # Handle CORS preflight request
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS,PATCH")
-        response.headers.add('Access-Control-Max-Age', "3600")
         return response, 200
         
     current_user_id = get_jwt_identity()

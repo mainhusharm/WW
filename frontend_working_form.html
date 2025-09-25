@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORS Fix Test</title>
+    <title>Frontend Working Form</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -75,20 +75,31 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
+        .instructions {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 CORS Fix Test</h1>
+        <h1>🚀 Frontend Working Form</h1>
         
-        <div class="result info">
-            Testing CORS fix - this should work now!
+        <div class="instructions">
+            <strong>Instructions:</strong><br>
+            1. Make sure backend is running: <code>python3 app.py</code><br>
+            2. Open this page via: <code>http://localhost:8080/frontend_working_form.html</code><br>
+            3. This will work because it's served from the same origin as the API
         </div>
 
-        <form id="testForm">
+        <form id="signupForm">
             <div class="form-group">
                 <label for="firstName">First Name:</label>
-                <input type="text" id="firstName" value="CORS" required>
+                <input type="text" id="firstName" value="Frontend" required>
             </div>
             
             <div class="form-group">
@@ -121,7 +132,7 @@
                 <input type="text" id="country" value="US">
             </div>
             
-            <button type="submit">Test CORS Fix</button>
+            <button type="submit">Register User</button>
         </form>
         
         <div id="result"></div>
@@ -130,7 +141,7 @@
     <script>
         // Generate unique email
         function generateUniqueEmail() {
-            return `cors_fix_${Date.now()}@example.com`;
+            return `frontend_${Date.now()}@example.com`;
         }
         
         // Set unique email on page load
@@ -139,7 +150,7 @@
         });
 
         // Handle form submission
-        document.getElementById('testForm').addEventListener('submit', async function(e) {
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const resultDiv = document.getElementById('result');
@@ -157,10 +168,11 @@
                 newsletter: false
             };
             
-            resultDiv.innerHTML = '<div class="result info">Testing CORS fix...</div>';
+            resultDiv.innerHTML = '<div class="result info">Registering user...</div>';
             
             try {
-                const response = await fetch('http://localhost:8080/api/user/register', {
+                // Use relative path (same origin) - this will work!
+                const response = await fetch('/api/user/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -172,10 +184,11 @@
                     const data = await response.json();
                     resultDiv.innerHTML = `
                         <div class="result success">
-                            ✅ CORS FIX WORKING!<br>
+                            ✅ SUCCESS!<br>
                             User ID: ${data.user_id}<br>
                             Email: ${userData.email}<br>
-                            <strong>Frontend → Backend → Database: SUCCESS!</strong>
+                            <strong>Data saved to PostgreSQL database!</strong><br><br>
+                            <strong>Frontend → Backend → Database: WORKING!</strong>
                         </div>
                     `;
                     
@@ -188,8 +201,11 @@
             } catch (error) {
                 resultDiv.innerHTML = `
                     <div class="result error">
-                        ❌ CORS still failing: ${error.message}<br><br>
-                        <strong>Check browser console for details</strong>
+                        ❌ Registration failed: ${error.message}<br><br>
+                        <strong>Make sure:</strong><br>
+                        1. Backend is running: python3 app.py<br>
+                        2. You opened this page via: http://localhost:8080/frontend_working_form.html<br>
+                        3. Not via file:// or localhost:3000
                     </div>
                 `;
             }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORS Fix Test</title>
+    <title>Working Signup Enhanced</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -31,7 +31,7 @@
             margin-bottom: 5px;
             font-weight: bold;
         }
-        input {
+        input, select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -75,25 +75,36 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
+        .curl-command {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 CORS Fix Test</h1>
+        <h1>🚀 Working Signup Enhanced</h1>
         
         <div class="result info">
-            Testing CORS fix - this should work now!
+            ✅ This form will actually send data to your PostgreSQL database!
         </div>
 
-        <form id="testForm">
+        <form id="signupForm">
             <div class="form-group">
                 <label for="firstName">First Name:</label>
-                <input type="text" id="firstName" value="CORS" required>
+                <input type="text" id="firstName" value="Enhanced" required>
             </div>
             
             <div class="form-group">
                 <label for="lastName">Last Name:</label>
-                <input type="text" id="lastName" value="Test" required>
+                <input type="text" id="lastName" value="User" required>
             </div>
             
             <div class="form-group">
@@ -121,16 +132,27 @@
                 <input type="text" id="country" value="US">
             </div>
             
-            <button type="submit">Test CORS Fix</button>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="terms" checked> I agree to the Terms of Service
+                </label>
+            </div>
+            
+            <button type="submit">Register User</button>
         </form>
         
         <div id="result"></div>
+        
+        <div id="curlCommand" class="curl-command" style="display: none;">
+            <strong>curl command:</strong><br>
+            <span id="curlText"></span>
+        </div>
     </div>
 
     <script>
         // Generate unique email
         function generateUniqueEmail() {
-            return `cors_fix_${Date.now()}@example.com`;
+            return `enhanced_${Date.now()}@example.com`;
         }
         
         // Set unique email on page load
@@ -139,7 +161,7 @@
         });
 
         // Handle form submission
-        document.getElementById('testForm').addEventListener('submit', async function(e) {
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const resultDiv = document.getElementById('result');
@@ -153,13 +175,14 @@
                 phone: document.getElementById('phone').value,
                 company: document.getElementById('company').value,
                 country: document.getElementById('country').value,
-                terms: true,
+                terms: document.getElementById('terms').checked,
                 newsletter: false
             };
             
-            resultDiv.innerHTML = '<div class="result info">Testing CORS fix...</div>';
+            resultDiv.innerHTML = '<div class="result info">Sending data to database...</div>';
             
             try {
+                // Try to send data to backend
                 const response = await fetch('http://localhost:8080/api/user/register', {
                     method: 'POST',
                     headers: {
@@ -172,10 +195,10 @@
                     const data = await response.json();
                     resultDiv.innerHTML = `
                         <div class="result success">
-                            ✅ CORS FIX WORKING!<br>
+                            ✅ SUCCESS! Data sent to database!<br>
                             User ID: ${data.user_id}<br>
                             Email: ${userData.email}<br>
-                            <strong>Frontend → Backend → Database: SUCCESS!</strong>
+                            <strong>Data saved to PostgreSQL database!</strong>
                         </div>
                     `;
                     
@@ -186,12 +209,18 @@
                 }
                 
             } catch (error) {
+                // If CORS fails, show curl command
                 resultDiv.innerHTML = `
                     <div class="result error">
-                        ❌ CORS still failing: ${error.message}<br><br>
-                        <strong>Check browser console for details</strong>
+                        ❌ CORS error: ${error.message}<br><br>
+                        <strong>Use the curl command below to send data to database:</strong>
                     </div>
                 `;
+                
+                // Generate curl command
+                const curlCommand = `curl -X POST -H "Content-Type: application/json" -d '${JSON.stringify(userData)}' http://localhost:8080/api/user/register`;
+                document.getElementById('curlText').textContent = curlCommand;
+                document.getElementById('curlCommand').style.display = 'block';
             }
         });
     </script>

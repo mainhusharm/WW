@@ -9,7 +9,6 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react({
-        fastRefresh: mode === 'development',
         // Ensure React 18 compatibility
         jsxImportSource: 'react',
       }),
@@ -42,12 +41,13 @@ export default defineConfig(({ mode }) => {
           },
           entryFileNames: 'js/[name]-[hash].js',
           assetFileNames: (assetInfo) => {
-            const info = assetInfo.name.split('.');
+            const name = assetInfo.name || '';
+            const info = name.split('.');
             const ext = info[info.length - 1];
-            if (/\.(css)$/.test(assetInfo.name)) {
+            if (/\.(css)$/.test(name)) {
               return `css/[name]-[hash].${ext}`;
             }
-            if (/\.(png|jpe?g|svg|gif|tiff|bmp|ico)$/i.test(assetInfo.name)) {
+            if (/\.(png|jpe?g|svg|gif|tiff|bmp|ico)$/i.test(name)) {
               return `images/[name]-[hash].${ext}`;
             }
             return `assets/[name]-[hash].${ext}`;
@@ -122,7 +122,7 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         '/api': {
-          target: env.VITE_API_URL || 'https://backend-gbhz.onrender.com',
+          target: 'https://backend-topb.onrender.com',
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path,

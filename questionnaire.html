@@ -759,7 +759,7 @@
                     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
 
                     // Submit to API
-                    const response = await fetch(`${API_BASE}/api/user/questionnaire`, {
+                    const response = await fetch(`${API_BASE}/api/simple/questionnaire`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

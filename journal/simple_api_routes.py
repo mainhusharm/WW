@@ -29,9 +29,6 @@ def handle_simple_payments():
     """Handle payment data with simple database structure"""
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "POST,OPTIONS")
         return response, 200
     
     try:
@@ -97,9 +94,6 @@ def handle_simple_questionnaire():
     """Handle questionnaire data with simple database structure"""
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "POST,OPTIONS")
         return response, 200
     
     try:
@@ -184,9 +178,6 @@ def handle_simple_dashboard():
     """Handle dashboard data with simple database structure"""
     if request.method == 'OPTIONS':
         response = jsonify({"status": "ok"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With,Accept,Origin")
-        response.headers.add('Access-Control-Allow-Methods', "POST,OPTIONS")
         return response, 200
     
     try:
