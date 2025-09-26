@@ -96,6 +96,7 @@ class FreshAPIConnection {
                             response.message === 'User registered successfully';
             
             if (isSuccess) {
+                console.log('✅ User registered successfully:', response);
                 
                 // Normalize response format
                 const normalizedResponse = {
