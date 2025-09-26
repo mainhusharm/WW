@@ -1,47 +1,41 @@
 #!/usr/bin/env python3
 """
-Quick test to check backend endpoints
+Quick test to see what's available on your backend
 """
 
 import requests
-import json
 
-def test_backend():
-    backend = "https://backend-topb.onrender.com"
+def quick_test():
+    backend_url = "https://backend-topb.onrender.com"
     
-    print(f"🔍 Testing {backend}")
+    print(f"🔍 Quick Backend Test: {backend_url}")
+    print("=" * 50)
     
-    # Test basic endpoints
-    endpoints = [
-        "/api/health",
-        "/api/auth/register", 
-        "/api/working/register",
-        "/api/register",
-        "/health"
-    ]
+    # Test basic connectivity
+    try:
+        response = requests.get(backend_url, timeout=15)
+        print(f"✅ Backend is reachable - Status: {response.status_code}")
+        print(f"📄 Response: {response.text[:200]}...")
+    except Exception as e:
+        print(f"❌ Backend connection failed: {e}")
+        return
+    
+    # Test common endpoints
+    endpoints = ["/api", "/api/health", "/health", "/status"]
     
     for endpoint in endpoints:
         try:
-            url = f"{backend}{endpoint}"
-            print(f"\n🧪 Testing {url}")
-            
-            if "register" in endpoint:
-                # POST test
-                response = requests.post(url, json={"test": "data"}, timeout=5)
-            else:
-                # GET test
-                response = requests.get(url, timeout=5)
-                
-            print(f"   Status: {response.status_code}")
-            print(f"   Response: {response.text[:100]}")
-            
-            if response.status_code < 400:
-                print(f"   ✅ WORKING!")
-            else:
-                print(f"   ❌ Failed")
-                
+            url = f"{backend_url}{endpoint}"
+            response = requests.get(url, timeout=10)
+            print(f"✅ {endpoint} - Status: {response.status_code}")
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    print(f"   📊 JSON Response: {data}")
+                except:
+                    print(f"   📄 Text Response: {response.text[:100]}...")
         except Exception as e:
-            print(f"   ❌ Error: {e}")
+            print(f"❌ {endpoint} - Error: {e}")
 
 if __name__ == "__main__":
-    test_backend()
+    quick_test()

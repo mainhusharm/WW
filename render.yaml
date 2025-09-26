@@ -5,8 +5,8 @@ services:
     name: flask-test-app
     env: python3
     plan: starter
-    buildCommand: pip install Flask==2.2.2
-    startCommand: python3 simple_app.py
+    buildCommand: pip install Flask==2.2.2 flask-cors psycopg2-binary
+    startCommand: python3 enhanced_postgresql_api_routes.py
     envVars:
       - key: PORT
         value: 10000
@@ -20,7 +20,7 @@ services:
     startCommand: python cors_proxy.py
     envVars:
       - key: BACKEND_URL
-        value: https://backend-topb.onrender.com
+        value: https://backend-topb.on.render.com
       - key: PORT
         value: 5001
 
@@ -33,7 +33,7 @@ services:
     startCommand: npm run start
     envVars:
       - key: VITE_API_URL
-        value: https://trading-cors-proxy-gbhz.onrender.com
+        value: https://trading-cors-proxy-gbhz.on.render.com
       - key: NODE_ENV
         value: production
 

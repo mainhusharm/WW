@@ -10,10 +10,15 @@ user_bp = Blueprint('user_bp', __name__)
 @user_bp.route('/register', methods=['POST'])
 def register():
     print("🔍 Starting user registration process...")
-    data = request.get_json()
-    if not data:
-        print("❌ No JSON data in request")
-        return jsonify({"msg": "Missing JSON in request"}), 400
+    try:
+        data = request.get_json()
+        if not data:
+            print("❌ No JSON data in request")
+            return jsonify({"msg": "Missing JSON in request"}), 400
+    except Exception as e:
+        print(f"🚨 Error getting JSON data: {e}")
+        print(f"Raw request data: {request.data}")
+        return jsonify({"msg": "Invalid JSON data"}), 400
 
     print(f"📝 Received registration data: {data}")
     

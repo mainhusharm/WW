@@ -1,0 +1,17 @@
+# Fresh Backend API Deployment Configuration for Render
+services:
+  # Fresh Backend API Service
+  - type: web
+    name: backend-topb
+    env: python3
+    plan: starter
+    buildCommand: pip install -r requirements_fresh_api.txt
+    startCommand: python3 fresh_backend_api.py
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: postgresql://pghero_dpg_d2v9i7er433s73f0878g_a_cdm2_user:f2Q7RBmy1OeYVDdOvTTDos4TKNe0rd0V@dpg-d37pd8nfte5s73bfl1ug-a.oregon-postgres.render.com/pghero_dpg_d2v9i7er433s73f0878g_a_cdm2
+      - key: FLASK_ENV
+        value: production
+    healthCheckPath: /api/health

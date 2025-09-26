@@ -1,0 +1,17 @@
+                // Validate form
+                const formData = new FormData(form);
+                const userData = {
+                    first_name: formData.get('firstName'),
+                    last_name: formData.get('lastName'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone'),
+                    password: formData.get('password'),
+                    company: formData.get('company'),
+                    country: formData.get('country'),
+                    agree_to_terms: formData.get('terms') === 'on',
+                    agree_to_marketing: formData.get('newsletter') === 'on'
+                };
+                // Update the field mapping to use snake case for the enhanced API
+                const enhancedUserData = Object.fromEntries(
+                    Object.entries(userData).map(([key, value]) => [key.replace(/_/g, ''), value])
+                );

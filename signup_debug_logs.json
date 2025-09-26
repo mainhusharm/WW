@@ -1,0 +1,250 @@
+{
+  "timestamp": "2025-09-25T23:09:03.559674",
+  "database_connected": true,
+  "tables_info": {
+    "enhanced_users": [
+      {
+        "column": "id",
+        "type": "uuid",
+        "nullable": "NO"
+      },
+      {
+        "column": "first_name",
+        "type": "character varying",
+        "nullable": "NO"
+      },
+      {
+        "column": "last_name",
+        "type": "character varying",
+        "nullable": "NO"
+      },
+      {
+        "column": "email",
+        "type": "character varying",
+        "nullable": "NO"
+      },
+      {
+        "column": "phone",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "company",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "country",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "password_hash",
+        "type": "character varying",
+        "nullable": "NO"
+      },
+      {
+        "column": "selected_plan_name",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "selected_plan_price",
+        "type": "numeric",
+        "nullable": "YES"
+      },
+      {
+        "column": "selected_plan_period",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "selected_plan_description",
+        "type": "text",
+        "nullable": "YES"
+      },
+      {
+        "column": "agree_to_terms",
+        "type": "boolean",
+        "nullable": "YES"
+      },
+      {
+        "column": "agree_to_marketing",
+        "type": "boolean",
+        "nullable": "YES"
+      },
+      {
+        "column": "registration_method",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "registration_ip",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "user_agent",
+        "type": "text",
+        "nullable": "YES"
+      },
+      {
+        "column": "status",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "email_verified",
+        "type": "boolean",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "timestamp with time zone",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "timestamp with time zone",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_login",
+        "type": "timestamp with time zone",
+        "nullable": "YES"
+      },
+      {
+        "column": "unique_id",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "access_token",
+        "type": "character varying",
+        "nullable": "YES"
+      }
+    ],
+    "users": [
+      {
+        "column": "id",
+        "type": "integer",
+        "nullable": "NO"
+      },
+      {
+        "column": "uuid",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "unique_id",
+        "type": "character varying",
+        "nullable": "NO"
+      },
+      {
+        "column": "username",
+        "type": "character varying",
+        "nullable": "NO"
+      },
+      {
+        "column": "first_name",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_name",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "phone",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "company",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "country",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "agree_to_marketing",
+        "type": "boolean",
+        "nullable": "YES"
+      },
+      {
+        "column": "email",
+        "type": "character varying",
+        "nullable": "NO"
+      },
+      {
+        "column": "normalized_email",
+        "type": "character varying",
+        "nullable": "NO"
+      },
+      {
+        "column": "password_hash",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "active_session_id",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "plan_type",
+        "type": "character varying",
+        "nullable": "NO"
+      },
+      {
+        "column": "risk_tier",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "timestamp without time zone",
+        "nullable": "NO"
+      },
+      {
+        "column": "last_login",
+        "type": "timestamp without time zone",
+        "nullable": "YES"
+      },
+      {
+        "column": "consent_accepted",
+        "type": "boolean",
+        "nullable": "NO"
+      },
+      {
+        "column": "consent_timestamp",
+        "type": "timestamp without time zone",
+        "nullable": "YES"
+      },
+      {
+        "column": "account_screenshot_url",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "reset_token",
+        "type": "character varying",
+        "nullable": "YES"
+      },
+      {
+        "column": "reset_token_expires",
+        "type": "timestamp without time zone",
+        "nullable": "YES"
+      }
+    ]
+  },
+  "working_endpoints": [],
+  "db_insert_success": true,
+  "api_signup_success": false,
+  "frontend_url": "http://localhost:5174/signup-enhanced",
+  "insert_result": "(1, 'test_1758821941@example.com', datetime.datetime(2025, 9, 25, 17, 39, 2, 888103))"
+}

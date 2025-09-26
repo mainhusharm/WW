@@ -122,7 +122,7 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         '/api': {
-          target: 'https://backend-topb.onrender.com',
+          target: 'http://localhost:5000',
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path,

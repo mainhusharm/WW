@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup - TradeEdge Pro</title>
+    <title>Signup - TradeEdge Pro (Fresh Connection)</title>
     <style>
         * {
             margin: 0;
@@ -241,6 +241,24 @@
             color: rgba(100, 200, 255, 0.8);
         }
 
+        .api-status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .api-healthy {
+            background: rgba(100, 255, 150, 0.1);
+            color: rgba(150, 255, 180, 0.9);
+        }
+
+        .api-unhealthy {
+            background: rgba(255, 100, 100, 0.1);
+            color: rgba(255, 150, 150, 0.9);
+        }
+
         @media (max-width: 768px) {
             .signup-container {
                 padding: 20px 15px;
@@ -267,12 +285,13 @@
     <div class="signup-container">
         <div class="logo">
             <h1>🚀 TradeEdge Pro</h1>
-            <p>Create your trading account</p>
+            <p>Create your trading account (Fresh Connection)</p>
         </div>
 
         <div class="form-container">
-            <div id="error-message" class="message error-message" style="display: none;"></div>
-            <div id="success-message" class="message success-message" style="display: none;"></div>
+            <div id="api-status" class="api-status">
+                🔄 Checking API connection...
+            </div>
 
             <form id="signup-form">
                 <div class="form-row">
@@ -385,11 +404,6 @@
                 <button type="submit" class="signup-btn" id="signup-btn">
                     Create Account & Continue to Payment
                 </button>
-
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <p style="color: rgba(255, 255, 255, 0.8);">Creating your account...</p>
-                </div>
             </form>
         </div>
 
@@ -398,10 +412,10 @@
         </div>
     </div>
 
+    <!-- Include the fresh frontend connection script -->
+    <script src="fresh_frontend_connection.js"></script>
+    
     <script>
-        // API Configuration
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://your-api-domain.com';
-
         // Initialize background animation
         function createGlassParticles() {
             const background = document.getElementById('background');
@@ -416,102 +430,29 @@
             }
         }
 
-        // Form submission
-        function initFormSubmission() {
-            const form = document.getElementById('signup-form');
-            const submitBtn = document.getElementById('signup-btn');
-            const loading = document.getElementById('loading');
-            const errorMessage = document.getElementById('error-message');
-            const successMessage = document.getElementById('success-message');
-
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                // Hide previous messages
-                errorMessage.style.display = 'none';
-                successMessage.style.display = 'none';
-
-                // Validate form
-                const formData = new FormData(form);
-                const userData = {
-                    firstName: formData.get('firstName'),
-                    lastName: formData.get('lastName'),
-                    email: formData.get('email'),
-                    phone: formData.get('phone'),
-                    password: formData.get('password'),
-                    company: formData.get('company'),
-                    country: formData.get('country'),
-                    terms: formData.get('terms') === 'on',
-                    newsletter: formData.get('newsletter') === 'on'
-                };
-
-                // Basic validation
-                if (!userData.firstName || !userData.lastName || !userData.email || !userData.phone || !userData.password || !userData.country) {
-                    errorMessage.textContent = '❌ Please fill in all required fields';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-
-                if (!userData.terms) {
-                    errorMessage.textContent = '❌ Please accept the Terms of Service and Privacy Policy';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-
-                // Show loading
-                submitBtn.style.display = 'none';
-                loading.style.display = 'block';
-
-                try {
-                    // Log the user data before sending
-                    console.log('Sending user data:', userData);
-
-                    // Submit to API
-                    const response = await fetch(`${API_BASE}/api/user/register`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(userData)
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok && result.success) {
-                        // Store user data in localStorage
-                        localStorage.setItem('userData', JSON.stringify({
-                            ...userData,
-                            user_id: result.user_id,
-                            access_token: result.access_token
-                        }));
-
-                        // Show success message
-                        successMessage.textContent = '✅ Account created successfully! Redirecting to payment...';
-                        successMessage.style.display = 'block';
-
-                        // Redirect after delay
-                        setTimeout(() => {
-                            window.location.href = '/payment-enhanced.html';
-                        }, 2000);
-                    } else {
-                        throw new Error(result.message || 'Registration failed');
-                    }
-                } catch (error) {
-                    console.error('Registration error:', error);
-                    errorMessage.textContent = `❌ ${error.message}`;
-                    errorMessage.style.display = 'block';
-                } finally {
-                    // Hide loading
-                    loading.style.display = 'none';
-                    submitBtn.style.display = 'block';
-                }
-            });
+        // Update API status display
+        function updateApiStatus(status) {
+            const statusDiv = document.getElementById('api-status');
+            if (status.status === 'healthy') {
+                statusDiv.className = 'api-status api-healthy';
+                statusDiv.textContent = '✅ API Connected - Ready to create accounts!';
+            } else {
+                statusDiv.className = 'api-status api-unhealthy';
+                statusDiv.textContent = '⚠️ API Connection Issue - Please try again';
+            }
         }
 
         // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
             createGlassParticles();
-            initFormSubmission();
+            
+            // Check API status and update display
+            freshAPI.healthCheck().then(status => {
+                updateApiStatus(status);
+            });
+            
+            // The form is automatically initialized by fresh_frontend_connection.js
+            console.log('🎯 Fresh signup page loaded and ready!');
         });
     </script>
 </body>

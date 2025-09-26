@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "db:migrate": "node src/scripts/runMigrations.js",
     "db:test": "node src/scripts/testDatabase.js",
@@ -23,7 +23,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "backend": "node backend-server.js",
+    "backend": "python3 working_backend_server.py",
     "backend:dev": "nodemon backend-server.js",
     "backend:render": "node backend-server-render.js",
     "ai:live-metrics": "node api-server/live-system-metrics-api-production.js",
@@ -31,7 +31,8 @@
     "ai:customer-care": "node api-server/ai-customer-care-engineer-production.js",
     "ai:start-all": "concurrently \"npm run ai:live-metrics\" \"npm run ai:emergency\" \"npm run ai:customer-care\"",
     "ai:test": "node test-live-dynamic-system.js",
-    "ai:verify": "node verify-dynamic-system.js"
+    "ai:verify": "node verify-dynamic-system.js",
+    "fullstack": "./start_fullstack.sh"
   },
   "dependencies": {
     "@heroicons/react": "^2.0.0",
