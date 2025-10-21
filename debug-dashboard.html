@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Customer Service Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .debug-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .debug-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .warning { background: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .user-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .user-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Customer Service Dashboard</h1>
+    <p>This debug page helps us understand why users aren't showing in the Customer Service Dashboard.</p>
+
+    <div class="debug-container">
+        <h2>Debug Actions</h2>
+        <button onclick="checkLocalStorage()">Check localStorage</button>
+        <button onclick="checkDatabaseAPI()">Check Database API</button>
+        <button onclick="createTestUsers()">Create Test Users</button>
+        <button onclick="clearAllData()">Clear All Data</button>
+        <button onclick="refreshData()">Refresh Data</button>
+    </div>
+
+    <div id="debug-results"></div>
+
+    <script>
+        const API_BASE = 'https://backend-topb.onrender.com';
+        
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('debug-results');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `debug-section ${type}`;
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            resultsDiv.appendChild(logEntry);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function checkLocalStorage() {
+            log('🔍 Checking localStorage data...', 'info');
+            
+            const localStorageData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                try {
+                    localStorageData[key] = JSON.parse(localStorage.getItem(key));
+                } catch (e) {
+                    localStorageData[key] = localStorage.getItem(key);
+                }
+            }
+            
+            log(`Found ${Object.keys(localStorageData).length} localStorage items:`, 'info');
+            log(`<pre>${JSON.stringify(localStorageData, null, 2)}</pre>`, 'info');
+            
+            // Check for user data specifically
+            const userKeys = Object.keys(localStorageData).filter(key => 
+                key.includes('user') || key.includes('questionnaire') || key.includes('risk')
+            );
+            
+            if (userKeys.length > 0) {
+                log(`✅ Found user-related data in localStorage: ${userKeys.join(', ')}`, 'success');
+            } else {
+                log('⚠️ No user-related data found in localStorage', 'warning');
+            }
+        }
+
+        async function checkDatabaseAPI() {
+            log('🌐 Checking database API...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/database/users`);
+                const data = await response.json();
+                
+                log(`Database API Response Status: ${response.status}`, response.ok ? 'success' : 'error');
+                log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+                
+                if (data.success && data.users && data.users.length > 0) {
+                    log(`✅ Found ${data.users.length} users in database`, 'success');
+                    displayUsers(data.users);
+                } else {
+                    log('⚠️ No users found in database or API error', 'warning');
+                }
+            } catch (error) {
+                log(`❌ Database API Error: ${error.message}`, 'error');
+                log('This means the backend is not available or not responding', 'warning');
+            }
+        }
+
+        function createTestUsers() {
+            log('👥 Creating test users in localStorage...', 'info');
+            
+            const testUsers = [
+                {
+                    id: 'test-user-1',
+                    email: 'conservative.trader@test.com',
+                    fullName: 'Conservative Trader',
+                    questionnaireData: {
+                        hasAccount: 'yes',
+                        propFirm: 'FTMO',
+                        accountType: 'Challenge',
+                        accountSize: 10000,
+                        riskPercentage: 0.5,
+                        riskRewardRatio: '2',
+                        tradingExperience: 'Beginner',
+                        riskTolerance: 'Low',
+                        tradingGoals: 'Learn Trading',
+                        tradesPerDay: '1-2',
+                        tradingSession: 'London',
+                        cryptoAssets: ['BTC', 'ETH'],
+                        forexAssets: ['EURUSD', 'GBPUSD']
+                    },
+                    riskManagementPlan: {
+                        riskPerTrade: 0.5,
+                        dailyLossLimit: 1.5,
+                        maxLoss: 500,
+                        profitTarget: 800,
+                        tradesToPass: 8,
+                        riskAmount: 50,
+                        profitAmount: 100,
+                        consecutiveLossesLimit: 3,
+                        generatedAt: new Date().toISOString()
+                    },
+                    status: 'PENDING',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'test-user-2',
+                    email: 'aggressive.trader@test.com',
+                    fullName: 'Aggressive Trader',
+                    questionnaireData: {
+                        hasAccount: 'no',
+                        propFirm: 'MyForexFunds',
+                        accountType: 'Evaluation',
+                        accountSize: 100000,
+                        riskPercentage: 3.0,
+                        riskRewardRatio: '3',
+                        tradingExperience: 'Advanced',
+                        riskTolerance: 'High',
+                        tradingGoals: 'Maximum Profits',
+                        tradesPerDay: '5+',
+                        tradingSession: 'New York',
+                        cryptoAssets: ['BTC', 'ETH', 'SOL', 'ADA', 'DOT'],
+                        forexAssets: ['XAUUSD', 'XAGUSD', 'USOIL', 'US30', 'US100']
+                    },
+                    riskManagementPlan: {
+                        riskPerTrade: 3.0,
+                        dailyLossLimit: 9.0,
+                        maxLoss: 5000,
+                        profitTarget: 8000,
+                        tradesToPass: 4,
+                        riskAmount: 3000,
+                        profitAmount: 9000,
+                        consecutiveLossesLimit: 2,
+                        generatedAt: new Date().toISOString()
+                    },
+                    status: 'PENDING',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            
+            // Save test users to localStorage
+            localStorage.setItem('users', JSON.stringify(testUsers));
+            
+            // Also save individual user data
+            testUsers.forEach(user => {
+                localStorage.setItem(`user_${user.id}`, JSON.stringify(user));
+                localStorage.setItem(`questionnaire_${user.email}`, JSON.stringify(user.questionnaireData));
+                localStorage.setItem(`risk_plan_${user.email}`, JSON.stringify(user.riskManagementPlan));
+            });
+            
+            log(`✅ Created ${testUsers.length} test users in localStorage`, 'success');
+            log('Now refresh the Customer Service Dashboard to see them', 'info');
+        }
+
+        function displayUsers(users) {
+            const userListDiv = document.createElement('div');
+            userListDiv.className = 'user-list';
+            
+            users.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.className = 'user-card';
+                userCard.innerHTML = `
+                    <h3>${user.fullName || user.username || 'No Name'}</h3>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>ID:</strong> ${user.id}</p>
+                    <p><strong>Status:</strong> ${user.status || 'Unknown'}</p>
+                    <p><strong>Created:</strong> ${user.created_at || 'Unknown'}</p>
+                    ${user.questionnaire_data ? '<p><strong>Has Questionnaire Data:</strong> ✅</p>' : '<p><strong>Has Questionnaire Data:</strong> ❌</p>'}
+                    ${user.risk_management_plan ? '<p><strong>Has Risk Plan:</strong> ✅</p>' : '<p><strong>Has Risk Plan:</strong> ❌</p>'}
+                `;
+                userListDiv.appendChild(userCard);
+            });
+            
+            const resultsDiv = document.getElementById('debug-results');
+            resultsDiv.appendChild(userListDiv);
+        }
+
+        function clearAllData() {
+            localStorage.clear();
+            log('🗑️ Cleared all localStorage data', 'warning');
+        }
+
+        function refreshData() {
+            document.getElementById('debug-results').innerHTML = '';
+            log('🔄 Refreshed debug data', 'info');
+        }
+
+        // Auto-run initial checks
+        window.onload = function() {
+            log('🚀 Debug Dashboard loaded. Click buttons to check different data sources.', 'info');
+            checkLocalStorage();
+        };
+    </script>
+</body>
+</html>

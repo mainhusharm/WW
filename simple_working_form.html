@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Working Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .copy-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        .copy-button:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Simple Working Form</h1>
+        
+        <div id="status" class="result info">
+            Ready to test registration
+        </div>
+
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="firstName">First Name:</label>
+                <input type="text" id="firstName" value="Test" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" value="User" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="test123" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="tel" id="phone" value="1234567890">
+            </div>
+            
+            <div class="form-group">
+                <label for="company">Company:</label>
+                <input type="text" id="company" value="Test Company">
+            </div>
+            
+            <div class="form-group">
+                <label for="country">Country:</label>
+                <input type="text" id="country" value="US">
+            </div>
+            
+            <button type="submit">Test Registration</button>
+        </form>
+        
+        <div id="result"></div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+            <h3>🔧 Alternative Methods:</h3>
+            <p>If the form above doesn't work due to CORS, use these methods:</p>
+            
+            <button class="copy-button" onclick="copyCurlCommand()">Copy curl Command</button>
+            <button class="copy-button" onclick="runPythonTest()">Run Python Test</button>
+            <button class="copy-button" onclick="checkBackend()">Check Backend</button>
+            
+            <div id="curlCommand" style="margin-top: 10px; padding: 10px; background: #e9ecef; border-radius: 3px; font-family: monospace; font-size: 12px; display: none;">
+                <strong>curl command:</strong><br>
+                <span id="curlText"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate unique email
+        function generateUniqueEmail() {
+            return `test_${Date.now()}@example.com`;
+        }
+        
+        // Set unique email on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('email').value = generateUniqueEmail();
+        });
+
+        // Handle form submission
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            const statusDiv = document.getElementById('status');
+            
+            // Get form data
+            const userData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                phone: document.getElementById('phone').value,
+                company: document.getElementById('company').value,
+                country: document.getElementById('country').value,
+                terms: true,
+                newsletter: false
+            };
+            
+            statusDiv.textContent = 'Testing registration...';
+            statusDiv.className = 'result info';
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/user/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ SUCCESS!<br>
+                            User ID: ${data.user_id}<br>
+                            Email: ${userData.email}<br>
+                            <strong>Data saved to database!</strong>
+                        </div>
+                    `;
+                    statusDiv.textContent = 'Registration successful!';
+                    statusDiv.className = 'result success';
+                    
+                    // Generate new email for next test
+                    document.getElementById('email').value = generateUniqueEmail();
+                } else {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Registration failed: ${error.message}<br><br>
+                        <strong>This is a CORS issue. Use the alternative methods below.</strong>
+                    </div>
+                `;
+                statusDiv.textContent = 'Registration failed - use alternative methods';
+                statusDiv.className = 'result error';
+            }
+        });
+
+        // Copy curl command
+        function copyCurlCommand() {
+            const userData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                phone: document.getElementById('phone').value,
+                company: document.getElementById('company').value,
+                country: document.getElementById('country').value,
+                terms: true,
+                newsletter: false
+            };
+            
+            const curlCommand = `curl -X POST -H "Content-Type: application/json" -d '${JSON.stringify(userData)}' http://localhost:8080/api/user/register`;
+            
+            document.getElementById('curlText').textContent = curlCommand;
+            document.getElementById('curlCommand').style.display = 'block';
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(curlCommand).then(() => {
+                alert('curl command copied to clipboard!');
+            });
+        }
+
+        // Run Python test
+        function runPythonTest() {
+            alert('Run this command in terminal:\npython3 test_registration_direct.py');
+        }
+
+        // Check backend
+        async function checkBackend() {
+            const statusDiv = document.getElementById('status');
+            try {
+                const response = await fetch('http://localhost:8080/health');
+                if (response.ok) {
+                    statusDiv.textContent = '✅ Backend is running';
+                    statusDiv.className = 'result success';
+                } else {
+                    statusDiv.textContent = '❌ Backend error';
+                    statusDiv.className = 'result error';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ Backend not connected';
+                statusDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>

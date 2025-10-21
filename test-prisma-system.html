@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prisma System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .user-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            background: #f9f9f9;
+        }
+        .localStorage-data {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Prisma Database Integration Test</h1>
+    
+    <div class="container">
+        <h2>System Status</h2>
+        <div id="systemStatus" class="status info">Checking system status...</div>
+        <button onclick="checkSystemStatus()">Check Status</button>
+    </div>
+
+    <div class="grid">
+        <div class="container">
+            <h2>User Registration Test</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <input type="password" id="password" name="password" required minlength="8">
+                </div>
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" name="fullName">
+                </div>
+                <div class="form-group">
+                    <label for="experience">Trading Experience</label>
+                    <select id="experience" name="experience">
+                        <option value="">Select experience level</option>
+                        <option value="beginner">Beginner (0-1 years)</option>
+                        <option value="intermediate">Intermediate (1-3 years)</option>
+                        <option value="advanced">Advanced (3+ years)</option>
+                        <option value="professional">Professional Trader</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="goals">Trading Goals</label>
+                    <textarea id="goals" name="goals" rows="3" placeholder="Describe your trading goals..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="preferences">Trading Preferences</label>
+                    <textarea id="preferences" name="preferences" rows="3" placeholder="Describe your trading style..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="riskPlan">Risk Management Plan</label>
+                    <textarea id="riskPlan" name="riskPlan" rows="3" placeholder="Describe your risk management strategy..."></textarea>
+                </div>
+                <button type="submit">Register User</button>
+            </form>
+            <div id="signupResult"></div>
+        </div>
+
+        <div class="container">
+            <h2>Users List</h2>
+            <button onclick="fetchUsers()">Refresh Users</button>
+            <div id="usersList"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>localStorage Data</h2>
+        <button onclick="showLocalStorageData()">Show localStorage Data</button>
+        <button onclick="clearLocalStorage()">Clear localStorage</button>
+        <div id="localStorageData" class="localStorage-data"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        
+        // Check system status
+        async function checkSystemStatus() {
+            const statusDiv = document.getElementById('systemStatus');
+            statusDiv.textContent = 'Checking...';
+            statusDiv.className = 'status info';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.textContent = `✅ Backend server is running (${data.timestamp})`;
+                    statusDiv.className = 'status success';
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Backend server is not running: ${error.message}`;
+                statusDiv.className = 'status error';
+            }
+        }
+
+        // Handle signup form submission
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const resultDiv = document.getElementById('signupResult');
+            resultDiv.innerHTML = '<div class="status info">Registering user...</div>';
+            
+            const formData = new FormData(e.target);
+            const data = {
+                email: formData.get('email'),
+                password: formData.get('password'),
+                fullName: formData.get('fullName'),
+                questionnaire: {
+                    experience: formData.get('experience'),
+                    goals: formData.get('goals'),
+                    preferences: formData.get('preferences')
+                },
+                riskManagementPlan: formData.get('riskPlan')
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Registration successful!<br>
+                            User ID: ${result.user.id}<br>
+                            Email: ${result.user.email}
+                        </div>
+                    `;
+                    
+                    // Store in localStorage
+                    localStorage.setItem('userId', result.user.id);
+                    localStorage.setItem('userData', JSON.stringify(result.user));
+                    localStorage.setItem('userEmail', result.user.email);
+                    localStorage.setItem('userFullName', result.user.fullName || '');
+                    localStorage.setItem('registrationTime', new Date().toISOString());
+                    localStorage.setItem('questionnaireData', JSON.stringify(data.questionnaire));
+                    localStorage.setItem('riskManagementPlan', data.riskManagementPlan);
+                    
+                    // Clear form
+                    e.target.reset();
+                    
+                    // Refresh users list
+                    fetchUsers();
+                    showLocalStorageData();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status error">
+                            ❌ Registration failed: ${result.error}
+                            ${result.details ? '<br>Details: ' + JSON.stringify(result.details) : ''}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Network error: ${error.message}
+                    </div>
+                `;
+            }
+        });
+
+        // Fetch users from API
+        async function fetchUsers() {
+            const usersDiv = document.getElementById('usersList');
+            usersDiv.innerHTML = '<div class="status info">Loading users...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/users`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.users && result.users.length > 0) {
+                        usersDiv.innerHTML = result.users.map(user => `
+                            <div class="user-card">
+                                <h4>${user.fullName || 'No name'}</h4>
+                                <p><strong>Email:</strong> ${user.email}</p>
+                                <p><strong>Status:</strong> <span class="status ${getStatusClass(user.status)}">${user.status}</span></p>
+                                <p><strong>Registered:</strong> ${new Date(user.createdAt).toLocaleString()}</p>
+                                ${user.questionnaireData ? `<p><strong>Experience:</strong> ${user.questionnaireData.experience || 'Not specified'}</p>` : ''}
+                                <div style="margin-top: 10px;">
+                                    ${['PENDING', 'PROCESSING', 'COMPLETED', 'REJECTED'].map(status => 
+                                        `<button onclick="updateUserStatus('${user.id}', '${status}')" 
+                                                style="font-size: 12px; padding: 5px 10px; margin: 2px;"
+                                                ${user.status === status ? 'disabled' : ''}>${status}</button>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        usersDiv.innerHTML = '<div class="status info">No users found. Register a user to see them here.</div>';
+                    }
+                } else {
+                    usersDiv.innerHTML = `<div class="status error">Failed to fetch users: ${result.error}</div>`;
+                }
+            } catch (error) {
+                usersDiv.innerHTML = `<div class="status error">Network error: ${error.message}</div>`;
+            }
+        }
+
+        // Update user status
+        async function updateUserStatus(userId, newStatus) {
+            try {
+                const response = await fetch(`${API_BASE}/api/users/${userId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    fetchUsers(); // Refresh the list
+                } else {
+                    alert(`Failed to update status: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`Network error: ${error.message}`);
+            }
+        }
+
+        // Show localStorage data
+        function showLocalStorageData() {
+            const dataDiv = document.getElementById('localStorageData');
+            const data = {};
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                data[key] = localStorage.getItem(key);
+            }
+            
+            dataDiv.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Clear localStorage
+        function clearLocalStorage() {
+            localStorage.clear();
+            showLocalStorageData();
+            alert('localStorage cleared!');
+        }
+
+        // Helper function for status styling
+        function getStatusClass(status) {
+            switch (status) {
+                case 'PENDING': return 'info';
+                case 'PROCESSING': return 'info';
+                case 'COMPLETED': return 'success';
+                case 'REJECTED': return 'error';
+                default: return 'info';
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSystemStatus();
+            fetchUsers();
+            showLocalStorageData();
+        });
+    </script>
+</body>
+</html>

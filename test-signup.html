@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Signup - Trading Platform</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Signup Test Page</h1>
+        <p>This page tests the signup functionality to ensure everything is working correctly.</p>
+
+        <div class="test-section">
+            <h3>1. Backend Health Check</h3>
+            <button class="test-button" onclick="testBackendHealth()">Test Backend Connection</button>
+            <div id="health-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Test User Registration</h3>
+            <button class="test-button" onclick="testRegistration()">Test Registration</button>
+            <div id="registration-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test Duplicate Registration</h3>
+            <button class="test-button" onclick="testDuplicateRegistration()">Test Duplicate (Should Fail)</button>
+            <div id="duplicate-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Open Signup Page</h3>
+            <button class="test-button" onclick="openSignupPage()">Open Fixed Signup Page</button>
+            <p style="margin-top: 10px; color: #666;">This will open the new signup page in a new tab.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+
+        async function testBackendHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('health-result', `✅ Backend is healthy!\n\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult('health-result', `❌ Backend health check failed\n\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult('health-result', `❌ Backend connection failed\n\nError: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRegistration() {
+            const testData = {
+                email: `test${Date.now()}@example.com`,
+                password: 'testpass123',
+                username: `testuser${Date.now()}`,
+                phone: '1234567890',
+                company: 'Test Company',
+                country: 'US'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('registration-result', `✅ Registration successful!\n\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult('registration-result', `❌ Registration failed\n\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult('registration-result', `❌ Registration request failed\n\nError: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDuplicateRegistration() {
+            const testData = {
+                email: 'duplicate@example.com',
+                password: 'testpass123',
+                username: 'duplicateuser',
+                phone: '1234567890',
+                company: 'Test Company',
+                country: 'US'
+            };
+
+            try {
+                // First registration
+                const response1 = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const data1 = await response1.json();
+
+                // Second registration (should fail)
+                const response2 = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const data2 = await response2.json();
+
+                let result = `First registration:\nStatus: ${response1.status}\nResponse: ${JSON.stringify(data1, null, 2)}\n\n`;
+                result += `Second registration (duplicate):\nStatus: ${response2.status}\nResponse: ${JSON.stringify(data2, null, 2)}\n\n`;
+
+                if (response1.ok && response2.status === 409) {
+                    result += '✅ Duplicate detection working correctly!';
+                    showResult('duplicate-result', result, 'success');
+                } else {
+                    result += '❌ Duplicate detection not working as expected';
+                    showResult('duplicate-result', result, 'error');
+                }
+            } catch (error) {
+                showResult('duplicate-result', `❌ Duplicate test failed\n\nError: ${error.message}`, 'error');
+            }
+        }
+
+        function openSignupPage() {
+            window.open('/signup-enhanced', '_blank');
+        }
+
+        // Auto-test backend health on page load
+        window.addEventListener('load', () => {
+            testBackendHealth();
+        });
+    </script>
+</body>
+</html>

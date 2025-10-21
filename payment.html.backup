@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - TradeEdge Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Glass Background Animation */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass-particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            backdrop-filter: blur(10px);
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        .payment-container {
+            position: relative;
+            z-index: 1;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .payment-content {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .plan-info {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .plan-info h3 {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, rgba(100, 200, 255, 0.9), rgba(150, 100, 255, 0.9));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+
+        .features {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .payment-section {
+            margin-bottom: 30px;
+        }
+
+        .payment-section h3 {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Cryptomus Payment Card */
+        .cryptomus-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .cryptomus-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(100, 200, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(100, 200, 255, 0.1);
+        }
+
+        .cryptomus-card.selected {
+            background: rgba(100, 200, 255, 0.15);
+            border-color: rgba(100, 200, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(100, 200, 255, 0.2);
+        }
+
+        .payment-method-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .payment-method-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .payment-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, rgba(100, 200, 255, 0.3), rgba(150, 100, 255, 0.3));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .payment-details h4 {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .payment-details p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .payment-status {
+            color: rgba(100, 200, 255, 0.8);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .crypto-currencies {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .crypto-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Cryptomus Payment Form */
+        .cryptomus-form {
+            display: none;
+            margin-top: 25px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cryptomus-form.show {
+            display: block;
+        }
+
+        .currency-selection {
+            margin-bottom: 20px;
+        }
+
+        .currency-selection label {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .currency-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .currency-option {
+            padding: 15px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .currency-option:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .currency-option.selected {
+            background: rgba(100, 200, 255, 0.3);
+            border-color: rgba(100, 200, 255, 0.5);
+            color: white;
+        }
+
+        .network-selection {
+            margin-bottom: 20px;
+        }
+
+        .network-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .network-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .network-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .network-btn.selected {
+            background: rgba(100, 200, 255, 0.3);
+            border-color: rgba(100, 200, 255, 0.5);
+            color: white;
+        }
+
+        .payment-amount {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .payment-amount h4 {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+
+        .amount-display {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, rgba(100, 200, 255, 0.9), rgba(150, 100, 255, 0.9));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .proceed-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, rgba(100, 200, 255, 0.3), rgba(150, 100, 255, 0.3));
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .proceed-btn:hover {
+            background: linear-gradient(135deg, rgba(100, 200, 255, 0.4), rgba(150, 100, 255, 0.4));
+            box-shadow: 0 10px 30px rgba(100, 200, 255, 0.2);
+        }
+
+        .proceed-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid rgba(100, 200, 255, 0.8);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .error-message {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.3);
+            color: rgba(255, 150, 150, 0.9);
+        }
+
+        .success-message {
+            background: rgba(100, 255, 150, 0.2);
+            border: 1px solid rgba(100, 255, 150, 0.3);
+            color: rgba(150, 255, 180, 0.9);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .back-link a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: rgba(100, 200, 255, 0.8);
+        }
+
+        @media (max-width: 768px) {
+            .payment-container {
+                padding: 20px 15px;
+            }
+            
+            .payment-content {
+                padding: 25px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .currency-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation" id="background"></div>
+    
+    <div class="payment-container">
+        <div class="header">
+            <h1>🚀 Complete Your Payment</h1>
+            <p>Secure your TradeEdge Pro subscription</p>
+        </div>
+
+        <div class="payment-content">
+            <div class="plan-info">
+                <h3>Premium Trading Plan</h3>
+                <div class="price">$199.99</div>
+                <div class="features">
+                    ✅ Advanced Trading Signals • ✅ Risk Management Tools • ✅ 24/7 Support • ✅ Premium Analytics
+                </div>
+            </div>
+
+            <div id="error-message" class="message error-message" style="display: none;"></div>
+            <div id="success-message" class="message success-message" style="display: none;"></div>
+
+            <div class="payment-section">
+                <h3>💳 Payment Method</h3>
+                
+                <div class="cryptomus-card" id="cryptomus-card">
+                    <div class="payment-method-header">
+                        <div class="payment-method-info">
+                            <div class="payment-icon">⚡</div>
+                            <div class="payment-details">
+                                <h4>Cryptomus Payment</h4>
+                                <p>Pay with cryptocurrency - Fast & Secure</p>
+                            </div>
+                        </div>
+                        <div class="payment-status">Instant verification</div>
+                    </div>
+                    
+                    <div class="crypto-currencies">
+                        <div class="crypto-item">BTC</div>
+                        <div class="crypto-item">USDT</div>
+                        <div class="crypto-item">ETH</div>
+                        <div class="crypto-item">BNB</div>
+                        <div class="crypto-item">LTC</div>
+                        <div class="crypto-item">TRX</div>
+                        <div class="crypto-item">DOGE</div>
+                        <div class="crypto-item">ADA</div>
+                    </div>
+
+                    <div class="cryptomus-form" id="cryptomus-form">
+                        <div class="currency-selection">
+                            <label>Select Cryptocurrency</label>
+                            <div class="currency-grid" id="currency-grid">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="network-selection" id="network-selection">
+                            <label>Select Network</label>
+                            <div class="network-options" id="network-options">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="payment-amount">
+                            <h4>Payment Amount</h4>
+                            <div class="amount-display">$199.99 USD</div>
+                        </div>
+
+                        <button class="proceed-btn" id="proceed-btn">
+                            ⚡ Generate Payment Address
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="color: rgba(255, 255, 255, 0.8);">Processing payment...</p>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="/signup.html">← Back to Signup</a>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://your-api-domain.com';
+
+        // Cryptomus supported currencies
+        const supportedCurrencies = [
+            { code: 'USDT', name: 'Tether USD', networks: ['tron', 'ethereum', 'bsc'] },
+            { code: 'BTC', name: 'Bitcoin', networks: ['bitcoin'] },
+            { code: 'ETH', name: 'Ethereum', networks: ['ethereum'] },
+            { code: 'BNB', name: 'Binance Coin', networks: ['bsc'] },
+            { code: 'LTC', name: 'Litecoin', networks: ['litecoin'] },
+            { code: 'TRX', name: 'Tron', networks: ['tron'] },
+            { code: 'DOGE', name: 'Dogecoin', networks: ['dogecoin'] },
+            { code: 'ADA', name: 'Cardano', networks: ['cardano'] }
+        ];
+
+        const networkNames = {
+            'tron': 'TRON (TRC20)',
+            'ethereum': 'Ethereum (ERC20)',
+            'bsc': 'BSC (BEP20)',
+            'bitcoin': 'Bitcoin',
+            'litecoin': 'Litecoin',
+            'dogecoin': 'Dogecoin',
+            'cardano': 'Cardano'
+        };
+
+        let selectedCurrency = 'USDT';
+        let selectedNetwork = 'tron';
+
+        // Initialize background animation
+        function createGlassParticles() {
+            const background = document.getElementById('background');
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'glass-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.width = particle.style.height = (Math.random() * 60 + 20) + 'px';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                background.appendChild(particle);
+            }
+        }
+
+        // Initialize Cryptomus payment
+        function initCryptomusPayment() {
+            const cryptomusCard = document.getElementById('cryptomus-card');
+            const cryptomusForm = document.getElementById('cryptomus-form');
+            const currencyGrid = document.getElementById('currency-grid');
+            const networkOptions = document.getElementById('network-options');
+            const proceedBtn = document.getElementById('proceed-btn');
+
+            // Show form when card is clicked
+            cryptomusCard.addEventListener('click', () => {
+                cryptomusCard.classList.add('selected');
+                cryptomusForm.classList.add('show');
+            });
+
+            // Populate currency grid
+            supportedCurrencies.forEach(currency => {
+                const currencyOption = document.createElement('div');
+                currencyOption.className = 'currency-option';
+                if (currency.code === selectedCurrency) {
+                    currencyOption.classList.add('selected');
+                }
+                currencyOption.textContent = currency.code;
+                currencyOption.addEventListener('click', () => {
+                    // Remove selected from all
+                    document.querySelectorAll('.currency-option').forEach(opt => opt.classList.remove('selected'));
+                    currencyOption.classList.add('selected');
+                    selectedCurrency = currency.code;
+                    updateNetworkOptions(currency.networks);
+                });
+                currencyGrid.appendChild(currencyOption);
+            });
+
+            // Initialize network options
+            updateNetworkOptions(supportedCurrencies.find(c => c.code === selectedCurrency).networks);
+
+            function updateNetworkOptions(networks) {
+                networkOptions.innerHTML = '';
+                networks.forEach((network, index) => {
+                    const networkBtn = document.createElement('button');
+                    networkBtn.className = 'network-btn';
+                    networkBtn.type = 'button';
+                    if (index === 0) {
+                        networkBtn.classList.add('selected');
+                        selectedNetwork = network;
+                    }
+                    networkBtn.textContent = networkNames[network];
+                    networkBtn.addEventListener('click', () => {
+                        document.querySelectorAll('.network-btn').forEach(btn => btn.classList.remove('selected'));
+                        networkBtn.classList.add('selected');
+                        selectedNetwork = network;
+                    });
+                    networkOptions.appendChild(networkBtn);
+                });
+            }
+
+            // Handle proceed button
+            proceedBtn.addEventListener('click', handleCryptomusPayment);
+        }
+
+        // Handle Cryptomus payment
+        async function handleCryptomusPayment() {
+            const loading = document.getElementById('loading');
+            const proceedBtn = document.getElementById('proceed-btn');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+
+            // Hide previous messages
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+
+            // Show loading
+            proceedBtn.style.display = 'none';
+            loading.style.display = 'block';
+
+            try {
+                // Get user data from localStorage
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+
+                // Create payment data
+                const paymentData = {
+                    ...userData,
+                    payment: {
+                        method: 'cryptomus',
+                        amount: 199.99,
+                        currency: 'USD',
+                        cryptocurrency: selectedCurrency,
+                        network: selectedNetwork,
+                        plan: 'Premium Trading Plan'
+                    }
+                };
+
+                // Submit payment to API
+                const response = await fetch(`${API_BASE}/api/working/payment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Update localStorage
+                    localStorage.setItem('userData', JSON.stringify({
+                        ...userData,
+                        payment: paymentData.payment
+                    }));
+
+                    // Show success message
+                    successMessage.textContent = '✅ Payment initiated successfully! Redirecting to questionnaire...';
+                    successMessage.style.display = 'block';
+
+                    // Redirect after delay
+                    setTimeout(() => {
+                        window.location.href = '/questionnaire.html';
+                    }, 2000);
+                } else {
+                    throw new Error(result.message || 'Payment failed');
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                errorMessage.textContent = `❌ ${error.message}`;
+                errorMessage.style.display = 'block';
+            } finally {
+                // Hide loading
+                loading.style.display = 'none';
+                proceedBtn.style.display = 'block';
+            }
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            createGlassParticles();
+            initCryptomusPayment();
+        });
+    </script>
+</body>
+</html>
