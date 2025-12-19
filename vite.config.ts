@@ -54,14 +54,17 @@ export default defineConfig(({ mode }) => {
             if (id.includes('whatwg-fetch') || id.includes('polyfills')) {
               return 'polyfills';
             }
-            // React core must load first - include ALL React-related code here
+            // React core must load first - separate React from other libraries
             if (id.includes('node_modules/react') ||
-                id.includes('node_modules/react-dom') ||
-                id.includes('node_modules/react-router-dom') ||
+                id.includes('node_modules/react-dom')) {
+              return 'vendor-react';
+            }
+            // React-related libraries
+            if (id.includes('node_modules/react-router-dom') ||
                 id.includes('node_modules/framer-motion') ||
                 id.includes('node_modules/@react-three') ||
                 id.includes('node_modules/recharts')) {
-              return 'vendor-react-core';
+              return 'vendor-react-libs';
             }
             // Other vendor chunks
             if (id.includes('node_modules/lucide-react') || id.includes('node_modules/@heroicons')) {
