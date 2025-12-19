@@ -2,6 +2,12 @@ import './polyfills'
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+
+// Ensure React is globally available for libraries that need it
+if (typeof window !== 'undefined') {
+  (window as any).React = React;
+  (window as any).ReactDOM = ReactDOM;
+}
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'

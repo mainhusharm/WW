@@ -1,22 +1,14 @@
 // Polyfills for production deployment
 // This ensures Web APIs are available in environments that don't have them
 
+// Load whatwg-fetch synchronously to prevent timing issues with React hooks
+import 'whatwg-fetch';
+
 console.log('🔧 Initializing polyfills...');
 
 // Critical: Ensure React is available before loading any polyfills that might interfere
 if (typeof window !== 'undefined' && (window as any).React) {
   console.log('✅ React is already available');
-}
-
-// Load whatwg-fetch asynchronously to avoid interfering with React initialization
-// This prevents React hooks errors during initialization
-if (typeof window !== 'undefined') {
-  // Use dynamic import for whatwg-fetch to prevent synchronous interference
-  import('whatwg-fetch').then(() => {
-    console.log('✅ whatwg-fetch loaded asynchronously');
-  }).catch(err => {
-    console.warn('⚠️ Failed to load whatwg-fetch:', err);
-  });
 }
 
 // Verify critical APIs are available immediately
