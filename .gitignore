@@ -86,3 +86,4 @@ pip-delete-this-directory.txt
 PAYMENT_INTEGRATION_SETUP.md
 src/api/create-payment-intent.ts
 src/api/payment-verification.ts
+node_modules

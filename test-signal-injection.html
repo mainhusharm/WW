@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Injection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .signal {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+        .info { background: #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>Signal Injection Test</h1>
+    
+    <div class="container">
+        <h2>Test Signal Generation</h2>
+        <p>This will inject test signals into localStorage for testing the signal flow.</p>
+        
+        <button onclick="injectTestSignals()">Inject Test Signals</button>
+        <button onclick="injectTestUser()">Inject Test User</button>
+        <button onclick="clearAllData()">Clear All Data</button>
+        <button onclick="viewCurrentData()">View Current Data</button>
+    </div>
+
+    <div class="container">
+        <h2>Current Data</h2>
+        <div id="dataDisplay"></div>
+    </div>
+
+    <div class="container">
+        <h2>Status</h2>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function injectTestSignals() {
+            try {
+                const testSignals = [
+                    {
+                        id: Date.now(),
+                        text: "EURUSD\nBUY NOW\nEntry 1.0850\nStop Loss 1.0820\nTake Profit 1.0910\nConfidence 85%\n\nStrong bullish momentum with key support holding. RSI showing oversold conditions with potential for reversal.",
+                        timestamp: new Date().toISOString(),
+                        from: 'Admin Dashboard',
+                        chat_id: 1,
+                        message_id: Date.now(),
+                        update_id: Date.now()
+                    },
+                    {
+                        id: Date.now() + 1,
+                        text: "GBPUSD\nSELL NOW\nEntry 1.2650\nStop Loss 1.2680\nTake Profit 1.2580\nConfidence 78%\n\nBearish divergence on 4H chart. Resistance at 1.2680 holding strong.",
+                        timestamp: new Date().toISOString(),
+                        from: 'Crypto Dashboard',
+                        chat_id: 2,
+                        message_id: Date.now() + 1,
+                        update_id: Date.now() + 1
+                    },
+                    {
+                        id: Date.now() + 2,
+                        text: "USDJPY\nBUY NOW\nEntry 149.50\nStop Loss 149.20\nTake Profit 150.20\nConfidence 92%\n\nBreakout above key resistance. Strong momentum with volume confirmation.",
+                        timestamp: new Date().toISOString(),
+                        from: 'Admin Dashboard',
+                        chat_id: 1,
+                        message_id: Date.now() + 2,
+                        update_id: Date.now() + 2
+                    }
+                ];
+
+                localStorage.setItem('telegram_messages', JSON.stringify(testSignals));
+                showStatus('Test signals injected successfully!', 'success');
+                viewCurrentData();
+            } catch (error) {
+                showStatus('Error injecting signals: ' + error.message, 'error');
+            }
+        }
+
+        function injectTestUser() {
+            try {
+                const testUser = {
+                    id: 'test-user-1',
+                    email: 'test@example.com',
+                    name: 'Test User',
+                    password: 'password123',
+                    isAuthenticated: true
+                };
+
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                users.push(testUser);
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('currentUser', JSON.stringify(testUser));
+                
+                showStatus('Test user injected successfully!', 'success');
+                viewCurrentData();
+            } catch (error) {
+                showStatus('Error injecting user: ' + error.message, 'error');
+            }
+        }
+
+        function clearAllData() {
+            try {
+                localStorage.removeItem('telegram_messages');
+                localStorage.removeItem('users');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('admin_generated_signals');
+                localStorage.removeItem('user_signals');
+                showStatus('All data cleared!', 'success');
+                viewCurrentData();
+            } catch (error) {
+                showStatus('Error clearing data: ' + error.message, 'error');
+            }
+        }
+
+        function viewCurrentData() {
+            try {
+                const signals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                
+                let html = '<h3>Signals in localStorage:</h3>';
+                if (signals.length === 0) {
+                    html += '<p>No signals found</p>';
+                } else {
+                    signals.forEach((signal, index) => {
+                        html += `<div class="signal">
+                            <strong>Signal ${index + 1}:</strong><br>
+                            <strong>Pair:</strong> ${signal.text.split('\n')[0]}<br>
+                            <strong>Direction:</strong> ${signal.text.split('\n')[1]}<br>
+                            <strong>Entry:</strong> ${signal.text.split('\n')[2]}<br>
+                            <strong>Stop Loss:</strong> ${signal.text.split('\n')[3]}<br>
+                            <strong>Take Profit:</strong> ${signal.text.split('\n')[4]}<br>
+                            <strong>Confidence:</strong> ${signal.text.split('\n')[5]}<br>
+                            <strong>From:</strong> ${signal.from}<br>
+                            <strong>Timestamp:</strong> ${new Date(signal.timestamp).toLocaleString()}
+                        </div>`;
+                    });
+                }
+                
+                html += '<h3>Users in localStorage:</h3>';
+                if (users.length === 0) {
+                    html += '<p>No users found</p>';
+                } else {
+                    users.forEach((user, index) => {
+                        html += `<div class="signal">
+                            <strong>User ${index + 1}:</strong><br>
+                            <strong>Email:</strong> ${user.email}<br>
+                            <strong>Name:</strong> ${user.name}<br>
+                            <strong>ID:</strong> ${user.id}
+                        </div>`;
+                    });
+                }
+                
+                html += '<h3>Current User:</h3>';
+                if (currentUser) {
+                    html += `<div class="signal">
+                        <strong>Email:</strong> ${currentUser.email}<br>
+                        <strong>Name:</strong> ${currentUser.name}<br>
+                        <strong>ID:</strong> ${currentUser.id}
+                    </div>`;
+                } else {
+                    html += '<p>No current user</p>';
+                }
+                
+                document.getElementById('dataDisplay').innerHTML = html;
+            } catch (error) {
+                showStatus('Error viewing data: ' + error.message, 'error');
+            }
+        }
+
+        // Load current data on page load
+        viewCurrentData();
+    </script>
+</body>
+</html>

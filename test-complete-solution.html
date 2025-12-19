@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Solution Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .signal {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #28a74520;
+            border: 1px solid #28a745;
+        }
+        .status.error {
+            background: #dc354520;
+            border: 1px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Complete Solution Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Signal Injection</h2>
+        <p>Inject test signals into localStorage to simulate admin dashboard:</p>
+        <button onclick="injectTestSignals()">Inject Test Signals</button>
+        <div id="injectionResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test User Registration</h2>
+        <p>Test user registration with localStorage (no CORS issues):</p>
+        <button onclick="testUserRegistration()">Test User Registration</button>
+        <div id="registrationResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test User Login</h2>
+        <p>Test user login with localStorage (no CORS issues):</p>
+        <button onclick="testUserLogin()">Test User Login</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. View All Stored Data</h2>
+        <p>Check all data stored in localStorage:</p>
+        <button onclick="viewAllStoredData()">View All Stored Data</button>
+        <div id="storedDataResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Test User Dashboard</h2>
+        <p>Open the user dashboard to see if signals appear:</p>
+        <button onclick="openUserDashboard()">Open User Dashboard</button>
+        <div id="dashboardResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Clear All Data</h2>
+        <p>Clear all test data from localStorage:</p>
+        <button onclick="clearAllData()">Clear All Data</button>
+        <div id="clearResult"></div>
+    </div>
+
+    <script>
+        function injectTestSignals() {
+            const testSignals = [
+                {
+                    id: Date.now(),
+                    text: `EUR/USD\nBUY NOW\nEntry 1.0850\nStop Loss 1.0800\nTake Profit 1.0950\nConfidence 85%\n\nStrong bullish momentum with RSI oversold and key support level holding.`,
+                    timestamp: new Date().toISOString(),
+                    from: 'Admin Dashboard',
+                    chat_id: 1,
+                    message_id: Date.now(),
+                    update_id: Date.now()
+                },
+                {
+                    id: Date.now() + 1,
+                    text: `GBP/USD\nSELL NOW\nEntry 1.2650\nStop Loss 1.2700\nTake Profit 1.2500\nConfidence 78%\n\nBearish divergence on RSI with resistance level rejection.`,
+                    timestamp: new Date().toISOString(),
+                    from: 'Admin Dashboard',
+                    chat_id: 1,
+                    message_id: Date.now() + 1,
+                    update_id: Date.now() + 1
+                }
+            ];
+
+            // Store signals in localStorage
+            const existingSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            testSignals.forEach(signal => {
+                existingSignals.unshift(signal);
+            });
+            localStorage.setItem('telegram_messages', JSON.stringify(existingSignals.slice(0, 50)));
+
+            // Dispatch events
+            testSignals.forEach(signal => {
+                window.dispatchEvent(new CustomEvent('newSignalSent', { detail: signal }));
+                window.dispatchEvent(new CustomEvent('newSignalGenerated', { detail: signal }));
+            });
+
+            document.getElementById('injectionResult').innerHTML = 
+                `<div class="status success">✅ ${testSignals.length} test signals injected successfully!</div>`;
+        }
+
+        function testUserRegistration() {
+            const testUser = {
+                email: 'test@example.com',
+                password: 'testpassword123',
+                name: 'Test User'
+            };
+
+            try {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                
+                // Check if user already exists
+                const existingUser = users.find(u => u.email === testUser.email);
+                if (existingUser) {
+                    document.getElementById('registrationResult').innerHTML = 
+                        `<div class="status success">✅ User already exists in localStorage</div>`;
+                    return;
+                }
+
+                // Create new user
+                const newUser = {
+                    id: Date.now(),
+                    email: testUser.email,
+                    password: testUser.password,
+                    name: testUser.name,
+                    createdAt: new Date().toISOString()
+                };
+
+                users.push(newUser);
+                localStorage.setItem('users', JSON.stringify(users));
+
+                document.getElementById('registrationResult').innerHTML = 
+                    `<div class="status success">✅ User registered successfully!</div>`;
+            } catch (error) {
+                document.getElementById('registrationResult').innerHTML = 
+                    `<div class="status error">❌ Registration failed: ${error.message}</div>`;
+            }
+        }
+
+        function testUserLogin() {
+            const credentials = {
+                email: 'test@example.com',
+                password: 'testpassword123'
+            };
+
+            try {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const user = users.find(u => 
+                    u.email === credentials.email && u.password === credentials.password
+                );
+
+                if (user) {
+                    // Store current user
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        isAuthenticated: true
+                    }));
+
+                    document.getElementById('loginResult').innerHTML = 
+                        `<div class="status success">✅ User logged in successfully!</div>`;
+                } else {
+                    document.getElementById('loginResult').innerHTML = 
+                        `<div class="status error">❌ Invalid credentials</div>`;
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    `<div class="status error">❌ Login failed: ${error.message}</div>`;
+            }
+        }
+
+        function viewAllStoredData() {
+            const data = {
+                'telegram_messages': JSON.parse(localStorage.getItem('telegram_messages') || '[]'),
+                'users': JSON.parse(localStorage.getItem('users') || '[]'),
+                'currentUser': JSON.parse(localStorage.getItem('currentUser') || 'null'),
+                'user_signals': JSON.parse(localStorage.getItem('user_signals') || '[]')
+            };
+
+            let html = '<h3>Stored Data in localStorage:</h3>';
+            
+            Object.entries(data).forEach(([key, value]) => {
+                html += `<div class="signal">
+                    <strong>${key}:</strong><br>
+                    <pre>${JSON.stringify(value, null, 2)}</pre>
+                </div>`;
+            });
+
+            document.getElementById('storedDataResult').innerHTML = html;
+        }
+
+        function openUserDashboard() {
+            // Open the user dashboard in a new tab
+            window.open('http://localhost:5175/dashboard/signals', '_blank');
+            document.getElementById('dashboardResult').innerHTML = 
+                '<div class="status success">✅ User dashboard opened in new tab</div>';
+        }
+
+        function clearAllData() {
+            localStorage.removeItem('telegram_messages');
+            localStorage.removeItem('users');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('user_signals');
+            localStorage.removeItem('admin_generated_signals');
+            
+            document.getElementById('clearResult').innerHTML = 
+                '<div class="status success">✅ All data cleared from localStorage</div>';
+        }
+
+        // Auto-run tests on page load
+        window.onload = function() {
+            console.log('Complete Solution Test loaded');
+            console.log('Development server should be running on http://localhost:5175');
+        };
+    </script>
+</body>
+</html>

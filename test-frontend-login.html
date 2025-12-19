@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Login Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: white;
+        }
+        .container {
+            background-color: #2a2a2a;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #333;
+            color: white;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #2d5a2d;
+            border: 1px solid #4CAF50;
+        }
+        .error {
+            background-color: #5a2d2d;
+            border: 1px solid #f44336;
+        }
+        .info {
+            background-color: #2d4a5a;
+            border: 1px solid #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Frontend Login Test</h1>
+        <p>This page simulates the exact frontend login flow to identify the issue.</p>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" value="anchlshrma18@gmail.com">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="password">
+        </div>
+        
+        <button onclick="testFrontendLogin()">Test Frontend Login Flow</button>
+        <button onclick="testDirectAPI()">Test Direct API Call</button>
+        <button onclick="clearResults()">Clear</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        function clearResults() {
+            document.getElementById('result').style.display = 'none';
+        }
+        
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+        }
+        
+        // Simulate the exact frontend login flow
+        async function testFrontendLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            showResult('Testing frontend login flow...', 'info');
+            
+            try {
+                // Simulate the exact API call the frontend makes
+                const response = await fetch('https://backend-bkt7.onrender.com/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                console.log('Response:', response);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Data:', data);
+                    
+                    // Simulate what the frontend does with the response
+                    localStorage.setItem('token', data.access_token);
+                    
+                    showResult(`✅ FRONTEND LOGIN SUCCESS!\n\nStatus: ${response.status}\nToken: ${data.access_token}\nUser: ${JSON.stringify(data.user, null, 2)}\n\nToken stored in localStorage: ${localStorage.getItem('token')}`, 'success');
+                } else {
+                    const errorData = await response.json();
+                    showResult(`❌ FRONTEND LOGIN ERROR!\n\nStatus: ${response.status}\nError: ${JSON.stringify(errorData, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult(`❌ FRONTEND LOGIN EXCEPTION!\n\nError: ${error.message}\n\nThis might be a CORS issue or network problem.`, 'error');
+            }
+        }
+        
+        // Test direct API call
+        async function testDirectAPI() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            showResult('Testing direct API call...', 'info');
+            
+            try {
+                const response = await fetch('https://backend-bkt7.onrender.com/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Origin': 'https://frontend-i6xs.onrender.com',
+                        'Referer': 'https://frontend-i6xs.onrender.com/signin'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                console.log('Direct API Response:', response);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(`✅ DIRECT API SUCCESS!\n\nStatus: ${response.status}\nToken: ${data.access_token}\nUser: ${JSON.stringify(data.user, null, 2)}`, 'success');
+                } else {
+                    const errorData = await response.json();
+                    showResult(`❌ DIRECT API ERROR!\n\nStatus: ${response.status}\nError: ${JSON.stringify(errorData, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                console.error('Direct API Error:', error);
+                showResult(`❌ DIRECT API EXCEPTION!\n\nError: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            console.log('Frontend login test page loaded...');
+        });
+    </script>
+</body>
+</html>

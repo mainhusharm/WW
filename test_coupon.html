@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coupon System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background-color: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+        input, button {
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #333;
+            color: white;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #28a745;
+            color: white;
+        }
+        .error {
+            background-color: #dc3545;
+            color: white;
+        }
+        .info {
+            background-color: #17a2b8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Coupon System Test Page</h1>
+    
+    <div class="test-section">
+        <h2>Test Coupon Validation</h2>
+        <div class="input-group">
+            <label for="couponCode">Coupon Code:</label>
+            <input type="text" id="couponCode" value="TRADERFREE" placeholder="Enter coupon code">
+        </div>
+        <div class="input-group">
+            <label for="planId">Plan ID:</label>
+            <input type="text" id="planId" value="enterprise" placeholder="Enter plan ID">
+        </div>
+        <div class="input-group">
+            <label for="originalPrice">Original Price:</label>
+            <input type="number" id="originalPrice" value="499.00" step="0.01" placeholder="Enter original price">
+        </div>
+        <button onclick="testCoupon()">Test Coupon</button>
+        <div id="couponResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Frontend Proxy</h2>
+        <button onclick="testFrontendProxy()">Test Frontend Proxy</button>
+        <div id="proxyResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Backend Direct</h2>
+        <button onclick="testBackendDirect()">Test Backend Direct</button>
+        <div id="backendResult" class="result"></div>
+    </div>
+
+    <script>
+        async function testCoupon() {
+            const couponCode = document.getElementById('couponCode').value;
+            const planId = document.getElementById('planId').value;
+            const originalPrice = parseFloat(document.getElementById('originalPrice').value);
+            const resultDiv = document.getElementById('couponResult');
+            
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing coupon...';
+            
+            try {
+                const response = await fetch('/api/payment/validate-coupon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        coupon_code: couponCode,
+                        plan_id: planId,
+                        original_price: originalPrice
+                    }),
+                });
+
+                const data = await response.json();
+                
+                if (data.valid) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Coupon Applied Successfully!
+Coupon: ${couponCode}
+Plan: ${planId}
+Original Price: $${originalPrice}
+Discount: $${data.discount_amount}
+Final Price: $${data.final_price}
+Message: ${data.message}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Coupon Validation Failed
+Error: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testFrontendProxy() {
+            const resultDiv = document.getElementById('proxyResult');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing frontend proxy...';
+            
+            try {
+                const response = await fetch('/api/payment/validate-coupon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        coupon_code: 'TRADERFREE',
+                        plan_id: 'enterprise',
+                        original_price: 499.00
+                    }),
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.valid) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Frontend Proxy Working!
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Frontend Proxy Failed
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Frontend Proxy Error: ${error.message}`;
+            }
+        }
+
+        async function testBackendDirect() {
+            const resultDiv = document.getElementById('backendResult');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing backend direct...';
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/payment/validate-coupon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        coupon_code: 'TRADERFREE',
+                        plan_id: 'enterprise',
+                        original_price: 499.00
+                    }),
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.valid) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Backend Direct Working!
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Backend Direct Failed
+Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Backend Direct Error: ${error.message}`;
+            }
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            console.log('Coupon test page loaded. Testing frontend proxy...');
+            setTimeout(testFrontendProxy, 1000);
+        });
+    </script>
+</body>
+</html>

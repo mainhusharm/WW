@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: yfinance-service
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "18.17.0"
+      - key: PORT
+        value: 10002
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: "https://www.traderedgepro.com,https://frontend-01uh.onrender.com,https://frontend-zwwl.onrender.com,https://traderedgepro.onrender.com"
+    healthCheckPath: /health
+    autoDeploy: true

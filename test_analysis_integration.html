@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Analysis Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            opacity: 0.8;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success { background: rgba(0, 255, 0, 0.2); }
+        .error { background: rgba(255, 0, 0, 0.2); }
+        .info { background: rgba(0, 0, 255, 0.2); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Market Analysis Integration Test</h1>
+            <p>Testing the connection between futures bot and market analysis page</p>
+        </div>
+
+        <div class="test-section">
+            <h2>1. Test Futures API Connection</h2>
+            <button class="button" onclick="testFuturesAPI()">Test Futures Prices API</button>
+            <button class="button" onclick="testFuturesSignals()">Test Futures Signals API</button>
+            <div id="futures-status" class="status"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Test Market Analysis Page</h2>
+            <button class="button" onclick="openAnalysisPage()">Open Market Analysis Page</button>
+            <div id="analysis-status" class="status"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Test Signal Generation</h2>
+            <button class="button" onclick="generateTestSignal()">Generate Test Signal</button>
+            <div id="signal-status" class="status"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Test Results</h2>
+            <div id="test-results"></div>
+        </div>
+    </div>
+
+    <script>
+        const FUTURES_API_BASE = 'http://localhost:10003';
+        
+        function updateStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type}`;
+        }
+
+        async function testFuturesAPI() {
+            try {
+                updateStatus('futures-status', 'Testing futures prices API...', 'info');
+                
+                const response = await fetch(`${FUTURES_API_BASE}/api/futures/prices`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                updateStatus('futures-status', `✅ Futures API working! Got ${data.length} prices`, 'success');
+                
+                // Display sample data
+                document.getElementById('test-results').innerHTML = `
+                    <h3>Sample Futures Data:</h3>
+                    <pre>${JSON.stringify(data.slice(0, 3), null, 2)}</pre>
+                `;
+            } catch (error) {
+                updateStatus('futures-status', `❌ Futures API failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFuturesSignals() {
+            try {
+                updateStatus('futures-status', 'Testing futures signals API...', 'info');
+                
+                const response = await fetch(`${FUTURES_API_BASE}/api/futures/signals`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        asset: 'SP500',
+                        timeframe: '1m'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                updateStatus('futures-status', `✅ Signals API working! Generated signal for ${data.symbol}`, 'success');
+                
+                // Display signal data
+                document.getElementById('test-results').innerHTML += `
+                    <h3>Generated Signal:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                updateStatus('futures-status', `❌ Signals API failed: ${error.message}`, 'error');
+            }
+        }
+
+        function openAnalysisPage() {
+            try {
+                window.open('/market-analysis', '_blank');
+                updateStatus('analysis-status', '✅ Market Analysis page opened in new tab', 'success');
+            } catch (error) {
+                updateStatus('analysis-status', `❌ Failed to open analysis page: ${error.message}`, 'error');
+            }
+        }
+
+        async function generateTestSignal() {
+            try {
+                updateStatus('signal-status', 'Generating test signal...', 'info');
+                
+                const response = await fetch(`${FUTURES_API_BASE}/api/futures/signals`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        asset: 'NASDAQ',
+                        timeframe: '5m'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const signal = await response.json();
+                updateStatus('signal-status', `✅ Test signal generated: ${signal.direction} ${signal.symbol}`, 'success');
+                
+                // Display signal details
+                document.getElementById('test-results').innerHTML += `
+                    <h3>Test Signal Details:</h3>
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong>Symbol:</strong> ${signal.symbol}</p>
+                        <p><strong>Direction:</strong> ${signal.direction}</p>
+                        <p><strong>Entry:</strong> $${signal.entry}</p>
+                        <p><strong>Stop Loss:</strong> $${signal.stopLoss}</p>
+                        <p><strong>Take Profit:</strong> $${signal.takeProfit}</p>
+                        <p><strong>Confidence:</strong> ${signal.confidence}%</p>
+                        <p><strong>Analysis:</strong> ${signal.analysis}</p>
+                    </div>
+                `;
+            } catch (error) {
+                updateStatus('signal-status', `❌ Signal generation failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run basic tests on page load
+        window.onload = function() {
+            updateStatus('analysis-status', 'Ready to test Market Analysis page', 'info');
+            updateStatus('signal-status', 'Ready to test signal generation', 'info');
+        };
+    </script>
+</body>
+</html>

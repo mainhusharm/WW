@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Fetch Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: white; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #2d5a2d; }
+        .error { background: #5a2d2d; }
+        .info { background: #2d4a5a; }
+        pre { background: #333; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Signal Fetch Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        async function testSignalFetch() {
+            addResult('🔄 Starting signal fetch test...', 'info');
+            
+            try {
+                // Test the backend health first
+                addResult('🔍 Testing backend health...', 'info');
+                const healthResponse = await fetch('https://backend-gbhz.onrender.com/health');
+                const healthData = await healthResponse.json();
+                addResult(`✅ Backend health: ${healthData.message}`, 'success');
+                addResult(`📊 Signals count: ${healthData.signals_count}`, 'info');
+                
+                // Test signals endpoint
+                addResult('🔍 Testing signals endpoint...', 'info');
+                const signalsResponse = await fetch('https://backend-gbhz.onrender.com/api/signals');
+                const signalsData = await signalsResponse.json();
+                
+                addResult(`✅ Signals endpoint working`, 'success');
+                addResult(`📊 Total signals: ${signalsData.total_count || signalsData.signals?.length || 0}`, 'info');
+                
+                if (signalsData.signals && signalsData.signals.length > 0) {
+                    addResult('📋 Signal details:', 'info');
+                    signalsData.signals.forEach((signal, index) => {
+                        addResult(`
+                            <strong>Signal ${index + 1}:</strong><br>
+                            ID: ${signal.id}<br>
+                            Pair: ${signal.pair}<br>
+                            Direction: ${signal.direction}<br>
+                            Entry: ${signal.entry_price}<br>
+                            Stop Loss: ${signal.stop_loss}<br>
+                            Take Profit: ${signal.take_profit}<br>
+                            Source: ${signal.source}<br>
+                            Confidence: ${signal.confidence}%<br>
+                            Analysis: ${signal.analysis}<br>
+                            ICT Concepts: ${signal.ict_concepts?.join(', ') || 'None'}<br>
+                            <hr>
+                        `, 'info');
+                    });
+                } else {
+                    addResult('⚠️ No signals found in response', 'error');
+                }
+                
+                // Test test/signals endpoint
+                addResult('🔍 Testing test/signals endpoint...', 'info');
+                try {
+                    const testResponse = await fetch('https://backend-gbhz.onrender.com/api/test/signals');
+                    const testData = await testResponse.json();
+                    addResult(`✅ Test signals endpoint working`, 'success');
+                    addResult(`📊 Test signals count: ${testData.total_count || testData.signals?.length || 0}`, 'info');
+                } catch (error) {
+                    addResult(`❌ Test signals endpoint failed: ${error.message}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Test failed: ${error.message}`, 'error');
+                console.error('Test error:', error);
+            }
+        }
+
+        // Run the test
+        testSignalFetch();
+    </script>
+</body>
+</html>

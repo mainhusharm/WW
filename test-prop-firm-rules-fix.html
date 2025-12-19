@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prop Firm Rules Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+        .feature-list {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛡️ Prop Firm Rules Fix Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li><strong>Click "Test API Call"</strong> to test the original API endpoint</li>
+            <li><strong>Click "Set Default Rules"</strong> to set fallback rules in localStorage</li>
+            <li><strong>Click "Test localStorage Fallback"</strong> to verify localStorage loading</li>
+            <li><strong>Go to Prop Firm Rules tab</strong> in the dashboard to see the fix in action</li>
+        </ol>
+    </div>
+    
+    <div class="feature-list">
+        <h3>✅ Fixes Implemented:</h3>
+        <ul>
+            <li><strong>localStorage Fallback:</strong> Loads rules from localStorage first to avoid API issues</li>
+            <li><strong>Content-Type Validation:</strong> Checks if response is JSON before parsing</li>
+            <li><strong>Default Rules:</strong> Provides fallback rules when API is unavailable</li>
+            <li><strong>Better Error Handling:</strong> Clear error messages and retry options</li>
+            <li><strong>Cache Management:</strong> Option to clear cache and retry</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="testAPICall()">🌐 Test API Call</button>
+        <button onclick="setDefaultRules()">📋 Set Default Rules</button>
+        <button onclick="testLocalStorageFallback()">💾 Test localStorage Fallback</button>
+        <button onclick="clearAllData()">🗑️ Clear All Data</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Current Data</h2>
+        <div id="currentData">Click test buttons to see current data</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click test buttons to see what's happening</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let currentDataDiv = document.getElementById('currentData');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        window.testAPICall = async function() {
+            log('🌐 Testing original API call...', 'info');
+            
+            try {
+                const response = await fetch('https://backend-gbhz.onrender.com/api/test/prop-firm-rules?accountType=QuantTekel%20Instant', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    mode: 'cors'
+                });
+                
+                log(`Response status: ${response.status} ${response.statusText}`, 'info');
+                
+                const contentType = response.headers.get('content-type');
+                log(`Content-Type: ${contentType}`, 'info');
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    log('❌ Server returned non-JSON response (likely HTML error page)', 'error');
+                    log('This is what causes the JSON parsing error!', 'warning');
+                } else {
+                    const data = await response.json();
+                    log('✅ API returned valid JSON:', 'success');
+                    log(JSON.stringify(data, null, 2), 'info');
+                }
+            } catch (err) {
+                log(`❌ API call failed: ${err.message}`, 'error');
+                log('This confirms the API is not working properly', 'warning');
+            }
+        };
+        
+        window.setDefaultRules = function() {
+            log('📋 Setting default rules in localStorage...', 'info');
+            
+            const defaultRules = {
+                name: 'QuantTekel Instant',
+                challengeType: 'Instant Funding',
+                dailyLossLimit: '$500',
+                maxDrawdown: '$2,500',
+                profitTarget: '$2,500',
+                minTradingDays: '5',
+                weekendHolding: 'Allowed',
+                newsTrading: 'Allowed',
+                description: 'Professional trading rules for instant funding account. Focus on consistent profitability while managing risk effectively.'
+            };
+            
+            localStorage.setItem('propFirmRules', JSON.stringify(defaultRules));
+            log('✅ Default rules saved to localStorage', 'success');
+            log(JSON.stringify(defaultRules, null, 2), 'info');
+            
+            updateCurrentData();
+        };
+        
+        window.testLocalStorageFallback = function() {
+            log('💾 Testing localStorage fallback...', 'info');
+            
+            const savedRules = localStorage.getItem('propFirmRules');
+            if (savedRules) {
+                try {
+                    const parsedRules = JSON.parse(savedRules);
+                    log('✅ Successfully loaded rules from localStorage:', 'success');
+                    log(`  - Name: ${parsedRules.name}`, 'info');
+                    log(`  - Challenge Type: ${parsedRules.challengeType}`, 'info');
+                    log(`  - Daily Loss Limit: ${parsedRules.dailyLossLimit}`, 'info');
+                    log(`  - Max Drawdown: ${parsedRules.maxDrawdown}`, 'info');
+                    log(`  - Profit Target: ${parsedRules.profitTarget}`, 'info');
+                } catch (e) {
+                    log(`❌ Failed to parse saved rules: ${e.message}`, 'error');
+                }
+            } else {
+                log('❌ No rules found in localStorage', 'warning');
+                log('Click "Set Default Rules" first', 'info');
+            }
+            
+            updateCurrentData();
+        };
+        
+        window.clearAllData = function() {
+            log('🗑️ Clearing all prop firm rules data...', 'warning');
+            localStorage.removeItem('propFirmRules');
+            log('✅ All data cleared', 'success');
+            updateCurrentData();
+        };
+        
+        function updateCurrentData() {
+            const savedRules = localStorage.getItem('propFirmRules');
+            let rulesData = 'No rules found';
+            
+            if (savedRules) {
+                try {
+                    const parsed = JSON.parse(savedRules);
+                    rulesData = `
+                        <div class="feature-list">
+                            <h3>Current Rules:</h3>
+                            <p><strong>Name:</strong> ${parsed.name}</p>
+                            <p><strong>Type:</strong> ${parsed.challengeType}</p>
+                            <p><strong>Daily Loss:</strong> ${parsed.dailyLossLimit}</p>
+                            <p><strong>Max Drawdown:</strong> ${parsed.maxDrawdown}</p>
+                            <p><strong>Profit Target:</strong> ${parsed.profitTarget}</p>
+                            <p><strong>Min Trading Days:</strong> ${parsed.minTradingDays}</p>
+                        </div>
+                    `;
+                } catch (e) {
+                    rulesData = 'Invalid rules data in localStorage';
+                }
+            }
+            
+            currentDataDiv.innerHTML = rulesData;
+        }
+        
+        // Auto-run initial check
+        log('🚀 Prop Firm Rules Fix Test initialized', 'info');
+        log('This test verifies the JSON parsing error fix', 'info');
+        updateCurrentData();
+    </script>
+</body>
+</html>

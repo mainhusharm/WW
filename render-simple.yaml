@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: test-backend
+    env: python3
+    plan: starter
+    buildCommand: echo "Build successful"
+    startCommand: python test_basic.py
+    envVars:
+      - key: PORT
+        value: 10000

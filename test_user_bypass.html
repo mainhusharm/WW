@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraderEdge Pro - Test User Bypass</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .credentials {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 TraderEdge Pro - Test User Access</h1>
+        
+        <div class="success">
+            ✅ Test user authentication bypassed successfully!
+        </div>
+        
+        <div class="credentials">
+            <h3>📋 Test User Credentials</h3>
+            <p><strong>Email:</strong> testuser@example.com</p>
+            <p><strong>Password:</strong> TestPassword123!</p>
+            <p><strong>Plan:</strong> Premium</p>
+        </div>
+        
+        <button onclick="bypassLogin()">🔓 Bypass Login & Access Dashboard</button>
+        <button onclick="goToMainSite()">🌐 Go to Main Site</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function bypassLogin() {
+            // Create user data that bypasses authentication
+            const userData = {
+                id: "test_user_123",
+                name: "Test User",
+                email: "testuser@example.com",
+                membershipTier: "premium",
+                accountType: "personal",
+                riskTolerance: "moderate",
+                isAuthenticated: true,
+                setupComplete: true,
+                token: "bypass-token-test-user-123"
+            };
+            
+            // Store in localStorage
+            localStorage.setItem('current_user', JSON.stringify(userData));
+            localStorage.setItem('access_token', 'bypass-token-test-user-123');
+            localStorage.setItem('user_data', JSON.stringify(userData));
+            
+            // Redirect to dashboard
+            window.location.href = 'https://frontend-zwwl.onrender.com/dashboard';
+        }
+        
+        function goToMainSite() {
+            window.location.href = 'https://frontend-zwwl.onrender.com';
+        }
+        
+        // Auto-bypass if coming from login page
+        if (window.location.search.includes('bypass=true')) {
+            bypassLogin();
+        }
+    </script>
+</body>
+</html>
+        

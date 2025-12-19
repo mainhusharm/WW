@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Signal Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .signal {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔔 Signal Flow Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Signal Generation</h2>
+        <p>Click the button below to generate a test signal and store it in localStorage:</p>
+        <button onclick="generateTestSignal()">Generate Test Signal</button>
+        <div id="signalResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. View Stored Signals</h2>
+        <p>Click to view all signals stored in localStorage:</p>
+        <button onclick="viewStoredSignals()">View Stored Signals</button>
+        <div id="storedSignals"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Clear All Signals</h2>
+        <p>Click to clear all stored signals:</p>
+        <button onclick="clearAllSignals()">Clear All Signals</button>
+        <div id="clearResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test User Dashboard Integration</h2>
+        <p>This simulates what the user dashboard will see:</p>
+        <button onclick="simulateUserDashboard()">Simulate User Dashboard</button>
+        <div id="userDashboard"></div>
+    </div>
+
+    <script>
+        function generateTestSignal() {
+            const signal = {
+                id: Date.now(),
+                text: `EUR/USD\nBUY NOW\nEntry: 1.0850\nStop Loss: 1.0800\nTake Profit: 1.0950\nConfidence: 85%\n\nStrong bullish momentum with RSI oversold`,
+                timestamp: new Date().toISOString(),
+                from: 'Admin Dashboard',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+
+            // Store in localStorage
+            const existingSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingSignals.unshift(signal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingSignals.slice(0, 50)));
+
+            document.getElementById('signalResult').innerHTML = 
+                `<div class="success">✅ Signal generated and stored successfully!</div>
+                 <div class="signal">${signal.text.replace(/\n/g, '<br>')}</div>`;
+        }
+
+        function viewStoredSignals() {
+            const signals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const container = document.getElementById('storedSignals');
+            
+            if (signals.length === 0) {
+                container.innerHTML = '<div class="error">No signals found in localStorage</div>';
+                return;
+            }
+
+            let html = `<h3>Found ${signals.length} signals:</h3>`;
+            signals.forEach((signal, index) => {
+                html += `<div class="signal">
+                    <strong>Signal ${index + 1}:</strong><br>
+                    ${signal.text.replace(/\n/g, '<br>')}<br>
+                    <small>Time: ${new Date(signal.timestamp).toLocaleString()}</small>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function clearAllSignals() {
+            localStorage.removeItem('telegram_messages');
+            localStorage.removeItem('admin_generated_signals');
+            document.getElementById('clearResult').innerHTML = 
+                '<div class="success">✅ All signals cleared from localStorage</div>';
+        }
+
+        function simulateUserDashboard() {
+            const signals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const container = document.getElementById('userDashboard');
+            
+            if (signals.length === 0) {
+                container.innerHTML = '<div class="error">No signals available. Generate some signals first!</div>';
+                return;
+            }
+
+            let html = `<h3>User Dashboard View (${signals.length} signals):</h3>`;
+            signals.forEach((signal, index) => {
+                html += `<div class="signal">
+                    <strong>📊 Signal ${index + 1}</strong><br>
+                    ${signal.text.replace(/\n/g, '<br>')}<br>
+                    <small>📅 ${new Date(signal.timestamp).toLocaleString()}</small>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Auto-load signals on page load
+        window.onload = function() {
+            viewStoredSignals();
+        };
+    </script>
+</body>
+</html>

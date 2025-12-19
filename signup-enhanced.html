@@ -1,0 +1,6 @@
+                // Basic validation
+                if (!userData.first_name || !userData.last_name || !userData.email || !userData.phone || !userData.password || !userData.country || !userData.agree_to_terms) {
+                    errorMessage.textContent = '❌ Please fill in all required fields and accept the Terms of Service and Privacy Policy';
+                    errorMessage.style.display = 'block';
+                    return;
+                }

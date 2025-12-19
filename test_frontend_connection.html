@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Frontend Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #2d5a2d; }
+        .error { background: #5a2d2d; }
+        .info { background: #2d4a5a; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .signal-card {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Enhanced Signal System - Frontend Connection Test</h1>
+        
+        <div id="status" class="status info">
+            Testing connection to Render backend...
+        </div>
+        
+        <div>
+            <button onclick="testConnection()">Test Connection</button>
+            <button onclick="createTestSignal()">Create Test Signal</button>
+            <button onclick="fetchSignals()">Fetch Signals</button>
+            <button onclick="clearSignals()">Clear All</button>
+        </div>
+        
+        <div id="signals"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://backend-u4hy.onrender.com';
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        async function testConnection() {
+            updateStatus('Testing connection to Render backend...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/healthz`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateStatus(`✅ Connected! Status: ${data.status}, Database: ${data.database}`, 'success');
+                } else {
+                    updateStatus(`❌ Connection failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                updateStatus(`❌ Connection error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function createTestSignal() {
+            updateStatus('Creating test signal...', 'info');
+            
+            const testSignal = {
+                symbol: "EUR/USD",
+                action: "BUY",
+                entryPrice: 1.0850,
+                stopLoss: 1.0800,
+                takeProfit: 1.0950,
+                timeframe: "1H",
+                confidence: 88,
+                rrRatio: "1:2.0",
+                analysis: "Test signal created from frontend",
+                ictConcepts: ["Order Block", "Liquidity Sweep"]
+            };
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/admin/forex/generate-signal`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testSignal)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateStatus(`✅ Test signal created successfully!`, 'success');
+                    fetchSignals(); // Refresh signals
+                } else {
+                    updateStatus(`❌ Failed to create signal: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                updateStatus(`❌ Error creating signal: ${error.message}`, 'error');
+            }
+        }
+        
+        async function fetchSignals() {
+            updateStatus('Fetching signals...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/signals/admin`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const signalsDiv = document.getElementById('signals');
+                    
+                    if (data.signals && data.signals.length > 0) {
+                        updateStatus(`✅ Found ${data.signals.length} signals`, 'success');
+                        
+                        signalsDiv.innerHTML = '<h2>📊 Available Signals:</h2>';
+                        
+                        data.signals.forEach(signal => {
+                            const signalCard = document.createElement('div');
+                            signalCard.className = 'signal-card';
+                            signalCard.innerHTML = `
+                                <h3>${signal.symbol} - ${signal.action}</h3>
+                                <p><strong>Entry:</strong> ${signal.entryPrice} | <strong>Stop Loss:</strong> ${signal.stopLoss} | <strong>Take Profit:</strong> ${signal.takeProfit}</p>
+                                <p><strong>Confidence:</strong> ${signal.confidence}% | <strong>Timeframe:</strong> ${signal.timeframe}</p>
+                                <p><strong>Analysis:</strong> ${signal.analysis}</p>
+                                <p><strong>Created:</strong> ${new Date(signal.createdAt).toLocaleString()}</p>
+                            `;
+                            signalsDiv.appendChild(signalCard);
+                        });
+                    } else {
+                        updateStatus('ℹ️ No signals found', 'info');
+                        signalsDiv.innerHTML = '<p>No signals available. Create some test signals!</p>';
+                    }
+                } else {
+                    updateStatus(`❌ Failed to fetch signals: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                updateStatus(`❌ Error fetching signals: ${error.message}`, 'error');
+            }
+        }
+        
+        async function clearSignals() {
+            updateStatus('Clearing all signals...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/signals/admin/clear`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateStatus(`✅ All signals cleared`, 'success');
+                    document.getElementById('signals').innerHTML = '';
+                } else {
+                    updateStatus(`❌ Failed to clear signals: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                updateStatus(`❌ Error clearing signals: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test connection on page load
+        window.onload = function() {
+            testConnection();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - TraderEdge Pro</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: white; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #333; border-radius: 8px; }
+        .success { border-color: #4CAF50; background: rgba(76, 175, 80, 0.1); }
+        .error { border-color: #f44336; background: rgba(244, 67, 54, 0.1); }
+        .loading { border-color: #ff9800; background: rgba(255, 152, 0, 0.1); }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #2a2a2a; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .status { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🧪 TraderEdge Pro - API Test Page</h1>
+    <p>This page tests all the fixed API endpoints to verify they're working correctly.</p>
+
+    <div class="test-section loading" id="prop-firm-test">
+        <h3>1. Prop Firm Rules API Test</h3>
+        <button onclick="testPropFirmRules()">Test QuantTekel Instant Rules</button>
+        <div id="prop-firm-result"></div>
+    </div>
+
+    <div class="test-section loading" id="signals-test">
+        <h3>2. Signals Dashboard API Test</h3>
+        <button onclick="testSignals()">Test Signals API</button>
+        <div id="signals-result"></div>
+    </div>
+
+    <div class="test-section loading" id="news-test">
+        <h3>3. Forex News API Test</h3>
+        <button onclick="testNews()">Test News API</button>
+        <div id="news-result"></div>
+    </div>
+
+    <div class="test-section loading" id="customers-test">
+        <h3>4. Customer Database API Test</h3>
+        <button onclick="testCustomers()">Test Customer API</button>
+        <div id="customers-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🚀 Quick Test All APIs</h3>
+        <button onclick="testAllAPIs()" style="background: #28a745;">Test All APIs</button>
+        <div id="all-results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://backend-u4hy.onrender.com/api';
+
+        async function testPropFirmRules() {
+            const section = document.getElementById('prop-firm-test');
+            const result = document.getElementById('prop-firm-result');
+            
+            section.className = 'test-section loading';
+            result.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/test/prop-firm-rules?accountType=QuantTekel%20Instant`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    section.className = 'test-section success';
+                    result.innerHTML = `
+                        <p class="status">✅ SUCCESS - Prop Firm Rules API Working!</p>
+                        <p><strong>Account Type:</strong> ${data.rules.name}</p>
+                        <p><strong>Challenge Type:</strong> ${data.rules.challengeType}</p>
+                        <p><strong>Daily Loss Limit:</strong> ${data.rules.dailyLossLimit}</p>
+                        <p><strong>Max Drawdown:</strong> ${data.rules.maxDrawdown}</p>
+                        <p><strong>Profit Target:</strong> ${data.rules.profitTarget}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(data.error || 'API returned error');
+                }
+            } catch (error) {
+                section.className = 'test-section error';
+                result.innerHTML = `<p class="status">❌ ERROR: ${error.message}</p>`;
+            }
+        }
+
+        async function testSignals() {
+            const section = document.getElementById('signals-test');
+            const result = document.getElementById('signals-result');
+            
+            section.className = 'test-section loading';
+            result.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/test/signals`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    section.className = 'test-section success';
+                    result.innerHTML = `
+                        <p class="status">✅ SUCCESS - Signals API Working!</p>
+                        <p><strong>Signals Count:</strong> ${data.signals.length}</p>
+                        <p><strong>First Signal:</strong> ${data.signals[0]?.symbol} - ${data.signals[0]?.action}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(data.error || 'API returned error');
+                }
+            } catch (error) {
+                section.className = 'test-section error';
+                result.innerHTML = `<p class="status">❌ ERROR: ${error.message}</p>`;
+            }
+        }
+
+        async function testNews() {
+            const section = document.getElementById('news-test');
+            const result = document.getElementById('news-result');
+            
+            section.className = 'test-section loading';
+            result.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/news/forex-factory?currency=ALL`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    section.className = 'test-section success';
+                    result.innerHTML = `
+                        <p class="status">✅ SUCCESS - News API Working!</p>
+                        <p><strong>News Count:</strong> ${data.news.length}</p>
+                        <p><strong>First News:</strong> ${data.news[0]?.title}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(data.error || 'API returned error');
+                }
+            } catch (error) {
+                section.className = 'test-section error';
+                result.innerHTML = `<p class="status">❌ ERROR: ${error.message}</p>`;
+            }
+        }
+
+        async function testCustomers() {
+            const section = document.getElementById('customers-test');
+            const result = document.getElementById('customers-result');
+            
+            section.className = 'test-section loading';
+            result.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/customers/dashboard`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    section.className = 'test-section success';
+                    result.innerHTML = `
+                        <p class="status">✅ SUCCESS - Customer API Working!</p>
+                        <p><strong>Customers Count:</strong> ${data.customers.length}</p>
+                        <p><strong>First Customer:</strong> ${data.customers[0]?.email}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(data.error || 'API returned error');
+                }
+            } catch (error) {
+                section.className = 'test-section error';
+                result.innerHTML = `<p class="status">❌ ERROR: ${error.message}</p>`;
+            }
+        }
+
+        async function testAllAPIs() {
+            const result = document.getElementById('all-results');
+            result.innerHTML = '<p>Testing all APIs...</p>';
+            
+            await testPropFirmRules();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testSignals();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testNews();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testCustomers();
+            
+            result.innerHTML = '<p class="status">🎉 All API tests completed! Check results above.</p>';
+        }
+
+        // Auto-run tests on page load
+        window.onload = function() {
+            setTimeout(testAllAPIs, 1000);
+        };
+    </script>
+</body>
+</html>

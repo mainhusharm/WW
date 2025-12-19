@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Trading System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .feature-list {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #4ade80;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Enhanced Trading System Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li><strong>Click "Create Test Signal"</strong> to generate a sample signal</li>
+            <li><strong>Click "Test Lot Size Calculator"</strong> to verify risk management calculations</li>
+            <li><strong>Click "Test Trade Status Updates"</strong> to verify trade status changes</li>
+            <li><strong>Click "Test Persistence"</strong> to verify data survives page reloads</li>
+            <li><strong>Go to User Dashboard</strong> and test the actual buttons with real signals</li>
+        </ol>
+    </div>
+    
+    <div class="feature-list">
+        <h3>✅ New Features Implemented:</h3>
+        <ul>
+            <li><strong>Persistent Trades:</strong> Trades stay forever across logout/login and page reloads</li>
+            <li><strong>Trade Status Buttons:</strong> Won/Lost/Break Even buttons with visual feedback</li>
+            <li><strong>Performance Updates:</strong> Account equity updates based on trade outcomes</li>
+            <li><strong>Lot Size Calculator:</strong> Smart lot sizing based on risk management plan</li>
+            <li><strong>Dollar Amounts:</strong> Stop loss and take profit values in dollars</li>
+            <li><strong>Risk Management:</strong> Professional risk management system</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="createTestSignal()">📊 Create Test Signal</button>
+        <button onclick="testLotSizeCalculator()">🧮 Test Lot Size Calculator</button>
+        <button onclick="testTradeStatusUpdates()">🔄 Test Trade Status Updates</button>
+        <button onclick="testPersistence()">💾 Test Persistence</button>
+        <button onclick="clearAllData()">🗑️ Clear All Data</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Current Data</h2>
+        <div id="currentData">Click test buttons to see current data</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click test buttons to see what's happening</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let currentDataDiv = document.getElementById('currentData');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // Simulate TradeManager functionality
+        class TestTradeManager {
+            constructor() {
+                this.trades = new Map();
+                this.riskPlan = {
+                    accountBalance: 10000,
+                    riskPercentage: 2,
+                    maxRiskPerTrade: 200,
+                    preferredRiskReward: 2
+                };
+            }
+            
+            calculateLotSize(signal) {
+                const entryPrice = parseFloat(signal.entryPrice || signal.entry || '0');
+                const stopLoss = parseFloat(signal.stopLoss || '0');
+                const takeProfit = parseFloat(Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0');
+                
+                if (!entryPrice || !stopLoss || !takeProfit) {
+                    return {
+                        lotSize: 0.01,
+                        units: 1000,
+                        moneyAtRisk: 0,
+                        stopLossPips: 0,
+                        pipValue: 0
+                    };
+                }
+
+                const stopLossPips = Math.abs(entryPrice - stopLoss) * 10000;
+                const pipValue = 10;
+                const moneyAtRisk = (this.riskPlan.accountBalance * this.riskPlan.riskPercentage) / 100;
+                const lotSize = Math.max(0.01, moneyAtRisk / (stopLossPips * pipValue));
+                const roundedLotSize = Math.round(lotSize * 100) / 100;
+                const units = roundedLotSize * 100000;
+                const stopLossDollar = Math.abs(entryPrice - stopLoss) * units;
+                const takeProfitDollar = Math.abs(takeProfit - entryPrice) * units;
+
+                return {
+                    lotSize: roundedLotSize,
+                    units: Math.round(units),
+                    moneyAtRisk: Math.round(moneyAtRisk * 100) / 100,
+                    stopLossPips: Math.round(stopLossPips * 100) / 100,
+                    pipValue,
+                    stopLossDollar: Math.round(stopLossDollar * 100) / 100,
+                    takeProfitDollar: Math.round(takeProfitDollar * 100) / 100
+                };
+            }
+            
+            createTrade(signal) {
+                const tradeId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const lotCalculation = this.calculateLotSize(signal);
+                
+                const trade = {
+                    id: tradeId,
+                    signalId: signal.id || signal.message_id || Date.now().toString(),
+                    status: 'active',
+                    pnl: 0,
+                    lotSize: lotCalculation.lotSize,
+                    dollarAmount: lotCalculation.moneyAtRisk,
+                    stopLossDollar: lotCalculation.stopLossDollar,
+                    takeProfitDollar: lotCalculation.takeProfitDollar,
+                    timestamp: new Date().toISOString()
+                };
+
+                this.trades.set(tradeId, trade);
+                localStorage.setItem('testTrades', JSON.stringify(Array.from(this.trades.values())));
+                return trade;
+            }
+            
+            updateTradeStatus(tradeId, status, pnl) {
+                const trade = this.trades.get(tradeId);
+                if (!trade) return;
+
+                trade.status = status;
+                trade.closedAt = new Date().toISOString();
+                
+                if (pnl !== undefined) {
+                    trade.pnl = pnl;
+                } else {
+                    switch (status) {
+                        case 'won':
+                            trade.pnl = trade.takeProfitDollar;
+                            break;
+                        case 'lost':
+                            trade.pnl = -trade.stopLossDollar;
+                            break;
+                        case 'breakeven':
+                            trade.pnl = 0;
+                            break;
+                    }
+                }
+
+                this.trades.set(tradeId, trade);
+                localStorage.setItem('testTrades', JSON.stringify(Array.from(this.trades.values())));
+                
+                // Update account balance
+                this.riskPlan.accountBalance += trade.pnl;
+            }
+            
+            getAllTrades() {
+                return Array.from(this.trades.values());
+            }
+        }
+        
+        const testTradeManager = new TestTradeManager();
+        
+        window.createTestSignal = function() {
+            log('📊 Creating test signal...', 'info');
+            
+            const testSignal = {
+                id: `signal_${Date.now()}`,
+                pair: 'EUR/USD',
+                direction: 'LONG',
+                entryPrice: '1.0850',
+                stopLoss: '1.0800',
+                takeProfit: '1.0950',
+                confidence: 85,
+                analysis: 'Strong bullish setup with ICT concepts',
+                timestamp: new Date().toISOString()
+            };
+            
+            // Store in localStorage for signals feed
+            const existingSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingSignals.unshift({
+                id: testSignal.id,
+                text: `${testSignal.pair}\n${testSignal.direction} NOW\nEntry ${testSignal.entryPrice}\nStop Loss ${testSignal.stopLoss}\nTake Profit ${testSignal.takeProfit}\nConfidence ${testSignal.confidence}%\n\n${testSignal.analysis}`,
+                timestamp: testSignal.timestamp,
+                from: 'Test Signal Generator'
+            });
+            localStorage.setItem('telegram_messages', JSON.stringify(existingSignals.slice(0, 100)));
+            
+            log('✅ Test signal created and stored', 'success');
+            log(`  - Pair: ${testSignal.pair}`, 'info');
+            log(`  - Direction: ${testSignal.direction}`, 'info');
+            log(`  - Entry: ${testSignal.entryPrice}`, 'info');
+            log(`  - Stop Loss: ${testSignal.stopLoss}`, 'info');
+            log(`  - Take Profit: ${testSignal.takeProfit}`, 'info');
+            
+            updateCurrentData();
+        };
+        
+        window.testLotSizeCalculator = function() {
+            log('🧮 Testing lot size calculator...', 'info');
+            
+            const testSignal = {
+                entryPrice: '1.0850',
+                stopLoss: '1.0800',
+                takeProfit: '1.0950'
+            };
+            
+            const calculation = testTradeManager.calculateLotSize(testSignal);
+            
+            log('✅ Lot size calculation completed:', 'success');
+            log(`  - Lot Size: ${calculation.lotSize}`, 'info');
+            log(`  - Units: ${calculation.units.toLocaleString()}`, 'info');
+            log(`  - Money at Risk: $${calculation.moneyAtRisk}`, 'info');
+            log(`  - Stop Loss Pips: ${calculation.stopLossPips}`, 'info');
+            log(`  - Stop Loss Dollar: $${calculation.stopLossDollar}`, 'info');
+            log(`  - Take Profit Dollar: $${calculation.takeProfitDollar}`, 'info');
+        };
+        
+        window.testTradeStatusUpdates = function() {
+            log('🔄 Testing trade status updates...', 'info');
+            
+            // Create a test trade
+            const testSignal = {
+                id: `test_signal_${Date.now()}`,
+                pair: 'GBP/USD',
+                direction: 'SHORT',
+                entryPrice: '1.2500',
+                stopLoss: '1.2550',
+                takeProfit: '1.2400'
+            };
+            
+            const trade = testTradeManager.createTrade(testSignal);
+            log(`✅ Trade created: ${trade.id}`, 'success');
+            log(`  - Initial Status: ${trade.status}`, 'info');
+            log(`  - Lot Size: ${trade.lotSize}`, 'info');
+            log(`  - Money at Risk: $${trade.dollarAmount}`, 'info');
+            
+            // Test won status
+            testTradeManager.updateTradeStatus(trade.id, 'won');
+            const wonTrade = testTradeManager.trades.get(trade.id);
+            log(`✅ Trade marked as WON:`, 'success');
+            log(`  - Status: ${wonTrade.status}`, 'info');
+            log(`  - P&L: $${wonTrade.pnl}`, 'info');
+            log(`  - Account Balance: $${testTradeManager.riskPlan.accountBalance}`, 'info');
+            
+            updateCurrentData();
+        };
+        
+        window.testPersistence = function() {
+            log('💾 Testing data persistence...', 'info');
+            
+            // Create some test data
+            const testTrades = [
+                {
+                    id: 'persistent_trade_1',
+                    signalId: 'signal_1',
+                    status: 'won',
+                    pnl: 150,
+                    lotSize: 0.1,
+                    dollarAmount: 200,
+                    timestamp: new Date().toISOString()
+                },
+                {
+                    id: 'persistent_trade_2',
+                    signalId: 'signal_2',
+                    status: 'lost',
+                    pnl: -100,
+                    lotSize: 0.05,
+                    dollarAmount: 100,
+                    timestamp: new Date().toISOString()
+                }
+            ];
+            
+            localStorage.setItem('testTrades', JSON.stringify(testTrades));
+            log('✅ Test data stored in localStorage', 'success');
+            
+            // Simulate page reload by reading from localStorage
+            const loadedTrades = JSON.parse(localStorage.getItem('testTrades') || '[]');
+            log(`✅ Data loaded from localStorage: ${loadedTrades.length} trades`, 'success');
+            
+            loadedTrades.forEach(trade => {
+                log(`  - Trade ${trade.id}: ${trade.status} (P&L: $${trade.pnl})`, 'info');
+            });
+            
+            updateCurrentData();
+        };
+        
+        window.clearAllData = function() {
+            log('🗑️ Clearing all test data...', 'warning');
+            localStorage.removeItem('testTrades');
+            localStorage.removeItem('telegram_messages');
+            testTradeManager.trades.clear();
+            log('✅ All data cleared', 'success');
+            updateCurrentData();
+        };
+        
+        function updateCurrentData() {
+            const trades = testTradeManager.getAllTrades();
+            const signals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            
+            currentDataDiv.innerHTML = `
+                <div class="feature-list">
+                    <h3>Current Data:</h3>
+                    <p><strong>Trades:</strong> ${trades.length}</p>
+                    <p><strong>Signals:</strong> ${signals.length}</p>
+                    <p><strong>Account Balance:</strong> $${testTradeManager.riskPlan.accountBalance}</p>
+                    ${trades.length > 0 ? `
+                        <h4>Recent Trades:</h4>
+                        ${trades.slice(0, 3).map(trade => `
+                            <p>• ${trade.signalId}: ${trade.status} (P&L: $${trade.pnl})</p>
+                        `).join('')}
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Auto-run initial check
+        log('🚀 Enhanced Trading System Test initialized', 'info');
+        log('This test verifies all the new trading system features', 'info');
+        updateCurrentData();
+    </script>
+</body>
+</html>

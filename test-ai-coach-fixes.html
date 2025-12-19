@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coach Fixes Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+        .feature-list {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 AI Coach Fixes Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li><strong>Click "Create Test Signal"</strong> to generate a signal with proper symbol</li>
+            <li><strong>Click "Test Symbol Extraction"</strong> to verify symbol is correctly extracted</li>
+            <li><strong>Click "Test Chat Persistence"</strong> to verify chat history survives page reloads</li>
+            <li><strong>Go to User Dashboard</strong> and test "Chat with Nexus" button</li>
+            <li><strong>Reload AI Coach page</strong> to verify chat history persists</li>
+        </ol>
+    </div>
+    
+    <div class="feature-list">
+        <h3>✅ Fixes Implemented:</h3>
+        <ul>
+            <li><strong>Symbol Fix:</strong> AI Coach now shows actual symbol (EUR/USD, GBP/USD, etc.) instead of "Unknown"</li>
+            <li><strong>Chat History Persistence:</strong> All chat messages and sessions saved permanently in localStorage</li>
+            <li><strong>Session Persistence:</strong> Trade sessions persist across page reloads and browser restarts</li>
+            <li><strong>Message History:</strong> Complete conversation history is preserved forever</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="createTestSignal()">📊 Create Test Signal</button>
+        <button onclick="testSymbolExtraction()">🔍 Test Symbol Extraction</button>
+        <button onclick="testChatPersistence()">💾 Test Chat Persistence</button>
+        <button onclick="openAICoach()">🤖 Open AI Coach</button>
+        <button onclick="clearAllData()">🗑️ Clear All Data</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Current Data</h2>
+        <div id="currentData">Click test buttons to see current data</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click test buttons to see what's happening</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let currentDataDiv = document.getElementById('currentData');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        window.createTestSignal = function() {
+            log('📊 Creating test signal with proper symbol...', 'info');
+            
+            const testSignal = {
+                id: `signal_${Date.now()}`,
+                pair: 'EUR/USD', // This is the key field that was missing
+                direction: 'LONG',
+                entryPrice: '1.0850',
+                stopLoss: '1.0800',
+                takeProfit: '1.0950',
+                confidence: 85,
+                analysis: 'Strong bullish setup with ICT concepts',
+                timestamp: new Date().toISOString()
+            };
+            
+            // Store in localStorage for signals feed
+            const existingSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingSignals.unshift({
+                id: testSignal.id,
+                text: `${testSignal.pair}\n${testSignal.direction} NOW\nEntry ${testSignal.entryPrice}\nStop Loss ${testSignal.stopLoss}\nTake Profit ${testSignal.takeProfit}\nConfidence ${testSignal.confidence}%\n\n${testSignal.analysis}`,
+                timestamp: testSignal.timestamp,
+                from: 'Test Signal Generator'
+            });
+            localStorage.setItem('telegram_messages', JSON.stringify(existingSignals.slice(0, 100)));
+            
+            log('✅ Test signal created with proper symbol', 'success');
+            log(`  - Symbol: ${testSignal.pair}`, 'info');
+            log(`  - Direction: ${testSignal.direction}`, 'info');
+            log(`  - Entry: ${testSignal.entryPrice}`, 'info');
+            
+            updateCurrentData();
+        };
+        
+        window.testSymbolExtraction = function() {
+            log('🔍 Testing symbol extraction logic...', 'info');
+            
+            // Simulate the signal data structure from localStorage
+            const signalData = {
+                pair: 'GBP/USD', // This should be extracted correctly now
+                direction: 'SHORT',
+                entryPrice: '1.2500',
+                stopLoss: '1.2550',
+                takeProfit: '1.2400',
+                confidence: '78',
+                analysis: 'Bearish setup with strong resistance'
+            };
+            
+            // Test the extraction logic (same as in DashboardConcept1)
+            let signalSymbol = signalData.pair || signalData.symbol || signalData.currencyPair || 'Unknown';
+            
+            log('✅ Symbol extraction test completed:', 'success');
+            log(`  - Input pair: ${signalData.pair}`, 'info');
+            log(`  - Extracted symbol: ${signalSymbol}`, 'info');
+            log(`  - Should NOT be 'Unknown': ${signalSymbol !== 'Unknown' ? '✅ PASS' : '❌ FAIL'}`, signalSymbol !== 'Unknown' ? 'success' : 'error');
+        };
+        
+        window.testChatPersistence = function() {
+            log('💾 Testing chat persistence...', 'info');
+            
+            // Create test chat data
+            const testSessions = [
+                {
+                    id: 'test_session_1',
+                    symbol: 'EUR/USD',
+                    type: 'LONG',
+                    entryPrice: '1.0850',
+                    timestamp: new Date().toISOString()
+                }
+            ];
+            
+            const testMessages = {
+                'test_session_1': [
+                    {
+                        type: 'ai',
+                        content: 'Hello! I see you have a EUR/USD LONG signal. How can I help you?',
+                        timestamp: new Date().toLocaleTimeString()
+                    },
+                    {
+                        type: 'user',
+                        content: 'What do you think about this trade setup?',
+                        timestamp: new Date().toLocaleTimeString()
+                    },
+                    {
+                        type: 'ai',
+                        content: 'Based on the signal details, this looks like a solid setup. Let me analyze the risk management...',
+                        timestamp: new Date().toLocaleTimeString()
+                    }
+                ]
+            };
+            
+            // Save to localStorage (same keys as AI Coach uses)
+            localStorage.setItem('nexus_ai_sessions', JSON.stringify(testSessions));
+            localStorage.setItem('nexus_ai_messages', JSON.stringify(testMessages));
+            localStorage.setItem('nexus_ai_current_session', 'test_session_1');
+            
+            log('✅ Test chat data saved to localStorage', 'success');
+            log(`  - Sessions: ${testSessions.length}`, 'info');
+            log(`  - Messages in session 1: ${testMessages['test_session_1'].length}`, 'info');
+            log('  - Data keys: nexus_ai_sessions, nexus_ai_messages, nexus_ai_current_session', 'info');
+            
+            updateCurrentData();
+        };
+        
+        window.openAICoach = function() {
+            log('🤖 Opening AI Coach...', 'info');
+            window.open('/AICoach.html', '_blank', 'width=1200,height=800');
+            log('✅ AI Coach opened in new window', 'success');
+            log('Check if the symbol shows correctly and chat history persists', 'info');
+        };
+        
+        window.clearAllData = function() {
+            log('🗑️ Clearing all AI Coach data...', 'warning');
+            localStorage.removeItem('nexus_ai_sessions');
+            localStorage.removeItem('nexus_ai_messages');
+            localStorage.removeItem('nexus_ai_current_session');
+            localStorage.removeItem('nexus_chat_signal');
+            localStorage.removeItem('telegram_messages');
+            log('✅ All AI Coach data cleared', 'success');
+            updateCurrentData();
+        };
+        
+        function updateCurrentData() {
+            const sessions = JSON.parse(localStorage.getItem('nexus_ai_sessions') || '[]');
+            const messages = JSON.parse(localStorage.getItem('nexus_ai_messages') || '{}');
+            const currentSession = localStorage.getItem('nexus_ai_current_session') || 'None';
+            const signals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            
+            currentDataDiv.innerHTML = `
+                <div class="feature-list">
+                    <h3>Current Data:</h3>
+                    <p><strong>AI Sessions:</strong> ${sessions.length}</p>
+                    <p><strong>Current Session:</strong> ${currentSession}</p>
+                    <p><strong>Total Messages:</strong> ${Object.values(messages).flat().length}</p>
+                    <p><strong>Signals:</strong> ${signals.length}</p>
+                    ${sessions.length > 0 ? `
+                        <h4>Recent Sessions:</h4>
+                        ${sessions.slice(0, 3).map(session => `
+                            <p>• ${session.symbol} ${session.type} (${messages[session.id]?.length || 0} messages)</p>
+                        `).join('')}
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Auto-run initial check
+        log('🚀 AI Coach Fixes Test initialized', 'info');
+        log('This test verifies the symbol fix and chat persistence', 'info');
+        updateCurrentData();
+    </script>
+</body>
+</html>

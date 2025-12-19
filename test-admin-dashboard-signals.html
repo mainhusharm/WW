@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard Signal Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .signal-display {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .signal-item {
+            background: #2a2a2a;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #4ade80;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+        .admin-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .admin-links a {
+            color: #60a5fa;
+            text-decoration: none;
+            padding: 8px 12px;
+            border: 1px solid #60a5fa;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .admin-links a:hover {
+            background: #60a5fa;
+            color: #1a1a1a;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Admin Dashboard Signal Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li><strong>Clear localStorage first</strong> - Click "Clear All Signals" below</li>
+            <li><strong>Go to Admin Dashboard</strong> - Click one of the admin links below</li>
+            <li><strong>Generate signals</strong> - Use the manual signal form or start real data analysis</li>
+            <li><strong>Check results</strong> - Come back to this page and click "Check Real Signals"</li>
+            <li><strong>Verify user dashboard</strong> - Check if signals appear in user dashboard</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>Admin Dashboard Links</h2>
+        <div class="admin-links">
+            <a href="http://localhost:5175/admin" target="_blank">Main Admin Dashboard</a>
+            <a href="http://localhost:5175/admin#forex" target="_blank">Forex Tab (Manual Signals)</a>
+            <a href="http://localhost:5175/admin#forex-data" target="_blank">Forex Data Tab (Real Analysis)</a>
+            <a href="http://localhost:5175/admin#crypto" target="_blank">Crypto Tab</a>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="checkRealSignals()">Check Real Signals</button>
+        <button onclick="clearAllSignals()">Clear All Signals</button>
+        <button onclick="startMonitoring()">Start Monitoring</button>
+        <button onclick="stopMonitoring()">Stop Monitoring</button>
+        <button onclick="simulateAdminSignal()">Simulate Admin Signal</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Real Signals from Admin Dashboard</h2>
+        <div id="signalsDisplay">No signals found yet. Generate signals from admin dashboard first.</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Live Monitoring Log</h2>
+        <div id="logs" class="log">Monitoring not started. Click "Start Monitoring" to begin.</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let signalsDisplay = document.getElementById('signalsDisplay');
+        let monitoringInterval = null;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function updateSignalsDisplay() {
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            
+            if (telegramMessages.length === 0 && adminSignals.length === 0) {
+                signalsDisplay.innerHTML = '<div class="signal-item">No signals found yet. Generate signals from admin dashboard first.</div>';
+                return;
+            }
+            
+            let html = `<h3>Found ${telegramMessages.length} signals in telegram_messages and ${adminSignals.length} in admin_generated_signals:</h3>`;
+            
+            // Show telegram_messages (these should come from admin dashboard)
+            telegramMessages.forEach((signal, index) => {
+                html += `
+                    <div class="signal-item">
+                        <strong>Signal ${index + 1} (telegram_messages):</strong><br>
+                        <strong>From:</strong> ${signal.from}<br>
+                        <strong>Time:</strong> ${new Date(signal.timestamp).toLocaleString()}<br>
+                        <strong>Content:</strong><br>
+                        <pre style="white-space: pre-wrap; margin-top: 5px;">${signal.text}</pre>
+                    </div>
+                `;
+            });
+            
+            // Show admin_generated_signals (these should come from forex signal generator)
+            adminSignals.forEach((signal, index) => {
+                html += `
+                    <div class="signal-item">
+                        <strong>Signal ${index + 1} (admin_generated_signals):</strong><br>
+                        <strong>From:</strong> ${signal.from || 'Forex Signal Generator'}<br>
+                        <strong>Time:</strong> ${new Date(signal.timestamp).toLocaleString()}<br>
+                        <strong>Content:</strong><br>
+                        <pre style="white-space: pre-wrap; margin-top: 5px;">${signal.text}</pre>
+                    </div>
+                `;
+            });
+            
+            signalsDisplay.innerHTML = html;
+        }
+        
+        window.checkRealSignals = function() {
+            log('🔍 Checking for real signals from admin dashboard...', 'info');
+            
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            
+            log(`📊 Signal Count:`, 'info');
+            log(`  - telegram_messages: ${telegramMessages.length} signals`, 'info');
+            log(`  - admin_generated_signals: ${adminSignals.length} signals`, 'info');
+            
+            if (telegramMessages.length > 0 || adminSignals.length > 0) {
+                log('✅ Found signals in localStorage!', 'success');
+                telegramMessages.forEach((msg, index) => {
+                    log(`  ${index + 1}. [${msg.from}] ${msg.text.substring(0, 50)}...`, 'info');
+                });
+                adminSignals.forEach((msg, index) => {
+                    log(`  ${index + 1}. [Admin Generated] ${msg.text.substring(0, 50)}...`, 'info');
+                });
+            } else {
+                log('❌ No signals found. Make sure admin dashboard is generating signals.', 'warning');
+            }
+            
+            updateSignalsDisplay();
+        };
+        
+        window.clearAllSignals = function() {
+            log('🗑️ Clearing all signals...', 'warning');
+            
+            localStorage.removeItem('telegram_messages');
+            localStorage.removeItem('admin_generated_signals');
+            localStorage.removeItem('user_signals');
+            localStorage.removeItem('forexBotStatus');
+            
+            log('✅ All signals cleared', 'success');
+            updateSignalsDisplay();
+        };
+        
+        window.simulateAdminSignal = function() {
+            log('🎯 Simulating admin dashboard signal...', 'info');
+            
+            const adminSignal = {
+                id: Date.now(),
+                text: `EUR/USD\nBUY NOW\nEntry 1.08500\nStop Loss 1.08200\nTake Profit 1.09100\nConfidence 85%\n\nSimulated admin signal for testing`,
+                timestamp: new Date().toISOString(),
+                from: 'Admin Dashboard (Simulated)',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(adminSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+            
+            window.dispatchEvent(new CustomEvent('newSignalSent', { 
+                detail: adminSignal 
+            }));
+            
+            log('✅ Simulated admin signal created and stored', 'success');
+            updateSignalsDisplay();
+        };
+        
+        window.startMonitoring = function() {
+            if (monitoringInterval) {
+                log('⚠️ Monitoring already started', 'warning');
+                return;
+            }
+            
+            log('🔄 Starting live monitoring of localStorage...', 'info');
+            log('This will check for new signals every 2 seconds', 'info');
+            
+            monitoringInterval = setInterval(() => {
+                const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+                const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+                if (telegramMessages.length > 0 || adminSignals.length > 0) {
+                    log(`📡 Detected ${telegramMessages.length + adminSignals.length} signals in localStorage`, 'success');
+                    updateSignalsDisplay();
+                }
+            }, 2000);
+            
+            log('✅ Live monitoring started', 'success');
+        };
+        
+        window.stopMonitoring = function() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                log('⏹️ Live monitoring stopped', 'info');
+            } else {
+                log('⚠️ Monitoring not started', 'warning');
+            }
+        };
+        
+        // Listen for signal events
+        window.addEventListener('newSignalSent', (event) => {
+            log(`📡 Received newSignalSent event from: ${event.detail.from}`, 'success');
+            updateSignalsDisplay();
+        });
+        
+        window.addEventListener('newSignalGenerated', (event) => {
+            log(`📡 Received newSignalGenerated event from: ${event.detail.from}`, 'success');
+            updateSignalsDisplay();
+        });
+        
+        // Auto-run initial check
+        log('🚀 Admin Dashboard Signal Test initialized', 'info');
+        log('Follow the instructions above to test real admin dashboard signal generation', 'info');
+        checkRealSignals();
+    </script>
+</body>
+</html>

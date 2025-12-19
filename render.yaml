@@ -1,0 +1,50 @@
+# Render Deployment Configuration
+services:
+  # Backend API Service
+  - type: web
+    name: flask-test-app
+    env: python3
+    plan: starter
+    buildCommand: pip install Flask==2.2.2 flask-cors psycopg2-binary
+    startCommand: python3 enhanced_postgresql_api_routes.py
+    envVars:
+      - key: PORT
+        value: 10000
+
+  # Frontend API Proxy Service
+  - type: web
+    name: trading-cors-proxy
+    env: python3
+    plan: starter
+    buildCommand: pip install -r requirements-cors-proxy.txt
+    startCommand: python cors_proxy.py
+    envVars:
+      - key: BACKEND_URL
+        value: https://backend-topb.on.render.com
+      - key: PORT
+        value: 5001
+
+  # Frontend Service
+  - type: web
+    name: trading-frontend
+    env: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: VITE_API_URL
+        value: https://trading-cors-proxy-gbhz.on.render.com
+      - key: NODE_ENV
+        value: production
+
+  # PostgreSQL API Service
+  - type: web
+    name: postgresql-api
+    env: python
+    buildCommand: pip install -r requirements_direct_api.txt
+    startCommand: python deploy_working_api.py
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://pghero_dpg_d2v9i7er433s73f0878g_a_cdm2_user:f2Q7RBmy1OeYVDdOvTTDos4TKNe0rd0V@dpg-d37pd8nfte5s73bfl1ug-a.oregon-postgres.render.com/pghero_dpg_d2v9i7er433s73f0878g_a_cdm2
+      - key: PORT
+        value: 10000
