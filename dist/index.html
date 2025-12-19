@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="shortcut icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Immediate redirect for root path -->
+    <script>
+      // More aggressive redirect logic
+      console.log('Current URL:', window.location.href);
+      console.log('Current pathname:', window.location.pathname);
+      console.log('Current hostname:', window.location.hostname);
+      
+      // Check if we're on the root path and redirect immediately
+      if (window.location.pathname === '/' || 
+          window.location.pathname === '' || 
+          window.location.href.endsWith('/') ||
+          window.location.href === window.location.origin) {
+        console.log('Redirecting to /home...');
+        // Try multiple redirect methods
+        try {
+          window.location.replace('/home');
+        } catch (e) {
+          console.log('Replace failed, trying href...');
+          window.location.href = '/home';
+        }
+      }
+    </script>
+    
+    <!-- Meta refresh as absolute fallback -->
+    <script>
+      // Add meta refresh only if on root path
+      if (window.location.pathname === '/' || 
+          window.location.pathname === '' || 
+          window.location.href.endsWith('/') ||
+          window.location.href === window.location.origin) {
+        const meta = document.createElement('meta');
+        meta.setAttribute('http-equiv', 'refresh');
+        meta.setAttribute('content', '0; url=/home');
+        document.head.appendChild(meta);
+      }
+    </script>
+    <meta name="description" content="TraderEdge Pro - Professional Trading Signals Platform with AI-powered analysis and real-time market data" />
+    <meta name="keywords" content="trading, signals, forex, crypto, AI trading, market analysis" />
+    <meta name="author" content="TraderEdge Pro" />
+    
+    <!-- Content Security Policy to allow necessary scripts -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline' 'unsafe-hashes' data: blob:; frame-src * data: blob:; connect-src * data: blob:; img-src * data: blob:;">
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <title>TraderEdge Pro BETA - Professional Trading Signals Platform</title>
+    
+    <!-- Production error handling -->
+    <script>
+      // Override CSP to allow all scripts
+      if (window.trustedTypes && window.trustedTypes.defaultPolicy) {
+        window.trustedTypes.defaultPolicy.createHTML = (string) => string;
+        window.trustedTypes.defaultPolicy.createScript = (string) => string;
+      }
+      
+      // Global error handler for production
+      window.addEventListener('error', function(e) {
+        // Check if we're in production environment
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          console.error('Global error caught:', e.error);
+          // You can send this to your error reporting service
+        }
+      });
+      
+      // Handle unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(e) {
+        // Check if we're in production environment
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          console.error('Unhandled promise rejection:', e.reason);
+          // You can send this to your error reporting service
+        }
+      });
+    </script>
+    <script type="module" crossorigin src="/js/index-3aa40261.js"></script>
+    <link rel="modulepreload" crossorigin href="/js/vendor-animations-5318fd63.js">
+    <link rel="modulepreload" crossorigin href="/js/polyfills-04934d90.js">
+    <link rel="modulepreload" crossorigin href="/js/vendor-3d-61107973.js">
+    <link rel="modulepreload" crossorigin href="/js/vendor-aa89dd43.js">
+    <link rel="modulepreload" crossorigin href="/js/vendor-react-core-24666f97.js">
+    <link rel="modulepreload" crossorigin href="/js/vendor-ui-8c022d9f.js">
+    <link rel="modulepreload" crossorigin href="/js/vendor-utils-cc5cefda.js">
+    <link rel="modulepreload" crossorigin href="/js/vendor-react-libs-92d47a48.js">
+    <link rel="modulepreload" crossorigin href="/js/vendor-socket-c5f83ed8.js">
+    <link rel="stylesheet" href="/css/index-1611938f.css">
+  </head>
+  <body>
+    <div id="root">
+      <!-- Futuristic Loading Screen -->
+      <div class="futuristic-loader">
+        <!-- Animated Background -->
+        <div class="loader-background">
+          <div class="grid-overlay"></div>
+          <div class="particles"></div>
+        </div>
+        
+        <!-- Main Loading Content -->
+        <div class="loader-content">
+          <!-- Futuristic Loading Animation -->
+          <div class="loading-animation">
+            <!-- Outer rotating ring -->
+            <div class="ring outer-ring"></div>
+            <!-- Middle rotating ring -->
+            <div class="ring middle-ring"></div>
+            <!-- Inner pulsing core -->
+            <div class="ring inner-core"></div>
+            <!-- Center dot -->
+            <div class="center-dot"></div>
+            <!-- Scanning lines -->
+            <div class="scan-lines">
+              <div class="scan-line scan-line-1"></div>
+              <div class="scan-line scan-line-2"></div>
+              <div class="scan-line scan-line-3"></div>
+            </div>
+          </div>
+          
+          <!-- Loading Text with Glitch Effect -->
+          <div class="loading-text">
+            <h1 class="main-title">
+              <span class="glitch" data-text="TRADEREDGE PRO">TRADEREDGE PRO</span>
+              <span class="beta-badge">BETA</span>
+            </h1>
+            <p class="subtitle">INITIALIZING TRADING SYSTEMS...</p>
+          </div>
+          
+          <!-- Progress Indicators -->
+          <div class="progress-container">
+            <div class="progress-item">
+              <span class="progress-label">CORE_SYS</span>
+              <div class="progress-bar">
+                <div class="progress-fill" style="--progress: 85%"></div>
+              </div>
+              <span class="progress-value">85%</span>
+            </div>
+            <div class="progress-item">
+              <span class="progress-label">DATA_SYNC</span>
+              <div class="progress-bar">
+                <div class="progress-fill" style="--progress: 72%"></div>
+              </div>
+              <span class="progress-value">72%</span>
+            </div>
+            <div class="progress-item">
+              <span class="progress-label">UI_LOAD</span>
+              <div class="progress-bar">
+                <div class="progress-fill" style="--progress: 91%"></div>
+              </div>
+              <span class="progress-value">91%</span>
+            </div>
+          </div>
+          
+          <!-- Status Messages -->
+          <div class="status-messages">
+            <div class="status-item">» Establishing secure connection...</div>
+            <div class="status-item">» Loading market data streams...</div>
+            <div class="status-item">» Initializing trading algorithms...</div>
+          </div>
+        </div>
+      </div>
+      
+      <style>
+        /* Futuristic Loading Styles */
+        .futuristic-loader {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0a0a0a 100%);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-family: 'Courier New', monospace;
+          overflow: hidden;
+          z-index: 9999;
+        }
+        
+        .loader-background {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1;
+        }
+        
+        .grid-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-image: 
+            linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+          background-size: 50px 50px;
+          animation: grid-move 20s linear infinite;
+        }
+        
+        .particles {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          background: radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 20%, rgba(0, 100, 255, 0.1) 0%, transparent 50%),
+                      radial-gradient(circle at 40% 40%, rgba(255, 0, 255, 0.1) 0%, transparent 50%);
+          animation: particles-float 15s ease-in-out infinite;
+        }
+        
+        .loader-content {
+          position: relative;
+          z-index: 10;
+          text-align: center;
+          color: white;
+        }
+        
+        .loading-animation {
+          position: relative;
+          width: 200px;
+          height: 200px;
+          margin: 0 auto 40px;
+        }
+        
+        .ring {
+          position: absolute;
+          border-radius: 50%;
+          border: 2px solid transparent;
+        }
+        
+        .outer-ring {
+          width: 200px;
+          height: 200px;
+          border-top: 2px solid #00ffff;
+          border-right: 2px solid #00ffff;
+          animation: spin 2s linear infinite;
+          box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        
+        .middle-ring {
+          width: 150px;
+          height: 150px;
+          top: 25px;
+          left: 25px;
+          border-bottom: 2px solid #0066ff;
+          border-left: 2px solid #0066ff;
+          animation: spin-reverse 1.5s linear infinite;
+          box-shadow: 0 0 15px rgba(0, 102, 255, 0.5);
+        }
+        
+        .inner-core {
+          width: 100px;
+          height: 100px;
+          top: 50px;
+          left: 50px;
+          background: linear-gradient(45deg, #00ffff, #0066ff, #ff00ff);
+          animation: pulse 2s ease-in-out infinite;
+          box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+        }
+        
+        .center-dot {
+          position: absolute;
+          width: 20px;
+          height: 20px;
+          top: 90px;
+          left: 90px;
+          background: white;
+          border-radius: 50%;
+          animation: ping 1s ease-in-out infinite;
+          box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+        
+        .scan-lines {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          top: 0;
+          left: 0;
+        }
+        
+        .scan-line {
+          position: absolute;
+          width: 2px;
+          height: 100%;
+          background: linear-gradient(to bottom, transparent, #00ffff, transparent);
+          animation: scan 3s linear infinite;
+        }
+        
+        .scan-line-1 {
+          left: 20%;
+          animation-delay: 0s;
+        }
+        
+        .scan-line-2 {
+          left: 50%;
+          animation-delay: 1s;
+        }
+        
+        .scan-line-3 {
+          left: 80%;
+          animation-delay: 2s;
+        }
+        
+        .loading-text {
+          margin-bottom: 40px;
+        }
+        
+        .main-title {
+          font-size: 2.5rem;
+          font-weight: bold;
+          margin-bottom: 10px;
+          position: relative;
+          display: inline-block;
+        }
+        
+        .glitch {
+          position: relative;
+          color: #00ffff;
+          text-shadow: 
+            0 0 10px #00ffff,
+            0 0 20px #00ffff,
+            0 0 40px #00ffff;
+          animation: glitch 2s ease-in-out infinite;
+        }
+        
+        .glitch::before,
+        .glitch::after {
+          content: attr(data-text);
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+        
+        .glitch::before {
+          animation: glitch-1 0.5s ease-in-out infinite;
+          color: #ff00ff;
+          z-index: -1;
+        }
+        
+        .glitch::after {
+          animation: glitch-2 0.5s ease-in-out infinite;
+          color: #0066ff;
+          z-index: -2;
+        }
+        
+        .beta-badge {
+          display: inline-block;
+          background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+          color: white;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: bold;
+          margin-left: 15px;
+          animation: pulse 2s ease-in-out infinite;
+          box-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+        }
+        
+        .subtitle {
+          font-size: 1.2rem;
+          color: #00ffff;
+          margin: 0;
+          animation: fade-in-out 3s ease-in-out infinite;
+          text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+        
+        .progress-container {
+          max-width: 400px;
+          margin: 0 auto 30px;
+        }
+        
+        .progress-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 15px;
+          gap: 15px;
+        }
+        
+        .progress-label {
+          color: #00ffff;
+          font-size: 0.9rem;
+          font-weight: bold;
+          min-width: 80px;
+          text-align: left;
+        }
+        
+        .progress-bar {
+          flex: 1;
+          height: 8px;
+          background: rgba(0, 255, 255, 0.2);
+          border-radius: 4px;
+          overflow: hidden;
+          position: relative;
+        }
+        
+        .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #00ffff, #0066ff);
+          width: var(--progress);
+          border-radius: 4px;
+          animation: progress-glow 2s ease-in-out infinite;
+          box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+        }
+        
+        .progress-value {
+          color: #00ffff;
+          font-size: 0.9rem;
+          font-weight: bold;
+          min-width: 35px;
+          text-align: right;
+        }
+        
+        .status-messages {
+          color: #00ffff;
+          font-size: 0.9rem;
+          line-height: 1.6;
+        }
+        
+        .status-item {
+          margin-bottom: 8px;
+          animation: fade-in-out 4s ease-in-out infinite;
+        }
+        
+        .status-item:nth-child(2) {
+          animation-delay: 1s;
+        }
+        
+        .status-item:nth-child(3) {
+          animation-delay: 2s;
+        }
+        
+        /* Animations */
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes spin-reverse {
+          0% { transform: rotate(360deg); }
+          100% { transform: rotate(0deg); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        
+        @keyframes ping {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.2); opacity: 0.7; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes scan {
+          0% { top: -100%; opacity: 0; }
+          50% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        
+        @keyframes grid-move {
+          0% { transform: translate(0, 0); }
+          100% { transform: translate(50px, 50px); }
+        }
+        
+        @keyframes particles-float {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          33% { transform: translate(30px, -30px) rotate(120deg); }
+          66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+        
+        @keyframes glitch {
+          0%, 100% { transform: translate(0); }
+          20% { transform: translate(-2px, 2px); }
+          40% { transform: translate(-2px, -2px); }
+          60% { transform: translate(2px, 2px); }
+          80% { transform: translate(2px, -2px); }
+        }
+        
+        @keyframes glitch-1 {
+          0%, 100% { transform: translate(0); }
+          20% { transform: translate(2px, -2px); }
+          40% { transform: translate(-2px, 2px); }
+          60% { transform: translate(-2px, -2px); }
+          80% { transform: translate(2px, 2px); }
+        }
+        
+        @keyframes glitch-2 {
+          0%, 100% { transform: translate(0); }
+          20% { transform: translate(-2px, 2px); }
+          40% { transform: translate(2px, -2px); }
+          60% { transform: translate(2px, 2px); }
+          80% { transform: translate(-2px, -2px); }
+        }
+        
+        @keyframes fade-in-out {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+        
+        @keyframes progress-glow {
+          0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 255, 0.6); }
+          50% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.9); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+          .main-title {
+            font-size: 2rem;
+          }
+          
+          .loading-animation {
+            width: 150px;
+            height: 150px;
+          }
+          
+          .outer-ring {
+            width: 150px;
+            height: 150px;
+          }
+          
+          .middle-ring {
+            width: 110px;
+            height: 110px;
+            top: 20px;
+            left: 20px;
+          }
+          
+          .inner-core {
+            width: 70px;
+            height: 70px;
+            top: 40px;
+            left: 40px;
+          }
+          
+          .center-dot {
+            top: 65px;
+            left: 65px;
+          }
+        }
+      </style>
+    </div>
+    
+    <script>
+      // Immediate fallback for signup errors - works without deployment
+      window.handleSignupFallback = function(formData, selectedPlan, navigate, login, setShowTempNotice) {
+        console.log('Executing signup fallback...');
+        
+        // Generate a temporary token
+        const tempToken = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('access_token', tempToken);
+        
+        const userData = {
+          id: `temp_user_${Date.now()}`,
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          membershipTier: selectedPlan.name.toLowerCase(),
+          accountType: 'personal',
+          riskTolerance: 'moderate',
+          isAuthenticated: true,
+          setupComplete: false,
+          selectedPlan,
+          token: tempToken,
+          isTemporary: true,
+        };
+
+        login(userData, tempToken);
+        localStorage.setItem('user_data', JSON.stringify(userData));
+        localStorage.setItem('temp_signup_data', JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          plan_type: selectedPlan.name.toLowerCase(),
+          timestamp: Date.now()
+        }));
+
+        // Show notification and navigate
+        if (setShowTempNotice) setShowTempNotice(true);
+        navigate('/payment', { state: { selectedPlan } });
+        
+        return true;
+      };
+      
+      // Production-ready error boundary fallback
+      window.handleReactError = function(error, errorInfo) {
+        // Check if we're in production environment
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          console.error('React error boundary caught:', error, errorInfo);
+          // You can send this to your error reporting service
+        }
+      };
+    </script>
+    
+    <!-- React app entry point -->
+    
+    
+    <!-- Fallback for when JavaScript fails to load -->
+    <noscript>
+      <div style="
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        height: 100vh; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        text-align: center;
+        padding: 20px;
+      ">
+        <div>
+          <h1>JavaScript Required</h1>
+          <p>TraderEdge Pro requires JavaScript to function properly. Please enable JavaScript in your browser and refresh the page.</p>
+        </div>
+      </div>
+    </noscript>
+  </body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Customer Service Dashboard Users</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 4px; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 4px; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 4px; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover { background: #0056b3; }
+        .user-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Fix Customer Service Dashboard Users</h1>
+    <p>This tool will populate localStorage with test users that have questionnaire data, making them visible in the Customer Service Dashboard.</p>
+
+    <div class="container">
+        <h2>Quick Fix Actions</h2>
+        <button onclick="populateTestUsers()">Create Test Users in localStorage</button>
+        <button onclick="checkCurrentUsers()">Check Current Users</button>
+        <button onclick="clearAllData()">Clear All Data</button>
+        <button onclick="openDashboard()">Open Customer Service Dashboard</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `container ${type}`;
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            resultsDiv.appendChild(logEntry);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function populateTestUsers() {
+            log('👥 Creating test users with questionnaire data...', 'info');
+            
+            const testUsers = [
+                {
+                    id: 'test-user-1',
+                    email: 'conservative.trader@test.com',
+                    fullName: 'Conservative Trader',
+                    selectedPlan: { 
+                        name: 'premium',
+                        price: 499,
+                        period: 'monthly',
+                        description: 'Premium trading signals'
+                    },
+                    questionnaireData: {
+                        hasAccount: 'yes',
+                        propFirm: 'FTMO',
+                        accountType: 'Challenge',
+                        accountSize: 10000,
+                        riskPercentage: 0.5,
+                        riskRewardRatio: '2',
+                        tradingExperience: 'Beginner',
+                        riskTolerance: 'Low',
+                        tradingGoals: 'Learn Trading',
+                        tradesPerDay: '1-2',
+                        tradingSession: 'London',
+                        cryptoAssets: ['BTC', 'ETH'],
+                        forexAssets: ['EURUSD', 'GBPUSD']
+                    },
+                    riskManagementPlan: {
+                        riskPerTrade: 0.5,
+                        dailyLossLimit: 1.5,
+                        maxLoss: 500,
+                        profitTarget: 800,
+                        tradesToPass: 8,
+                        riskAmount: 50,
+                        profitAmount: 100,
+                        consecutiveLossesLimit: 3,
+                        generatedAt: new Date().toISOString()
+                    },
+                    cryptoAssets: ['BTC', 'ETH'],
+                    forexPairs: ['EURUSD', 'GBPUSD'],
+                    otherForexPair: null,
+                    screenshotUrl: null,
+                    tradingPreferences: {
+                        tradingSession: 'London',
+                        tradesPerDay: '1-2',
+                        riskTolerance: 'Low',
+                        tradingExperience: 'Beginner'
+                    },
+                    status: 'PENDING',
+                    planActivatedAt: null,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    payments: [],
+                    trades: []
+                },
+                {
+                    id: 'test-user-2',
+                    email: 'aggressive.trader@test.com',
+                    fullName: 'Aggressive Trader',
+                    selectedPlan: { 
+                        name: 'premium',
+                        price: 499,
+                        period: 'monthly',
+                        description: 'Premium trading signals'
+                    },
+                    questionnaireData: {
+                        hasAccount: 'no',
+                        propFirm: 'MyForexFunds',
+                        accountType: 'Evaluation',
+                        accountSize: 100000,
+                        riskPercentage: 3.0,
+                        riskRewardRatio: '3',
+                        tradingExperience: 'Advanced',
+                        riskTolerance: 'High',
+                        tradingGoals: 'Maximum Profits',
+                        tradesPerDay: '5+',
+                        tradingSession: 'New York',
+                        cryptoAssets: ['BTC', 'ETH', 'SOL', 'ADA', 'DOT'],
+                        forexAssets: ['XAUUSD', 'XAGUSD', 'USOIL', 'US30', 'US100']
+                    },
+                    riskManagementPlan: {
+                        riskPerTrade: 3.0,
+                        dailyLossLimit: 9.0,
+                        maxLoss: 5000,
+                        profitTarget: 8000,
+                        tradesToPass: 4,
+                        riskAmount: 3000,
+                        profitAmount: 9000,
+                        consecutiveLossesLimit: 2,
+                        generatedAt: new Date().toISOString()
+                    },
+                    cryptoAssets: ['BTC', 'ETH', 'SOL', 'ADA', 'DOT'],
+                    forexPairs: ['XAUUSD', 'XAGUSD', 'USOIL', 'US30', 'US100'],
+                    otherForexPair: null,
+                    screenshotUrl: null,
+                    tradingPreferences: {
+                        tradingSession: 'New York',
+                        tradesPerDay: '5+',
+                        riskTolerance: 'High',
+                        tradingExperience: 'Advanced'
+                    },
+                    status: 'PENDING',
+                    planActivatedAt: null,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    payments: [],
+                    trades: []
+                },
+                {
+                    id: 'test-user-3',
+                    email: 'moderate.trader@test.com',
+                    fullName: 'Moderate Trader',
+                    selectedPlan: { 
+                        name: 'premium',
+                        price: 499,
+                        period: 'monthly',
+                        description: 'Premium trading signals'
+                    },
+                    questionnaireData: {
+                        hasAccount: 'yes',
+                        propFirm: 'TopStep',
+                        accountType: 'Instant',
+                        accountSize: 25000,
+                        riskPercentage: 1.5,
+                        riskRewardRatio: '2.5',
+                        tradingExperience: 'Intermediate',
+                        riskTolerance: 'Medium',
+                        tradingGoals: 'Steady Growth',
+                        tradesPerDay: '2-3',
+                        tradingSession: 'Asian',
+                        cryptoAssets: ['BTC', 'ETH', 'LTC'],
+                        forexAssets: ['USDJPY', 'AUDUSD', 'NZDUSD']
+                    },
+                    riskManagementPlan: {
+                        riskPerTrade: 1.5,
+                        dailyLossLimit: 4.5,
+                        maxLoss: 1250,
+                        profitTarget: 2000,
+                        tradesToPass: 4,
+                        riskAmount: 375,
+                        profitAmount: 938,
+                        consecutiveLossesLimit: 3,
+                        generatedAt: new Date().toISOString()
+                    },
+                    cryptoAssets: ['BTC', 'ETH', 'LTC'],
+                    forexPairs: ['USDJPY', 'AUDUSD', 'NZDUSD'],
+                    otherForexPair: null,
+                    screenshotUrl: null,
+                    tradingPreferences: {
+                        tradingSession: 'Asian',
+                        tradesPerDay: '2-3',
+                        riskTolerance: 'Medium',
+                        tradingExperience: 'Intermediate'
+                    },
+                    status: 'PENDING',
+                    planActivatedAt: null,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    payments: [],
+                    trades: []
+                }
+            ];
+            
+            // Save users to localStorage in the format expected by CustomerServiceDashboard
+            localStorage.setItem('users', JSON.stringify(testUsers));
+            
+            // Also save individual user data for compatibility
+            testUsers.forEach(user => {
+                localStorage.setItem(`user_${user.id}`, JSON.stringify(user));
+                localStorage.setItem(`questionnaire_${user.email}`, JSON.stringify(user.questionnaireData));
+                localStorage.setItem(`risk_plan_${user.email}`, JSON.stringify(user.riskManagementPlan));
+            });
+            
+            log(`✅ Created ${testUsers.length} test users in localStorage:`, 'success');
+            testUsers.forEach(user => {
+                log(`   - ${user.fullName} (${user.email}): ${user.questionnaireData.propFirm}, $${user.questionnaireData.accountSize.toLocaleString()}, ${user.questionnaireData.riskPercentage}% risk`, 'info');
+            });
+            
+            log('🔄 Now go to the Customer Service Dashboard and refresh the page to see the users!', 'success');
+        }
+
+        function checkCurrentUsers() {
+            log('🔍 Checking current users in localStorage...', 'info');
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            log(`Found ${users.length} users in localStorage:`, 'info');
+            
+            if (users.length > 0) {
+                users.forEach(user => {
+                    const hasQuestionnaire = user.questionnaireData ? '✅' : '❌';
+                    const hasRiskPlan = user.riskManagementPlan ? '✅' : '❌';
+                    log(`   - ${user.fullName} (${user.email}): Questionnaire ${hasQuestionnaire}, Risk Plan ${hasRiskPlan}`, 'info');
+                });
+            } else {
+                log('No users found in localStorage', 'warning');
+            }
+        }
+
+        function clearAllData() {
+            localStorage.clear();
+            log('🗑️ Cleared all localStorage data', 'warning');
+        }
+
+        function openDashboard() {
+            const dashboardUrl = 'http://localhost:5175/customer-service-dashboard';
+            log(`🌐 Opening Customer Service Dashboard: ${dashboardUrl}`, 'info');
+            window.open(dashboardUrl, '_blank');
+        }
+
+        // Auto-run initial check
+        window.onload = function() {
+            log('🚀 Fix Dashboard Users Tool loaded', 'info');
+            checkCurrentUsers();
+        };
+    </script>
+</body>
+</html>

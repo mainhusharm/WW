@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend vs Frontend Log Analysis Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card h3 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .comparison-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .comparison-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-good { background: #48bb78; }
+        .status-warning { background: #ed8936; }
+        .status-error { background: #f56565; }
+
+        .log-entry {
+            background: #f7fafc;
+            border-left: 4px solid #4299e1;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .log-timestamp {
+            color: #718096;
+            font-weight: bold;
+        }
+
+        .log-level {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .log-level-info { background: #bee3f8; color: #2b6cb0; }
+        .log-level-warn { background: #faf089; color: #744210; }
+        .log-level-error { background: #fed7d7; color: #c53030; }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3182ce;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+
+        .real-time-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background: #48bb78;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4299e1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Backend vs Frontend Log Analysis</h1>
+            <p>Real-time monitoring and comparison of execution patterns</p>
+        </div>
+
+        <div class="real-time-indicator">
+            <div class="pulse"></div>
+            <span>Live monitoring active</span>
+        </div>
+
+        <div class="filter-section">
+            <h3>📊 Filter & Controls</h3>
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label for="timeRange">Time Range</label>
+                    <select id="timeRange">
+                        <option value="1h">Last Hour</option>
+                        <option value="6h">Last 6 Hours</option>
+                        <option value="24h" selected>Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="logLevel">Log Level</label>
+                    <select id="logLevel">
+                        <option value="all">All Levels</option>
+                        <option value="error">Errors Only</option>
+                        <option value="warn">Warnings & Errors</option>
+                        <option value="info">Info, Warnings & Errors</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="service">Service</label>
+                    <select id="service">
+                        <option value="all">All Services</option>
+                        <option value="backend">Backend Only</option>
+                        <option value="frontend">Frontend Only</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="toggleRealTime()">⏸️ Pause Real-time</button>
+            <button class="btn btn-secondary" onclick="exportLogs()">📥 Export Logs</button>
+            <button class="btn btn-secondary" onclick="generateReport()">📋 Generate Report</button>
+            <button class="btn btn-secondary" onclick="clearLogs()">🗑️ Clear Logs</button>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Performance Comparison Card -->
+            <div class="card">
+                <h3>⚡ Performance Comparison</h3>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="backendAvgTime">--</div>
+                        <div class="metric-label">Backend Avg (ms)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="frontendAvgTime">--</div>
+                        <div class="metric-label">Frontend Avg (ms)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="performanceDiff">--</div>
+                        <div class="metric-label">Difference (%)</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Error Analysis Card -->
+            <div class="card">
+                <h3>❌ Error Analysis</h3>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="backendErrors">--</div>
+                        <div class="metric-label">Backend Errors</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="frontendErrors">--</div>
+                        <div class="metric-label">Frontend Errors</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="errorRate">--</div>
+                        <div class="metric-label">Error Rate (/hr)</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="errorChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Request Timeline Card -->
+            <div class="card">
+                <h3>📈 Request Timeline</h3>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="totalRequests">--</div>
+                        <div class="metric-label">Total Requests</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="avgResponseTime">--</div>
+                        <div class="metric-label">Avg Response (ms)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="successRate">--</div>
+                        <div class="metric-label">Success Rate (%)</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- User Behavior Card -->
+            <div class="card">
+                <h3>👤 User Behavior</h3>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="totalSessions">--</div>
+                        <div class="metric-label">Total Sessions</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="avgSessionTime">--</div>
+                        <div class="metric-label">Avg Session (min)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="actionsPerSession">--</div>
+                        <div class="metric-label">Actions/Session</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="userBehaviorChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Comparison Table -->
+        <div class="card">
+            <h3>📊 Detailed Comparison</h3>
+            <table class="comparison-table" id="comparisonTable">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Backend</th>
+                        <th>Frontend</th>
+                        <th>Difference</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="comparisonTableBody">
+                    <!-- Dynamic content -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Recent Logs -->
+        <div class="card">
+            <h3>📝 Recent Log Entries</h3>
+            <div id="recentLogs">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading recent logs...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let isRealTimeActive = true;
+        let refreshInterval;
+        let performanceChart, errorChart, timelineChart, userBehaviorChart;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadInitialData();
+            startRealTimeUpdates();
+        });
+
+        function initializeCharts() {
+            // Performance Chart
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(perfCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Response Time', 'Memory Usage', 'CPU Usage', 'Database Queries'],
+                    datasets: [{
+                        label: 'Backend',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: 'rgba(66, 153, 225, 0.8)',
+                        borderColor: 'rgba(66, 153, 225, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Frontend',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: 'rgba(72, 187, 120, 0.8)',
+                        borderColor: 'rgba(72, 187, 120, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Error Chart
+            const errorCtx = document.getElementById('errorChart').getContext('2d');
+            errorChart = new Chart(errorCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Backend Errors', 'Frontend Errors'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['rgba(245, 101, 101, 0.8)', 'rgba(237, 137, 54, 0.8)'],
+                        borderColor: ['rgba(245, 101, 101, 1)', 'rgba(237, 137, 54, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Timeline Chart
+            const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+            timelineChart = new Chart(timelineCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Requests per Hour',
+                        data: [],
+                        borderColor: 'rgba(66, 153, 225, 1)',
+                        backgroundColor: 'rgba(66, 153, 225, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // User Behavior Chart
+            const userCtx = document.getElementById('userBehaviorChart').getContext('2d');
+            userBehaviorChart = new Chart(userCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Page Views', 'Clicks', 'API Calls', 'Errors', 'Session Duration'],
+                    datasets: [{
+                        label: 'User Activity',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(72, 187, 120, 0.2)',
+                        borderColor: 'rgba(72, 187, 120, 1)',
+                        pointBackgroundColor: 'rgba(72, 187, 120, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(72, 187, 120, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadInitialData() {
+            try {
+                // Simulate loading data (replace with actual API calls)
+                const mockData = generateMockData();
+                updateDashboard(mockData);
+                updateRecentLogs(mockData.recentLogs);
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+            }
+        }
+
+        function generateMockData() {
+            const now = new Date();
+            const hours = Array.from({length: 24}, (_, i) => {
+                const hour = new Date(now.getTime() - (23-i) * 60 * 60 * 1000);
+                return hour.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+            });
+
+            return {
+                performance: {
+                    backend: {
+                        responseTime: Math.random() * 200 + 50,
+                        memoryUsage: Math.random() * 100 + 200,
+                        cpuUsage: Math.random() * 50 + 20,
+                        dbQueries: Math.random() * 100 + 50
+                    },
+                    frontend: {
+                        responseTime: Math.random() * 100 + 20,
+                        memoryUsage: Math.random() * 50 + 50,
+                        cpuUsage: Math.random() * 30 + 10,
+                        dbQueries: 0
+                    }
+                },
+                errors: {
+                    backend: Math.floor(Math.random() * 20),
+                    frontend: Math.floor(Math.random() * 15)
+                },
+                requests: {
+                    total: Math.floor(Math.random() * 1000) + 500,
+                    avgResponseTime: Math.random() * 150 + 50,
+                    successRate: Math.random() * 20 + 80,
+                    timeline: hours.map(() => Math.floor(Math.random() * 50) + 10)
+                },
+                userBehavior: {
+                    totalSessions: Math.floor(Math.random() * 200) + 100,
+                    avgSessionTime: Math.random() * 30 + 10,
+                    actionsPerSession: Math.random() * 20 + 5,
+                    activity: [
+                        Math.random() * 100,
+                        Math.random() * 100,
+                        Math.random() * 100,
+                        Math.random() * 100,
+                        Math.random() * 100
+                    ]
+                },
+                recentLogs: generateMockLogs()
+            };
+        }
+
+        function generateMockLogs() {
+            const logLevels = ['info', 'warn', 'error'];
+            const services = ['backend', 'frontend'];
+            const messages = [
+                'User authentication successful',
+                'Database query executed',
+                'API request processed',
+                'Component rendered',
+                'Error occurred in payment processing',
+                'Signal generated successfully',
+                'User session expired',
+                'Cache miss detected'
+            ];
+
+            return Array.from({length: 10}, (_, i) => ({
+                timestamp: new Date(Date.now() - i * 60000).toISOString(),
+                level: logLevels[Math.floor(Math.random() * logLevels.length)],
+                service: services[Math.floor(Math.random() * services.length)],
+                message: messages[Math.floor(Math.random() * messages.length)]
+            }));
+        }
+
+        function updateDashboard(data) {
+            // Update performance metrics
+            document.getElementById('backendAvgTime').textContent = Math.round(data.performance.backend.responseTime);
+            document.getElementById('frontendAvgTime').textContent = Math.round(data.performance.frontend.responseTime);
+            
+            const diff = ((data.performance.backend.responseTime - data.performance.frontend.responseTime) / 
+                         data.performance.frontend.responseTime * 100).toFixed(1);
+            document.getElementById('performanceDiff').textContent = diff + '%';
+
+            // Update error metrics
+            document.getElementById('backendErrors').textContent = data.errors.backend;
+            document.getElementById('frontendErrors').textContent = data.errors.frontend;
+            document.getElementById('errorRate').textContent = Math.round((data.errors.backend + data.errors.frontend) / 24);
+
+            // Update request metrics
+            document.getElementById('totalRequests').textContent = data.requests.total;
+            document.getElementById('avgResponseTime').textContent = Math.round(data.requests.avgResponseTime);
+            document.getElementById('successRate').textContent = Math.round(data.requests.successRate);
+
+            // Update user behavior metrics
+            document.getElementById('totalSessions').textContent = data.userBehavior.totalSessions;
+            document.getElementById('avgSessionTime').textContent = Math.round(data.userBehavior.avgSessionTime);
+            document.getElementById('actionsPerSession').textContent = Math.round(data.userBehavior.actionsPerSession);
+
+            // Update charts
+            updateCharts(data);
+            updateComparisonTable(data);
+        }
+
+        function updateCharts(data) {
+            // Performance Chart
+            performanceChart.data.datasets[0].data = [
+                data.performance.backend.responseTime,
+                data.performance.backend.memoryUsage,
+                data.performance.backend.cpuUsage,
+                data.performance.backend.dbQueries
+            ];
+            performanceChart.data.datasets[1].data = [
+                data.performance.frontend.responseTime,
+                data.performance.frontend.memoryUsage,
+                data.performance.frontend.cpuUsage,
+                data.performance.frontend.dbQueries
+            ];
+            performanceChart.update();
+
+            // Error Chart
+            errorChart.data.datasets[0].data = [data.errors.backend, data.errors.frontend];
+            errorChart.update();
+
+            // Timeline Chart
+            const hours = Array.from({length: 24}, (_, i) => {
+                const hour = new Date(Date.now() - (23-i) * 60 * 60 * 1000);
+                return hour.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+            });
+            timelineChart.data.labels = hours;
+            timelineChart.data.datasets[0].data = data.requests.timeline;
+            timelineChart.update();
+
+            // User Behavior Chart
+            userBehaviorChart.data.datasets[0].data = data.userBehavior.activity;
+            userBehaviorChart.update();
+        }
+
+        function updateComparisonTable(data) {
+            const tbody = document.getElementById('comparisonTableBody');
+            tbody.innerHTML = '';
+
+            const comparisons = [
+                {
+                    metric: 'Response Time (ms)',
+                    backend: Math.round(data.performance.backend.responseTime),
+                    frontend: Math.round(data.performance.frontend.responseTime),
+                    unit: 'ms'
+                },
+                {
+                    metric: 'Memory Usage (MB)',
+                    backend: Math.round(data.performance.backend.memoryUsage),
+                    frontend: Math.round(data.performance.frontend.memoryUsage),
+                    unit: 'MB'
+                },
+                {
+                    metric: 'Error Count',
+                    backend: data.errors.backend,
+                    frontend: data.errors.frontend,
+                    unit: 'count'
+                },
+                {
+                    metric: 'Success Rate (%)',
+                    backend: Math.round(data.requests.successRate),
+                    frontend: Math.round(data.requests.successRate * 0.95), // Simulate slight difference
+                    unit: '%'
+                }
+            ];
+
+            comparisons.forEach(comp => {
+                const diff = Math.abs(comp.backend - comp.frontend);
+                const percentageDiff = ((diff / Math.min(comp.backend, comp.frontend)) * 100).toFixed(1);
+                const status = diff < (comp.backend * 0.1) ? 'good' : diff < (comp.backend * 0.3) ? 'warning' : 'error';
+
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${comp.metric}</td>
+                    <td>${comp.backend} ${comp.unit}</td>
+                    <td>${comp.frontend} ${comp.unit}</td>
+                    <td>${percentageDiff}%</td>
+                    <td><span class="status-indicator status-${status}"></span>${status.toUpperCase()}</td>
+                `;
+            });
+        }
+
+        function updateRecentLogs(logs) {
+            const container = document.getElementById('recentLogs');
+            container.innerHTML = '';
+
+            logs.forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.innerHTML = `
+                    <div class="log-timestamp">${new Date(log.timestamp).toLocaleString()}</div>
+                    <span class="log-level log-level-${log.level}">${log.level}</span>
+                    <strong>${log.service.toUpperCase()}</strong>: ${log.message}
+                `;
+                container.appendChild(logEntry);
+            });
+        }
+
+        function startRealTimeUpdates() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            
+            refreshInterval = setInterval(() => {
+                if (isRealTimeActive) {
+                    loadInitialData();
+                }
+            }, 5000); // Update every 5 seconds
+        }
+
+        function toggleRealTime() {
+            isRealTimeActive = !isRealTimeActive;
+            const button = event.target;
+            button.textContent = isRealTimeActive ? '⏸️ Pause Real-time' : '▶️ Resume Real-time';
+            
+            if (isRealTimeActive) {
+                startRealTimeUpdates();
+            } else {
+                clearInterval(refreshInterval);
+            }
+        }
+
+        function refreshData() {
+            loadInitialData();
+        }
+
+        function exportLogs() {
+            const data = generateMockData();
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                performance: data.performance,
+                errors: data.errors,
+                requests: data.requests,
+                userBehavior: data.userBehavior,
+                logs: data.recentLogs
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `log-analysis-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function generateReport() {
+            const report = generateAnalysisReport();
+            const blob = new Blob([report], {type: 'text/markdown'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `log-analysis-report-${new Date().toISOString().split('T')[0]}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function generateAnalysisReport() {
+            const data = generateMockData();
+            return `# Backend vs Frontend Log Analysis Report
+Generated on: ${new Date().toLocaleString()}
+
+## Executive Summary
+- Backend Response Time: ${Math.round(data.performance.backend.responseTime)}ms
+- Frontend Response Time: ${Math.round(data.performance.frontend.responseTime)}ms
+- Backend Errors: ${data.errors.backend}
+- Frontend Errors: ${data.errors.frontend}
+- Total Requests: ${data.requests.total}
+- Success Rate: ${Math.round(data.requests.successRate)}%
+
+## Key Findings
+- Performance difference: ${((data.performance.backend.responseTime - data.performance.frontend.responseTime) / data.performance.frontend.responseTime * 100).toFixed(1)}%
+- Error rate: ${Math.round((data.errors.backend + data.errors.frontend) / 24)} errors per hour
+- User engagement: ${Math.round(data.userBehavior.avgSessionTime)} minutes average session
+
+## Recommendations
+- Monitor backend performance for optimization opportunities
+- Implement better error handling for frontend components
+- Continue monitoring user engagement metrics
+`;
+        }
+
+        function clearLogs() {
+            if (confirm('Are you sure you want to clear all logs? This action cannot be undone.')) {
+                document.getElementById('recentLogs').innerHTML = '<div class="loading"><div class="spinner"></div><p>Clearing logs...</p></div>';
+                setTimeout(() => {
+                    document.getElementById('recentLogs').innerHTML = '<p>Logs cleared successfully.</p>';
+                }, 1000);
+            }
+        }
+
+        // Handle filter changes
+        document.getElementById('timeRange').addEventListener('change', refreshData);
+        document.getElementById('logLevel').addEventListener('change', refreshData);
+        document.getElementById('service').addEventListener('change', refreshData);
+    </script>
+</body>
+</html>

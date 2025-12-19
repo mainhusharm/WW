@@ -1,0 +1,40 @@
+#!/bin/bash
+# Force redeploy by updating the service
+echo "🔄 Force Redeploy Instructions"
+echo "=============================="
+
+echo "Your current service is running the OLD API (simple schema)"
+echo "You need to redeploy with the ENHANCED API (enhanced schema)"
+echo ""
+
+echo "📋 Option 1: Manual Redeploy via Render Dashboard"
+echo "1. Go to https://dashboard.render.com"
+echo "2. Find your 'flask-test-app' service"
+echo "3. Click 'Manual Deploy' → 'Deploy latest commit'"
+echo "4. Or change the start command to: python3 enhanced_postgresql_api_routes.py"
+echo "5. Add build command: pip install Flask==2.2.2 flask-cors psycopg2-binary"
+echo ""
+
+echo "📋 Option 2: Force Redeploy via Git Push"
+echo "If your service is connected to git:"
+echo "1. Make a small change to trigger redeploy:"
+echo "   echo '# Force redeploy' >> .force-redeploy"
+echo "   git add .force-redeploy"
+echo "   git commit -m 'Force redeploy enhanced API'"
+echo "   git push"
+echo ""
+
+echo "📋 Option 3: Check Service Logs"
+echo "In Render dashboard:"
+echo "1. Go to your service logs"
+echo "2. Look for startup messages"
+echo "3. Check if it says 'Enhanced PostgreSQL API' or 'simple_app.py'"
+echo ""
+
+echo "✅ After redeploy, test this:"
+echo "curl -s 'https://backend-topb.onrender.com/api/enhanced/health' | python3 -m json.tool"
+echo ""
+echo "Should show: \"schema\": \"enhanced\""
+echo ""
+echo "🚀 Then test signup:"
+echo "curl -s -X POST 'https://backend-topb.onrender.com/api/enhanced/signup' -H 'Content-Type: application/json' -d '{\"first_name\": \"Test\", \"last_name\": \"User\", \"email\": \"test@example.com\", \"password\": \"testpassword123\"}' | python3 -m json.tool"

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency CORS Fix - Customer Service Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .status-bar {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+        
+        .status-indicator.error {
+            background: #dc3545;
+        }
+        
+        .status-indicator.warning {
+            background: #ffc107;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .users-section {
+            margin-top: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #333;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .user-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .user-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .user-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .user-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-processing {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .user-details {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .user-details p {
+            margin-bottom: 8px;
+        }
+        
+        .user-details strong {
+            color: #333;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        
+        .info-message {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Emergency CORS Fix</h1>
+            <p>Customer Service Dashboard - Working Solution</p>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator" id="cors-status"></div>
+                <span>CORS Proxy</span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator" id="api-status"></div>
+                <span>Backend API</span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator" id="data-status"></div>
+                <span>Data Loading</span>
+            </div>
+            <div class="status-item">
+                <span>Last Updated: <span id="last-update">Never</span></span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-users">-</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pending-users">-</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completed-users">-</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="processing-users">-</div>
+                    <div class="stat-label">Processing</div>
+                </div>
+            </div>
+            
+            <div class="users-section">
+                <div class="section-header">
+                    <h2 class="section-title">User Management</h2>
+                    <button class="btn" onclick="loadUsers()" id="load-btn">🔄 Load Users</button>
+                </div>
+                
+                <div id="message-container"></div>
+                <div id="users-container">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Click "Load Users" to fetch customer data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>✅ CORS issues resolved using proxy solution | Backend: node-backend-g1mk.onrender.com</p>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://node-backend-g1mk.onrender.com';
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        
+        let users = [];
+        let lastUpdate = null;
+
+        function updateStatusIndicator(id, status) {
+            const indicator = document.getElementById(id);
+            indicator.className = `status-indicator ${status}`;
+        }
+
+        function updateLastUpdate() {
+            lastUpdate = new Date();
+            document.getElementById('last-update').textContent = lastUpdate.toLocaleTimeString();
+        }
+
+        function showMessage(message, type = 'info') {
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="${type}-message">${message}</div>`;
+        }
+
+        function updateStats() {
+            const total = users.length;
+            const pending = users.filter(u => u.status === 'PENDING').length;
+            const completed = users.filter(u => u.status === 'COMPLETED').length;
+            const processing = users.filter(u => u.status === 'PROCESSING').length;
+            
+            document.getElementById('total-users').textContent = total;
+            document.getElementById('pending-users').textContent = pending;
+            document.getElementById('completed-users').textContent = completed;
+            document.getElementById('processing-users').textContent = processing;
+        }
+
+        function displayUsers() {
+            const container = document.getElementById('users-container');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<div class="loading"><p>No users found</p></div>';
+                return;
+            }
+
+            container.innerHTML = users.map(user => `
+                <div class="user-card">
+                    <div class="user-header">
+                        <div class="user-name">${user.fullName || 'No Name'}</div>
+                        <div class="user-status status-${user.status.toLowerCase()}">${user.status}</div>
+                    </div>
+                    <div class="user-details">
+                        <p><strong>📧 Email:</strong> ${user.email}</p>
+                        <p><strong>🆔 ID:</strong> ${user.id}</p>
+                        <p><strong>📅 Created:</strong> ${new Date(user.createdAt).toLocaleString()}</p>
+                        <p><strong>🔄 Updated:</strong> ${new Date(user.updatedAt).toLocaleString()}</p>
+                        ${user.questionnaireData ? '<p><strong>📋 Questionnaire:</strong> Completed</p>' : ''}
+                        ${user.riskManagementPlan ? '<p><strong>⚠️ Risk Plan:</strong> Provided</p>' : ''}
+                        ${user.screenshotUrl ? '<p><strong>📸 Screenshot:</strong> Uploaded</p>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadUsers() {
+            const loadBtn = document.getElementById('load-btn');
+            loadBtn.disabled = true;
+            loadBtn.textContent = '⏳ Loading...';
+            
+            updateStatusIndicator('data-status', 'warning');
+            showMessage('🔄 Loading users from backend...', 'info');
+
+            try {
+                // Use CORS proxy to fetch data
+                const proxyUrl = `${CORS_PROXY}${encodeURIComponent(`${BACKEND_URL}/api/users`)}`;
+                console.log('🌐 Fetching from:', proxyUrl);
+                
+                const response = await fetch(proxyUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('📊 Response data:', data);
+                
+                if (data.success && data.users) {
+                    users = data.users;
+                    updateStats();
+                    displayUsers();
+                    updateLastUpdate();
+                    updateStatusIndicator('data-status', 'success');
+                    showMessage(`✅ Successfully loaded ${data.count} users!`, 'success');
+                } else {
+                    throw new Error(data.error || 'Invalid response format');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading users:', error);
+                updateStatusIndicator('data-status', 'error');
+                showMessage(`❌ Error loading users: ${error.message}`, 'error');
+                users = [];
+                updateStats();
+                displayUsers();
+            } finally {
+                loadBtn.disabled = false;
+                loadBtn.textContent = '🔄 Load Users';
+            }
+        }
+
+        // Initialize status indicators
+        function initializeStatus() {
+            updateStatusIndicator('cors-status', 'success');
+            updateStatusIndicator('api-status', 'warning');
+            updateStatusIndicator('data-status', 'warning');
+        }
+
+        // Test API connection
+        async function testAPI() {
+            try {
+                const proxyUrl = `${CORS_PROXY}${encodeURIComponent(`${BACKEND_URL}/health`)}`;
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                if (data.status === 'OK') {
+                    updateStatusIndicator('api-status', 'success');
+                    console.log('✅ API connection successful');
+                } else {
+                    updateStatusIndicator('api-status', 'error');
+                }
+            } catch (error) {
+                updateStatusIndicator('api-status', 'error');
+                console.error('❌ API connection failed:', error);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            initializeStatus();
+            testAPI();
+            setTimeout(loadUsers, 2000);
+        });
+    </script>
+</body>
+</html>

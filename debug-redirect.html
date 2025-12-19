@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Redirect</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Redirect Debug Information</h1>
+    
+    <div class="info">
+        <strong>Current URL:</strong> <span id="currentUrl"></span>
+    </div>
+    
+    <div class="info">
+        <strong>Pathname:</strong> <span id="pathname"></span>
+    </div>
+    
+    <div class="info">
+        <strong>Hostname:</strong> <span id="hostname"></span>
+    </div>
+    
+    <div class="info">
+        <strong>Origin:</strong> <span id="origin"></span>
+    </div>
+    
+    <div class="info">
+        <strong>Should Redirect:</strong> <span id="shouldRedirect"></span>
+    </div>
+    
+    <div class="info">
+        <strong>Redirect Test:</strong> <span id="redirectTest"></span>
+    </div>
+    
+    <button onclick="testRedirect()">Test Redirect to /home</button>
+    <button onclick="location.reload()">Reload Page</button>
+    
+    <script>
+        // Display current information
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('pathname').textContent = window.location.pathname;
+        document.getElementById('hostname').textContent = window.location.hostname;
+        document.getElementById('origin').textContent = window.location.origin;
+        
+        // Check if should redirect
+        const shouldRedirect = window.location.pathname === '/' || 
+                              window.location.pathname === '' || 
+                              window.location.href.endsWith('/') ||
+                              window.location.href === window.location.origin;
+        
+        document.getElementById('shouldRedirect').textContent = shouldRedirect ? 'YES' : 'NO';
+        document.getElementById('shouldRedirect').className = shouldRedirect ? 'success' : 'error';
+        
+        // Test redirect function
+        function testRedirect() {
+            try {
+                console.log('Testing redirect to /home...');
+                window.location.replace('/home');
+                document.getElementById('redirectTest').textContent = 'Redirect attempted';
+                document.getElementById('redirectTest').className = 'success';
+            } catch (e) {
+                document.getElementById('redirectTest').textContent = 'Redirect failed: ' + e.message;
+                document.getElementById('redirectTest').className = 'error';
+            }
+        }
+        
+        // Auto-redirect if on root path
+        if (shouldRedirect) {
+            console.log('Auto-redirecting to /home...');
+            setTimeout(() => {
+                window.location.replace('/home');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
