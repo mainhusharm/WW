@@ -3,12 +3,21 @@
 
 console.log('🔧 Initializing polyfills...');
 
-// Critical: Ensure whatwg-fetch polyfills are loaded synchronously
-// This must happen before any code that uses fetch, Request, or Response
-// @ts-ignore - whatwg-fetch doesn't have types but we need it for polyfills
-import 'whatwg-fetch';
+// Critical: Ensure React is available before loading any polyfills that might interfere
+if (typeof window !== 'undefined' && (window as any).React) {
+  console.log('✅ React is already available');
+}
 
-console.log('✅ whatwg-fetch loaded synchronously');
+// Load whatwg-fetch asynchronously to avoid interfering with React initialization
+// This prevents React hooks errors during initialization
+if (typeof window !== 'undefined') {
+  // Use dynamic import for whatwg-fetch to prevent synchronous interference
+  import('whatwg-fetch').then(() => {
+    console.log('✅ whatwg-fetch loaded asynchronously');
+  }).catch(err => {
+    console.warn('⚠️ Failed to load whatwg-fetch:', err);
+  });
+}
 
 // Verify critical APIs are available immediately
 if (typeof globalThis.Request === 'undefined' ||

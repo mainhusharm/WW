@@ -89,6 +89,7 @@
     "@types/react-dom": "^18.0.0",
     "@types/three": "^0.150.0",
     "@types/uuid": "^9.0.0",
+    "@types/whatwg-fetch": "^0.0.33",
     "eslint": "^8.0.0",
     "eslint-plugin-react": "^7.0.0",
     "eslint-plugin-react-hooks": "^4.0.0",
