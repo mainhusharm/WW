@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Form Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Frontend Form Test</h1>
+    <p>Test the frontend forms to see if they're connecting to the backend properly.</p>
+
+    <!-- Backend Status Check -->
+    <div class="test-section">
+        <h2>1. Backend Status Check</h2>
+        <button onclick="checkBackendStatus()">Check Backend Status</button>
+        <div id="backendStatus" class="result"></div>
+    </div>
+
+    <!-- Registration Form Test -->
+    <div class="test-section">
+        <h2>2. Registration Form Test</h2>
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="firstName">First Name:</label>
+                <input type="text" id="firstName" name="firstName" value="Test" required>
+            </div>
+            <div class="form-group">
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" name="lastName" value="User" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" value="test123" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="tel" id="phone" name="phone" value="1234567890">
+            </div>
+            <div class="form-group">
+                <label for="company">Company:</label>
+                <input type="text" id="company" name="company" value="Test Company">
+            </div>
+            <div class="form-group">
+                <label for="country">Country:</label>
+                <input type="text" id="country" name="country" value="US">
+            </div>
+            <button type="submit">Test Registration</button>
+        </form>
+        <div id="registrationResult" class="result"></div>
+    </div>
+
+    <!-- Questionnaire Form Test -->
+    <div class="test-section">
+        <h2>3. Questionnaire Form Test</h2>
+        <form id="questionnaireForm">
+            <div class="form-group">
+                <label for="propFirm">Prop Firm:</label>
+                <select id="propFirm" name="propFirm" required>
+                    <option value="">Select Prop Firm</option>
+                    <option value="FTMO">FTMO</option>
+                    <option value="The 5%ers">The 5%ers</option>
+                    <option value="Apex Trader Funding">Apex Trader Funding</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="accountType">Account Type:</label>
+                <select id="accountType" name="accountType" required>
+                    <option value="">Select Account Type</option>
+                    <option value="Challenge">Challenge</option>
+                    <option value="Funded">Funded</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="accountSize">Account Size:</label>
+                <input type="number" id="accountSize" name="accountSize" value="10000" required>
+            </div>
+            <div class="form-group">
+                <label for="riskPercentage">Risk Percentage:</label>
+                <input type="number" id="riskPercentage" name="riskPercentage" value="1" step="0.1" required>
+            </div>
+            <button type="submit">Test Questionnaire</button>
+        </form>
+        <div id="questionnaireResult" class="result"></div>
+    </div>
+
+    <!-- Payment Form Test -->
+    <div class="test-section">
+        <h2>4. Payment Form Test</h2>
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="paymentMethod">Payment Method:</label>
+                <select id="paymentMethod" name="paymentMethod" required>
+                    <option value="">Select Payment Method</option>
+                    <option value="crypto">Cryptocurrency</option>
+                    <option value="stripe">Credit Card</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="amount">Amount:</label>
+                <input type="number" id="amount" name="amount" value="99" required>
+            </div>
+            <div class="form-group">
+                <label for="currency">Currency:</label>
+                <select id="currency" name="currency" required>
+                    <option value="USDT">USDT</option>
+                    <option value="BTC">BTC</option>
+                    <option value="USD">USD</option>
+                </select>
+            </div>
+            <button type="submit">Test Payment</button>
+        </form>
+        <div id="paymentResult" class="result"></div>
+    </div>
+
+    <!-- Database Check -->
+    <div class="test-section">
+        <h2>5. Database Check</h2>
+        <button onclick="checkDatabase()">Check Database Contents</button>
+        <div id="databaseResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        
+        // Generate unique email
+        function generateUniqueEmail() {
+            return `test_${Date.now()}@example.com`;
+        }
+        
+        // Set unique email on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('email').value = generateUniqueEmail();
+        });
+
+        // Check backend status
+        async function checkBackendStatus() {
+            const resultDiv = document.getElementById('backendStatus');
+            resultDiv.textContent = 'Checking backend status...';
+            resultDiv.className = 'result info';
+            
+            try {
+                const response = await fetch('http://localhost:8080/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Backend is running!\n\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Backend error: ${response.status}\n\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Connection failed: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Test registration
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const resultDiv = document.getElementById('registrationResult');
+            resultDiv.textContent = 'Testing registration...';
+            resultDiv.className = 'result info';
+            
+            const formData = new FormData(this);
+            const userData = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch(`${API_BASE}/user/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Registration successful!\n\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Registration failed: ${response.status}\n\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Registration error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        });
+
+        // Test questionnaire
+        document.getElementById('questionnaireForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const resultDiv = document.getElementById('questionnaireResult');
+            resultDiv.textContent = 'Testing questionnaire...';
+            resultDiv.className = 'result info';
+            
+            const formData = new FormData(this);
+            const questionnaireData = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch(`${API_BASE}/user/questionnaire`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(questionnaireData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Questionnaire successful!\n\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Questionnaire failed: ${response.status}\n\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Questionnaire error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        });
+
+        // Test payment
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const resultDiv = document.getElementById('paymentResult');
+            resultDiv.textContent = 'Testing payment...';
+            resultDiv.className = 'result info';
+            
+            const formData = new FormData(this);
+            const paymentData = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch(`${API_BASE}/payment/verify-payment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Payment successful!\n\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Payment failed: ${response.status}\n\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Payment error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        });
+
+        // Check database
+        async function checkDatabase() {
+            const resultDiv = document.getElementById('databaseResult');
+            resultDiv.textContent = 'Checking database...';
+            resultDiv.className = 'result info';
+            
+            try {
+                const response = await fetch(`${API_BASE}/user/customers`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ Database check successful!\n\nFound ${data.length} users:\n\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `❌ Database check failed: ${response.status}\n\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Database check error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Auto-check backend status on page load
+        window.addEventListener('load', function() {
+            checkBackendStatus();
+        });
+    </script>
+</body>
+</html>

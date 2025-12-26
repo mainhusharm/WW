@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Signal Service Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: white; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #2d5a2d; }
+        .error { background: #5a2d2d; }
+        .info { background: #2d4a5a; }
+        pre { background: #333; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #4a90e2; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #357abd; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Enhanced Signal Service Test</h1>
+    <div>
+        <button onclick="testSignalService()">Test Signal Service</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <button onclick="forceLoadSignals()">Force Load Signals</button>
+    </div>
+    <div id="results"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+
+        // Mock the enhanced signal service for testing
+        class MockEnhancedSignalService {
+            constructor() {
+                this.signals = [];
+                this.callbacks = {};
+            }
+
+            setCallbacks(callbacks) {
+                this.callbacks = { ...this.callbacks, ...callbacks };
+            }
+
+            async initialize() {
+                addResult('🔄 Initializing mock signal service...', 'info');
+                try {
+                    await this.loadSignalsFromAPI();
+                    addResult('✅ Mock signal service initialized', 'success');
+                } catch (error) {
+                    addResult(`❌ Mock signal service initialization failed: ${error.message}`, 'error');
+                }
+            }
+
+            async loadSignalsFromAPI() {
+                addResult('🔄 Loading signals from API...', 'info');
+                
+                const endpoints = [
+                    'https://backend-bkt7.onrender.com/api/signals',
+                    'https://backend-bkt7.onrender.com/api/test/signals'
+                ];
+                
+                let signals = [];
+                let endpointUsed = '';
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        addResult(`🔍 Trying endpoint: ${endpoint}`, 'info');
+                        const response = await fetch(endpoint);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (Array.isArray(data)) {
+                                signals = data;
+                                endpointUsed = endpoint;
+                                break;
+                            } else if (data.signals && Array.isArray(data.signals)) {
+                                signals = data.signals;
+                                endpointUsed = endpoint;
+                                break;
+                            } else if (data.data && Array.isArray(data.data)) {
+                                signals = data.data;
+                                endpointUsed = endpoint;
+                                break;
+                            }
+                        }
+                    } catch (error) {
+                        addResult(`❌ Endpoint ${endpoint} failed: ${error.message}`, 'error');
+                        continue;
+                    }
+                }
+                
+                if (signals.length > 0) {
+                    addResult(`✅ Loaded ${signals.length} signals from ${endpointUsed}`, 'success');
+                    
+                    const existingSignalIds = new Set(this.signals.map(s => s.id));
+                    let newSignalsCount = 0;
+                    
+                    signals.forEach(signal => {
+                        if ((signal.source === 'admin_generated' || signal.source === 'bot_generated') && !existingSignalIds.has(signal.id)) {
+                            const transformedSignal = {
+                                id: signal.id,
+                                pair: signal.pair,
+                                symbol: signal.pair,
+                                direction: signal.direction === 'BUY' ? 'LONG' : signal.direction === 'SELL' ? 'SHORT' : signal.direction,
+                                action: signal.direction === 'LONG' || signal.direction === 'BUY' ? 'BUY' : 'SELL',
+                                entry: signal.entry_price,
+                                entryPrice: parseFloat(signal.entry_price) || 0,
+                                stopLoss: signal.stop_loss,
+                                takeProfit: signal.take_profit,
+                                timeframe: signal.timeframe || '1h',
+                                status: signal.status || 'active',
+                                createdAt: signal.created_at,
+                                description: signal.analysis || '',
+                                confidence: signal.confidence || 85,
+                                analysis: signal.analysis || 'Professional signal analysis',
+                                market: signal.market || 'forex',
+                                ictConcepts: signal.ict_concepts || [],
+                                is_recommended: signal.confidence > 80
+                            };
+                            
+                            this.signals.push(transformedSignal);
+                            this.callbacks.onSignalReceived?.(transformedSignal);
+                            newSignalsCount++;
+                        }
+                    });
+                    
+                    if (newSignalsCount > 0) {
+                        addResult(`✅ Found ${newSignalsCount} new signals`, 'success');
+                    } else {
+                        addResult('ℹ️ No new signals found', 'info');
+                    }
+                } else {
+                    addResult('⚠️ No signals found in any endpoint', 'error');
+                }
+            }
+
+            getPersistentSignals() {
+                return [...this.signals];
+            }
+
+            getSignalStats() {
+                const total = this.signals.length;
+                const recent = this.signals.filter(s => {
+                    const signalDate = new Date(s.createdAt);
+                    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                    return signalDate > weekAgo;
+                }).length;
+                
+                return {
+                    total,
+                    recent,
+                    delivered: total
+                };
+            }
+
+            async forceLoadSignals() {
+                await this.loadSignalsFromAPI();
+            }
+        }
+
+        const mockService = new MockEnhancedSignalService();
+
+        async function testSignalService() {
+            clearResults();
+            addResult('🔄 Starting enhanced signal service test...', 'info');
+            
+            // Set up callbacks
+            mockService.setCallbacks({
+                onSignalReceived: (signal) => {
+                    addResult(`📡 New signal received: ${signal.pair} ${signal.direction}`, 'success');
+                },
+                onConnected: () => {
+                    addResult('✅ Connected to signal service', 'success');
+                },
+                onError: (error) => {
+                    addResult(`❌ Signal service error: ${error.message}`, 'error');
+                }
+            });
+
+            try {
+                await mockService.initialize();
+                
+                const signals = mockService.getPersistentSignals();
+                const stats = mockService.getSignalStats();
+                
+                addResult(`📊 Signal Statistics:`, 'info');
+                addResult(`Total: ${stats.total}`, 'info');
+                addResult(`Recent: ${stats.recent}`, 'info');
+                addResult(`Delivered: ${stats.delivered}`, 'info');
+                
+                if (signals.length > 0) {
+                    addResult('📋 Current Signals:', 'info');
+                    signals.forEach((signal, index) => {
+                        addResult(`
+                            <strong>Signal ${index + 1}:</strong><br>
+                            ID: ${signal.id}<br>
+                            Pair: ${signal.pair}<br>
+                            Direction: ${signal.direction}<br>
+                            Entry: ${signal.entry}<br>
+                            Stop Loss: ${signal.stopLoss}<br>
+                            Take Profit: ${signal.takeProfit}<br>
+                            Confidence: ${signal.confidence}%<br>
+                            Analysis: ${signal.analysis}<br>
+                            ICT Concepts: ${signal.ictConcepts?.join(', ') || 'None'}<br>
+                            <hr>
+                        `, 'info');
+                    });
+                } else {
+                    addResult('⚠️ No signals available', 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Test failed: ${error.message}`, 'error');
+                console.error('Test error:', error);
+            }
+        }
+
+        async function forceLoadSignals() {
+            addResult('🔄 Force loading signals...', 'info');
+            try {
+                await mockService.forceLoadSignals();
+                addResult('✅ Force load completed', 'success');
+            } catch (error) {
+                addResult(`❌ Force load failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run test on page load
+        window.addEventListener('load', () => {
+            testSignalService();
+        });
+    </script>
+</body>
+</html>

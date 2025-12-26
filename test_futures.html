@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futures Prices Test</title>
+</head>
+<body>
+    <h1>Futures Prices Test</h1>
+    <label for="timeframe">Select Timeframe:</label>
+    <select id="timeframe">
+        <option value="1m">1 Minute</option>
+        <option value="5m">5 Minutes</option>
+        <option value="15m">15 Minutes</option>
+        <option value="1hr">1 Hour</option>
+        <option value="4hr">4 Hours</option>
+        <option value="1D">1 Day</option>
+    </select>
+    <button onclick="fetchPrices()">Fetch Prices</button>
+    <pre id="result"></pre>
+
+    <script>
+        function fetchPrices() {
+            const timeframe = document.getElementById('timeframe').value;
+            fetch(`/api/futures/prices?timeframe=${timeframe}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('result').textContent = `Error: ${error}`;
+                });
+        }
+    </script>
+</body>
+</html>

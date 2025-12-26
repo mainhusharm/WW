@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        button.success { background: #059669; }
+        button.success:hover { background: #047857; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .signal-card {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Button Functionality Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li><strong>Go to User Dashboard:</strong> <a href="http://localhost:5175/dashboard/signals" target="_blank" style="color: #60a5fa;">http://localhost:5175/dashboard/signals</a></li>
+            <li><strong>Find a signal</strong> with "Add to Journal" and "Chat with Nexus" buttons</li>
+            <li><strong>Click "Add to Journal"</strong> - Should navigate to Trade Journal with pre-filled data</li>
+            <li><strong>Go back to signals</strong> and click "Chat with Nexus" - Should navigate to AI Coach</li>
+            <li><strong>Check the results</strong> below to see if the data was properly stored</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="checkJournalData()">Check Journal Data</button>
+        <button onclick="checkNexusData()">Check Nexus Chat Data</button>
+        <button onclick="clearTestData()">Clear Test Data</button>
+        <button onclick="simulateSignal()">Simulate Signal for Testing</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Journal Entry Data</h2>
+        <div id="journalData">Click "Check Journal Data" to see if journal entry was pre-filled</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Nexus Chat Data</h2>
+        <div id="nexusData">Click "Check Nexus Chat Data" to see if signal data was stored for AI Coach</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click the test buttons to see debug information</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let journalDataDiv = document.getElementById('journalData');
+        let nexusDataDiv = document.getElementById('nexusData');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        window.checkJournalData = function() {
+            log('🔍 Checking journal entry data...', 'info');
+            
+            // Check if there's a signal in localStorage that would trigger journal pre-fill
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            
+            if (telegramMessages.length > 0 || adminSignals.length > 0) {
+                const latestSignal = [...telegramMessages, ...adminSignals][0];
+                log('✅ Found signal data for journal pre-fill:', 'success');
+                log(`  - Symbol: ${latestSignal.symbol || latestSignal.currencyPair || 'Unknown'}`, 'info');
+                log(`  - Direction: ${latestSignal.direction || latestSignal.signalType || 'BUY'}`, 'info');
+                log(`  - Entry Price: ${latestSignal.entryPrice || latestSignal.entry || '0'}`, 'info');
+                log(`  - Analysis: ${latestSignal.analysis || latestSignal.text || 'No analysis'}`, 'info');
+                
+                journalDataDiv.innerHTML = `
+                    <div class="signal-card">
+                        <h3>Latest Signal Data (for journal pre-fill):</h3>
+                        <p><strong>Symbol:</strong> ${latestSignal.symbol || latestSignal.currencyPair || 'Unknown'}</p>
+                        <p><strong>Direction:</strong> ${latestSignal.direction || latestSignal.signalType || 'BUY'}</p>
+                        <p><strong>Entry Price:</strong> ${latestSignal.entryPrice || latestSignal.entry || '0'}</p>
+                        <p><strong>Stop Loss:</strong> ${latestSignal.stopLoss || '0'}</p>
+                        <p><strong>Take Profit:</strong> ${Array.isArray(latestSignal.takeProfit) ? latestSignal.takeProfit[0] : latestSignal.takeProfit || '0'}</p>
+                        <p><strong>Analysis:</strong> ${latestSignal.analysis || latestSignal.text || 'No analysis'}</p>
+                    </div>
+                `;
+            } else {
+                log('❌ No signal data found for journal pre-fill', 'warning');
+                journalDataDiv.innerHTML = '<div class="signal-card">No signal data found. Generate a signal first or click "Simulate Signal for Testing".</div>';
+            }
+        };
+        
+        window.checkNexusData = function() {
+            log('🔍 Checking Nexus chat data...', 'info');
+            
+            const nexusSignal = localStorage.getItem('nexus_chat_signal');
+            if (nexusSignal) {
+                try {
+                    const signalData = JSON.parse(nexusSignal);
+                    log('✅ Found Nexus chat signal data:', 'success');
+                    log(`  - Symbol: ${signalData.symbol}`, 'info');
+                    log(`  - Direction: ${signalData.direction}`, 'info');
+                    log(`  - Entry Price: ${signalData.entryPrice}`, 'info');
+                    log(`  - Confidence: ${signalData.confidence}%`, 'info');
+                    
+                    nexusDataDiv.innerHTML = `
+                        <div class="signal-card">
+                            <h3>Nexus Chat Signal Data:</h3>
+                            <p><strong>Symbol:</strong> ${signalData.symbol}</p>
+                            <p><strong>Direction:</strong> ${signalData.direction}</p>
+                            <p><strong>Entry Price:</strong> ${signalData.entryPrice}</p>
+                            <p><strong>Stop Loss:</strong> ${signalData.stopLoss}</p>
+                            <p><strong>Take Profit:</strong> ${signalData.takeProfit}</p>
+                            <p><strong>Confidence:</strong> ${signalData.confidence}%</p>
+                            <p><strong>Analysis:</strong> ${signalData.analysis}</p>
+                            <p><strong>Timestamp:</strong> ${new Date(signalData.timestamp).toLocaleString()}</p>
+                        </div>
+                    `;
+                } catch (e) {
+                    log('❌ Error parsing Nexus chat data', 'error');
+                    nexusDataDiv.innerHTML = '<div class="signal-card">Error parsing Nexus chat data</div>';
+                }
+            } else {
+                log('❌ No Nexus chat signal data found', 'warning');
+                nexusDataDiv.innerHTML = '<div class="signal-card">No Nexus chat signal data found. Click "Chat with Nexus" on a signal first.</div>';
+            }
+        };
+        
+        window.clearTestData = function() {
+            log('🗑️ Clearing test data...', 'warning');
+            
+            localStorage.removeItem('nexus_chat_signal');
+            
+            log('✅ Test data cleared', 'success');
+            checkJournalData();
+            checkNexusData();
+        };
+        
+        window.simulateSignal = function() {
+            log('🎯 Simulating signal for testing...', 'info');
+            
+            const testSignal = {
+                id: Date.now(),
+                symbol: 'EUR/USD',
+                currencyPair: 'EUR/USD',
+                direction: 'BUY',
+                signalType: 'BUY',
+                entryPrice: '1.08500',
+                entry: '1.08500',
+                stopLoss: '1.08200',
+                takeProfit: '1.09100',
+                confidence: 85,
+                analysis: 'Strong bullish setup detected. Break of structure confirms momentum shift.',
+                text: 'EUR/USD\nBUY NOW\nEntry 1.08500\nStop Loss 1.08200\nTake Profit 1.09100\nConfidence 85%\n\nStrong bullish setup detected.',
+                timestamp: new Date().toISOString(),
+                from: 'Test Signal'
+            };
+            
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(testSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+            
+            log('✅ Test signal created', 'success');
+            checkJournalData();
+        };
+        
+        // Auto-run initial check
+        log('🚀 Button Functionality Test initialized', 'info');
+        log('This test verifies that the "Add to Journal" and "Chat with Nexus" buttons work correctly', 'info');
+        checkJournalData();
+        checkNexusData();
+    </script>
+</body>
+</html>

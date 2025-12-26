@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forex Data Fetch Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Forex Data Fetch Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="testSingleForexPrice()">Test Single Forex Price</button>
+        <button onclick="testBulkForexPrices()">Test Bulk Forex Prices</button>
+        <button onclick="testForexSignals()">Test Forex Signal Generation</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="logs" class="log"></div>
+    </div>
+
+    <script type="module">
+        // Import the yfinance service
+        import realYfinanceService from './src/services/realYfinanceService.js';
+        
+        let logContainer = document.getElementById('logs');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        window.testSingleForexPrice = async function() {
+            log('🔄 Testing single forex price fetch...', 'info');
+            
+            try {
+                const result = await realYfinanceService.fetchRealPrice('EUR/USD', true);
+                if (result) {
+                    log(`✅ Single price fetch successful: ${result.symbol} = $${result.price} (${result.provider})`, 'success');
+                } else {
+                    log('❌ Single price fetch failed - no data returned', 'error');
+                }
+            } catch (error) {
+                log(`❌ Single price fetch error: ${error.message}`, 'error');
+            }
+        };
+        
+        window.testBulkForexPrices = async function() {
+            log('🔄 Testing bulk forex prices fetch...', 'info');
+            
+            const symbols = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD'];
+            
+            try {
+                const result = await realYfinanceService.fetchBulkRealPrices(symbols, true);
+                if (result.success) {
+                    log(`✅ Bulk price fetch successful: ${result.count}/${symbols.length} symbols`, 'success');
+                    result.data.forEach(item => {
+                        log(`  - ${item.symbol}: $${item.price} (${item.provider})`, 'info');
+                    });
+                } else {
+                    log(`❌ Bulk price fetch failed: ${result.count}/${symbols.length} symbols`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Bulk price fetch error: ${error.message}`, 'error');
+            }
+        };
+        
+        window.testForexSignals = async function() {
+            log('🔄 Testing forex signal generation...', 'info');
+            
+            // Simulate signal generation by checking if we can get price data
+            const symbols = ['EUR/USD', 'GBP/USD'];
+            
+            try {
+                const result = await realYfinanceService.fetchBulkRealPrices(symbols, true);
+                if (result.success && result.count > 0) {
+                    log(`✅ Forex signal generation test passed - data available for ${result.count} symbols`, 'success');
+                    log('📊 Signal generation should work properly now', 'info');
+                } else {
+                    log('❌ Forex signal generation test failed - insufficient data', 'error');
+                }
+            } catch (error) {
+                log(`❌ Forex signal generation test error: ${error.message}`, 'error');
+            }
+        };
+        
+        window.clearLogs = function() {
+            logContainer.innerHTML = '';
+            log('Logs cleared', 'info');
+        };
+        
+        // Auto-run initial test
+        log('🚀 Forex Data Fetch Test initialized', 'info');
+        log('Click the buttons above to test different functionalities', 'info');
+    </script>
+</body>
+</html>

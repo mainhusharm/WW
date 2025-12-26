@@ -1,0 +1,64 @@
+REVIEWS SIZE AND FONT INFORMATION EXTRACTED FROM WW-MAIN
+
+=== ReviewSummaryCard Component Styling ===
+
+Rating Display:
+- Font Size: text-4xl (4.8)
+- Font Weight: font-bold
+- Color: text-foreground (white/inherited)
+
+Review Count Display:
+- Font Size: text-3xl
+- Font Weight: font-semibold
+- Format: "(1,847 Reviews)"
+- Color: text-foreground (white/inherited)
+
+Star Ratings:
+- Size: h-6 w-6 (24px x 24px)
+- Filled Color: text-yellow-400 (#fbbf24)
+- Unfilled Color: text-muted-foreground/50
+
+Summary Text:
+- Font Size: text-sm
+- Color: text-muted-foreground
+- Text: "Trusted by traders worldwide for exceptional results."
+
+=== Testimonial Card Styling (FUITestimonialWithSlide) ===
+
+Testimonial Text:
+- Font Size: text-lg font-light on mobile, text-xl md:text-2xl on larger screens
+- Font Weight: font-light
+- Color: text-white/90
+- Font Family: font-sans
+- Line Height: tracking-tight
+
+Highlighted Dollar Amounts:
+- Color: text-yellow-400
+- Font Weight: font-bold
+
+User Names:
+- Font Size: text-base font-medium on mobile, text-lg on larger screens
+- Color: text-white/90
+
+User Professions:
+- Font Size: text-sm text-text-tertiary on mobile, text-base on larger screens
+- Color: text-white/50
+- Margin: mt-[-4px] (negative margin for tighter spacing)
+
+Star Ratings in Testimonials:
+- Size: w-4 h-4 (16px x 16px)
+- Color: text-yellow-400 fill-current
+
+Card Background:
+- Background: bg-white/[0.02] (very subtle white overlay)
+- Border: border-[1.2px] border-white/[0.08]
+- Backdrop Filter: backdrop-blur-sm
+
+=== Overall Styling Context ===
+
+- Background: Dark theme (#030303)
+- Primary Text: White (#FFFFFF)
+- Secondary Text: Gray variants (text-gray-400, text-white/70, etc.)
+- Accent Colors: Cyan (#06b6d4), Blue (#3b82f6), Yellow (#fbbf24)
+- Font Family: Inter (sans-serif)
+- Responsive Design: Mobile-first approach with md: and lg: breakpoints

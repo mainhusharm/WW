@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Bot Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+        .info { background: #2196F3; }
+        .warning { background: #ff9800; }
+    </style>
+</head>
+<body>
+    <h1>Crypto Bot Test</h1>
+    
+    <div class="test-section">
+        <h2>Manual Crypto Signal Generation</h2>
+        <p>This test manually generates crypto signals to test the system.</p>
+        
+        <button class="test-button" onclick="generateCryptoSignal()">Generate Crypto Signal</button>
+        <button class="test-button" onclick="generateForexSignal()">Generate Forex Signal</button>
+        <button class="test-button" onclick="checkSignals()">Check All Signals</button>
+        <button class="test-button" onclick="clearAll()">Clear All</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Signal Generation Status</h2>
+        <div id="status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Generated Signals</h2>
+        <div id="signals"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const status = document.getElementById('status');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            status.appendChild(div);
+            status.scrollTop = status.scrollHeight;
+        }
+        
+        function generateCryptoSignal() {
+            const symbols = ['BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'BNBUSDT', 'XRPUSDT'];
+            const directions = ['BUY', 'SELL'];
+            const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+            const direction = directions[Math.floor(Math.random() * directions.length)];
+            
+            const basePrice = Math.random() * 1000 + 100;
+            const entryPrice = basePrice;
+            const stopLoss = direction === 'BUY' ? basePrice * 0.98 : basePrice * 1.02;
+            const takeProfit = direction === 'BUY' ? basePrice * 1.04 : basePrice * 0.96;
+            const confidence = Math.floor(Math.random() * 30) + 70;
+            
+            const signal = {
+                id: Date.now(),
+                text: `${symbol}\n${direction} NOW\nEntry ${entryPrice.toFixed(2)}\nStop Loss ${stopLoss.toFixed(2)}\nTake Profit ${takeProfit.toFixed(2)}\nConfidence ${confidence}%\n\nStrong ${direction.toLowerCase()} setup detected. Major swing Break of Structure confirms ${direction.toLowerCase()} momentum shift.`,
+                timestamp: new Date().toISOString(),
+                from: 'Crypto Signal Generator',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Store in localStorage
+            const existingSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingSignals.unshift(signal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingSignals));
+            
+            // Dispatch event
+            window.dispatchEvent(new CustomEvent('newSignalGenerated', { 
+                detail: signal 
+            }));
+            
+            log(`Generated crypto signal: ${symbol} ${direction}`, 'success');
+            checkSignals();
+        }
+        
+        function generateForexSignal() {
+            const symbols = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD'];
+            const directions = ['BUY', 'SELL'];
+            const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+            const direction = directions[Math.floor(Math.random() * directions.length)];
+            
+            const basePrice = Math.random() * 2 + 0.5;
+            const entryPrice = basePrice;
+            const stopLoss = direction === 'BUY' ? basePrice * 0.998 : basePrice * 1.002;
+            const takeProfit = direction === 'BUY' ? basePrice * 1.004 : basePrice * 0.996;
+            const confidence = Math.floor(Math.random() * 30) + 70;
+            
+            const signal = {
+                id: Date.now(),
+                text: `${symbol}\n${direction} NOW\nEntry ${entryPrice.toFixed(5)}\nStop Loss ${stopLoss.toFixed(5)}\nTake Profit ${takeProfit.toFixed(5)}\nConfidence ${confidence}%\n\nStrong ${direction.toLowerCase()} setup detected. Major swing Break of Structure confirms ${direction.toLowerCase()} momentum shift.`,
+                timestamp: new Date().toISOString(),
+                from: 'Forex Signal Generator',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Store in localStorage
+            const existingSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingSignals.unshift(signal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingSignals));
+            
+            // Dispatch event
+            window.dispatchEvent(new CustomEvent('newSignalGenerated', { 
+                detail: signal 
+            }));
+            
+            log(`Generated forex signal: ${symbol} ${direction}`, 'success');
+            checkSignals();
+        }
+        
+        function checkSignals() {
+            const signals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const signalsDiv = document.getElementById('signals');
+            signalsDiv.innerHTML = '';
+            
+            if (signals.length === 0) {
+                signalsDiv.innerHTML = '<div class="status error">No signals found</div>';
+                return;
+            }
+            
+            signals.forEach((signal, index) => {
+                const isCrypto = signal.text.includes('USDT') || signal.text.includes('BTC') || signal.text.includes('ETH');
+                const lines = signal.text.split('\n');
+                const pair = lines[0] || 'UNKNOWN';
+                const direction = lines[1] || 'UNKNOWN';
+                
+                const signalDiv = document.createElement('div');
+                signalDiv.className = 'test-section';
+                signalDiv.style.borderLeft = isCrypto ? '4px solid #FF9800' : '4px solid #2196F3';
+                signalDiv.innerHTML = `
+                    <h4>${isCrypto ? '🪙 CRYPTO' : '💱 FOREX'} Signal #${index + 1}</h4>
+                    <p><strong>Pair:</strong> ${pair}</p>
+                    <p><strong>Direction:</strong> ${direction}</p>
+                    <p><strong>Timestamp:</strong> ${new Date(signal.timestamp).toLocaleString()}</p>
+                    <p><strong>Full Text:</strong></p>
+                    <pre style="background: #333; padding: 10px; border-radius: 4px; white-space: pre-wrap;">${signal.text}</pre>
+                `;
+                signalsDiv.appendChild(signalDiv);
+            });
+            
+            log(`Found ${signals.length} signals in localStorage`, 'info');
+        }
+        
+        function clearAll() {
+            localStorage.removeItem('telegram_messages');
+            localStorage.removeItem('admin_generated_signals');
+            log('All signals cleared', 'warning');
+            checkSignals();
+        }
+        
+        // Initialize
+        log('Crypto bot test page loaded', 'success');
+        checkSignals();
+        
+        // Auto-refresh every 3 seconds
+        setInterval(checkSignals, 3000);
+    </script>
+</body>
+</html>
