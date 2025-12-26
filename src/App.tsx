@@ -81,6 +81,8 @@ import SignupRedirect from './components/SignupRedirect';
 import FuturesPage from './components/FuturesPage';
 import CustomMT5Development from './components/CustomMT5Development';
 import MT5InquiryForm from './components/MT5InquiryForm';
+import PropFirmComparison from './components/PropFirmComparison';
+import PropPassGuarantee from './components/PropPassGuarantee';
 
 // Global Error Boundary for the entire app
 class GlobalErrorBoundary extends Component<
@@ -282,6 +284,8 @@ const AppContent = () => {
         <Route path="/futures-signals" element={<FuturesSignalsPage />} />
         <Route path="/mt5-development" element={<CustomMT5Development />} />
         <Route path="/mt5-inquiry" element={<MT5InquiryForm />} />
+        <Route path="/prop-comparison" element={<PropFirmComparison />} />
+        <Route path="/prop-pass-guarantee" element={<PropPassGuarantee />} />
         <Route path="/lightning" element={<Lightning><LandingPage /></Lightning>} />
         <Route path="/animation-test" element={<AnimationTest />} />
         <Route path="/liquid-loader-demo" element={<DotLoaderDemo />} />

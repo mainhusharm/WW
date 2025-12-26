@@ -481,6 +481,129 @@ app.post('/api/v1/calculator/position-size', async (req, res) => {
 });
 
 // =====================================================
+// 7. PROP FIRM COMPARISON ENGINE
+// =====================================================
+app.get('/api/v1/prop-comparison', async (req, res) => {
+  try {
+    const fs = require('fs').promises;
+    const path = require('path');
+
+    // Read the prop firm data from JSON file
+    const dataPath = path.join(__dirname, 'prop_firm_data.json');
+    const data = await fs.readFile(dataPath, 'utf8');
+    let firms = JSON.parse(data);
+
+    // Sort by edge compatibility score (highest first)
+    firms = firms.sort((a, b) => b.compatibility_score - a.compatibility_score);
+
+    // Add last updated timestamp
+    const lastUpdated = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+
+    // Add educational disclaimer header
+    res.set('X-Educational-Purpose', 'true');
+
+    res.json({
+      success: true,
+      data: firms,
+      meta: {
+        lastUpdated,
+        totalFirms: firms.length,
+        sortedBy: 'edge_compatibility',
+        disclaimer: 'Prop firm data is for educational purposes only. Always verify current terms directly with the firm.'
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching prop firm comparison:', error);
+    res.status(500).json({ error: 'Failed to fetch prop firm comparison data' });
+  }
+});
+
+// =====================================================
+// 8. PROP FIRM WAITLIST (Lead Capture)
+// =====================================================
+app.post('/api/v1/waitlist', async (req, res) => {
+  try {
+    const { email, firm, name, accountSize, expectedStartDate } = req.body;
+
+    if (!email || !firm) {
+      return res.status(400).json({ error: 'Email and firm are required' });
+    }
+
+    // Insert waitlist entry
+    const insertQuery = `
+      INSERT INTO leads (
+        email, name, source, source_url, ip_address, user_agent,
+        prop_firm_interest, account_size_interest, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ON CONFLICT (email) DO UPDATE SET
+        prop_firm_interest = array_append(leads.prop_firm_interest, $7),
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING id, email
+    `;
+
+    const result = await pool.query(insertQuery, [
+      email, name || null, 'prop_firm_waitlist', `https://traderedgepro.com/prop-comparison?firm=${firm}`,
+      req.ip, req.headers['user-agent'],
+      [firm], accountSize || null, 'qualified'
+    ]);
+
+    // Send confirmation email
+    try {
+      const discountCode = `TEP${Date.now().toString().slice(-6)}`; // Generate unique discount code
+
+      await emailTransporter.sendMail({
+        from: process.env.FROM_EMAIL || 'noreply@traderedgepro.com',
+        to: email,
+        subject: `You're on the VIP List for ${firm} Partnership!`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #10b981;">🎯 You're on the VIP List!</h1>
+            <p>Thank you for your interest in our exclusive partnership with <strong>${firm}</strong>.</p>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0;">🚀 What happens next?</h3>
+              <ul>
+                <li>We'll negotiate your exclusive 20% discount code</li>
+                <li>You'll be the first to know when it's available</li>
+                <li>Get priority access to our prop firm optimization tools</li>
+              </ul>
+            </div>
+
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+              <h3 style="margin-top: 0; color: #10b981;">Your Exclusive Discount Code</h3>
+              <p style="font-size: 24px; font-weight: bold; color: #10b981; margin: 10px 0;">${discountCode}</p>
+              <p>Keep this code safe - you'll use it when our partnership goes live!</p>
+            </div>
+
+            <p><small><em>This partnership is in development. We'll notify you as soon as the exclusive discount becomes available.</em></small></p>
+
+            <hr style="margin: 30px 0;">
+            <p>Questions? Reply to this email or visit our <a href="https://traderedgepro.com/prop-comparison">comparison tool</a>.</p>
+          </div>
+        `
+      });
+
+    } catch (emailError) {
+      console.error('Error sending waitlist confirmation:', emailError);
+      // Don't fail the request if email fails
+    }
+
+    res.json({
+      success: true,
+      message: 'Successfully added to waitlist',
+      data: {
+        email: result.rows[0].email,
+        firm,
+        discountCode: `TEP${Date.now().toString().slice(-6)}`
+      }
+    });
+  } catch (error) {
+    console.error('Error adding to waitlist:', error);
+    res.status(500).json({ error: 'Failed to add to waitlist' });
+  }
+});
+
+// =====================================================
 // WEBSOCKET SIGNAL BROADCASTING
 // =====================================================
 const broadcastSignal = (signal) => {

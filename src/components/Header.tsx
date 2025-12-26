@@ -76,6 +76,7 @@ const Header = () => {
         <nav className="hidden sm:flex items-center space-x-4 sm:space-x-6 text-sm">
           <AnimatedNavLink to="/" isActive={isActive('/')}>Home</AnimatedNavLink>
           <AnimatedNavLink to="/features" isActive={isActive('/features')}>Features</AnimatedNavLink>
+          <AnimatedNavLink to="/prop-comparison" isActive={isActive('/prop-comparison')}>Compare Firms</AnimatedNavLink>
           <AnimatedNavLink to="/about" isActive={isActive('/about')}>About</AnimatedNavLink>
           <AnimatedNavLink to="/faq" isActive={isActive('/faq')}>FAQ</AnimatedNavLink>
           <AnimatedNavLink to="/membership" isActive={isActive('/membership')}>Pricing</AnimatedNavLink>
@@ -139,6 +140,13 @@ const Header = () => {
             onClick={() => setIsMenuOpen(false)}
           >
             Features
+          </Link>
+          <Link
+            to="/prop-comparison"
+            className={`text-gray-300 hover:text-white transition-colors w-full text-center ${isActive('/prop-comparison') ? 'text-blue-400' : ''}`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Compare Firms
           </Link>
           <Link
             to="/about"

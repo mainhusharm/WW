@@ -857,15 +857,19 @@ const ProductionLandingPage = () => {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
               <Link
+                to="/prop-comparison"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold rounded-full hover:from-green-600 hover:to-teal-600 transition-all duration-300 transform hover:scale-105"
+              >
+                Compare Prop Firms
+                <TrendingUp className="ml-2 w-5 h-5" />
+              </Link>
+              <Link
                 to="/mt5-development"
                 className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-purple-500 text-white font-semibold rounded-full hover:from-orange-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105"
               >
                 Custom Automation
                 <Zap className="ml-2 w-5 h-5" />
               </Link>
-              <button className="inline-flex items-center px-8 py-4 border border-white/20 text-white font-semibold rounded-full hover:bg-white/10 transition-all duration-300">
-                Watch Demo
-              </button>
             </div>
           </div>
         </div>
