@@ -78,7 +78,7 @@ export function WaveAnimation({
         u_point_size: { value: pointSize },
         u_color: { value: new THREE.Color(particleColor) },
       },
-      vertexShader: `
+        vertexShader: `
         #define M_PI 3.1415926535897932384626433832795
         precision mediump float;
         uniform float u_time;
@@ -86,7 +86,7 @@ export function WaveAnimation({
 
         void main() {
           vec3 p = position;
-          p.y += (
+          p.y += 4.0 * (
             cos(p.x / M_PI * ${waveIntensity.toFixed(1)} + u_time * ${waveSpeed.toFixed(1)}) +
             sin(p.z / M_PI * ${waveIntensity.toFixed(1)} + u_time * ${waveSpeed.toFixed(1)})
           );
