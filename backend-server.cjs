@@ -10,7 +10,7 @@ const app = express();
 const prisma = new PrismaClient();
 
 // Enhanced CORS configuration for production
-const corsOrigins = process.env.CORS_ORIGIN 
+const corsOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
   : [
       'https://frontend-tkxf.onrender.com',
@@ -25,34 +25,50 @@ const corsOrigins = process.env.CORS_ORIGIN
       'http://localhost:3000'
     ];
 
+console.log('🔧 CORS Origins configured:', corsOrigins);
+
 // More permissive CORS for development and testing
 app.use(cors({
   origin: function (origin, callback) {
-    console.log('CORS origin:', origin); // Add this line for debugging
+    console.log('🔒 CORS origin request:', origin);
+
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log('✅ CORS: Allowing request with no origin');
+      return callback(null, true);
+    }
 
     // Allow localhost for development
     if (origin && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
+      console.log('✅ CORS: Allowing localhost origin:', origin);
       return callback(null, true);
     }
 
     // Check if origin is in our allowed list
     if (corsOrigins.indexOf(origin) !== -1) {
+      console.log('✅ CORS: Allowing whitelisted origin:', origin);
       return callback(null, true);
     }
 
     // For development, allow all onrender.com domains
     if (origin && origin.includes('onrender.com')) {
+      console.log('✅ CORS: Allowing onrender.com domain:', origin);
       return callback(null, true);
     }
 
-    console.log('CORS rejected origin:', origin);
+    // TEMPORARILY allow traderedgepro.com domains for debugging
+    if (origin && origin.includes('traderedgepro.com')) {
+      console.log('✅ CORS: Allowing traderedgepro.com domain (temp):', origin);
+      return callback(null, true);
+    }
+
+    console.log('❌ CORS: Rejecting origin:', origin);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept'],
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 }));
 
 // Add CORS preflight handler
