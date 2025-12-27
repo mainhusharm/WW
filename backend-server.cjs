@@ -1,3 +1,4 @@
+// Load environment variables - try .env.local first (dev), then fallback to system env vars (production)
 require('dotenv').config({ path: '.env.local' });
 const express = require('express');
 const cors = require('cors');
