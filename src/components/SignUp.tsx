@@ -97,49 +97,61 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
-      // Create user data for localStorage
+      // Prepare user data for backend
       const userData = {
-        id: `user_${Date.now()}`,
-        name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
-        membershipTier: selectedPlan?.name.toLowerCase() || 'starter',
-        accountType: 'personal' as const,
-        riskTolerance: 'moderate' as const,
-        isAuthenticated: true,
-        setupComplete: false,
-        selectedPlan,
-        token: `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        password: formData.password,
+        fullName: `${formData.firstName} ${formData.lastName}`,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        company: formData.company || '',
+        country: formData.country,
+        agreeToMarketing: formData.agreeToMarketing
       };
 
-      // Store user data in localStorage
-      localStorage.setItem('access_token', userData.token);
-      localStorage.setItem('current_user', JSON.stringify(userData));
-      localStorage.setItem('userEmail', userData.email);
-      localStorage.setItem('userFullName', userData.name);
+      console.log('🔄 Calling backend registration API...');
+      console.log('📡 Request URL: http://localhost:3001/api/auth/register');
+      console.log('📋 Request data:', userData);
 
-      // Store form data for later reference
-      localStorage.setItem('signup_form_data', JSON.stringify(formData));
+      // Call backend registration endpoint
+      const response = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
 
-      // Login the user
-      login(userData, userData.token);
+      console.log('📡 API Response status:', response.status);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('📡 Response ok:', response.ok);
+
+      const result = await response.json();
+      console.log('📋 API Response:', result);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Registration failed');
+      }
 
       console.log('✅ User registered successfully');
+      console.log('📧 Email should be sent to:', formData.email);
 
-      // Navigate to payment flow with URL parameters for reliability
-      const urlParams = new URLSearchParams();
-      if (selectedPlan) {
-        urlParams.set('plan', selectedPlan.id);
-        urlParams.set('price', selectedPlan.price.toString());
-        if (selectedPlan.discountedPrice) {
-          urlParams.set('discountedPrice', selectedPlan.discountedPrice.toString());
-        }
-        urlParams.set('period', selectedPlan.period || 'month');
-        urlParams.set('type', selectedPlan.type || 'trading');
-      }
-      window.location.href = `/payment-flow?${urlParams.toString()}`;
+      // Store user data in localStorage for later use
+      localStorage.setItem('pendingVerificationEmail', formData.email);
+      localStorage.setItem('userEmail', formData.email);
+      localStorage.setItem('userFullName', userData.fullName);
+      localStorage.setItem('selectedPlan', JSON.stringify(selectedPlan));
+
+      console.log('🔀 Redirecting to verification page...');
+
+      // Redirect to verification page using React Router (maintains SPA state)
+      console.log('🚀 Redirecting to verification page:', `/verify?email=${encodeURIComponent(formData.email)}`);
+      navigate(`/verify?email=${encodeURIComponent(formData.email)}`);
+
     } catch (err: any) {
       console.error('Signup failed:', err);
-      setError('Failed to create account. Please try again.');
+      setError(err.message || 'Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -225,9 +225,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (userData: Omit<User, 'isAuthenticated' | 'membershipTier'>, token: string, rememberMe = false) => {
+    console.log('🔐 UserContext login called with:', { userData, token, rememberMe });
+
     let plan = 'professional';
     let name = userData.name;
-    
+
     // Only decode JWT if it's not a demo token
     if (token && typeof token === 'string' && !token.startsWith('demo-token')) {
       try {
@@ -254,27 +256,31 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       membershipTier: plan,
     };
 
-    const finalUserData = { 
-      ...updatedUserData, 
-      membershipTier: plan as any, 
-      isAuthenticated: true, 
+    const finalUserData = {
+      ...updatedUserData,
+      membershipTier: plan as any,
+      isAuthenticated: true,
       setupComplete: userData.setupComplete || false,
-      token 
+      token
     };
+
+    console.log('💾 Storing user data:', finalUserData);
 
     // Store user data with email as key for persistence
     localStorage.setItem('current_user', JSON.stringify(finalUserData));
     localStorage.setItem(`user_profile_${userData.email}`, JSON.stringify(finalUserData));
-    
+
     // Use rememberMe to determine token storage strategy
     if (rememberMe) {
       localStorage.setItem('access_token', token);
       localStorage.setItem('remember_me', 'true');
+      console.log('💾 Stored token in localStorage (remember me)');
     } else {
       localStorage.setItem('access_token', token);
       sessionStorage.setItem('session_token', token);
+      console.log('💾 Stored token in localStorage and sessionStorage');
     }
-    
+
     // Only set API auth for real tokens
     if (token && typeof token === 'string' && !token.startsWith('demo-token')) {
       if (!api.defaults.headers.common) {
@@ -282,8 +288,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
-    
+
+    console.log('🔄 Setting user state:', finalUserData);
     setUser(finalUserData);
+    console.log('✅ UserContext login completed');
   };
 
   const logout = () => {

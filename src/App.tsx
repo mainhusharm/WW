@@ -83,6 +83,7 @@ import CustomMT5Development from './components/CustomMT5Development';
 import MT5InquiryForm from './components/MT5InquiryForm';
 import PropFirmComparison from './components/PropFirmComparison';
 import PropPassGuarantee from './components/PropPassGuarantee';
+import OTPVerification from './components/OTPVerification';
 
 // Global Error Boundary for the entire app
 class GlobalErrorBoundary extends Component<
@@ -182,6 +183,7 @@ const AppContent = () => {
           <Route path="/signup" element={<SignUp />} />
         <Route path="/signup-enhanced" element={<EnhancedSignupForm />} />
         <Route path="/signup-smart" element={<SignupRedirect />} />
+          <Route path="/verify" element={<OTPVerification />} />
           <Route path="/signin" element={<SignIn />} />
         <Route path="/membership" element={<MembershipPlans />} />
         <Route path="/mt5-bots" element={<MT5BotsPage />} />

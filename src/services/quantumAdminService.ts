@@ -1,5 +1,5 @@
 // Quantum Admin Service - REAL Database Integration (NO PREFILLED DATA)
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5002';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001';
 const API_KEY = 'quantum_key_2025'; // API key for secure access
 
 export interface QuantumUser {
@@ -276,13 +276,13 @@ class QuantumAdminService {
   }
 
   // Create user notification
-  private createUserNotification(user: QuantumUser, updates: QuantumUserUpdate): void {
+  private createUserNotification(user: QuantumUser, updateData: QuantumUserUpdate): void {
     const userNotification = {
       id: Date.now().toString(),
       type: 'admin_update',
       message: `Your account has been updated by admin`,
       timestamp: new Date().toISOString(),
-      data: updates
+      data: updateData
     };
     
     const userNotificationsKey = `user_notifications_${user.email}`;

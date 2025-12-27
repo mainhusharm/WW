@@ -109,21 +109,31 @@ const PaymentFlow = () => {
           amountPaid = parsedDetails.amount;
         }
 
-        const requestData = {
-          token: paymentToken,
-          plan: selectedPlan?.name?.toLowerCase() || 'basic',
-          user_id: user.id,
-          amount_paid: amountPaid,
-          coupon_code: paymentData?.coupon_code || parsedDetails?.coupon_code || null,
+        // Call payment completion endpoint to save user to database and send welcome email
+        const completionData = {
+          email: user.email,
+          paymentId: paymentToken,
+          planData: selectedPlan
         };
 
-        console.log('Sending payment verification request:', requestData);
-        console.log('Amount being verified:', amountPaid);
-        console.log('Original plan price:', selectedPlan?.price || 0);
+        console.log('Sending payment completion request:', completionData);
 
-        const response = await api.post('/payment/verify-payment', requestData);
+        const completionResponse = await fetch('/api/payment/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(completionData),
+        });
 
-        if (response.status === 200) {
+        const completionResult = await completionResponse.json();
+
+        if (completionResult.success) {
+          console.log('✅ Payment completed successfully, user saved to database');
+
+          // Mark payment as completed in localStorage
+          localStorage.setItem(`payment_completed_${user.email}`, 'true');
+
           // Create subscription for the selected plan
           await createSubscription(selectedPlan.id);
 
@@ -153,9 +163,9 @@ const PaymentFlow = () => {
             navigate('/successful-payment', { state: { selectedPlan } });
           }
         } else {
-          // Handle payment verification failure
-          console.error('Payment verification failed with status:', response.status);
-          alert('Payment verification failed. Please contact support.');
+          // Handle payment completion failure
+          console.error('Payment completion failed:', completionResult.error);
+          alert('Payment processing failed. Please contact support.');
         }
       } catch (error: any) {
         console.error('Payment verification failed:', error);

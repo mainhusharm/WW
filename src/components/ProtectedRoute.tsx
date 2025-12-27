@@ -43,7 +43,32 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     );
   }
 
-  if (!user || !user.isAuthenticated) {
+  // Check React state first
+  const isAuthenticatedInState = user && user.isAuthenticated;
+
+  // Also check localStorage as backup (for cases where state hasn't updated yet)
+  const storedUser = localStorage.getItem('current_user');
+  const storedToken = localStorage.getItem('access_token') || sessionStorage.getItem('session_token');
+  let isAuthenticatedInStorage = false;
+
+  if (storedUser && storedToken) {
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      isAuthenticatedInStorage = parsedUser.isAuthenticated === true;
+    } catch (error) {
+      console.warn('Error parsing stored user data:', error);
+    }
+  }
+
+  const isAuthenticated = isAuthenticatedInState || isAuthenticatedInStorage;
+
+  console.log('ProtectedRoute - Auth checks:', {
+    isAuthenticatedInState,
+    isAuthenticatedInStorage,
+    finalResult: isAuthenticated
+  });
+
+  if (!isAuthenticated) {
     console.log('ProtectedRoute - Not authenticated, redirecting to signin');
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }

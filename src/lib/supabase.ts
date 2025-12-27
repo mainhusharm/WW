@@ -8,15 +8,19 @@ const createSupabaseClient = () => {
   if (_supabase) return _supabase
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    // Use Vite environment variables (available in browser)
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-    if (!supabaseUrl) {
-      throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
-    }
+    // Fallback for development/demo
+    const fallbackUrl = 'https://demo.supabase.co'
+    const fallbackKey = 'demo-key'
 
-    if (!supabaseAnonKey) {
-      throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
+    const finalUrl = supabaseUrl || fallbackUrl
+    const finalKey = supabaseAnonKey || fallbackKey
+
+    if (!finalUrl || finalUrl === fallbackUrl) {
+      console.warn('⚠️ Using demo Supabase configuration - replace with real credentials')
     }
 
     console.log('🔄 Creating Supabase client...')
@@ -33,7 +37,7 @@ const createSupabaseClient = () => {
       throw new Error('Web APIs not available');
     }
 
-    _supabase = createClient(supabaseUrl, supabaseAnonKey)
+    _supabase = createClient(finalUrl, finalKey)
     console.log('✅ Supabase client created successfully')
     return _supabase
   } catch (error) {

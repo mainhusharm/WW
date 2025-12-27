@@ -5,7 +5,7 @@ export interface UserFlowStatus {
   completedSteps: string[];
   missingSteps: string[];
   currentStep: string | null;
-  redirectTo: string | null;
+  redirectTo: string | undefined;
 }
 
 export interface UserAccountStatus {
@@ -53,16 +53,18 @@ class UserFlowService {
   private getLocalFlowStatus(email: string): UserFlowStatus {
     const userData = localStorage.getItem(`user_flow_${email}`);
     if (userData) {
-      return JSON.parse(userData);
+      try {
+        return JSON.parse(userData);
+      } catch (error) {
+        console.warn('Invalid user flow data, recalculating');
+      }
     }
 
-    // Check individual step completions
-    const hasPayment = !!localStorage.getItem(`payment_success_${email}`) || 
-                      !!localStorage.getItem('payment_success_data');
-    const hasQuestionnaire = !!localStorage.getItem(`questionnaire_completed_${email}`) ||
-                            !!localStorage.getItem('questionnaire_completed');
-    const hasRiskManagement = !!localStorage.getItem(`risk_management_completed_${email}`) ||
-                             !!localStorage.getItem('risk_management_completed');
+    // Check individual step completions - STRICT checks
+    // Only count as completed if explicitly marked with email suffix
+    const hasPayment = !!localStorage.getItem(`payment_completed_${email}`);
+    const hasQuestionnaire = !!localStorage.getItem(`questionnaire_completed_${email}`);
+    const hasRiskManagement = !!localStorage.getItem(`risk_management_completed_${email}`);
 
     const completedSteps = [];
     const missingSteps = [];
@@ -148,16 +150,16 @@ class UserFlowService {
   }
 
   // Get redirect route for missing step
-  private getRedirectRoute(step: string | null): string | null {
+  private getRedirectRoute(step: string | null): string | undefined {
     switch (step) {
       case 'payment':
-        return '/payment-enhanced';
+        return '/payment-flow';
       case 'questionnaire':
         return '/questionnaire';
       case 'risk_management':
         return '/risk-management-plan';
       default:
-        return null;
+        return undefined;
     }
   }
 
