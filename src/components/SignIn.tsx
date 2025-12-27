@@ -7,14 +7,13 @@ import Header from './Header';
 import { userFlowService } from '../services/userFlowService';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { cn } from '../lib/utils';
+import { api } from '../lib/api';
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [success, setSuccess] = useState(false);
   const { login } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,8 +27,8 @@ const SignIn = () => {
     setError('');
 
     // Basic validation
-    if (!email || !password) {
-      setError('Please fill in all fields');
+    if (!email) {
+      setError('Please enter your email address');
       setIsLoading(false);
       return;
     }
@@ -41,159 +40,25 @@ const SignIn = () => {
     }
 
     try {
-      // First validate user flow status
-      const flowValidation = await userFlowService.validateSignIn(email);
-      if (!flowValidation.canSignIn) {
-        setError(flowValidation.error || 'Please complete all required steps before signing in.');
-        if (flowValidation.redirectTo) {
-          setTimeout(() => {
-            navigate(flowValidation.redirectTo!);
-          }, 2000);
-        }
-        setIsLoading(false);
-        return;
-      }
+      console.log('🔐 Attempting login for:', email);
 
-      // First check if user exists in localStorage (from signup)
-      const storedUserData = localStorage.getItem('user_data');
-      const pendingSignupData = localStorage.getItem('pending_signup_data');
-      
-      let validCredentials = false;
-      let userData = null;
+      // Call backend login endpoint using API utility - this sends OTP
+      const data = await api.auth.login(email);
 
-      // Check against stored signup data
-      if (storedUserData) {
-        const parsedUserData = JSON.parse(storedUserData);
-        if (parsedUserData.email === email) {
-          validCredentials = true;
-          userData = parsedUserData;
-        }
-      }
+      console.log('✅ Login OTP sent successfully');
+      setSuccess(true);
 
-      // Check against pending signup data
-      if (!validCredentials && pendingSignupData) {
-        const parsedSignupData = JSON.parse(pendingSignupData);
-        if (parsedSignupData.email === email && parsedSignupData.password === password) {
-          validCredentials = true;
-          userData = {
-            id: `user_${Date.now()}`,
-            name: `${parsedSignupData.firstName} ${parsedSignupData.lastName}`,
-            email: parsedSignupData.email,
-            membershipTier: parsedSignupData.plan_type,
-            accountType: 'personal' as const,
-            riskTolerance: 'moderate' as const,
-            isAuthenticated: true,
-            setupComplete: true,
-            selectedPlan,
-            token: `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-          };
-        }
-      }
+      // Store email for OTP verification
+      localStorage.setItem('pendingVerificationEmail', email);
 
-      if (validCredentials && userData) {
-        localStorage.setItem('access_token', userData.token);
-        localStorage.setItem('current_user', JSON.stringify(userData));
-        login(userData, userData.token, rememberMe);
-        
-        // Check if user needs to complete questionnaire
-        const questionnaireCompleted = localStorage.getItem('questionnaire_completed');
-        if (!questionnaireCompleted) {
-          navigate('/questionnaire');
-        } else {
-          navigate('/dashboard');
-        }
-      } else {
-        // Try backend authentication
-        let apiEndpoint = 'http://localhost:3001/api/auth/login';
-        let response;
-        let data;
-        
-        try {
-          response = await fetch(apiEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
-          });
-          
-          data = await response.json();
-        } catch (corsError) {
-          console.log('Direct connection failed, using localStorage fallback...', corsError);
-          
-          // Use localStorage fallback instead of CORS proxy
-          const users = JSON.parse(localStorage.getItem('users') || '[]');
-          const user = users.find((u: any) => 
-            u.email === email && u.password === password
-          );
-          
-          if (user) {
-            data = {
-              access_token: `local-token-${Date.now()}`,
-              user: user
-            };
-            response = { ok: true };
-          } else {
-            throw new Error('Invalid credentials');
-          }
-        }
+      // Redirect to OTP verification page
+      setTimeout(() => {
+        navigate(`/verify?email=${encodeURIComponent(email)}`);
+      }, 2000);
 
-        if (response.ok) {
-          localStorage.setItem('access_token', data.access_token);
-          
-          // Decode JWT to get user info
-          const tokenPayload = JSON.parse(atob(data.access_token.split('.')[1]));
-          
-          const backendUserData = {
-            id: tokenPayload.sub || '',
-            name: tokenPayload.username || email,
-            email: email,
-            membershipTier: tokenPayload.plan_type || 'professional',
-            accountType: 'personal' as const,
-            riskTolerance: 'moderate' as const,
-            isAuthenticated: true,
-            setupComplete: true,
-            selectedPlan,
-            token: data.access_token
-          };
-          
-          login(backendUserData, data.access_token, rememberMe);
-          navigate('/dashboard');
-        } else {
-          // If backend fails (401, 500, or database issues), create a working login for testing
-          console.log('Backend login failed, creating working login for testing...');
-          
-          // Create a working JWT token for testing
-          const workingToken = btoa(JSON.stringify({
-            sub: 'working-user-id',
-            username: email.split('@')[0],
-            email: email,
-            plan_type: 'professional',
-            iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
-          }));
-          
-          const workingUserData = {
-            id: 'working-user-id',
-            name: email.split('@')[0],
-            email: email,
-            membershipTier: 'professional',
-            accountType: 'personal' as const,
-            riskTolerance: 'moderate' as const,
-            isAuthenticated: true,
-            setupComplete: true,
-            selectedPlan,
-            token: workingToken
-          };
-          
-          localStorage.setItem('access_token', workingToken);
-          login(workingUserData, workingToken, rememberMe);
-          navigate('/dashboard');
-        }
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('Unable to sign in. Please check your credentials or try again later.');
+    } catch (error: any) {
+      console.error('❌ Login failed:', error);
+      setError(error.message || 'Unable to sign in. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -334,6 +199,20 @@ const SignIn = () => {
                       </motion.div>
                     )}
 
+                    {/* Success Message */}
+                    {success && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-3 bg-green-600/20 border border-green-600 rounded-lg flex items-center space-x-2"
+                      >
+                        <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-green-400 text-xs">OTP sent to your email! Redirecting...</span>
+                      </motion.div>
+                    )}
+
                     {/* Email input */}
                     <motion.div
                       whileFocus={{ scale: 1.02 }}
@@ -358,81 +237,13 @@ const SignIn = () => {
                         />
                       </div>
                     </motion.div>
-
-                    {/* Password input */}
-                    <motion.div
-                      whileFocus={{ scale: 1.02 }}
-                      whileHover={{ scale: 1.01 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    >
-                      <div className="relative flex items-center overflow-hidden rounded-lg">
-                        <Lock className={`absolute left-3 w-4 h-4 transition-all duration-300 ${
-                          password ? 'text-white' : 'text-white/40'
-                        }`} />
-
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={password}
-                          onChange={(e) => {
-                            setPassword(e.target.value);
-                            setError(''); // Clear error when user starts typing
-                          }}
-                          className="w-full bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30 h-10 transition-all duration-300 pl-10 pr-10 focus:bg-white/10 rounded-lg"
-                          placeholder="Password"
-                          required
-                          minLength={6}
-                        />
-
-                        {/* Toggle password visibility */}
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 cursor-pointer"
-                        >
-                          {showPassword ? (
-                            <Eye className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
-                          ) : (
-                            <EyeOff className="w-4 h-4 text-white/40 hover:text-white transition-colors duration-300" />
-                          )}
-                        </button>
-                      </div>
-                    </motion.div>
                   </motion.div>
 
-                  {/* Remember me & Forgot password */}
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center space-x-2">
-                      <div className="relative">
-                        <input
-                          id="remember-me"
-                          name="remember-me"
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={(e) => setRememberMe(e.target.checked)}
-                          className="appearance-none h-4 w-4 rounded border border-white/20 bg-white/5 checked:bg-white checked:border-white focus:outline-none focus:ring-1 focus:ring-white/30 transition-all duration-200"
-                        />
-                        {rememberMe && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.5 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="absolute inset-0 flex items-center justify-center text-black pointer-events-none"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          </motion.div>
-                        )}
-                      </div>
-                      <label htmlFor="remember-me" className="text-xs text-white/60 hover:text-white/80 transition-colors duration-200">
-                        Remember me
-                      </label>
-                    </div>
-
-                    <div className="text-xs relative group/link">
-                      <Link to="/forgot-password" className="text-white/60 hover:text-white transition-colors duration-200">
-                        Forgot password?
-                      </Link>
-                    </div>
+                  {/* Info text */}
+                  <div className="text-center pt-1">
+                    <p className="text-xs text-white/60">
+                      Enter your email to receive a verification code
+                    </p>
                   </div>
 
                   {/* Sign in button */}

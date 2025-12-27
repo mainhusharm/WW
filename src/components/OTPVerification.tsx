@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
+import { api } from '../lib/api';
 
 export default function OTPVerification() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -80,18 +81,7 @@ export default function OTPVerification() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          otpCode
-        }),
-      });
-
-      const data = await response.json();
+      const data = await api.auth.verifyOtp({ email, otpCode });
 
       if (data.success) {
         console.log('✅ OTP verification successful, data:', data);
@@ -212,15 +202,7 @@ export default function OTPVerification() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/resend-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
+      const data = await api.auth.resendOtp(email);
 
       if (data.success) {
         setCountdown(60);

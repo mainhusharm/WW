@@ -6,7 +6,7 @@ import { useUser } from '../contexts/UserContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import PlanSelection from './PlanSelection';
 import Header from './Header';
-import api from '../api';
+import { api } from '../lib/api';
 
 const PaymentFlow = () => {
   const navigate = useNavigate();
@@ -110,6 +110,10 @@ const PaymentFlow = () => {
         }
 
         // Call payment completion endpoint to save user to database and send welcome email
+        if (!user.email) {
+          throw new Error('User email is required for payment completion');
+        }
+
         const completionData = {
           email: user.email,
           paymentId: paymentToken,
@@ -118,15 +122,7 @@ const PaymentFlow = () => {
 
         console.log('Sending payment completion request:', completionData);
 
-        const completionResponse = await fetch('/api/payment/complete', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(completionData),
-        });
-
-        const completionResult = await completionResponse.json();
+        const completionResult = await api.payment.complete(completionData);
 
         if (completionResult.success) {
           console.log('✅ Payment completed successfully, user saved to database');
