@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correct Backend Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Correct Backend URL Test</h1>
+        <p>Testing the correct backend URL that the frontend should be using.</p>
+        
+        <div class="test-section info">
+            <h3>Backend Information</h3>
+            <p><strong>Correct Backend URL:</strong> <code>https://backend-ox9b.onrender.com</code></p>
+            <p><strong>Frontend URL:</strong> <span id="frontend-url"></span></p>
+            <p><strong>Test Time:</strong> <span id="test-time"></span></p>
+        </div>
+
+        <div class="test-section">
+            <h3>API Tests</h3>
+            <button onclick="testHealth()">Test Health Endpoint</button>
+            <button onclick="testUsers()">Test Users Endpoint</button>
+            <button onclick="testCorsHeaders()">Test CORS Headers</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://backend-ox9b.onrender.com';
+        const FRONTEND_URL = window.location.origin;
+        
+        document.getElementById('frontend-url').textContent = FRONTEND_URL;
+        document.getElementById('test-time').textContent = new Date().toLocaleString();
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-section ${type}`;
+            resultDiv.innerHTML = `<pre>${message}</pre>`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        async function testHealth() {
+            try {
+                addResult('Testing health endpoint...', 'info');
+                const response = await fetch(`${BACKEND_URL}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Health endpoint successful!\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ Health endpoint failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Health endpoint error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testUsers() {
+            try {
+                addResult('Testing users endpoint...', 'info');
+                const response = await fetch(`${BACKEND_URL}/api/users`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Users endpoint successful!\nUsers found: ${data.count}\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ Users endpoint failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Users endpoint error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCorsHeaders() {
+            try {
+                addResult('Testing CORS headers...', 'info');
+                const response = await fetch(`${BACKEND_URL}/api/users`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': FRONTEND_URL,
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials')
+                };
+                
+                if (response.ok) {
+                    addResult(`✅ CORS preflight successful!\nCORS Headers: ${JSON.stringify(corsHeaders, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ CORS preflight failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ CORS headers test error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addResult('🚀 Running backend tests...', 'info');
+                testHealth();
+                setTimeout(testUsers, 2000);
+                setTimeout(testCorsHeaders, 4000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

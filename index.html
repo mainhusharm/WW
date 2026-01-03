@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="/" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/logo.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo.png" />
+    <link rel="shortcut icon" href="/logo.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/logo.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Immediate redirect for root path -->
+    <script>
+      // More aggressive redirect logic
+      console.log('Current URL:', window.location.href);
+      console.log('Current pathname:', window.location.pathname);
+      console.log('Current hostname:', window.location.hostname);
+      
+      // Check if we're on the root path and redirect immediately
+      if (window.location.pathname === '/' || 
+          window.location.pathname === '' || 
+          window.location.href.endsWith('/') ||
+          window.location.href === window.location.origin) {
+        console.log('Redirecting to /home...');
+        // Try multiple redirect methods
+        try {
+          window.location.replace('/home');
+        } catch (e) {
+          console.log('Replace failed, trying href...');
+          window.location.href = '/home';
+        }
+      }
+    </script>
+    
+    <!-- Meta refresh as absolute fallback -->
+    <script>
+      // Add meta refresh only if on root path
+      if (window.location.pathname === '/' || 
+          window.location.pathname === '' || 
+          window.location.href.endsWith('/') ||
+          window.location.href === window.location.origin) {
+        const meta = document.createElement('meta');
+        meta.setAttribute('http-equiv', 'refresh');
+        meta.setAttribute('content', '0; url=/home');
+        document.head.appendChild(meta);
+      }
+    </script>
+    <meta name="description" content="TraderEdge Pro - Professional Trading Signals Platform with AI-powered analysis and real-time market data" />
+    <meta name="keywords" content="trading, signals, forex, crypto, AI trading, market analysis" />
+    <meta name="author" content="TraderEdge Pro" />
+    
+    <!-- Content Security Policy to allow necessary scripts -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline' 'unsafe-hashes' data: blob:; frame-src * data: blob:; connect-src * data: blob:; img-src * data: blob:;">
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <title>TraderEdge Pro BETA - Professional Trading Signals Platform</title>
+    
+    <!-- Production error handling -->
+    <script>
+      // Override CSP to allow all scripts
+      if (window.trustedTypes && window.trustedTypes.defaultPolicy) {
+        window.trustedTypes.defaultPolicy.createHTML = (string) => string;
+        window.trustedTypes.defaultPolicy.createScript = (string) => string;
+      }
+      
+      // Global error handler for production
+      window.addEventListener('error', function(e) {
+        // Check if we're in production environment
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          console.error('Global error caught:', e.error);
+          // You can send this to your error reporting service
+        }
+      });
+      
+      // Handle unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(e) {
+        // Check if we're in production environment
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          console.error('Unhandled promise rejection:', e.reason);
+          // You can send this to your error reporting service
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Liquid Loading Screen -->
+      <div class="liquid-loader">
+        <div class="liquid-container">
+          <div class="liquid-bars">
+            <!-- Bar 1 - Purple to Pink -->
+            <div class="liquid-bar-container">
+              <div class="droplet" style="animation-delay: 0.2s;">
+                <div class="droplet-inner"></div>
+              </div>
+              <div class="liquid-bar bar-1">
+                <div class="liquid-surface"></div>
+                <div class="liquid-wave"></div>
+                <div class="liquid-shimmer"></div>
+                <div class="liquid-bubble"></div>
+              </div>
+              <div class="base-droplet" style="animation-delay: 0.9s;"></div>
+            </div>
+
+            <!-- Bar 2 - Blue to Purple -->
+            <div class="liquid-bar-container">
+              <div class="droplet" style="animation-delay: 0.4s;">
+                <div class="droplet-inner"></div>
+              </div>
+              <div class="liquid-bar bar-2">
+                <div class="liquid-surface"></div>
+                <div class="liquid-wave"></div>
+                <div class="liquid-shimmer"></div>
+                <div class="liquid-bubble"></div>
+              </div>
+              <div class="base-droplet" style="animation-delay: 1.1s;"></div>
+            </div>
+
+            <!-- Bar 3 - Cyan to Blue -->
+            <div class="liquid-bar-container">
+              <div class="droplet" style="animation-delay: 0.6s;">
+                <div class="droplet-inner"></div>
+              </div>
+              <div class="liquid-bar bar-3">
+                <div class="liquid-surface"></div>
+                <div class="liquid-wave"></div>
+                <div class="liquid-shimmer"></div>
+                <div class="liquid-bubble"></div>
+              </div>
+              <div class="base-droplet" style="animation-delay: 1.3s;"></div>
+            </div>
+
+            <!-- Bar 4 - Green to Cyan -->
+            <div class="liquid-bar-container">
+              <div class="droplet" style="animation-delay: 0.8s;">
+                <div class="droplet-inner"></div>
+              </div>
+              <div class="liquid-bar bar-4">
+                <div class="liquid-surface"></div>
+                <div class="liquid-wave"></div>
+                <div class="liquid-shimmer"></div>
+                <div class="liquid-bubble"></div>
+              </div>
+              <div class="base-droplet" style="animation-delay: 1.5s;"></div>
+            </div>
+
+            <!-- Bar 5 - Yellow to Green -->
+            <div class="liquid-bar-container">
+              <div class="droplet" style="animation-delay: 1.0s;">
+                <div class="droplet-inner"></div>
+              </div>
+              <div class="liquid-bar bar-5">
+                <div class="liquid-surface"></div>
+                <div class="liquid-wave"></div>
+                <div class="liquid-shimmer"></div>
+                <div class="liquid-bubble"></div>
+              </div>
+              <div class="base-droplet" style="animation-delay: 1.7s;"></div>
+            </div>
+
+            <!-- Bar 6 - Orange to Yellow -->
+            <div class="liquid-bar-container">
+              <div class="droplet" style="animation-delay: 1.2s;">
+                <div class="droplet-inner"></div>
+              </div>
+              <div class="liquid-bar bar-6">
+                <div class="liquid-surface"></div>
+                <div class="liquid-wave"></div>
+                <div class="liquid-shimmer"></div>
+                <div class="liquid-bubble"></div>
+              </div>
+              <div class="base-droplet" style="animation-delay: 1.9s;"></div>
+            </div>
+
+            <!-- Bar 7 - Red to Orange -->
+            <div class="liquid-bar-container">
+              <div class="droplet" style="animation-delay: 1.4s;">
+                <div class="droplet-inner"></div>
+              </div>
+              <div class="liquid-bar bar-7">
+                <div class="liquid-surface"></div>
+                <div class="liquid-wave"></div>
+                <div class="liquid-shimmer"></div>
+                <div class="liquid-bubble"></div>
+              </div>
+              <div class="base-droplet" style="animation-delay: 2.1s;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <style>
+        /* Liquid Loading Styles */
+        .liquid-loader {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: #000;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+        }
+
+        .liquid-container {
+          display: flex;
+          align-items: end;
+          gap: 16px;
+          padding: 32px;
+        }
+
+        .liquid-bars {
+          display: flex;
+          align-items: end;
+          gap: 16px;
+        }
+
+        .liquid-bar-container {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .droplet {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          margin-bottom: 12px;
+          opacity: 0;
+          animation: droplet-fall 2s ease-in-out infinite;
+        }
+
+        .droplet-inner {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          filter: blur(0.5px);
+        }
+
+        .liquid-bar {
+          width: 40px;
+          border-radius: 8px;
+          position: relative;
+          overflow: hidden;
+          filter: blur(0.15px);
+          animation: liquid-wave 2s ease-in-out infinite;
+        }
+
+        .liquid-surface {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 16px;
+          border-radius: 8px;
+          background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 100%);
+          animation: liquid-surface 2s ease-in-out infinite;
+        }
+
+        .liquid-wave {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+          border-radius: 8px;
+          animation: liquid-wave-flow 2s ease-in-out infinite;
+        }
+
+        .liquid-shimmer {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+          border-radius: 8px;
+          width: 140%;
+          left: -20%;
+          animation: liquid-shimmer 2s ease-in-out infinite;
+        }
+
+        .liquid-bubble {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.3);
+          animation: liquid-bubble 2s ease-in-out infinite;
+        }
+
+        .base-droplet {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          margin-top: 8px;
+          filter: blur(0.1px);
+          animation: base-droplet 2s ease-in-out infinite;
+        }
+
+        /* Bar Colors */
+        .bar-1 {
+          background: linear-gradient(180deg, #a855f7 0%, #ec4899 100%);
+          box-shadow: 0 0 20px rgba(168, 85, 247, 0.5), inset 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .bar-1 .droplet-inner {
+          background: linear-gradient(180deg, #a855f7 0%, #ec4899 100%);
+          box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .bar-1 .base-droplet {
+          background: linear-gradient(180deg, #a855f7 0%, #ec4899 100%);
+          box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+        }
+
+        .bar-2 {
+          background: linear-gradient(180deg, #3b82f6 0%, #a855f7 100%);
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), inset 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .bar-2 .droplet-inner {
+          background: linear-gradient(180deg, #3b82f6 0%, #a855f7 100%);
+          box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .bar-2 .base-droplet {
+          background: linear-gradient(180deg, #3b82f6 0%, #a855f7 100%);
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .bar-3 {
+          background: linear-gradient(180deg, #06b6d4 0%, #3b82f6 100%);
+          box-shadow: 0 0 20px rgba(6, 182, 212, 0.5), inset 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .bar-3 .droplet-inner {
+          background: linear-gradient(180deg, #06b6d4 0%, #3b82f6 100%);
+          box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        .bar-3 .base-droplet {
+          background: linear-gradient(180deg, #06b6d4 0%, #3b82f6 100%);
+          box-shadow: 0 2px 8px rgba(6, 182, 212, 0.4);
+        }
+
+        .bar-4 {
+          background: linear-gradient(180deg, #10b981 0%, #06b6d4 100%);
+          box-shadow: 0 0 20px rgba(16, 185, 129, 0.5), inset 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .bar-4 .droplet-inner {
+          background: linear-gradient(180deg, #10b981 0%, #06b6d4 100%);
+          box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .bar-4 .base-droplet {
+          background: linear-gradient(180deg, #10b981 0%, #06b6d4 100%);
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .bar-5 {
+          background: linear-gradient(180deg, #eab308 0%, #10b981 100%);
+          box-shadow: 0 0 20px rgba(234, 179, 8, 0.5), inset 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .bar-5 .droplet-inner {
+          background: linear-gradient(180deg, #eab308 0%, #10b981 100%);
+          box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
+        }
+
+        .bar-5 .base-droplet {
+          background: linear-gradient(180deg, #eab308 0%, #10b981 100%);
+          box-shadow: 0 2px 8px rgba(234, 179, 8, 0.4);
+        }
+
+        .bar-6 {
+          background: linear-gradient(180deg, #f97316 0%, #eab308 100%);
+          box-shadow: 0 0 20px rgba(249, 115, 22, 0.5), inset 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .bar-6 .droplet-inner {
+          background: linear-gradient(180deg, #f97316 0%, #eab308 100%);
+          box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
+        }
+
+        .bar-6 .base-droplet {
+          background: linear-gradient(180deg, #f97316 0%, #eab308 100%);
+          box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
+        }
+
+        .bar-7 {
+          background: linear-gradient(180deg, #ef4444 0%, #f97316 100%);
+          box-shadow: 0 0 20px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .bar-7 .droplet-inner {
+          background: linear-gradient(180deg, #ef4444 0%, #f97316 100%);
+          box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .bar-7 .base-droplet {
+          background: linear-gradient(180deg, #ef4444 0%, #f97316 100%);
+          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Animations */
+        @keyframes liquid-wave {
+          0%, 100% { height: 0px; transform: scaleY(1); }
+          25% { height: 40px; transform: scaleY(1); }
+          50% { height: 80px; transform: scaleY(1); }
+          75% { height: 40px; transform: scaleY(1); }
+        }
+
+        @keyframes droplet-fall {
+          0%, 80% { opacity: 0; transform: translateY(-20px) scale(0.5); }
+          90% { opacity: 1; transform: translateY(0px) scale(0.8); }
+          100% { opacity: 0; transform: translateY(10px) scale(0.5); }
+        }
+
+        @keyframes liquid-surface {
+          0%, 100% { transform: translateY(0px) scaleY(0.8); }
+          50% { transform: translateY(2px) scaleY(0.9); }
+        }
+
+        @keyframes liquid-wave-flow {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(4px); }
+        }
+
+        @keyframes liquid-shimmer {
+          0%, 100% { transform: translateX(-20%); }
+          50% { transform: translateX(20%); }
+        }
+
+        @keyframes liquid-bubble {
+          0%, 100% { top: 40%; left: 30%; transform: scale(0.5); opacity: 0.3; }
+          25% { top: 20%; left: 60%; transform: scale(0.7); opacity: 0.5; }
+          50% { top: 60%; left: 40%; transform: scale(0.3); opacity: 0.2; }
+          75% { top: 30%; left: 70%; transform: scale(0.6); opacity: 0.4; }
+        }
+
+        @keyframes base-droplet {
+          0%, 100% { opacity: 0.6; transform: scale(0.6) translateY(0px); }
+          50% { opacity: 1; transform: scale(0.8) translateY(2px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .liquid-container {
+            gap: 12px;
+            padding: 24px;
+          }
+
+          .liquid-bars {
+            gap: 12px;
+          }
+
+          .liquid-bar {
+            width: 32px;
+          }
+
+          .droplet {
+            width: 12px;
+            height: 12px;
+            margin-bottom: 8px;
+          }
+
+          .base-droplet {
+            width: 10px;
+            height: 10px;
+            margin-top: 6px;
+          }
+        }
+      </style>
+    </div>
+    
+    <script>
+      // Immediate fallback for signup errors - works without deployment
+      window.handleSignupFallback = function(formData, selectedPlan, navigate, login, setShowTempNotice) {
+        console.log('Executing signup fallback...');
+        
+        // Generate a temporary token
+        const tempToken = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('access_token', tempToken);
+        
+        const userData = {
+          id: `temp_user_${Date.now()}`,
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          membershipTier: selectedPlan.name.toLowerCase(),
+          accountType: 'personal',
+          riskTolerance: 'moderate',
+          isAuthenticated: true,
+          setupComplete: false,
+          selectedPlan,
+          token: tempToken,
+          isTemporary: true,
+        };
+
+        login(userData, tempToken);
+        localStorage.setItem('user_data', JSON.stringify(userData));
+        localStorage.setItem('temp_signup_data', JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          plan_type: selectedPlan.name.toLowerCase(),
+          timestamp: Date.now()
+        }));
+
+        // Show notification and navigate
+        if (setShowTempNotice) setShowTempNotice(true);
+        navigate('/payment', { state: { selectedPlan } });
+        
+        return true;
+      };
+      
+      // Production-ready error boundary fallback
+      window.handleReactError = function(error, errorInfo) {
+        // Check if we're in production environment
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          console.error('React error boundary caught:', error, errorInfo);
+          // You can send this to your error reporting service
+        }
+      };
+    </script>
+    
+    <!-- React app entry point -->
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Fallback for when JavaScript fails to load -->
+    <noscript>
+      <div style="
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        height: 100vh; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        text-align: center;
+        padding: 20px;
+      ">
+        <div>
+          <h1>JavaScript Required</h1>
+          <p>TraderEdge Pro requires JavaScript to function properly. Please enable JavaScript in your browser and refresh the page.</p>
+        </div>
+      </div>
+    </noscript>
+  </body>
+</html>

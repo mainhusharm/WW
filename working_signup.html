@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Working Signup Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>🚀 Working Signup Form</h1>
+        
+        <div id="connectionStatus" class="status">
+            Checking connection...
+        </div>
+
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="firstName">First Name:</label>
+                <input type="text" id="firstName" name="firstName" value="John" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" name="lastName" value="Doe" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" value="test123" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="tel" id="phone" name="phone" value="1234567890">
+            </div>
+            
+            <div class="form-group">
+                <label for="company">Company:</label>
+                <input type="text" id="company" name="company" value="Test Company">
+            </div>
+            
+            <div class="form-group">
+                <label for="country">Country:</label>
+                <input type="text" id="country" name="country" value="US">
+            </div>
+            
+            <button type="submit" id="submitBtn">Create Account</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Generate unique email
+        function generateUniqueEmail() {
+            return `user_${Date.now()}@example.com`;
+        }
+        
+        // Set unique email on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('email').value = generateUniqueEmail();
+            checkConnection();
+        });
+
+        // Check if backend is connected
+        async function checkConnection() {
+            const statusDiv = document.getElementById('connectionStatus');
+            try {
+                const response = await fetch('http://localhost:8080/health');
+                if (response.ok) {
+                    statusDiv.textContent = '✅ Backend Connected - Ready to Register!';
+                    statusDiv.className = 'status connected';
+                } else {
+                    statusDiv.textContent = '❌ Backend Error - Check Server';
+                    statusDiv.className = 'status disconnected';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ Backend Not Connected - Start Server First';
+                statusDiv.className = 'status disconnected';
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating Account...';
+            resultDiv.innerHTML = '<div class="result loading">Creating your account...</div>';
+            
+            // Get form data
+            const formData = new FormData(this);
+            const userData = Object.fromEntries(formData.entries());
+            
+            try {
+                // Try multiple methods to ensure it works
+                let response;
+                
+                // Method 1: Direct fetch
+                try {
+                    response = await fetch('http://localhost:8080/api/user/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(userData)
+                    });
+                } catch (fetchError) {
+                    // Method 2: XMLHttpRequest as fallback
+                    response = await makeXHRRequest(userData);
+                }
+                
+                if (response && response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ SUCCESS! Account Created<br>
+                            User ID: ${data.user_id}<br>
+                            Email: ${userData.email}<br>
+                            <strong>Data saved to PostgreSQL database!</strong>
+                        </div>
+                    `;
+                    
+                    // Generate new email for next test
+                    document.getElementById('email').value = generateUniqueEmail();
+                } else {
+                    throw new Error(`Server error: ${response ? response.status : 'No response'}`);
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Registration Failed<br>
+                        Error: ${error.message}<br><br>
+                        <strong>Solutions:</strong><br>
+                        1. Make sure backend is running: python3 app.py<br>
+                        2. Try opening this page via: http://localhost:3000/working_signup.html<br>
+                        3. Check browser console for more details
+                    </div>
+                `;
+            } finally {
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        });
+
+        // XMLHttpRequest fallback method
+        function makeXHRRequest(userData) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'http://localhost:8080/api/user/register', true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            resolve({
+                                ok: true,
+                                json: () => Promise.resolve(JSON.parse(xhr.responseText))
+                            });
+                        } else {
+                            reject(new Error(`XHR Error: ${xhr.status}`));
+                        }
+                    }
+                };
+                
+                xhr.onerror = () => reject(new Error('XHR Network Error'));
+                xhr.send(JSON.stringify(userData));
+            });
+        }
+
+        // Auto-refresh connection status every 10 seconds
+        setInterval(checkConnection, 10000);
+    </script>
+</body>
+</html>

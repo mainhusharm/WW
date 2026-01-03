@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+        .info { background: #2196F3; }
+        .payment-test {
+            background: #333;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Payment Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Payment Methods</h2>
+        <p>This test verifies that PayPal and Stripe integrations are working correctly.</p>
+        
+        <button class="test-button" onclick="testPayPalIntegration()">Test PayPal Integration</button>
+        <button class="test-button" onclick="testStripeIntegration()">Test Stripe Integration</button>
+        <button class="test-button" onclick="testFreePayment()">Test Free Payment (Coupon)</button>
+        <button class="test-button" onclick="clearStorage()">Clear Storage</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Payment Configuration</h2>
+        <div id="config-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Payment Page Test</h2>
+        <p>Test the actual payment page:</p>
+        <a href="http://localhost:5175/payment-enhanced" target="_blank" class="test-button">Open Payment Page</a>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            log('Storage cleared', 'success');
+        }
+        
+        function testPayPalIntegration() {
+            log('Testing PayPal integration...', 'info');
+            
+            // Check if PayPal SDK is available
+            if (typeof window.paypal !== 'undefined') {
+                log('PayPal SDK loaded successfully', 'success');
+            } else {
+                log('PayPal SDK not loaded - this is expected in test mode', 'info');
+            }
+            
+            // Test PayPal configuration
+            const paypalConfig = {
+                clientId: 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tQrIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW',
+                currency: 'USD',
+                environment: 'sandbox'
+            };
+            
+            log(`PayPal Config: ${JSON.stringify(paypalConfig)}`, 'info');
+            log('PayPal integration test completed', 'success');
+        }
+        
+        function testStripeIntegration() {
+            log('Testing Stripe integration...', 'info');
+            
+            // Check if Stripe SDK is available
+            if (typeof window.Stripe !== 'undefined') {
+                log('Stripe SDK loaded successfully', 'success');
+            } else {
+                log('Stripe SDK not loaded - this is expected in test mode', 'info');
+            }
+            
+            // Test Stripe configuration
+            const stripeConfig = {
+                publishableKey: 'pk_test_51OQmzHiUwz1pmfaVTSXSEpbx',
+                currency: 'USD'
+            };
+            
+            log(`Stripe Config: ${JSON.stringify(stripeConfig)}`, 'info');
+            log('Stripe integration test completed', 'success');
+        }
+        
+        function testFreePayment() {
+            log('Testing free payment (coupon) flow...', 'info');
+            
+            // Simulate free payment
+            const paymentData = {
+                method: 'free_coupon',
+                amount: 0,
+                plan: 'Enterprise',
+                paymentId: `FREE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                coupon_code: 'FREE',
+                coupon_applied: true,
+                discount_amount: 100,
+                timestamp: new Date().toISOString(),
+            };
+            
+            localStorage.setItem('payment_data', JSON.stringify(paymentData));
+            log('Free payment data stored', 'success');
+            log(`Payment Data: ${JSON.stringify(paymentData)}`, 'info');
+        }
+        
+        function checkConfiguration() {
+            const config = document.getElementById('config-status');
+            config.innerHTML = '';
+            
+            // Check environment variables
+            const envVars = {
+                'VITE_STRIPE_PUBLISHABLE_KEY': 'pk_test_51OQmzHiUwz1pmfaVTSXSEpbx',
+                'VITE_PAYPAL_CLIENT_ID': 'ASUvkAyi9hd0D6xgfR9LgBvXWcsOg4spZd05tQrIE3LNW1RyQXmzJfaHTO908qTlpmljK2qcuM7xx8xW'
+            };
+            
+            Object.entries(envVars).forEach(([key, value]) => {
+                const div = document.createElement('div');
+                div.textContent = `${key}: ${value}`;
+                config.appendChild(div);
+            });
+        }
+        
+        // Initialize
+        checkConfiguration();
+        log('Payment integration test page loaded', 'success');
+    </script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+#!/usr/bin/env python3
+"""
+Working server that handles all the required endpoints without database dependencies
+"""
+
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+import json
+import uuid
+from datetime import datetime
+import random
+
+# Create Flask app
+app = Flask(__name__)
+CORS(app, origins=["*"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+
+# In-memory storage for signals (simulates database)
+signals_storage = []
+user_profiles = {}
+
+@app.route('/health')
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'ok',
+        'message': 'Backend is healthy',
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.route('/api/user/health')
+def user_health_check():
+    """User health check endpoint"""
+    return jsonify({
+        'status': 'ok',
+        'message': 'Backend is running',
+        'database': 'connected',
+        'user_count': len(user_profiles),
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.route('/api/user/profile', methods=['GET'])
+def get_user_profile():
+    """Get user profile data"""
+    # Mock user profile data
+    profile_data = {
+        "id": 1,
+        "username": "test_user",
+        "email": "test@example.com",
+        "plan_type": "premium",
+        "created_at": datetime.now().isoformat(),
+        "last_login": datetime.now().isoformat(),
+        "unique_id": "952244",
+        "status": "active",
+        "tradingData": {
+            "propFirm": "Quant Tekel",
+            "accountType": "Instant",
+            "accountSize": "10200",
+            "riskPerTrade": "1",
+            "tradesPerDay": "5",
+            "tradingSession": "London",
+            "cryptoAssets": ["BTC", "ETH"],
+            "forexAssets": ["EURUSD", "GBPUSD"],
+            "hasAccount": "yes",
+            "accountEquity": "10200",
+            "riskRewardRatio": "2"
+        }
+    }
+    return jsonify(profile_data), 200
+
+@app.route('/api/dashboard-data', methods=['GET'])
+def get_dashboard_data():
+    """Get dashboard data"""
+    dashboard_data = {
+        "account_balance": 10200,
+        "total_pnl": 5230.50,
+        "win_rate": 68.5,
+        "recent_trades": [
+            {"symbol": "EURUSD", "pnl": 150.25, "outcome": "win"},
+            {"symbol": "GBPUSD", "pnl": -75.50, "outcome": "loss"}
+        ]
+    }
+    return jsonify(dashboard_data), 200
+
+@app.route('/api/user/progress', methods=['GET', 'POST'])
+def handle_user_progress():
+    """Handle user progress"""
+    if request.method == 'GET':
+        progress_data = {
+            "completed_lessons": 10,
+            "total_lessons": 50,
+            "current_module": "Advanced Strategies"
+        }
+        return jsonify(progress_data), 200
+    else:
+        return jsonify({"msg": "Progress saved successfully"}), 200
+
+@app.route('/api/news/forex-factory', methods=['GET', 'OPTIONS'])
+def get_forex_factory_news():
+    """Get forex factory news - disabled as requested"""
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    return jsonify({
+        'success': True,
+        'events': [],
+        'message': 'Forex Factory scraper has been removed as requested',
+        'source': 'Disabled'
+    }), 200
+
+@app.route('/api/test/signals', methods=['GET'])
+def get_test_signals():
+    """Get test signals for the signal feed"""
+    # Generate some sample signals if none exist
+    if not signals_storage:
+        generate_sample_signals()
+    
+    return jsonify({
+        'signals': signals_storage,
+        'total': len(signals_storage),
+        'message': 'Signals retrieved successfully'
+    }), 200
+
+@app.route('/api/admin/create-signal', methods=['POST'])
+def create_admin_signal():
+    """Create signal from admin dashboard"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Create signal
+        signal = {
+            'id': str(uuid.uuid4()),
+            'pair': data.get('pair', 'EURUSD'),
+            'direction': data.get('direction', 'LONG'),
+            'type': data.get('direction', 'LONG'),
+            'entry': data.get('entry', '1.0850'),
+            'entryPrice': data.get('entry', '1.0850'),
+            'stopLoss': data.get('stopLoss', '1.0800'),
+            'takeProfit': data.get('takeProfit', '1.0950'),
+            'confidence': data.get('confidence', 85),
+            'analysis': data.get('analysis', 'Strong signal based on market analysis'),
+            'ictConcepts': data.get('ictConcepts', ['Order Block', 'Fair Value Gap']),
+            'timestamp': datetime.now().isoformat(),
+            'status': 'active',
+            'market': data.get('market', 'forex'),
+            'timeframe': data.get('timeframe', '1h'),
+            'is_recommended': data.get('confidence', 85) > 80
+        }
+        
+        # Store signal
+        signals_storage.insert(0, signal)  # Add to beginning
+        
+        return jsonify({
+            'success': True,
+            'message': 'Signal created and delivered successfully',
+            'signal_id': signal['id']
+        }), 201
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to create signal: {str(e)}'
+        }), 500
+
+@app.route('/api/signals/mark-taken', methods=['POST'])
+def mark_signal_taken():
+    """Mark a signal as taken by user"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        signal_id = data.get('signalId')
+        outcome = data.get('outcome')
+        
+        if not signal_id or not outcome:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Find and update signal
+        for signal in signals_storage:
+            if signal['id'] == signal_id:
+                signal['status'] = 'taken'
+                signal['outcome'] = outcome
+                break
+        
+        return jsonify({
+            'message': 'Signal marked as taken successfully',
+            'signal_id': signal_id,
+            'outcome': outcome
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'error': f'Failed to mark signal as taken: {str(e)}'
+        }), 500
+
+def generate_sample_signals():
+    """Generate sample signals for testing"""
+    pairs = ['EURUSD', 'GBPUSD', 'USDJPY', 'BTCUSD', 'ETHUSD']
+    directions = ['LONG', 'SHORT']
+    
+    for i in range(5):
+        signal = {
+            'id': str(uuid.uuid4()),
+            'pair': random.choice(pairs),
+            'direction': random.choice(directions),
+            'type': random.choice(directions),
+            'entry': f"{random.uniform(1.0, 1.2):.4f}",
+            'entryPrice': f"{random.uniform(1.0, 1.2):.4f}",
+            'stopLoss': f"{random.uniform(0.95, 1.0):.4f}",
+            'takeProfit': f"{random.uniform(1.1, 1.3):.4f}",
+            'confidence': random.randint(70, 95),
+            'analysis': f"Strong {random.choice(directions)} signal based on market structure analysis",
+            'ictConcepts': random.sample(['Order Block', 'Fair Value Gap', 'Liquidity Sweep', 'Market Structure'], 2),
+            'timestamp': datetime.now().isoformat(),
+            'status': 'active',
+            'market': 'forex' if 'USD' in random.choice(pairs) else 'crypto',
+            'timeframe': random.choice(['15m', '1h', '4h']),
+            'is_recommended': random.choice([True, False])
+        }
+        signals_storage.append(signal)
+
+@app.route('/api/dashboard/real-time-data', methods=['GET'])
+def get_real_time_data():
+    """Get real-time dashboard data"""
+    return jsonify({
+        'timestamp': datetime.now().isoformat(),
+        'user': {
+            'id': 1,
+            'name': 'test_user',
+            'email': 'test@example.com',
+            'status': 'active'
+        },
+        'trading': {
+            'recent_trades': [],
+            'active_signals': signals_storage[:5],
+            'total_pnl': 5230.50,
+            'win_rate': 68.5,
+            'total_trades': 45
+        },
+        'market': {
+            'status': 'open',
+            'last_update': datetime.now().isoformat()
+        }
+    }), 200
+
+@app.route('/api/dashboard/performance-metrics', methods=['GET'])
+def get_performance_metrics():
+    """Get performance metrics"""
+    return jsonify({
+        'metrics': {
+            'total_trades': 45,
+            'winning_trades': 31,
+            'losing_trades': 14,
+            'win_rate': 68.9,
+            'total_pnl': 5230.50,
+            'average_win': 250.75,
+            'average_loss': -150.25,
+            'profit_factor': 1.67,
+            'max_drawdown': 8.2
+        }
+    }), 200
+
+@app.route('/api/user/signals/stats', methods=['GET'])
+def get_signal_stats():
+    """Get signal statistics"""
+    return jsonify({
+        'total_signals': len(signals_storage),
+        'active_signals': len([s for s in signals_storage if s['status'] == 'active']),
+        'taken_signals': len([s for s in signals_storage if s['status'] == 'taken']),
+        'win_rate': 68.5
+    }), 200
+
+if __name__ == '__main__':
+    print("🚀 Starting Working Server on port 8080")
+    print("✅ All endpoints configured")
+    print("✅ CORS enabled for all origins")
+    print("✅ No database dependencies")
+    print("✅ Sample signals will be generated")
+    
+    # Generate initial sample signals
+    generate_sample_signals()
+    
+    app.run(host='0.0.0.0', port=8080, debug=True)

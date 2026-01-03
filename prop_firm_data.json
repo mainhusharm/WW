@@ -1,0 +1,67 @@
+[
+  {
+    "id": "fundednext",
+    "firm": "FundedNext",
+    "name": "FundedNext",
+    "payout_speed": "24h Guarantee",
+    "drawdown": "Balance-Based",
+    "profit_split": "Up to 95%",
+    "edge_score": 98,
+    "highlight": "15% Challenge Phase Profit Share",
+    "affiliate_link": null,
+    "trader_edge_insight": "Our AI scalping algorithms are perfectly optimized for FundedNext's flexible balance-based drawdown, capturing their 15% challenge profit share.",
+    "compatibility_score": 98
+  },
+  {
+    "id": "ftmo",
+    "firm": "FTMO",
+    "name": "FTMO",
+    "payout_speed": "1-2 Business Days",
+    "drawdown": "Static (Daily 5% / 10% Total)",
+    "profit_split": "Up to 90%",
+    "edge_score": 92,
+    "highlight": "Regulated Broker (OANDA) Partnership",
+    "affiliate_link": null,
+    "trader_edge_insight": "Our MT5 bots excel with FTMO's static drawdown limits, providing precise risk management that maximizes your 80% profit split potential.",
+    "compatibility_score": 92
+  },
+  {
+    "id": "fundingpips",
+    "firm": "FundingPips",
+    "name": "FundingPips",
+    "payout_speed": "Weekly (Tuesday)",
+    "drawdown": "Static",
+    "profit_split": "Up to 100%",
+    "edge_score": 96,
+    "highlight": "Lowest entry cost ($29)",
+    "affiliate_link": null,
+    "trader_edge_insight": "FundingPips' zero reward denial policy pairs perfectly with our Nexus AI signals, ensuring every profitable trade gets its full 100% payout.",
+    "compatibility_score": 96
+  },
+  {
+    "id": "e8",
+    "firm": "E8 Markets",
+    "name": "E8 Markets",
+    "payout_speed": "On-Demand (Avg 21 Hours)",
+    "drawdown": "Customizable (up to 14%)",
+    "profit_split": "80% - 100%",
+    "edge_score": 95,
+    "highlight": "User-defined drawdown targets",
+    "affiliate_link": null,
+    "trader_edge_insight": "Our bots dynamically adapt to E8's customizable drawdown targets, providing superior risk management compared to manual trading approaches.",
+    "compatibility_score": 95
+  },
+  {
+    "id": "the5ers",
+    "firm": "The5ers",
+    "name": "The5ers",
+    "payout_speed": "Every 14 Days",
+    "drawdown": "Equity/Balance Hybrid",
+    "profit_split": "Up to 100% (Scaling)",
+    "edge_score": 94,
+    "highlight": "Hyper-growth: Double funding every 10% gain",
+    "affiliate_link": null,
+    "trader_edge_insight": "The5ers' scaling model rewards consistent performance - our AI coaches ensure you maximize their hyper-growth potential without emotional interference.",
+    "compatibility_score": 94
+  }
+]

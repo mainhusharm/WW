@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .user { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+        .error { color: red; }
+        .success { color: green; }
+        .loading { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Debug Customer Service Dashboard</h1>
+    <div id="status">Loading...</div>
+    <div id="users"></div>
+    <button onclick="testAPI()">Test API</button>
+
+    <script>
+        async function testAPI() {
+            const statusDiv = document.getElementById('status');
+            const usersDiv = document.getElementById('users');
+            
+            statusDiv.innerHTML = '<span class="loading">Testing API...</span>';
+            usersDiv.innerHTML = '';
+
+            try {
+                // Test the database endpoint
+                console.log('Testing database endpoint...');
+                const response = await fetch('https://backend-gbhz.onrender.com/api/database/users');
+                const data = await response.json();
+                
+                console.log('API Response:', data);
+                
+                if (data.success && data.users) {
+                    statusDiv.innerHTML = `<span class="success">Success! Found ${data.users.length} users</span>`;
+                    
+                    // Transform and display users
+                    const transformedUsers = data.users.map((user) => ({
+                        id: user.id.toString(),
+                        email: user.email,
+                        fullName: user.username || 'No name provided',
+                        planType: user.plan_type || 'premium',
+                        createdAt: user.created_at
+                    }));
+                    
+                    console.log('Transformed users:', transformedUsers);
+                    
+                    usersDiv.innerHTML = transformedUsers.map(user => `
+                        <div class="user">
+                            <h3>${user.fullName}</h3>
+                            <p><strong>Email:</strong> ${user.email}</p>
+                            <p><strong>ID:</strong> ${user.id}</p>
+                            <p><strong>Plan:</strong> ${user.planType}</p>
+                            <p><strong>Created:</strong> ${new Date(user.createdAt).toLocaleString()}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    statusDiv.innerHTML = `<span class="error">API returned no users: ${JSON.stringify(data)}</span>`;
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                statusDiv.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+            }
+        }
+
+        // Test on page load
+        window.onload = testAPI;
+    </script>
+</body>
+</html>

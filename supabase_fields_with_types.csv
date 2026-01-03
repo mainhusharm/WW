@@ -1,0 +1,122 @@
+Field Name,Data Type,Description,Required,Default Value
+id,uuid,Primary Key,Yes,gen_random_uuid()
+first_name,text,User's first name,Yes,
+last_name,text,User's last name,Yes,
+email,text,User's email address,Yes,
+phone,text,User's phone number,Yes,
+company,text,User's company name,No,
+country,text,User's country,No,United States
+language,text,User's preferred language,No,English
+bio,text,User's biography,No,
+password_hash,text,Encrypted password,Yes,
+agree_to_terms,boolean,Agreed to terms of service,Yes,false
+agree_to_marketing,boolean,Agreed to marketing communications,No,false
+status,text,User account status,No,PENDING
+membership_tier,text,User's membership level,No,
+account_type,text,Account type,No,
+setup_complete,boolean,Whether setup is complete,No,false
+is_temporary,boolean,Whether account is temporary,No,false
+unique_id,text,Unique identifier,No,
+token,text,Authentication token,No,
+selected_plan,jsonb,Selected membership plan,No,
+trading_experience_signup,text,Trading experience from signup,No,
+trading_goals_signup,text,Trading goals from signup,No,
+risk_tolerance_signup,text,Risk tolerance from signup,No,
+preferred_markets,text,Preferred trading markets,No,
+trading_style,text,Trading style preference,No,
+trades_per_day,text,Number of trades per day,No,
+trading_session,text,Preferred trading session,No,
+has_account,text,Whether user has existing account,No,
+account_equity,numeric,Current account equity,No,
+prop_firm,text,Selected prop firm,No,
+account_type_questionnaire,text,Account type from prop firm,No,
+account_size,numeric,Account size in USD,No,
+risk_percentage,numeric,Risk per trade percentage,No,
+risk_reward_ratio,text,Preferred risk:reward ratio,No,
+crypto_assets,text[],Array of crypto symbols,No,
+forex_assets,text[],Array of forex pairs,No,
+account_screenshot,text,Base64 encoded screenshot,No,
+screenshot_url,text,URL to stored screenshot,No,
+trading_experience,text,User's trading experience,No,
+risk_tolerance,text,User's risk tolerance,No,
+trading_goals,text,User's trading goals,No,
+plan_name,text,Risk management plan name,No,
+plan_description,text,Risk management plan description,No,
+is_active,boolean,Whether plan is active,No,true
+version,text,Plan version,No,1.0
+max_risk_per_trade,numeric,Maximum risk per trade,No,
+max_daily_loss,numeric,Maximum daily loss,No,
+max_weekly_loss,numeric,Maximum weekly loss,No,
+max_monthly_loss,numeric,Maximum monthly loss,No,
+max_position_size,numeric,Maximum position size,No,
+max_open_trades,integer,Maximum open trades,No,
+stop_loss_type,text,Stop loss type,No,
+default_stop_loss,numeric,Default stop loss,No,
+take_profit_type,text,Take profit type,No,
+default_risk_reward,numeric,Default risk:reward ratio,No,
+max_consecutive_losses,integer,Maximum consecutive losses,No,
+max_drawdown_percentage,numeric,Maximum drawdown percentage,No,
+recovery_mode,boolean,Recovery mode enabled,No,false
+recovery_risk_reduction,numeric,Recovery risk reduction,No,
+trades_to_pass,integer,Number of trades needed to pass,No,
+risk_amount,numeric,Risk amount per trade,No,
+profit_amount,numeric,Profit target per trade,No,
+profit_target,numeric,Total profit target,No,
+profit_target_percentage,numeric,Profit target percentage,No,
+daily_profit_target,numeric,Daily profit target,No,
+daily_risk_amount,numeric,Daily risk amount,No,
+estimated_days_to_pass,integer,Estimated days to pass,No,
+plan_data,jsonb,Complete plan data as JSON,No,
+risk_per_trade_setting,numeric,Risk per trade setting,No,1.0
+max_daily_risk_setting,numeric,Max daily risk setting,No,5.0
+max_drawdown_setting,numeric,Max drawdown setting,No,10.0
+stop_loss_default_setting,numeric,Default stop loss setting,No,50.0
+take_profit_default_setting,numeric,Default take profit setting,No,100.0
+risk_reward_ratio_setting,numeric,Risk reward ratio setting,No,2.0
+trading_preferences,jsonb,Trading preferences settings,No,
+display_settings,jsonb,Display and theme settings,No,
+notification_settings,jsonb,Notification preferences,No,
+security_settings,jsonb,Security settings,No,
+data_settings,jsonb,Data and export settings,No,
+api_settings,jsonb,API and integration settings,No,
+currency,text,User's currency,No,USD
+timezone,text,User's timezone,No,America/New_York
+auto_save,boolean,Auto-save enabled,No,true
+payment_id,uuid,Payment record ID,No,
+plan_name_payment,text,Plan name from payment,No,
+original_price,numeric,Original plan price,No,
+discount_amount,numeric,Discount amount applied,No,0.00
+final_price,numeric,Final price after discount,No,
+coupon_code,text,Coupon code used,No,
+payment_method,text,Payment method used,No,
+payment_status,text,Payment status,No,pending
+transaction_id,text,Payment transaction ID,No,
+payment_processor,text,Payment processor used,No,
+payment_currency,text,Payment currency,No,USD
+payment_amount,numeric,Payment amount,No,
+payment_fees,numeric,Payment processing fees,No,0.00
+payment_net_amount,numeric,Net amount received,No,
+payment_date,timestamptz,Payment completion date,No,
+payment_verified,boolean,Payment verification status,No,false
+payment_verification_method,text,Payment verification method,No,
+crypto_transaction_hash,text,Crypto transaction hash,No,
+crypto_from_address,text,Crypto sender address,No,
+crypto_amount,numeric,Crypto amount paid,No,
+crypto_currency,text,Crypto currency used,No,
+crypto_verification_screenshot,text,Crypto payment screenshot,No,
+paypal_order_id,text,PayPal order ID,No,
+paypal_payer_id,text,PayPal payer ID,No,
+stripe_payment_intent_id,text,Stripe payment intent ID,No,
+stripe_customer_id,text,Stripe customer ID,No,
+refund_amount,numeric,Refund amount,No,0.00
+refund_reason,text,Refund reason,No,
+refund_date,timestamptz,Refund date,No,
+ip_address,text,User's IP address,No,
+user_agent,text,User's browser info,No,
+consent_accepted,boolean,Consent acceptance status,No,false
+consent_timestamp,timestamptz,Consent acceptance time,No,
+data_capture_complete,boolean,Data capture completion status,No,false
+last_active,timestamptz,Last activity timestamp,No,
+created_at,timestamptz,Record creation timestamp,No,now()
+updated_at,timestamptz,Record update timestamp,No,now()
+plan_activated_at,timestamptz,Plan activation timestamp,No,

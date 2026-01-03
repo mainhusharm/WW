@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coach Signal Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        button.success { background: #059669; }
+        button.success:hover { background: #047857; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .signal-card {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 AI Coach Signal Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li><strong>Click "Simulate Signal"</strong> below to create test signal data</li>
+            <li><strong>Click "Open AI Coach"</strong> to test the AI Coach with the signal</li>
+            <li><strong>Check if the signal session is created automatically</strong> - No more "Please select or create a trade session first" popup</li>
+            <li><strong>Verify the AI Coach shows the signal details</strong> and starts a conversation about it</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="simulateSignal()">🎯 Simulate Signal</button>
+        <button onclick="checkSignalData()">🔍 Check Signal Data</button>
+        <button onclick="clearSignalData()">🗑️ Clear Signal Data</button>
+        <button onclick="openAICoach()" class="success">🤖 Open AI Coach</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Signal Data Status</h2>
+        <div id="signalStatus">No signal data found</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click "Simulate Signal" to start testing</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let signalStatusDiv = document.getElementById('signalStatus');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        window.simulateSignal = function() {
+            log('🎯 Simulating signal data for AI Coach...', 'info');
+            
+            const signalData = {
+                symbol: 'EUR/USD',
+                direction: 'BUY',
+                entryPrice: '1.08500',
+                stopLoss: '1.08200',
+                takeProfit: '1.09100',
+                confidence: 85,
+                analysis: 'Strong bullish setup detected. Break of structure confirms momentum shift. Fair Value Gap providing strong directional bias.',
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('nexus_chat_signal', JSON.stringify(signalData));
+            
+            log('✅ Signal data stored in localStorage', 'success');
+            log(`  - Symbol: ${signalData.symbol}`, 'info');
+            log(`  - Direction: ${signalData.direction}`, 'info');
+            log(`  - Entry: ${signalData.entryPrice}`, 'info');
+            log(`  - Confidence: ${signalData.confidence}%`, 'info');
+            
+            checkSignalData();
+        };
+        
+        window.checkSignalData = function() {
+            log('🔍 Checking signal data in localStorage...', 'info');
+            
+            const signalData = localStorage.getItem('nexus_chat_signal');
+            if (signalData) {
+                try {
+                    const signal = JSON.parse(signalData);
+                    log('✅ Signal data found:', 'success');
+                    log(`  - Symbol: ${signal.symbol}`, 'info');
+                    log(`  - Direction: ${signal.direction}`, 'info');
+                    log(`  - Entry Price: ${signal.entryPrice}`, 'info');
+                    log(`  - Stop Loss: ${signal.stopLoss}`, 'info');
+                    log(`  - Take Profit: ${signal.takeProfit}`, 'info');
+                    log(`  - Confidence: ${signal.confidence}%`, 'info');
+                    
+                    signalStatusDiv.innerHTML = `
+                        <div class="signal-card">
+                            <h3>✅ Signal Data Found</h3>
+                            <p><strong>Symbol:</strong> ${signal.symbol}</p>
+                            <p><strong>Direction:</strong> ${signal.direction}</p>
+                            <p><strong>Entry Price:</strong> ${signal.entryPrice}</p>
+                            <p><strong>Stop Loss:</strong> ${signal.stopLoss}</p>
+                            <p><strong>Take Profit:</strong> ${signal.takeProfit}</p>
+                            <p><strong>Confidence:</strong> ${signal.confidence}%</p>
+                            <p><strong>Analysis:</strong> ${signal.analysis}</p>
+                        </div>
+                    `;
+                } catch (e) {
+                    log('❌ Error parsing signal data', 'error');
+                    signalStatusDiv.innerHTML = '<div class="signal-card">❌ Error parsing signal data</div>';
+                }
+            } else {
+                log('❌ No signal data found', 'warning');
+                signalStatusDiv.innerHTML = '<div class="signal-card">❌ No signal data found. Click "Simulate Signal" first.</div>';
+            }
+        };
+        
+        window.clearSignalData = function() {
+            log('🗑️ Clearing signal data...', 'warning');
+            localStorage.removeItem('nexus_chat_signal');
+            log('✅ Signal data cleared', 'success');
+            checkSignalData();
+        };
+        
+        window.openAICoach = function() {
+            log('🤖 Opening AI Coach...', 'info');
+            
+            const signalData = localStorage.getItem('nexus_chat_signal');
+            if (signalData) {
+                log('✅ Signal data found - AI Coach should automatically create a session', 'success');
+                log('Opening AI Coach in new tab...', 'info');
+                window.open('http://localhost:5175/dashboard#ai-coach', '_blank');
+            } else {
+                log('❌ No signal data found - AI Coach will show the "Please select or create a trade session first" popup', 'warning');
+                log('Click "Simulate Signal" first, then try again', 'info');
+            }
+        };
+        
+        // Auto-run initial check
+        log('🚀 AI Coach Signal Test initialized', 'info');
+        log('This test verifies that the AI Coach automatically creates a session from signal data', 'info');
+        checkSignalData();
+    </script>
+</body>
+</html>

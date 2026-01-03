@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coach Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .debug-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .signal-data {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 AI Coach Debug Test</h1>
+    
+    <div class="debug-section">
+        <h2>Debug Controls</h2>
+        <button onclick="checkLocalStorage()">🔍 Check localStorage</button>
+        <button onclick="simulateSignalData()">📊 Simulate Signal Data</button>
+        <button onclick="testAICoachDetection()">🤖 Test AI Coach Detection</button>
+        <button onclick="clearAllData()">🗑️ Clear All Data</button>
+    </div>
+
+    <div class="debug-section">
+        <h2>Current localStorage Data</h2>
+        <div id="localStorageData">Click "Check localStorage" to see current data</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click debug buttons to see what's happening</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let localStorageDiv = document.getElementById('localStorageData');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        window.checkLocalStorage = function() {
+            log('🔍 Checking localStorage for signal data...', 'info');
+            
+            const nexusSignal = localStorage.getItem('nexus_chat_signal');
+            const telegramMessages = localStorage.getItem('telegram_messages');
+            
+            log(`nexus_chat_signal: ${nexusSignal ? 'EXISTS' : 'NOT FOUND'}`, nexusSignal ? 'success' : 'warning');
+            log(`telegram_messages: ${telegramMessages ? 'EXISTS' : 'NOT FOUND'}`, telegramMessages ? 'success' : 'warning');
+            
+            if (nexusSignal) {
+                try {
+                    const parsed = JSON.parse(nexusSignal);
+                    log('✅ nexus_chat_signal data:', 'success');
+                    log(JSON.stringify(parsed, null, 2), 'info');
+                } catch (e) {
+                    log(`❌ Error parsing nexus_chat_signal: ${e.message}`, 'error');
+                }
+            }
+            
+            if (telegramMessages) {
+                try {
+                    const parsed = JSON.parse(telegramMessages);
+                    log(`📊 telegram_messages contains ${parsed.length} messages`, 'info');
+                    if (parsed.length > 0) {
+                        log('Latest message:', 'info');
+                        log(JSON.stringify(parsed[0], null, 2), 'info');
+                    }
+                } catch (e) {
+                    log(`❌ Error parsing telegram_messages: ${e.message}`, 'error');
+                }
+            }
+            
+            // Display in UI
+            localStorageDiv.innerHTML = `
+                <div class="signal-data">
+                    <h3>localStorage Status:</h3>
+                    <p><strong>nexus_chat_signal:</strong> ${nexusSignal ? '✅ EXISTS' : '❌ NOT FOUND'}</p>
+                    <p><strong>telegram_messages:</strong> ${telegramMessages ? '✅ EXISTS' : '❌ NOT FOUND'}</p>
+                    ${nexusSignal ? `<pre>${JSON.stringify(JSON.parse(nexusSignal), null, 2)}</pre>` : ''}
+                </div>
+            `;
+        };
+        
+        window.simulateSignalData = function() {
+            log('📊 Simulating signal data...', 'info');
+            
+            // Create a test signal in the format that DashboardConcept1 creates
+            const testSignal = {
+                symbol: 'EUR/CHF',
+                direction: 'SELL',
+                entryPrice: '0.9338',
+                stopLoss: '0.93511',
+                takeProfit: '0.93119',
+                confidence: '72',
+                analysis: 'Strong bearish setup detected. Major swing Break of Structure confirms bearish momentum shift.',
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('nexus_chat_signal', JSON.stringify(testSignal));
+            log('✅ Test signal data stored in localStorage', 'success');
+            log(JSON.stringify(testSignal, null, 2), 'info');
+            
+            checkLocalStorage();
+        };
+        
+        window.testAICoachDetection = function() {
+            log('🤖 Testing AI Coach signal detection...', 'info');
+            
+            // Simulate the AI Coach's checkForSignalData function
+            const signalData = localStorage.getItem('nexus_chat_signal');
+            if (signalData) {
+                try {
+                    const signal = JSON.parse(signalData);
+                    log('✅ Signal data found and parsed successfully', 'success');
+                    log(`  - Symbol: ${signal.symbol}`, 'info');
+                    log(`  - Direction: ${signal.direction}`, 'info');
+                    log(`  - Entry Price: ${signal.entryPrice}`, 'info');
+                    log(`  - Stop Loss: ${signal.stopLoss}`, 'info');
+                    log(`  - Take Profit: ${signal.takeProfit}`, 'info');
+                    log(`  - Confidence: ${signal.confidence}%`, 'info');
+                    
+                    // Simulate creating session
+                    const sessionId = 'signal_' + Date.now();
+                    const session = {
+                        id: sessionId,
+                        symbol: signal.symbol || 'Unknown',
+                        type: signal.direction || 'BUY',
+                        entryPrice: signal.entryPrice || '0',
+                        stopLoss: signal.stopLoss || '0',
+                        takeProfit: signal.takeProfit || '0',
+                        confidence: signal.confidence || '0',
+                        analysis: signal.analysis || '',
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    log('✅ Session would be created:', 'success');
+                    log(JSON.stringify(session, null, 2), 'info');
+                    
+                } catch (e) {
+                    log(`❌ Error parsing signal data: ${e.message}`, 'error');
+                }
+            } else {
+                log('❌ No signal data found in localStorage', 'warning');
+                log('Make sure to click "Chat with Nexus" from a signal first', 'info');
+            }
+        };
+        
+        window.clearAllData = function() {
+            log('🗑️ Clearing all localStorage data...', 'warning');
+            localStorage.removeItem('nexus_chat_signal');
+            localStorage.removeItem('telegram_messages');
+            log('✅ All data cleared', 'success');
+            checkLocalStorage();
+        };
+        
+        // Auto-run initial check
+        log('🚀 AI Coach Debug Test initialized', 'info');
+        checkLocalStorage();
+    </script>
+</body>
+</html>

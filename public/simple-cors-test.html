@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple CORS Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: white;
+        }
+        .container {
+            background-color: #2a2a2a;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #2d5a2d;
+            border: 1px solid #4CAF50;
+        }
+        .error {
+            background-color: #5a2d2d;
+            border: 1px solid #f44336;
+        }
+        .info {
+            background-color: #2d4a5a;
+            border: 1px solid #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Simple CORS Test</h1>
+        <p>Testing direct approaches to fix CORS issues.</p>
+        
+        <button onclick="testDirect()">Test Direct Request</button>
+        <button onclick="testNoCors()">Test No-CORS Mode</button>
+        <button onclick="testMockData()">Test Mock Data</button>
+        <button onclick="clearResults()">Clear</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        function clearResults() {
+            document.getElementById('result').style.display = 'none';
+        }
+        
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+        }
+        
+        // Test direct request
+        async function testDirect() {
+            showResult('Testing direct request...', 'info');
+            
+            try {
+                const response = await fetch('https://backend-ox9b.onrender.com/api/users', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(`✅ SUCCESS!\n\nUsers: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`❌ ERROR!\n\nStatus: ${response.status}\nResponse: ${await response.text()}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ CORS ERROR!\n\nError: ${error.message}\n\nThis is expected due to CORS policy.`, 'error');
+            }
+        }
+        
+        // Test no-cors mode
+        async function testNoCors() {
+            showResult('Testing no-cors mode...', 'info');
+            
+            try {
+                const response = await fetch('https://backend-ox9b.onrender.com/api/users', {
+                    method: 'GET',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                showResult(`✅ NO-CORS REQUEST SENT!\n\nStatus: ${response.status}\nType: ${response.type}\n\nNote: No-cors mode doesn't allow reading response body, but the request was sent successfully.`, 'success');
+            } catch (error) {
+                showResult(`❌ NO-CORS ERROR!\n\nError: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test mock data
+        function testMockData() {
+            showResult('Testing mock data...', 'info');
+            
+            const mockUsers = [
+                {
+                    id: '1',
+                    name: 'John Doe',
+                    email: 'john@example.com',
+                    status: 'active',
+                    joinDate: '2024-01-15',
+                    totalTrades: 25,
+                    successRate: 85,
+                    balance: 5000,
+                    tier: 'gold'
+                },
+                {
+                    id: '2',
+                    name: 'Jane Smith',
+                    email: 'jane@example.com',
+                    status: 'active',
+                    joinDate: '2024-01-10',
+                    totalTrades: 18,
+                    successRate: 92,
+                    balance: 7500,
+                    tier: 'platinum'
+                },
+                {
+                    id: '3',
+                    name: 'Bob Johnson',
+                    email: 'bob@example.com',
+                    status: 'inactive',
+                    joinDate: '2024-01-05',
+                    totalTrades: 12,
+                    successRate: 75,
+                    balance: 2500,
+                    tier: 'silver'
+                }
+            ];
+            
+            showResult(`✅ MOCK DATA LOADED!\n\nUsers: ${JSON.stringify(mockUsers, null, 2)}\n\nThis is the fallback data that will be used when CORS blocks the API.`, 'success');
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            console.log('Simple CORS test page loaded...');
+        });
+    </script>
+</body>
+</html>

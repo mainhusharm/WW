@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Render CORS Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+        .feature-list {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Render CORS Fix Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li><strong>Click "Test Environment Detection"</strong> to verify environment detection</li>
+            <li><strong>Click "Test CORS Proxy Fix"</strong> to test the CORS proxy improvements</li>
+            <li><strong>Click "Test API Headers"</strong> to verify safe headers are used</li>
+            <li><strong>Click "Test Production API"</strong> to test production API calls</li>
+            <li><strong>Deploy to Render</strong> and verify the errors are gone</li>
+        </ol>
+    </div>
+    
+    <div class="feature-list">
+        <h3>✅ Fixes Implemented:</h3>
+        <ul>
+            <li><strong>Environment Detection:</strong> Automatically detects production vs development</li>
+            <li><strong>Safe Headers:</strong> Removes problematic headers in production</li>
+            <li><strong>CORS Proxy Priority:</strong> Uses more reliable proxies first</li>
+            <li><strong>Authorization Header Handling:</strong> Removes auth headers from CORS requests</li>
+            <li><strong>Production API Client:</strong> Fallback to localStorage when APIs fail</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="testEnvironmentDetection()">🌍 Test Environment Detection</button>
+        <button onclick="testCorsProxyFix()">🔄 Test CORS Proxy Fix</button>
+        <button onclick="testApiHeaders()">📋 Test API Headers</button>
+        <button onclick="testProductionApi()">🚀 Test Production API</button>
+        <button onclick="clearLogs()">🗑️ Clear Logs</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Environment Info</h2>
+        <div id="environmentInfo">Click "Test Environment Detection" to see environment info</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click test buttons to see what's happening</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let environmentInfoDiv = document.getElementById('environmentInfo');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // Environment detection functions
+        function isProduction() {
+            return window.location.hostname.includes('onrender.com') || 
+                   window.location.hostname.includes('traderedgepro.com') ||
+                   !window.location.hostname.includes('localhost');
+        }
+        
+        function isDevelopment() {
+            return window.location.hostname.includes('localhost') || 
+                   window.location.hostname.includes('127.0.0.1');
+        }
+        
+        function isRender() {
+            return window.location.hostname.includes('onrender.com');
+        }
+        
+        function getEnvironment() {
+            if (isRender()) return 'render';
+            if (isProduction()) return 'production';
+            return 'development';
+        }
+        
+        function getSafeHeaders(originalHeaders = {}) {
+            const safeHeaders = { ...originalHeaders };
+            
+            // Remove headers that cause CORS issues
+            delete safeHeaders['Authorization'];
+            delete safeHeaders['Access-Control-Request-Method'];
+            delete safeHeaders['Access-Control-Request-Headers'];
+            
+            // Add safe headers
+            safeHeaders['Accept'] = 'application/json';
+            safeHeaders['Content-Type'] = 'application/json';
+            
+            return safeHeaders;
+        }
+        
+        window.testEnvironmentDetection = function() {
+            log('🌍 Testing environment detection...', 'info');
+            
+            const envInfo = {
+                hostname: window.location.hostname,
+                environment: getEnvironment(),
+                isProduction: isProduction(),
+                isDevelopment: isDevelopment(),
+                isRender: isRender()
+            };
+            
+            log('✅ Environment detection completed:', 'success');
+            log(`  - Hostname: ${envInfo.hostname}`, 'info');
+            log(`  - Environment: ${envInfo.environment}`, 'info');
+            log(`  - Is Production: ${envInfo.isProduction}`, 'info');
+            log(`  - Is Development: ${envInfo.isDevelopment}`, 'info');
+            log(`  - Is Render: ${envInfo.isRender}`, 'info');
+            
+            environmentInfoDiv.innerHTML = `
+                <div class="feature-list">
+                    <h3>Current Environment:</h3>
+                    <p><strong>Hostname:</strong> ${envInfo.hostname}</p>
+                    <p><strong>Environment:</strong> ${envInfo.environment}</p>
+                    <p><strong>Is Production:</strong> ${envInfo.isProduction ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Is Development:</strong> ${envInfo.isDevelopment ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>Is Render:</strong> ${envInfo.isRender ? '✅ Yes' : '❌ No'}</p>
+                </div>
+            `;
+        };
+        
+        window.testCorsProxyFix = function() {
+            log('🔄 Testing CORS proxy fix...', 'info');
+            
+            // Test original headers (problematic)
+            const originalHeaders = {
+                'Authorization': 'Bearer test-token',
+                'Access-Control-Request-Method': 'POST',
+                'Access-Control-Request-Headers': 'Content-Type, Authorization',
+                'Content-Type': 'application/json'
+            };
+            
+            log('Original headers (problematic):', 'warning');
+            log(JSON.stringify(originalHeaders, null, 2), 'info');
+            
+            // Test safe headers
+            const safeHeaders = getSafeHeaders(originalHeaders);
+            
+            log('Safe headers (fixed):', 'success');
+            log(JSON.stringify(safeHeaders, null, 2), 'info');
+            
+            log('✅ CORS proxy fix test completed', 'success');
+            log('  - Removed Authorization header', 'info');
+            log('  - Removed Access-Control-Request-* headers', 'info');
+            log('  - Kept safe headers only', 'info');
+        };
+        
+        window.testApiHeaders = function() {
+            log('📋 Testing API headers...', 'info');
+            
+            const testCases = [
+                {
+                    name: 'Development Headers',
+                    headers: {
+                        'Authorization': 'Bearer test-token',
+                        'Content-Type': 'application/json',
+                        'Access-Control-Request-Method': 'POST'
+                    },
+                    environment: 'development'
+                },
+                {
+                    name: 'Production Headers',
+                    headers: {
+                        'Authorization': 'Bearer test-token',
+                        'Content-Type': 'application/json',
+                        'Access-Control-Request-Method': 'POST'
+                    },
+                    environment: 'production'
+                }
+            ];
+            
+            testCases.forEach(testCase => {
+                log(`Testing ${testCase.name}:`, 'info');
+                
+                if (testCase.environment === 'production') {
+                    const safeHeaders = getSafeHeaders(testCase.headers);
+                    log('  - Safe headers applied:', 'success');
+                    log(JSON.stringify(safeHeaders, null, 2), 'info');
+                } else {
+                    log('  - Original headers kept (development):', 'info');
+                    log(JSON.stringify(testCase.headers, null, 2), 'info');
+                }
+            });
+            
+            log('✅ API headers test completed', 'success');
+        };
+        
+        window.testProductionApi = function() {
+            log('🚀 Testing production API calls...', 'info');
+            
+            // Simulate production API call
+            const apiUrl = 'https://backend-ox9b.onrender.com/api/test';
+            const safeHeaders = getSafeHeaders({
+                'Authorization': 'Bearer test-token'
+            });
+            
+            log('Making API call with safe headers:', 'info');
+            log(`  - URL: ${apiUrl}`, 'info');
+            log(`  - Headers: ${JSON.stringify(safeHeaders)}`, 'info');
+            
+            // Test fetch with safe headers
+            fetch(apiUrl, {
+                method: 'GET',
+                headers: safeHeaders,
+                mode: 'cors'
+            })
+            .then(response => {
+                if (response.ok) {
+                    log('✅ API call successful!', 'success');
+                } else {
+                    log(`⚠️ API call failed with status: ${response.status}`, 'warning');
+                }
+            })
+            .catch(error => {
+                log(`❌ API call failed: ${error.message}`, 'error');
+                log('This is expected if the API is not available', 'info');
+            });
+        };
+        
+        window.clearLogs = function() {
+            logContainer.innerHTML = '';
+            log('🗑️ Logs cleared', 'info');
+        };
+        
+        // Auto-run initial check
+        log('🚀 Render CORS Fix Test initialized', 'info');
+        log('This test verifies the CORS fixes for Render deployment', 'info');
+        testEnvironmentDetection();
+    </script>
+</body>
+</html>

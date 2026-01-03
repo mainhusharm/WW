@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Payment Webhook</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: white;
+        }
+        .container {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        .error {
+            background-color: #4a1a1a;
+            color: #ff6b6b;
+        }
+        .success {
+            background-color: #1a4a1a;
+            color: #6bff6b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Payment Webhook Test</h1>
+    
+    <div class="container">
+        <h2>Test Payment Webhook</h2>
+        <p>This will simulate a successful payment and create a customer in the database.</p>
+        <button onclick="testPaymentWebhook()">Test Payment Webhook</button>
+        <div id="webhookResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>Check Payment Customers</h2>
+        <p>This will show all customers created through payment webhooks.</p>
+        <button onclick="checkPaymentCustomers()">Check Payment Customers</button>
+        <div id="customersResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>Test Admin Signals</h2>
+        <p>This will test the admin signals endpoint.</p>
+        <button onclick="testAdminSignals()">Test Admin Signals</button>
+        <div id="signalsResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>Create Test Signal</h2>
+        <p>This will create a test signal from admin.</p>
+        <button onclick="createTestSignal()">Create Test Signal</button>
+        <div id="createSignalResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://backend-u4hy.onrender.com/api';
+
+        async function testPaymentWebhook() {
+            const resultDiv = document.getElementById('webhookResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Testing payment webhook...';
+
+            try {
+                const response = await fetch(`${API_BASE}/payment/test-webhook`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Payment webhook successful!\n\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Payment webhook failed:\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function checkPaymentCustomers() {
+            const resultDiv = document.getElementById('customersResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Checking payment customers...';
+
+            try {
+                const response = await fetch(`${API_BASE}/payment/customers`);
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Payment customers retrieved!\n\nTotal: ${data.total}\n\n${JSON.stringify(data.customers, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Failed to get customers:\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testAdminSignals() {
+            const resultDiv = document.getElementById('signalsResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Testing admin signals...';
+
+            try {
+                const response = await fetch(`${API_BASE}/signals/admin`);
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Admin signals retrieved!\n\nTotal: ${data.total}\n\n${JSON.stringify(data.signals, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Failed to get signals:\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function createTestSignal() {
+            const resultDiv = document.getElementById('createSignalResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Creating test signal...';
+
+            try {
+                const testSignal = {
+                    symbol: 'EUR/USD',
+                    action: 'BUY',
+                    entryPrice: 1.0850,
+                    stopLoss: 1.0800,
+                    takeProfit: 1.0950,
+                    timeframe: '1H',
+                    description: 'Test signal from webhook test',
+                    confidence: 85,
+                    rrRatio: '1:2.7',
+                    analysis: 'Professional-grade signal analysis',
+                    createdBy: 'Test Admin'
+                };
+
+                const response = await fetch(`${API_BASE}/signals/admin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testSignal)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Test signal created!\n\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Failed to create signal:\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

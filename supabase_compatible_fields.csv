@@ -1,0 +1,122 @@
+Field Name,Data Type,Description,Category,Required,Default Value,Notes
+id,uuid,Primary Key,Basic,Yes,gen_random_uuid(),Auto-generated
+first_name,text,User's first name,Profile,Yes,,From signup form
+last_name,text,User's last name,Profile,Yes,,From signup form
+email,text,User's email address,Profile,Yes,,Unique identifier
+phone,text,User's phone number,Profile,Yes,,From signup form
+company,text,User's company name,Profile,No,,From signup form
+country,text,User's country,Profile,No,United States,From signup form
+language,text,User's preferred language,Profile,No,English,From dashboard settings
+bio,text,User's biography,Profile,No,,From dashboard settings
+password_hash,text,Encrypted password,Authentication,Yes,,Hashed password for security
+agree_to_terms,boolean,Agreed to terms of service,Authentication,Yes,false,From signup form
+agree_to_marketing,boolean,Agreed to marketing communications,Authentication,No,false,From signup form
+status,text,User account status,Status,No,PENDING,PENDING/PROCESSING/COMPLETED/REJECTED/ACTIVE
+membership_tier,text,User's membership level,Status,No,,free/premium/kickstarter
+account_type,text,Account type,Status,No,,personal/business
+setup_complete,boolean,Whether setup is complete,Status,No,false,From user context
+is_temporary,boolean,Whether account is temporary,Status,No,false,From user context
+unique_id,text,Unique identifier,Status,No,,From user context
+token,text,Authentication token,Status,No,,From user context
+selected_plan,jsonb,Selected membership plan,Status,No,,JSON object
+trading_experience_signup,text,Trading experience from signup,Signup,No,,beginner/intermediate/advanced
+trading_goals_signup,text,Trading goals from signup,Signup,No,,Free text description
+risk_tolerance_signup,text,Risk tolerance from signup,Signup,No,,conservative/moderate/aggressive
+preferred_markets,text,Preferred trading markets,Signup,No,,From signup form
+trading_style,text,Trading style preference,Signup,No,,From signup form
+trades_per_day,text,Number of trades per day,Questionnaire,No,,1-2/3-5/6-10/10+
+trading_session,text,Preferred trading session,Questionnaire,No,,asian/european/us/any
+has_account,text,Whether user has existing account,Questionnaire,No,,yes/no
+account_equity,numeric,Current account equity,Questionnaire,No,,If has_account equals yes
+prop_firm,text,Selected prop firm,Questionnaire,No,,From questionnaire
+account_type_questionnaire,text,Account type from prop firm,Questionnaire,No,,From questionnaire
+account_size,numeric,Account size in USD,Questionnaire,No,,From questionnaire
+risk_percentage,numeric,Risk per trade percentage,Questionnaire,No,,0.5 to 2.5 percent
+risk_reward_ratio,text,Preferred risk:reward ratio,Questionnaire,No,,1/2/3/4
+crypto_assets,text[],Array of crypto symbols,Questionnaire,No,,BTC ETH etc
+forex_assets,text[],Array of forex pairs,Questionnaire,No,,EURUSD GBPUSD etc
+account_screenshot,text,Base64 encoded screenshot,Questionnaire,No,,Account verification
+screenshot_url,text,URL to stored screenshot,Questionnaire,No,,If stored externally
+trading_experience,text,User's trading experience,Questionnaire,No,,beginner/intermediate/advanced
+risk_tolerance,text,User's risk tolerance,Questionnaire,No,,conservative/moderate/aggressive
+trading_goals,text,User's trading goals,Questionnaire,No,,Free text description
+plan_name,text,Risk management plan name,Risk Management,No,,Conservative/Balanced/Aggressive/Custom
+plan_description,text,Risk management plan description,Risk Management,No,,Plan details
+is_active,boolean,Whether plan is active,Risk Management,No,true,Plan status
+version,text,Plan version,Risk Management,No,1.0,Version control
+max_risk_per_trade,numeric,Maximum risk per trade,Risk Management,No,,0.1 to 5.0 percent
+max_daily_loss,numeric,Maximum daily loss,Risk Management,No,,1 to 10 percent
+max_weekly_loss,numeric,Maximum weekly loss,Risk Management,No,,5 to 20 percent
+max_monthly_loss,numeric,Maximum monthly loss,Risk Management,No,,10 to 30 percent
+max_position_size,numeric,Maximum position size,Risk Management,No,,1 to 20 percent
+max_open_trades,integer,Maximum open trades,Risk Management,No,,1 to 10
+stop_loss_type,text,Stop loss type,Risk Management,No,,Fixed Percentage ATR-based Support/Resistance Manual
+default_stop_loss,numeric,Default stop loss,Risk Management,No,,0.5 to 10 percent
+take_profit_type,text,Take profit type,Risk Management,No,,Fixed R:R Ratio Multiple Targets Trailing Stop Manual
+default_risk_reward,numeric,Default risk:reward ratio,Risk Management,No,,1.0 to 10.0
+max_consecutive_losses,integer,Maximum consecutive losses,Risk Management,No,,1 to 10
+max_drawdown_percentage,numeric,Maximum drawdown percentage,Risk Management,No,,5 to 30 percent
+recovery_mode,boolean,Recovery mode enabled,Risk Management,No,false,Advanced setting
+recovery_risk_reduction,numeric,Recovery risk reduction,Risk Management,No,,0.1 to 1.0
+trades_to_pass,integer,Number of trades needed to pass,Calculated,No,,Calculated value
+risk_amount,numeric,Risk amount per trade,Calculated,No,,Calculated value
+profit_amount,numeric,Profit target per trade,Calculated,No,,Calculated value
+profit_target,numeric,Total profit target,Calculated,No,,Calculated value
+profit_target_percentage,numeric,Profit target percentage,Calculated,No,,Calculated value
+daily_profit_target,numeric,Daily profit target,Calculated,No,,Calculated value
+daily_risk_amount,numeric,Daily risk amount,Calculated,No,,Calculated value
+estimated_days_to_pass,integer,Estimated days to pass,Calculated,No,,Calculated value
+plan_data,jsonb,Complete plan data as JSON,Risk Management,No,,JSON object with all plan details
+risk_per_trade_setting,numeric,Risk per trade setting,Dashboard Settings,No,1.0,From dashboard settings
+max_daily_risk_setting,numeric,Max daily risk setting,Dashboard Settings,No,5.0,From dashboard settings
+max_drawdown_setting,numeric,Max drawdown setting,Dashboard Settings,No,10.0,From dashboard settings
+stop_loss_default_setting,numeric,Default stop loss setting,Dashboard Settings,No,50.0,From dashboard settings
+take_profit_default_setting,numeric,Default take profit setting,Dashboard Settings,No,100.0,From dashboard settings
+risk_reward_ratio_setting,numeric,Risk reward ratio setting,Dashboard Settings,No,2.0,From dashboard settings
+trading_preferences,jsonb,Trading preferences settings,Dashboard Settings,No,,JSON object with trading settings
+display_settings,jsonb,Display and theme settings,Dashboard Settings,No,,JSON object with display preferences
+notification_settings,jsonb,Notification preferences,Dashboard Settings,No,,JSON object with notification settings
+security_settings,jsonb,Security settings,Dashboard Settings,No,,JSON object with security preferences
+data_settings,jsonb,Data and export settings,Dashboard Settings,No,,JSON object with data preferences
+api_settings,jsonb,API and integration settings,Dashboard Settings,No,,JSON object with API settings
+currency,text,User's currency,Dashboard Settings,No,USD,Currency preference
+timezone,text,User's timezone,Dashboard Settings,No,America/New_York,Timezone preference
+auto_save,boolean,Auto-save enabled,Dashboard Settings,No,true,From dashboard settings
+payment_id,uuid,Payment record ID,Payment,No,,Auto-generated payment ID
+plan_name_payment,text,Plan name from payment,Payment,No,,From payment form
+original_price,numeric,Original plan price,Payment,No,,Before discounts
+discount_amount,numeric,Discount amount applied,Payment,No,0.00,From coupon or promotion
+final_price,numeric,Final price after discount,Payment,No,,Amount actually charged
+coupon_code,text,Coupon code used,Payment,No,,If applicable
+payment_method,text,Payment method used,Payment,No,,paypal/crypto/stripe
+payment_status,text,Payment status,Payment,No,pending,pending/completed/failed/refunded
+transaction_id,text,Payment transaction ID,Payment,No,,From payment processor
+payment_processor,text,Payment processor used,Payment,No,,paypal/stripe/crypto
+payment_currency,text,Payment currency,Payment,No,USD,Currency used for payment
+payment_amount,numeric,Payment amount,Payment,No,,Amount paid
+payment_fees,numeric,Payment processing fees,Payment,No,0.00,Fees charged by processor
+payment_net_amount,numeric,Net amount received,Payment,No,,Amount after fees
+payment_date,timestamptz,Payment completion date,Payment,No,,When payment was completed
+payment_verified,boolean,Payment verification status,Payment,No,false,Whether payment is verified
+payment_verification_method,text,Payment verification method,Payment,No,,manual/automatic/webhook
+crypto_transaction_hash,text,Crypto transaction hash,Payment,No,,For crypto payments
+crypto_from_address,text,Crypto sender address,Payment,No,,For crypto payments
+crypto_amount,numeric,Crypto amount paid,Payment,No,,For crypto payments
+crypto_currency,text,Crypto currency used,Payment,No,,ETH/SOL/etc
+crypto_verification_screenshot,text,Crypto payment screenshot,Payment,No,,Base64 encoded image
+paypal_order_id,text,PayPal order ID,Payment,No,,For PayPal payments
+paypal_payer_id,text,PayPal payer ID,Payment,No,,For PayPal payments
+stripe_payment_intent_id,text,Stripe payment intent ID,Payment,No,,For Stripe payments
+stripe_customer_id,text,Stripe customer ID,Payment,No,,For Stripe payments
+refund_amount,numeric,Refund amount,Payment,No,0.00,If refunded
+refund_reason,text,Refund reason,Payment,No,,Reason for refund
+refund_date,timestamptz,Refund date,Payment,No,,When refund was processed
+ip_address,text,User's IP address,Metadata,No,,For security tracking
+user_agent,text,User's browser info,Metadata,No,,For security tracking
+consent_accepted,boolean,Consent acceptance status,Metadata,No,false,GDPR compliance
+consent_timestamp,timestamptz,Consent acceptance time,Metadata,No,,GDPR compliance
+data_capture_complete,boolean,Data capture completion status,Metadata,No,false,Whether all data is captured
+last_active,timestamptz,Last activity timestamp,Metadata,No,,User's last activity
+created_at,timestamptz,Record creation timestamp,Metadata,No,now(),Auto-generated
+updated_at,timestamptz,Record update timestamp,Metadata,No,now(),Auto-updated
+plan_activated_at,timestamptz,Plan activation timestamp,Metadata,No,,When plan was activated

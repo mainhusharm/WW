@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Flow Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .fix-summary {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Data Flow Fix Test</h1>
+        
+        <div class="fix-summary">
+            <h3>🚨 Issue Identified and Fixed</h3>
+            <p><strong>Problem:</strong> Frontend was sending data to non-existent API endpoints</p>
+            <p><strong>Solution:</strong> Updated frontend to use correct working endpoints</p>
+            <ul>
+                <li>❌ <code>/api/user/questionnaire</code> → ✅ <code>/api/simple/questionnaire</code></li>
+                <li>❌ <code>/api/payment/verify-payment</code> → ✅ <code>/api/simple/payments</code></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>1. Test User Registration (Should Work)</h3>
+            <button onclick="testRegistration()">Test Registration</button>
+            <div id="registrationResult" class="result info">Click button to test</div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Test Questionnaire Data Flow (Fixed)</h3>
+            <button onclick="testQuestionnaire()">Test Questionnaire</button>
+            <div id="questionnaireResult" class="result info">Click button to test</div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test Payment Data Flow (Fixed)</h3>
+            <button onclick="testPayment()">Test Payment</button>
+            <div id="paymentResult" class="result info">Click button to test</div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Test Dashboard Data Flow</h3>
+            <button onclick="testDashboard()">Test Dashboard</button>
+            <div id="dashboardResult" class="result info">Click button to test</div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Complete Data Flow Test</h3>
+            <button onclick="runAllTests()">Run All Tests</button>
+            <div id="allTestsResult" class="result info">Click button to run all tests</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let testResults = {
+            registration: false,
+            questionnaire: false,
+            payment: false,
+            dashboard: false
+        };
+
+        async function testRegistration() {
+            const resultDiv = document.getElementById('registrationResult');
+            
+            try {
+                resultDiv.innerHTML = '<div class="result info">Testing registration...</div>';
+                
+                const userData = {
+                    firstName: 'Data',
+                    lastName: 'Flow',
+                    email: `dataflow_${Date.now()}@example.com`,
+                    password: 'test123',
+                    phone: '1234567890',
+                    company: 'Test Company',
+                    country: 'US',
+                    terms: true,
+                    newsletter: false
+                };
+                
+                const response = await fetch(`${API_BASE}/api/user/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ Registration successful!<br>
+                            User ID: ${data.user_id}<br>
+                            Message: ${data.msg}<br>
+                            <strong>Data is flowing to database!</strong>
+                        </div>
+                    `;
+                    testResults.registration = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Registration failed<br>
+                        Error: ${error.message}
+                    </div>
+                `;
+                testResults.registration = false;
+            }
+        }
+
+        async function testQuestionnaire() {
+            const resultDiv = document.getElementById('questionnaireResult');
+            
+            try {
+                resultDiv.innerHTML = '<div class="result info">Testing questionnaire data flow...</div>';
+                
+                const questionnaireData = {
+                    user_id: 1,
+                    user_email: `questionnaire_${Date.now()}@example.com`,
+                    user_name: 'Test User',
+                    trades_per_day: '5-10',
+                    trading_session: 'London',
+                    crypto_assets: ['BTC', 'ETH', 'ADA'],
+                    forex_assets: ['EUR/USD', 'GBP/USD', 'USD/JPY'],
+                    has_account: true,
+                    account_equity: '10000-50000',
+                    prop_firm: 'FTMO',
+                    account_type: 'Standard',
+                    account_size: '10000',
+                    risk_percentage: '2',
+                    risk_reward_ratio: '1:2',
+                    trading_experience: 'Intermediate',
+                    risk_tolerance: 'Medium',
+                    trading_goals: 'Consistent profits'
+                };
+                
+                const response = await fetch(`${API_BASE}/api/simple/questionnaire`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(questionnaireData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ Questionnaire data saved!<br>
+                            Questionnaire ID: ${data.questionnaire_id}<br>
+                            Message: ${data.message}<br>
+                            <strong>Data is flowing to database!</strong>
+                        </div>
+                    `;
+                    testResults.questionnaire = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Questionnaire failed<br>
+                        Error: ${error.message}
+                    </div>
+                `;
+                testResults.questionnaire = false;
+            }
+        }
+
+        async function testPayment() {
+            const resultDiv = document.getElementById('paymentResult');
+            
+            try {
+                resultDiv.innerHTML = '<div class="result info">Testing payment data flow...</div>';
+                
+                const paymentData = {
+                    user_id: 1,
+                    user_email: `payment_${Date.now()}@example.com`,
+                    user_name: 'Test User',
+                    plan_name_payment: 'Premium Trading Plan',
+                    original_price: 99.99,
+                    discount_amount: 10.00,
+                    final_price: 89.99,
+                    payment_method: 'Credit Card',
+                    transaction_id: `txn_${Date.now()}`,
+                    payment_status: 'completed',
+                    payment_provider: 'Stripe',
+                    crypto_transaction_hash: null,
+                    crypto_from_address: null,
+                    crypto_amount: null
+                };
+                
+                const response = await fetch(`${API_BASE}/api/simple/payments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ Payment data saved!<br>
+                            Payment ID: ${data.payment_id}<br>
+                            Message: ${data.message}<br>
+                            <strong>Data is flowing to database!</strong>
+                        </div>
+                    `;
+                    testResults.payment = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Payment failed<br>
+                        Error: ${error.message}
+                    </div>
+                `;
+                testResults.payment = false;
+            }
+        }
+
+        async function testDashboard() {
+            const resultDiv = document.getElementById('dashboardResult');
+            
+            try {
+                resultDiv.innerHTML = '<div class="result info">Testing dashboard data flow...</div>';
+                
+                const dashboardData = {
+                    user_id: 1,
+                    user_email: `dashboard_${Date.now()}@example.com`,
+                    user_name: 'Test User',
+                    current_equity: 10500.00,
+                    initial_equity: 10000.00,
+                    total_pnl: 500.00,
+                    win_rate: 65.5,
+                    total_trades: 20,
+                    winning_trades: 13,
+                    losing_trades: 7,
+                    account_balance: 10500.00,
+                    daily_pnl: 150.00
+                };
+                
+                const response = await fetch(`${API_BASE}/api/simple/dashboard`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dashboardData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ Dashboard data saved!<br>
+                            Dashboard ID: ${data.dashboard_id}<br>
+                            Message: ${data.message}<br>
+                            <strong>Data is flowing to database!</strong>
+                        </div>
+                    `;
+                    testResults.dashboard = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Dashboard failed<br>
+                        Error: ${error.message}
+                    </div>
+                `;
+                testResults.dashboard = false;
+            }
+        }
+
+        async function runAllTests() {
+            const resultDiv = document.getElementById('allTestsResult');
+            
+            resultDiv.innerHTML = '<div class="result info">Running all data flow tests...</div>';
+            
+            // Run all tests in sequence
+            await testRegistration();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testQuestionnaire();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testPayment();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testDashboard();
+            
+            // Final summary
+            const allPassed = Object.values(testResults).every(result => result);
+            
+            if (allPassed) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        🎉 ALL DATA FLOW TESTS PASSED!<br><br>
+                        <strong>✅ Data is now flowing properly from frontend to backend to database!</strong><br><br>
+                        • Registration: ✅ Working<br>
+                        • Questionnaire: ✅ Working<br>
+                        • Payment: ✅ Working<br>
+                        • Dashboard: ✅ Working<br><br>
+                        <strong>Your data flow issue has been resolved!</strong>
+                    </div>
+                `;
+            } else {
+                const failedTests = Object.entries(testResults)
+                    .filter(([_, passed]) => !passed)
+                    .map(([test, _]) => test);
+                
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ SOME DATA FLOW TESTS FAILED<br><br>
+                        <strong>Failed tests:</strong> ${failedTests.join(', ')}<br><br>
+                        <strong>Data flow issue still exists for these components</strong>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

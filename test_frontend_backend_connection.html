@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend-Backend Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .status-card {
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .status-card.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-card.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-card.unknown {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Frontend-Backend Connection Test</h1>
+        <p>This page will test all aspects of the frontend-backend connection to identify any issues.</p>
+
+        <div class="status-grid">
+            <div id="backendStatus" class="status-card unknown">
+                <h4>Backend Status</h4>
+                <p>Checking...</p>
+            </div>
+            <div id="corsStatus" class="status-card unknown">
+                <h4>CORS Configuration</h4>
+                <p>Checking...</p>
+            </div>
+            <div id="apiStatus" class="status-card unknown">
+                <h4>API Endpoints</h4>
+                <p>Checking...</p>
+            </div>
+            <div id="databaseStatus" class="status-card unknown">
+                <h4>Database</h4>
+                <p>Checking...</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>1. Backend Health Check</h3>
+            <button onclick="testBackendHealth()">Test Backend Health</button>
+            <div id="healthResult" class="result info">Click button to test</div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. CORS Preflight Test</h3>
+            <button onclick="testCORS()">Test CORS Preflight</button>
+            <div id="corsResult" class="result info">Click button to test</div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. API Registration Test</h3>
+            <button onclick="testRegistration()">Test User Registration</button>
+            <div id="registrationResult" class="result info">Click button to test</div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Database Connection Test</h3>
+            <button onclick="testDatabase()">Test Database Connection</button>
+            <div id="databaseResult" class="result info">Click button to test</div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Complete Integration Test</h3>
+            <button onclick="runCompleteTest()">Run Complete Test</button>
+            <div id="completeResult" class="result info">Click button to run all tests</div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Test Summary</h3>
+            <div id="testSummary" class="result info">
+                <strong>Test Results:</strong><br>
+                • Backend Health: <span id="healthSummary">Not tested</span><br>
+                • CORS Configuration: <span id="corsSummary">Not tested</span><br>
+                • API Endpoints: <span id="apiSummary">Not tested</span><br>
+                • Database Connection: <span id="dbSummary">Not tested</span><br>
+                • Overall Status: <span id="overallSummary">Not tested</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8080';
+        let testResults = {
+            health: false,
+            cors: false,
+            api: false,
+            database: false
+        };
+
+        // Auto-run tests on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(runCompleteTest, 1000);
+        });
+
+        async function testBackendHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            const statusDiv = document.getElementById('backendStatus');
+            
+            try {
+                resultDiv.innerHTML = '<div class="result info">Testing backend health...</div>';
+                
+                const response = await fetch(`${BACKEND_URL}/health`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ Backend is healthy!<br>
+                            Status: ${data.status}<br>
+                            Service: ${data.service}<br>
+                            Version: ${data.version}
+                        </div>
+                    `;
+                    statusDiv.innerHTML = '<h4>Backend Status</h4><p>✅ Connected</p>';
+                    statusDiv.className = 'status-card connected';
+                    testResults.health = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Backend health check failed<br>
+                        Error: ${error.message}<br><br>
+                        <strong>Possible causes:</strong><br>
+                        • Backend server not running<br>
+                        • Wrong port (should be 8080)<br>
+                        • Firewall blocking connection
+                    </div>
+                `;
+                statusDiv.innerHTML = '<h4>Backend Status</h4><p>❌ Disconnected</p>';
+                statusDiv.className = 'status-card disconnected';
+                testResults.health = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testCORS() {
+            const resultDiv = document.getElementById('corsResult');
+            const statusDiv = document.getElementById('corsStatus');
+            
+            try {
+                resultDiv.innerHTML = '<div class="result info">Testing CORS configuration...</div>';
+                
+                // Test OPTIONS request (preflight)
+                const response = await fetch(`${BACKEND_URL}/api/user/register`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                if (response.ok) {
+                    const corsHeaders = {};
+                    for (const [key, value] of response.headers.entries()) {
+                        if (key.toLowerCase().startsWith('access-control')) {
+                            corsHeaders[key] = value;
+                        }
+                    }
+                    
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ CORS preflight successful!<br>
+                            Status: ${response.status}<br>
+                            CORS Headers:<br>
+                            ${Object.entries(corsHeaders).map(([k, v]) => `• ${k}: ${v}`).join('<br>')}
+                        </div>
+                    `;
+                    statusDiv.innerHTML = '<h4>CORS Configuration</h4><p>✅ Working</p>';
+                    statusDiv.className = 'status-card connected';
+                    testResults.cors = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ CORS test failed<br>
+                        Error: ${error.message}<br><br>
+                        <strong>This indicates CORS is not properly configured</strong>
+                    </div>
+                `;
+                statusDiv.innerHTML = '<h4>CORS Configuration</h4><p>❌ Failed</p>';
+                statusDiv.className = 'status-card disconnected';
+                testResults.cors = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testRegistration() {
+            const resultDiv = document.getElementById('registrationResult');
+            const statusDiv = document.getElementById('apiStatus');
+            
+            try {
+                resultDiv.innerHTML = '<div class="result info">Testing user registration API...</div>';
+                
+                const testData = {
+                    firstName: 'Test',
+                    lastName: 'User',
+                    email: `test_${Date.now()}@example.com`,
+                    password: 'test123',
+                    phone: '1234567890',
+                    company: 'Test Company',
+                    country: 'US',
+                    terms: true,
+                    newsletter: false
+                };
+                
+                const response = await fetch(`${BACKEND_URL}/api/user/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ Registration API working!<br>
+                            Status: ${response.status}<br>
+                            User ID: ${data.user_id}<br>
+                            Message: ${data.msg}
+                        </div>
+                    `;
+                    statusDiv.innerHTML = '<h4>API Endpoints</h4><p>✅ Working</p>';
+                    statusDiv.className = 'status-card connected';
+                    testResults.api = true;
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Registration API failed<br>
+                        Error: ${error.message}<br><br>
+                        <strong>Possible causes:</strong><br>
+                        • API endpoint not found<br>
+                        • Database connection issues<br>
+                        • Invalid request format
+                    </div>
+                `;
+                statusDiv.innerHTML = '<h4>API Endpoints</h4><p>❌ Failed</p>';
+                statusDiv.className = 'status-card disconnected';
+                testResults.api = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testDatabase() {
+            const resultDiv = document.getElementById('databaseResult');
+            const statusDiv = document.getElementById('databaseStatus');
+            
+            try {
+                resultDiv.innerHTML = '<div class="result info">Testing database connection...</div>';
+                
+                const response = await fetch(`${BACKEND_URL}/api/simple/health`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ Database connection working!<br>
+                            Status: ${data.status}<br>
+                            Database: ${data.database}<br>
+                            Timestamp: ${data.timestamp}
+                        </div>
+                    `;
+                    statusDiv.innerHTML = '<h4>Database</h4><p>✅ Connected</p>';
+                    statusDiv.className = 'status-card connected';
+                    testResults.database = true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ Database connection failed<br>
+                        Error: ${error.message}<br><br>
+                        <strong>Possible causes:</strong><br>
+                        • Database server not running<br>
+                        • Connection string issues<br>
+                        • Database permissions
+                    </div>
+                `;
+                statusDiv.innerHTML = '<h4>Database</h4><p>❌ Disconnected</p>';
+                statusDiv.className = 'status-card disconnected';
+                testResults.database = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function runCompleteTest() {
+            const resultDiv = document.getElementById('completeResult');
+            
+            resultDiv.innerHTML = '<div class="result info">Running complete integration test...</div>';
+            
+            // Run all tests in sequence
+            await testBackendHealth();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testCORS();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testDatabase();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testRegistration();
+            
+            // Final summary
+            const allPassed = Object.values(testResults).every(result => result);
+            
+            if (allPassed) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        🎉 ALL TESTS PASSED!<br><br>
+                        <strong>Frontend-Backend Connection Status: ✅ WORKING</strong><br><br>
+                        Your application is properly connected and ready to use!
+                    </div>
+                `;
+            } else {
+                const failedTests = Object.entries(testResults)
+                    .filter(([_, passed]) => !passed)
+                    .map(([test, _]) => test);
+                
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ SOME TESTS FAILED<br><br>
+                        <strong>Failed tests:</strong> ${failedTests.join(', ')}<br><br>
+                        <strong>Frontend-Backend Connection Status: ❌ ISSUES DETECTED</strong><br><br>
+                        Please check the individual test results above for details.
+                    </div>
+                `;
+            }
+        }
+
+        function updateSummary() {
+            const healthSummary = testResults.health ? '✅ Pass' : '❌ Fail';
+            const corsSummary = testResults.cors ? '✅ Pass' : '❌ Fail';
+            const apiSummary = testResults.api ? '✅ Pass' : '❌ Fail';
+            const dbSummary = testResults.database ? '✅ Pass' : '❌ Fail';
+            
+            const allPassed = Object.values(testResults).every(result => result);
+            const overallSummary = allPassed ? '✅ All Systems Working' : '❌ Issues Detected';
+            
+            document.getElementById('healthSummary').textContent = healthSummary;
+            document.getElementById('corsSummary').textContent = corsSummary;
+            document.getElementById('apiSummary').textContent = apiSummary;
+            document.getElementById('dbSummary').textContent = dbSummary;
+            document.getElementById('overallSummary').textContent = overallSummary;
+        }
+    </script>
+</body>
+</html>

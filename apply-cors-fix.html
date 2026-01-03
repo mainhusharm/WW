@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Fix Application Tool</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #666;
+            font-size: 1.2rem;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        .code {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            border-left: 4px solid #667eea;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        .instructions {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+        .test-results {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .test-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+        .test-icon {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 CORS Fix Application Tool</h1>
+            <p>Fix CORS issues across your entire application</p>
+        </div>
+        
+        <div class="section">
+            <h2>🚀 Quick Fixes</h2>
+            <p>Choose one of these methods to fix CORS issues:</p>
+            
+            <button class="btn" onclick="applyCORSFix()">Apply CORS Fix to This Page</button>
+            <button class="btn btn-success" onclick="testAllEndpoints()">Test All Endpoints</button>
+            <button class="btn btn-warning" onclick="showInstructions()">Show Instructions</button>
+        </div>
+        
+        <div class="section">
+            <h2>📋 Manual Instructions</h2>
+            <div class="instructions">
+                <h3>Method 1: Console Script</h3>
+                <p>1. Open browser console (F12)</p>
+                <p>2. Copy and paste the script below</p>
+                <p>3. Press Enter</p>
+                <p>4. Refresh the page</p>
+            </div>
+            
+            <div class="code" id="console-script">
+                // Universal CORS Fix Script
+                const BACKEND_URL = 'https://backend-ox9b.onrender.com';
+                const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+                const originalFetch = window.fetch;
+                window.fetch = function(url, options = {}) {
+                    if (typeof url === 'string' && url.includes('node-backend-g1mk.onrender.com')) {
+                        const proxyUrl = `${CORS_PROXY}${encodeURIComponent(url)}`;
+                        return originalFetch(proxyUrl, options);
+                    }
+                    return originalFetch(url, options);
+                };
+                console.log('✅ CORS Fix Applied!');
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🧪 Test Results</h2>
+            <div id="test-results" class="test-results">
+                <p>Click "Test All Endpoints" to check which parts of your application are working.</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📱 Working Pages</h2>
+            <p>These pages are already fixed and working:</p>
+            <ul>
+                <li><a href="emergency-cors-fix.html" target="_blank">Emergency Customer Service Dashboard</a></li>
+                <li><a href="/signup-enhanced" target="_blank">Enhanced Signup Form</a></li>
+                <li><a href="customer-service-fixed.html" target="_blank">Customer Service Dashboard</a></li>
+            </ul>
+        </div>
+        
+        <div id="status-container"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://backend-ox9b.onrender.com';
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        
+        function showStatus(message, type = 'info') {
+            const container = document.getElementById('status-container');
+            container.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function applyCORSFix() {
+            // Store original fetch
+            const originalFetch = window.fetch;
+            
+            // Override fetch
+            window.fetch = function(url, options = {}) {
+                if (typeof url === 'string' && url.includes('node-backend-g1mk.onrender.com')) {
+                    console.log('🔄 Intercepting request:', url);
+                    const proxyUrl = `${CORS_PROXY}${encodeURIComponent(url)}`;
+                    return originalFetch(proxyUrl, options);
+                }
+                return originalFetch(url, options);
+            };
+            
+            // Also override XMLHttpRequest
+            const originalXHROpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url, ...args) {
+                if (typeof url === 'string' && url.includes('node-backend-g1mk.onrender.com')) {
+                    const proxyUrl = `${CORS_PROXY}${encodeURIComponent(url)}`;
+                    return originalXHROpen.call(this, method, proxyUrl, ...args);
+                }
+                return originalXHROpen.call(this, method, url, ...args);
+            };
+            
+            showStatus('✅ CORS Fix Applied! All backend requests now use CORS proxy.', 'success');
+            console.log('✅ CORS Fix Applied!');
+        }
+        
+        async function testAllEndpoints() {
+            const endpoints = [
+                { name: 'Health Check', url: '/health' },
+                { name: 'Users API', url: '/api/users' },
+                { name: 'Register API', url: '/api/auth/register' }
+            ];
+            
+            const resultsContainer = document.getElementById('test-results');
+            resultsContainer.innerHTML = '<p>🧪 Testing endpoints...</p>';
+            
+            const results = [];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${BACKEND_URL}${endpoint.url}`);
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        results.push({
+                            name: endpoint.name,
+                            status: 'success',
+                            message: 'Working'
+                        });
+                    } else {
+                        results.push({
+                            name: endpoint.name,
+                            status: 'error',
+                            message: `HTTP ${response.status}`
+                        });
+                    }
+                } catch (error) {
+                    results.push({
+                        name: endpoint.name,
+                        status: 'error',
+                        message: error.message
+                    });
+                }
+            }
+            
+            // Display results
+            let html = '<h3>Test Results:</h3>';
+            results.forEach(result => {
+                const icon = result.status === 'success' ? '✅' : '❌';
+                html += `
+                    <div class="test-item">
+                        <span class="test-icon">${icon}</span>
+                        <strong>${result.name}:</strong> ${result.message}
+                    </div>
+                `;
+            });
+            
+            resultsContainer.innerHTML = html;
+            
+            const successCount = results.filter(r => r.status === 'success').length;
+            if (successCount === results.length) {
+                showStatus('🎉 All endpoints working! CORS fix successful.', 'success');
+            } else {
+                showStatus(`⚠️ ${successCount}/${results.length} endpoints working. Some issues may remain.`, 'info');
+            }
+        }
+        
+        function showInstructions() {
+            showStatus(`
+                <h3>📋 How to Apply CORS Fix:</h3>
+                <ol>
+                    <li><strong>Method 1:</strong> Click "Apply CORS Fix to This Page" button above</li>
+                    <li><strong>Method 2:</strong> Copy the console script and paste it in browser console</li>
+                    <li><strong>Method 3:</strong> Use the working pages linked above</li>
+                </ol>
+                <p><strong>Note:</strong> The fix will work on the current page. For permanent fix, use the working pages or apply the console script on each page.</p>
+            `, 'info');
+        }
+        
+        // Auto-apply fix on page load
+        window.addEventListener('load', () => {
+            applyCORSFix();
+            setTimeout(testAllEndpoints, 2000);
+        });
+    </script>
+</body>
+</html>

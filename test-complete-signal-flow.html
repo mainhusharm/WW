@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Signal Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .signal-preview {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Complete Signal Flow Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="testAdminSignal()">Test Admin Signal</button>
+        <button onclick="testForexSignal()">Test Forex Signal</button>
+        <button onclick="testCryptoSignal()">Test Crypto Signal</button>
+        <button onclick="checkAllSignals()">Check All Signals</button>
+        <button onclick="clearAllSignals()">Clear All Signals</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Signal Preview</h2>
+        <div id="signalPreview" class="signal-preview">No signals to preview</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Results</h2>
+        <div id="logs" class="log"></div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let signalPreview = document.getElementById('signalPreview');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function updateSignalPreview() {
+            const signals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            if (signals.length === 0) {
+                signalPreview.innerHTML = 'No signals to preview';
+                return;
+            }
+            
+            const latestSignal = signals[0];
+            signalPreview.innerHTML = `
+                <h3>Latest Signal Preview:</h3>
+                <div><strong>From:</strong> ${latestSignal.from}</div>
+                <div><strong>Time:</strong> ${new Date(latestSignal.timestamp).toLocaleString()}</div>
+                <div><strong>Content:</strong></div>
+                <pre style="white-space: pre-wrap; margin-top: 10px;">${latestSignal.text}</pre>
+            `;
+        }
+        
+        window.testAdminSignal = function() {
+            log('🔄 Testing Admin Dashboard Signal...', 'info');
+            
+            const adminSignal = {
+                id: Date.now(),
+                text: `EUR/USD\nBUY NOW\nEntry 1.08500\nStop Loss 1.08300\nTake Profit 1.08700\nConfidence 90%\n\nAdmin generated signal for testing signal flow`,
+                timestamp: new Date().toISOString(),
+                from: 'Admin Dashboard',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Store in localStorage (same as admin dashboard)
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(adminSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+            
+            // Dispatch event (same as admin dashboard)
+            window.dispatchEvent(new CustomEvent('newSignalSent', { 
+                detail: adminSignal 
+            }));
+            
+            log('✅ Admin signal created and event dispatched', 'success');
+            updateSignalPreview();
+        };
+        
+        window.testForexSignal = function() {
+            log('🔄 Testing Forex Signal Generator...', 'info');
+            
+            const forexSignal = {
+                id: Date.now(),
+                text: `GBP/USD\nSELL NOW\nEntry 1.26500\nStop Loss 1.26800\nTake Profit 1.26200\nConfidence 85%\n\nForex signal generated by SMC analysis`,
+                timestamp: new Date().toISOString(),
+                from: 'Forex Signal Generator',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Store in localStorage (same as forex generator)
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(forexSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+            
+            // Dispatch event (same as forex generator)
+            window.dispatchEvent(new CustomEvent('newSignalGenerated', { 
+                detail: forexSignal 
+            }));
+            
+            log('✅ Forex signal created and event dispatched', 'success');
+            updateSignalPreview();
+        };
+        
+        window.testCryptoSignal = function() {
+            log('🔄 Testing Crypto Signal Generator...', 'info');
+            
+            const cryptoSignal = {
+                id: Date.now(),
+                text: `BTC/USD\nBUY NOW\nEntry 45000\nStop Loss 44000\nTake Profit 47000\nConfidence 88%\n\nCrypto signal generated by SMC analysis`,
+                timestamp: new Date().toISOString(),
+                from: 'Crypto Signal Generator',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Store in localStorage (same as crypto generator)
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(cryptoSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+            
+            // Dispatch event (same as crypto generator)
+            window.dispatchEvent(new CustomEvent('newSignalGenerated', { 
+                detail: cryptoSignal 
+            }));
+            
+            log('✅ Crypto signal created and event dispatched', 'success');
+            updateSignalPreview();
+        };
+        
+        window.checkAllSignals = function() {
+            log('🔍 Checking all signals in localStorage...', 'info');
+            
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            
+            log(`📊 Signal Count:`, 'info');
+            log(`  - telegram_messages: ${telegramMessages.length} signals`, 'info');
+            log(`  - admin_generated_signals: ${adminSignals.length} signals`, 'info');
+            
+            if (telegramMessages.length > 0) {
+                log('📋 All telegram_messages signals:', 'info');
+                telegramMessages.forEach((msg, index) => {
+                    log(`  ${index + 1}. [${msg.from}] ${msg.text.substring(0, 50)}...`, 'info');
+                });
+            }
+            
+            // Test signal conversion (same as SimpleSignalsFeed)
+            if (telegramMessages.length > 0) {
+                log('🔄 Testing signal conversion...', 'info');
+                
+                const convertedSignals = telegramMessages.map((msg) => {
+                    const lines = msg.text.split('\n');
+                    const pair = lines[0] || 'UNKNOWN';
+                    const direction = lines[1]?.includes('BUY') ? 'LONG' : lines[1]?.includes('SELL') ? 'SHORT' : 'LONG';
+                    
+                    const entryMatch = msg.text.match(/Entry\s+([0-9.]+)/i);
+                    const slMatch = msg.text.match(/Stop Loss\s+([0-9.]+)/i);
+                    const tpMatch = msg.text.match(/Take Profit\s+([0-9.,\s]+)/i);
+                    const confidenceMatch = msg.text.match(/Confidence\s+([0-9]+)%/i);
+                    
+                    const entryPrice = entryMatch ? parseFloat(entryMatch[1]) : 0;
+                    const stopLoss = slMatch ? parseFloat(slMatch[1]) : 0;
+                    const takeProfit = tpMatch ? parseFloat(tpMatch[1].split(',')[0]) : 0;
+                    const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 85;
+                    
+                    return {
+                        id: msg.id.toString(),
+                        pair,
+                        direction,
+                        entry: entryPrice.toString(),
+                        entryPrice,
+                        stopLoss: stopLoss.toString(),
+                        takeProfit: takeProfit.toString(),
+                        confidence,
+                        timestamp: msg.timestamp,
+                        description: msg.text.split('\n\n')[1] || 'Professional trading signal',
+                        market: 'forex',
+                        status: 'active',
+                        type: direction === 'LONG' ? 'buy' : 'sell'
+                    };
+                });
+                
+                log(`✅ Converted ${convertedSignals.length} signals successfully`, 'success');
+                convertedSignals.forEach((signal, index) => {
+                    log(`  ${index + 1}. ${signal.pair} ${signal.direction} @ ${signal.entry}`, 'info');
+                });
+            }
+        };
+        
+        window.clearAllSignals = function() {
+            log('🗑️ Clearing all signals...', 'warning');
+            
+            localStorage.removeItem('telegram_messages');
+            localStorage.removeItem('admin_generated_signals');
+            localStorage.removeItem('user_signals');
+            
+            log('✅ All signals cleared', 'success');
+            updateSignalPreview();
+        };
+        
+        // Listen for signal events
+        window.addEventListener('newSignalSent', (event) => {
+            log(`📡 Received newSignalSent event: ${event.detail.from}`, 'info');
+        });
+        
+        window.addEventListener('newSignalGenerated', (event) => {
+            log(`📡 Received newSignalGenerated event: ${event.detail.from}`, 'info');
+        });
+        
+        // Auto-run initial check
+        log('🚀 Complete Signal Flow Test initialized', 'info');
+        log('This test simulates the exact signal flow from admin to user dashboard', 'info');
+        checkAllSignals();
+        updateSignalPreview();
+    </script>
+</body>
+</html>

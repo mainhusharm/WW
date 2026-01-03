@@ -1,0 +1,80 @@
+{
+  "trading_pairs": {
+    "forex": [
+      {
+        "symbol": "EUR/USD",
+        "timeframes": ["1h", "4h"],
+        "risk_reward": {
+          "risk_percent": 2,
+          "reward_ratio": 2.5
+        },
+        "enabled": true
+      },
+      {
+        "symbol": "GBP/USD", 
+        "timeframes": ["1h", "4h"],
+        "risk_reward": {
+          "risk_percent": 1.5,
+          "reward_ratio": 3
+        },
+        "enabled": true
+      },
+      {
+        "symbol": "USD/JPY",
+        "timeframes": ["1h", "4h"],
+        "risk_reward": {
+          "risk_percent": 2,
+          "reward_ratio": 2
+        },
+        "enabled": false
+      }
+    ],
+    "crypto": [
+      {
+        "symbol": "BTCUSDT",
+        "timeframes": ["1h", "4h"],
+        "risk_reward": {
+          "risk_percent": 3,
+          "reward_ratio": 2
+        },
+        "enabled": true
+      },
+      {
+        "symbol": "ETHUSDT",
+        "timeframes": ["1h", "4h"],
+        "risk_reward": {
+          "risk_percent": 2.5,
+          "reward_ratio": 2.5
+        },
+        "enabled": true
+      }
+    ]
+  },
+  "schedule": {
+    "analysis_interval_minutes": 30,
+    "market_hours": {
+      "forex": {
+        "start": "00:00",
+        "end": "23:59",
+        "timezone": "UTC"
+      },
+      "crypto": {
+        "start": "00:00", 
+        "end": "23:59",
+        "timezone": "UTC"
+      }
+    }
+  },
+  "risk_management": {
+    "max_concurrent_trades": 5,
+    "daily_loss_limit_percent": 5,
+    "account_balance": 10000,
+    "position_sizing": "fixed_percent"
+  },
+  "notifications": {
+    "webhook_url": "",
+    "email_alerts": false,
+    "telegram_bot_token": "",
+    "telegram_chat_id": ""
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "simple-auth-service",
+  "version": "1.0.0",
+  "description": "Simple authentication service for trading platform",
+  "main": "simple_auth_service.js",
+  "scripts": {
+    "start": "node simple_auth_service.js",
+    "dev": "nodemon simple_auth_service.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
