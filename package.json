@@ -1,0 +1,36 @@
+{
+  "name": "traderedgepro-backend",
+  "version": "1.0.0",
+  "description": "Backend server for Trader Edge Pro trading platform",
+  "type": "module",
+  "main": "backend-server-render.js",
+  "scripts": {
+    "start": "node backend-server-render.js",
+    "dev": "nodemon backend-server-render.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "mongoose": "^8.0.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "resend": "^3.2.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "trading",
+    "backend",
+    "api",
+    "prisma",
+    "express"
+  ],
+  "author": "Trader Edge Pro",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

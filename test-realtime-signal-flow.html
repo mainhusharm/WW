@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Signal Flow Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .connected { background-color: #2d5a2d; }
+        .disconnected { background-color: #5a2d2d; }
+        .connecting { background-color: #5a5a2d; }
+        .signal {
+            background-color: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .signal.new {
+            border-color: #4CAF50;
+            background-color: #2d5a2d;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+        input, select, textarea {
+            background-color: #444;
+            color: white;
+            border: 1px solid #666;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        .log {
+            background-color: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .stat {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Real-Time Signal Flow Test</h1>
+    <p>This page tests the complete real-time signal flow from admin dashboard to user dashboard.</p>
+
+    <div class="container">
+        <!-- Admin Panel -->
+        <div class="panel">
+            <h2>📡 Admin Dashboard (Signal Creator)</h2>
+            <div id="adminStatus" class="status disconnected">Disconnected</div>
+            
+            <form id="signalForm">
+                <div>
+                    <label>Pair:</label>
+                    <select id="pair">
+                        <option value="EURUSD">EURUSD</option>
+                        <option value="GBPUSD">GBPUSD</option>
+                        <option value="USDJPY">USDJPY</option>
+                        <option value="AUDUSD">AUDUSD</option>
+                        <option value="BTCUSD">BTCUSD</option>
+                        <option value="ETHUSD">ETHUSD</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label>Direction:</label>
+                    <select id="direction">
+                        <option value="BUY">BUY</option>
+                        <option value="SELL">SELL</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label>Entry Price:</label>
+                    <input type="number" id="entry" step="0.00001" placeholder="1.0850" required>
+                </div>
+                
+                <div>
+                    <label>Stop Loss:</label>
+                    <input type="number" id="stopLoss" step="0.00001" placeholder="1.0800" required>
+                </div>
+                
+                <div>
+                    <label>Take Profit:</label>
+                    <input type="text" id="takeProfit" placeholder="1.0900,1.0950" required>
+                </div>
+                
+                <div>
+                    <label>Confidence:</label>
+                    <input type="number" id="confidence" min="1" max="100" value="90" required>
+                </div>
+                
+                <div>
+                    <label>Analysis:</label>
+                    <textarea id="analysis" rows="3" placeholder="Market analysis..."></textarea>
+                </div>
+                
+                <div>
+                    <label>Market:</label>
+                    <select id="market">
+                        <option value="forex">Forex</option>
+                        <option value="crypto">Crypto</option>
+                    </select>
+                </div>
+                
+                <button type="submit" id="sendSignalBtn">🚀 Send Signal</button>
+            </form>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="signalsSent">0</div>
+                    <div class="stat-label">Signals Sent</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="successRate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Panel -->
+        <div class="panel">
+            <h2>👤 User Dashboard (Signal Receiver)</h2>
+            <div id="userStatus" class="status disconnected">Disconnected</div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="signalsReceived">0</div>
+                    <div class="stat-label">Signals Received</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="connectionTime">0s</div>
+                    <div class="stat-label">Connected Time</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="lastSignalTime">Never</div>
+                    <div class="stat-label">Last Signal</div>
+                </div>
+            </div>
+            
+            <div id="signalsContainer">
+                <h3>📊 Received Signals</h3>
+                <div id="signalsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Panel -->
+    <div class="panel">
+        <h2>📝 System Log</h2>
+        <div id="log" class="log"></div>
+        <button onclick="clearLog()">Clear Log</button>
+        <button onclick="exportLog()">Export Log</button>
+    </div>
+
+    <script>
+        // Configuration
+        const BACKEND_URL = 'https://backend-ox9b.onrender.com';
+        const API_URL = `${BACKEND_URL}/api/admin/create-signal`;
+        
+        // State
+        let adminSocket = null;
+        let userSocket = null;
+        let signalsSent = 0;
+        let signalsReceived = 0;
+        let successfulSends = 0;
+        let connectionStartTime = null;
+        let lastSignalTime = null;
+        
+        // DOM Elements
+        const adminStatus = document.getElementById('adminStatus');
+        const userStatus = document.getElementById('userStatus');
+        const signalForm = document.getElementById('signalForm');
+        const sendSignalBtn = document.getElementById('sendSignalBtn');
+        const signalsList = document.getElementById('signalsList');
+        const log = document.getElementById('log');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            connectUserSocket();
+            logMessage('🚀 Real-Time Signal Flow Test initialized');
+        });
+        
+        function setupEventListeners() {
+            signalForm.addEventListener('submit', handleSendSignal);
+        }
+        
+        function connectUserSocket() {
+            logMessage('🔌 Connecting user socket to WebSocket server...');
+            
+            userSocket = io(BACKEND_URL, {
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 5000
+            });
+            
+            userSocket.on('connect', () => {
+                logMessage('✅ User socket connected successfully');
+                updateUserStatus('connected');
+                connectionStartTime = Date.now();
+                updateConnectionTime();
+                setInterval(updateConnectionTime, 1000);
+            });
+            
+            userSocket.on('disconnect', (reason) => {
+                logMessage(`❌ User socket disconnected: ${reason}`);
+                updateUserStatus('disconnected');
+            });
+            
+            userSocket.on('connect_error', (error) => {
+                logMessage(`❌ User socket connection error: ${error.message}`);
+                updateUserStatus('disconnected');
+            });
+            
+            userSocket.on('new_signal', (signal) => {
+                logMessage(`📨 Received new signal: ${signal.pair} ${signal.direction}`);
+                handleNewSignal(signal);
+            });
+            
+            userSocket.on('connected', (data) => {
+                logMessage(`📡 Server confirmed connection: ${JSON.stringify(data)}`);
+            });
+        }
+        
+        function updateUserStatus(status) {
+            userStatus.className = `status ${status}`;
+            userStatus.textContent = status === 'connected' ? '🟢 Connected' : 
+                                   status === 'connecting' ? '🟡 Connecting...' : '🔴 Disconnected';
+        }
+        
+        function updateConnectionTime() {
+            if (connectionStartTime) {
+                const elapsed = Math.floor((Date.now() - connectionStartTime) / 1000);
+                document.getElementById('connectionTime').textContent = `${elapsed}s`;
+            }
+        }
+        
+        function handleNewSignal(signal) {
+            signalsReceived++;
+            lastSignalTime = new Date();
+            
+            // Update stats
+            document.getElementById('signalsReceived').textContent = signalsReceived;
+            document.getElementById('lastSignalTime').textContent = lastSignalTime.toLocaleTimeString();
+            
+            // Create signal element
+            const signalElement = document.createElement('div');
+            signalElement.className = 'signal new';
+            signalElement.innerHTML = `
+                <div><strong>${signal.pair}</strong> - ${signal.direction}</div>
+                <div>Entry: ${signal.entry_price} | SL: ${signal.stop_loss} | TP: ${signal.take_profit}</div>
+                <div>Confidence: ${signal.confidence}% | Market: ${signal.market}</div>
+                <div>Time: ${new Date(signal.created_at).toLocaleString()}</div>
+                ${signal.analysis ? `<div>Analysis: ${signal.analysis}</div>` : ''}
+            `;
+            
+            // Add to top of list
+            signalsList.insertBefore(signalElement, signalsList.firstChild);
+            
+            // Remove new class after animation
+            setTimeout(() => {
+                signalElement.classList.remove('new');
+            }, 3000);
+            
+            // Keep only last 10 signals visible
+            while (signalsList.children.length > 10) {
+                signalsList.removeChild(signalsList.lastChild);
+            }
+        }
+        
+        async function handleSendSignal(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(signalForm);
+            const signalData = {
+                pair: document.getElementById('pair').value,
+                direction: document.getElementById('direction').value,
+                entry: parseFloat(document.getElementById('entry').value),
+                stopLoss: parseFloat(document.getElementById('stopLoss').value),
+                takeProfit: document.getElementById('takeProfit').value,
+                confidence: parseInt(document.getElementById('confidence').value),
+                analysis: document.getElementById('analysis').value,
+                market: document.getElementById('market').value,
+                timeframe: '1h'
+            };
+            
+            sendSignalBtn.disabled = true;
+            sendSignalBtn.textContent = 'Sending...';
+            
+            try {
+                logMessage(`📤 Sending signal: ${signalData.pair} ${signalData.direction}`);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(signalData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    logMessage(`✅ Signal sent successfully: ${result.signal_id}`);
+                    signalsSent++;
+                    successfulSends++;
+                    updateAdminStats();
+                } else {
+                    const errorText = await response.text();
+                    logMessage(`❌ Failed to send signal: ${response.status} - ${errorText}`);
+                    signalsSent++;
+                    updateAdminStats();
+                }
+            } catch (error) {
+                logMessage(`❌ Error sending signal: ${error.message}`);
+                signalsSent++;
+                updateAdminStats();
+            } finally {
+                sendSignalBtn.disabled = false;
+                sendSignalBtn.textContent = '🚀 Send Signal';
+            }
+        }
+        
+        function updateAdminStats() {
+            document.getElementById('signalsSent').textContent = signalsSent;
+            const successRate = signalsSent > 0 ? Math.round((successfulSends / signalsSent) * 100) : 0;
+            document.getElementById('successRate').textContent = `${successRate}%`;
+        }
+        
+        function logMessage(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            log.textContent += logEntry + '\n';
+            log.scrollTop = log.scrollHeight;
+            console.log(logEntry);
+        }
+        
+        function clearLog() {
+            log.textContent = '';
+        }
+        
+        function exportLog() {
+            const logData = log.textContent;
+            const blob = new Blob([logData], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `signal-flow-test-${new Date().toISOString().slice(0, 19)}.log`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Test functions
+        function runAutomatedTest() {
+            logMessage('🤖 Starting automated test...');
+            
+            const testSignals = [
+                { pair: 'EURUSD', direction: 'BUY', entry: 1.0850, stopLoss: 1.0800, takeProfit: '1.0900,1.0950', confidence: 85 },
+                { pair: 'GBPUSD', direction: 'SELL', entry: 1.2650, stopLoss: 1.2700, takeProfit: '1.2600,1.2550', confidence: 90 },
+                { pair: 'BTCUSD', direction: 'BUY', entry: 45000, stopLoss: 44000, takeProfit: '46000,47000', confidence: 75 }
+            ];
+            
+            let index = 0;
+            const sendNext = () => {
+                if (index < testSignals.length) {
+                    const signal = testSignals[index];
+                    
+                    // Fill form
+                    document.getElementById('pair').value = signal.pair;
+                    document.getElementById('direction').value = signal.direction;
+                    document.getElementById('entry').value = signal.entry;
+                    document.getElementById('stopLoss').value = signal.stopLoss;
+                    document.getElementById('takeProfit').value = signal.takeProfit;
+                    document.getElementById('confidence').value = signal.confidence;
+                    document.getElementById('market').value = signal.pair.includes('BTC') ? 'crypto' : 'forex';
+                    
+                    // Submit form
+                    signalForm.dispatchEvent(new Event('submit'));
+                    
+                    index++;
+                    setTimeout(sendNext, 5000); // Wait 5 seconds between signals
+                } else {
+                    logMessage('🤖 Automated test completed');
+                }
+            };
+            
+            sendNext();
+        }
+        
+        // Add test button
+        document.addEventListener('DOMContentLoaded', function() {
+            const testBtn = document.createElement('button');
+            testBtn.textContent = '🤖 Run Automated Test';
+            testBtn.onclick = runAutomatedTest;
+            testBtn.style.marginTop = '10px';
+            document.querySelector('.panel h2').parentNode.appendChild(testBtn);
+        });
+    </script>
+</body>
+</html>

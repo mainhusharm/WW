@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Data Isolation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .user-section { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 User Data Isolation Test</h1>
+    <p>Testing that each user has their own isolated account balance and trading data...</p>
+    
+    <div>
+        <button onclick="testUserDataIsolation()">Test User Data Isolation</button>
+        <button onclick="clearAllData()">Clear All Data</button>
+        <button onclick="openDashboard()">Open Dashboard</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        // Simulate UserDataService functionality
+        class TestUserDataService {
+            constructor() {
+                this.userEmail = null;
+            }
+
+            setUserEmail(email) {
+                this.userEmail = email;
+            }
+
+            getUserEmail() {
+                return this.userEmail;
+            }
+
+            getAccountData() {
+                if (!this.userEmail) return null;
+                
+                const key = `account_data_${this.userEmail}`;
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : this.getDefaultAccountData();
+            }
+
+            saveAccountData(data) {
+                if (!this.userEmail) return;
+                
+                const key = `account_data_${this.userEmail}`;
+                localStorage.setItem(key, JSON.stringify(data));
+            }
+
+            getTakenSignals() {
+                if (!this.userEmail) return [];
+                
+                const key = `taken_signals_${this.userEmail}`;
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : [];
+            }
+
+            saveTakenSignals(signals) {
+                if (!this.userEmail) return;
+                
+                const key = `taken_signals_${this.userEmail}`;
+                localStorage.setItem(key, JSON.stringify(signals));
+            }
+
+            addTakenSignal(signalId) {
+                const takenSignals = this.getTakenSignals();
+                if (!takenSignals.includes(signalId)) {
+                    takenSignals.push(signalId);
+                    this.saveTakenSignals(takenSignals);
+                }
+            }
+
+            calculatePnL(signal, outcome) {
+                // Simulate P&L calculation
+                switch (outcome) {
+                    case 'Target Hit':
+                        return 198.08; // Example profit
+                    case 'Stop Loss Hit':
+                        return -99.04; // Example loss
+                    case 'Breakeven':
+                        return 0;
+                    default:
+                        return 0;
+                }
+            }
+
+            updateAccountBalance(pnl) {
+                const accountData = this.getAccountData();
+                const newBalance = accountData.accountBalance + pnl;
+                
+                const updatedData = {
+                    ...accountData,
+                    accountBalance: newBalance,
+                    totalPnl: accountData.totalPnl + pnl,
+                    totalTrades: accountData.totalTrades + 1,
+                    wins: accountData.wins + (pnl > 0 ? 1 : 0)
+                };
+
+                this.saveAccountData(updatedData);
+            }
+
+            getDefaultAccountData() {
+                return {
+                    accountBalance: 10000,
+                    totalPnl: 0,
+                    totalTrades: 0,
+                    wins: 0,
+                    winRate: 0
+                };
+            }
+
+            clearUserData() {
+                if (!this.userEmail) return;
+                
+                const keys = [
+                    `account_data_${this.userEmail}`,
+                    `taken_signals_${this.userEmail}`
+                ];
+                
+                keys.forEach(key => localStorage.removeItem(key));
+            }
+        }
+
+        const userDataService = new TestUserDataService();
+
+        async function testUserDataIsolation() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="test-section info">Testing user data isolation...</div>';
+            
+            let html = '';
+            
+            // Test with User 1
+            userDataService.setUserEmail('user1@example.com');
+            const user1Data = userDataService.getAccountData();
+            html += `
+                <div class="user-section">
+                    <h3>👤 User 1 (user1@example.com)</h3>
+                    <p><strong>Initial Balance:</strong> $${user1Data.accountBalance.toLocaleString()}</p>
+                    <p><strong>Total P&L:</strong> $${user1Data.totalPnl.toLocaleString()}</p>
+                    <p><strong>Total Trades:</strong> ${user1Data.totalTrades}</p>
+                </div>
+            `;
+            
+            // Simulate a winning trade for User 1
+            const signal1 = { id: 'signal1', pair: 'EUR/USD' };
+            const pnl1 = userDataService.calculatePnL(signal1, 'Target Hit');
+            userDataService.updateAccountBalance(pnl1);
+            userDataService.addTakenSignal('signal1');
+            
+            const user1DataAfter = userDataService.getAccountData();
+            html += `
+                <div class="user-section">
+                    <h3>👤 User 1 After Winning Trade</h3>
+                    <p><strong>New Balance:</strong> $${user1DataAfter.accountBalance.toLocaleString()}</p>
+                    <p><strong>Total P&L:</strong> $${user1DataAfter.totalPnl.toLocaleString()}</p>
+                    <p><strong>Total Trades:</strong> ${user1DataAfter.totalTrades}</p>
+                    <p><strong>Taken Signals:</strong> ${userDataService.getTakenSignals().join(', ')}</p>
+                </div>
+            `;
+            
+            // Test with User 2
+            userDataService.setUserEmail('user2@example.com');
+            const user2Data = userDataService.getAccountData();
+            html += `
+                <div class="user-section">
+                    <h3>👤 User 2 (user2@example.com)</h3>
+                    <p><strong>Initial Balance:</strong> $${user2Data.accountBalance.toLocaleString()}</p>
+                    <p><strong>Total P&L:</strong> $${user2Data.totalPnl.toLocaleString()}</p>
+                    <p><strong>Total Trades:</strong> ${user2Data.totalTrades}</p>
+                    <p><strong>Taken Signals:</strong> ${userDataService.getTakenSignals().join(', ')}</p>
+                </div>
+            `;
+            
+            // Simulate a losing trade for User 2
+            const signal2 = { id: 'signal2', pair: 'GBP/USD' };
+            const pnl2 = userDataService.calculatePnL(signal2, 'Stop Loss Hit');
+            userDataService.updateAccountBalance(pnl2);
+            userDataService.addTakenSignal('signal2');
+            
+            const user2DataAfter = userDataService.getAccountData();
+            html += `
+                <div class="user-section">
+                    <h3>👤 User 2 After Losing Trade</h3>
+                    <p><strong>New Balance:</strong> $${user2DataAfter.accountBalance.toLocaleString()}</p>
+                    <p><strong>Total P&L:</strong> $${user2DataAfter.totalPnl.toLocaleString()}</p>
+                    <p><strong>Total Trades:</strong> ${user2DataAfter.totalTrades}</p>
+                    <p><strong>Taken Signals:</strong> ${userDataService.getTakenSignals().join(', ')}</p>
+                </div>
+            `;
+            
+            // Verify isolation
+            userDataService.setUserEmail('user1@example.com');
+            const user1FinalData = userDataService.getAccountData();
+            const user1TakenSignals = userDataService.getTakenSignals();
+            
+            html += `
+                <div class="test-section ${user1FinalData.accountBalance === 10198.08 ? 'success' : 'error'}">
+                    <h3>✅ Data Isolation Verification</h3>
+                    <p><strong>User 1 Final Balance:</strong> $${user1FinalData.accountBalance.toLocaleString()}</p>
+                    <p><strong>User 1 Taken Signals:</strong> ${user1TakenSignals.join(', ')}</p>
+                    <p><strong>Isolation Working:</strong> ${user1FinalData.accountBalance === 10198.08 ? 'YES' : 'NO'}</p>
+                </div>
+            `;
+            
+            // Show localStorage keys
+            const allKeys = Object.keys(localStorage).filter(key => key.startsWith('account_data_') || key.startsWith('taken_signals_'));
+            html += `
+                <div class="test-section info">
+                    <h3>📦 localStorage Keys</h3>
+                    <pre>${allKeys.join('\n')}</pre>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function clearAllData() {
+            const keys = Object.keys(localStorage).filter(key => key.startsWith('account_data_') || key.startsWith('taken_signals_'));
+            keys.forEach(key => localStorage.removeItem(key));
+            document.getElementById('results').innerHTML = '<div class="test-section success">All user data cleared!</div>';
+        }
+
+        function openDashboard() {
+            window.open('http://localhost:5175/dashboard/signals', '_blank');
+        }
+
+        // Auto-run test
+        testUserDataIsolation();
+    </script>
+</body>
+</html>

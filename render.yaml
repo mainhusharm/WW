@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: traderedge-backend-python
+    runtime: python
+    buildCommand: "pip install -r journal/requirements.txt"
+    startCommand: "gunicorn journal.wsgi:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.6
+      - key: FLASK_APP
+        value: "journal:create_app()"
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: traderedge-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+
+databases:
+  - name: traderedge-db
+    databaseName: traderedgedb
+    user: traderedge

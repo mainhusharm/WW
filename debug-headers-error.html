@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Headers Error</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .info { color: #60a5fa; }
+        .warning { color: #fbbf24; }
+        .log { background: #1e1e1e; padding: 10px; border-radius: 5px; margin: 10px 0; max-height: 300px; overflow-y: auto; }
+        iframe { width: 100%; height: 600px; border: 1px solid #444; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Headers Error</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Load Application in iframe</h2>
+        <p>This will load the application in an iframe to test for headers errors.</p>
+        <button onclick="loadApp()">Load Application</button>
+        <div id="test1-result" class="log"></div>
+        <iframe id="app-iframe" src="about:blank" style="display: none;"></iframe>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Check Console Errors</h2>
+        <p>This will monitor for any console errors related to headers.</p>
+        <button onclick="monitorErrors()">Start Error Monitoring</button>
+        <div id="test2-result" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Test Axios Headers Access</h2>
+        <p>This will test various headers access patterns.</p>
+        <button onclick="testHeadersAccess()">Test Headers Access</button>
+        <div id="test3-result" class="log"></div>
+    </div>
+
+    <script>
+        let errorCount = 0;
+        let originalConsoleError = console.error;
+        let originalConsoleWarn = console.warn;
+
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info';
+            element.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        function loadApp() {
+            const resultDiv = document.getElementById('test1-result');
+            const iframe = document.getElementById('app-iframe');
+            resultDiv.innerHTML = '';
+            
+            log('test1-result', '🔄 Loading application in iframe...', 'info');
+            
+            // Set up error monitoring for the iframe
+            iframe.onload = function() {
+                log('test1-result', '✅ Application iframe loaded', 'success');
+                
+                try {
+                    // Try to access the iframe's content (this might fail due to CORS)
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (iframeDoc) {
+                        log('test1-result', '✅ Can access iframe content', 'success');
+                    }
+                } catch (e) {
+                    log('test1-result', '⚠️ Cannot access iframe content (CORS restriction)', 'warning');
+                }
+            };
+            
+            iframe.onerror = function() {
+                log('test1-result', '❌ Error loading application iframe', 'error');
+            };
+            
+            // Load the application
+            iframe.src = 'http://localhost:4173';
+            iframe.style.display = 'block';
+        }
+
+        function monitorErrors() {
+            const resultDiv = document.getElementById('test2-result');
+            resultDiv.innerHTML = '';
+            
+            log('test2-result', '🔄 Starting error monitoring...', 'info');
+            
+            // Override console methods to capture errors
+            console.error = function(...args) {
+                originalConsoleError.apply(console, args);
+                const message = args.join(' ');
+                if (message.includes('headers') || message.includes('Cannot read properties')) {
+                    errorCount++;
+                    log('test2-result', `❌ Headers Error #${errorCount}: ${message}`, 'error');
+                }
+            };
+            
+            console.warn = function(...args) {
+                originalConsoleWarn.apply(console, args);
+                const message = args.join(' ');
+                if (message.includes('headers')) {
+                    log('test2-result', `⚠️ Headers Warning: ${message}`, 'warning');
+                }
+            };
+            
+            // Monitor for unhandled errors
+            window.addEventListener('error', function(e) {
+                if (e.message && e.message.includes('headers')) {
+                    errorCount++;
+                    log('test2-result', `❌ Unhandled Headers Error #${errorCount}: ${e.message}`, 'error');
+                }
+            });
+            
+            // Monitor for unhandled promise rejections
+            window.addEventListener('unhandledrejection', function(e) {
+                if (e.reason && e.reason.message && e.reason.message.includes('headers')) {
+                    errorCount++;
+                    log('test2-result', `❌ Promise Rejection Headers Error #${errorCount}: ${e.reason.message}`, 'error');
+                }
+            });
+            
+            log('test2-result', '✅ Error monitoring started', 'success');
+            log('test2-result', 'Now try loading the application to see if headers errors occur', 'info');
+        }
+
+        function testHeadersAccess() {
+            const resultDiv = document.getElementById('test3-result');
+            resultDiv.innerHTML = '';
+            
+            log('test3-result', '🧪 Testing headers access patterns...', 'info');
+            
+            // Test 1: Basic headers object creation
+            try {
+                const headers1 = {};
+                headers1['Content-Type'] = 'application/json';
+                log('test3-result', '✅ Basic headers object creation works', 'success');
+            } catch (e) {
+                log('test3-result', `❌ Basic headers object creation failed: ${e.message}`, 'error');
+            }
+            
+            // Test 2: Headers with spread operator
+            try {
+                const options = { headers: { 'Content-Type': 'application/json' } };
+                const headers2 = { ...(options.headers || {}) };
+                headers2['Authorization'] = 'Bearer test';
+                log('test3-result', '✅ Headers with spread operator works', 'success');
+            } catch (e) {
+                log('test3-result', `❌ Headers with spread operator failed: ${e.message}`, 'error');
+            }
+            
+            // Test 3: Headers with undefined
+            try {
+                const options = { headers: undefined };
+                const headers3 = { ...(options.headers || {}) };
+                headers3['Content-Type'] = 'application/json';
+                log('test3-result', '✅ Headers with undefined works', 'success');
+            } catch (e) {
+                log('test3-result', `❌ Headers with undefined failed: ${e.message}`, 'error');
+            }
+            
+            // Test 4: Headers with null
+            try {
+                const options = { headers: null };
+                const headers4 = { ...(options.headers || {}) };
+                headers4['Content-Type'] = 'application/json';
+                log('test3-result', '✅ Headers with null works', 'success');
+            } catch (e) {
+                log('test3-result', `❌ Headers with null failed: ${e.message}`, 'error');
+            }
+            
+            // Test 5: Simulate axios config
+            try {
+                const config = { headers: undefined };
+                if (!config.headers) {
+                    config.headers = {};
+                }
+                config.headers['Authorization'] = 'Bearer test';
+                log('test3-result', '✅ Axios config simulation works', 'success');
+            } catch (e) {
+                log('test3-result', `❌ Axios config simulation failed: ${e.message}`, 'error');
+            }
+            
+            log('test3-result', '✅ All headers access tests completed', 'success');
+        }
+
+        // Auto-start error monitoring
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                monitorErrors();
+                testHeadersAccess();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

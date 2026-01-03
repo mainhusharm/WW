@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Signal Loading</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .log {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .signal {
+            background: #444;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            border-left-color: #f44336;
+        }
+        .success {
+            border-left-color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Signal Loading</h1>
+    
+    <div class="container">
+        <h3>📡 Test Backend API</h3>
+        <button onclick="testBackendAPI()">Test Backend API</button>
+        <button onclick="testFrontendLoading()">Test Frontend Loading</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div class="container">
+        <h3>📝 Debug Log</h3>
+        <div id="log" class="log"></div>
+    </div>
+    
+    <div class="container">
+        <h3>📊 Results</h3>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const resultsDiv = document.getElementById('results');
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            log.textContent += logEntry;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function clearLog() {
+            log.textContent = '';
+            resultsDiv.innerHTML = '';
+        }
+        
+        async function testBackendAPI() {
+            addLog('🔄 Testing backend API...');
+            try {
+                const response = await fetch('https://backend-ox9b.onrender.com/api/signals');
+                addLog(`📡 Response status: ${response.status}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`✅ Backend returned ${data.signals.length} signals`);
+                    addLog(`📊 Total count: ${data.total_count}`);
+                    
+                    // Display signals
+                    resultsDiv.innerHTML = '';
+                    data.signals.forEach((signal, index) => {
+                        const signalDiv = document.createElement('div');
+                        signalDiv.className = 'signal success';
+                        signalDiv.innerHTML = `
+                            <strong>Signal ${index + 1}:</strong> ${signal.pair} ${signal.direction}<br>
+                            <strong>Entry:</strong> ${signal.entry_price} | 
+                            <strong>SL:</strong> ${signal.stop_loss} | 
+                            <strong>TP:</strong> ${signal.take_profit}<br>
+                            <strong>Confidence:</strong> ${signal.confidence}% | 
+                            <strong>Market:</strong> ${signal.market}<br>
+                            <strong>ID:</strong> ${signal.id}<br>
+                            <strong>Analysis:</strong> ${signal.analysis}
+                        `;
+                        resultsDiv.appendChild(signalDiv);
+                    });
+                } else {
+                    addLog(`❌ Backend error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                addLog(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testFrontendLoading() {
+            addLog('🔄 Testing frontend signal loading...');
+            try {
+                // Simulate the exact same API call the frontend makes
+                const response = await fetch('https://backend-ox9b.onrender.com/api/signals', {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                addLog(`📡 Frontend response status: ${response.status}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`✅ Frontend received ${data.signals.length} signals`);
+                    
+                    // Test signal transformation
+                    const transformedSignals = data.signals.map((signal, index) => {
+                        const transformedSignal = {
+                            id: signal.id,
+                            pair: signal.pair,
+                            symbol: signal.pair,
+                            direction: signal.direction,
+                            action: signal.direction === 'LONG' ? 'BUY' : 'SELL',
+                            entry: signal.entry_price,
+                            entryPrice: parseFloat(signal.entry_price) || 0,
+                            stopLoss: parseFloat(signal.stop_loss) || 0,
+                            takeProfit: parseFloat(signal.take_profit) || 0,
+                            timeframe: signal.timeframe || '1h',
+                            status: signal.status || 'active',
+                            createdAt: signal.created_at,
+                            description: signal.analysis || '',
+                            confidence: signal.confidence || 85,
+                            rrRatio: '1:2',
+                            analysis: signal.analysis || 'Professional signal analysis',
+                            riskTier: 'medium',
+                            market: signal.market || 'forex',
+                            ictConcepts: signal.ict_concepts || [],
+                            is_recommended: signal.confidence > 80
+                        };
+                        
+                        addLog(`🔄 Transformed signal ${index + 1}: ${transformedSignal.symbol} ${transformedSignal.action}`);
+                        return transformedSignal;
+                    });
+                    
+                    // Display transformed signals
+                    resultsDiv.innerHTML = '';
+                    transformedSignals.forEach((signal, index) => {
+                        const signalDiv = document.createElement('div');
+                        signalDiv.className = 'signal success';
+                        signalDiv.innerHTML = `
+                            <strong>Transformed Signal ${index + 1}:</strong> ${signal.symbol} ${signal.action}<br>
+                            <strong>Entry:</strong> ${signal.entryPrice} | 
+                            <strong>SL:</strong> ${signal.stopLoss} | 
+                            <strong>TP:</strong> ${signal.takeProfit}<br>
+                            <strong>Confidence:</strong> ${signal.confidence}% | 
+                            <strong>Market:</strong> ${signal.market}<br>
+                            <strong>ID:</strong> ${signal.id}<br>
+                            <strong>Analysis:</strong> ${signal.analysis}
+                        `;
+                        resultsDiv.appendChild(signalDiv);
+                    });
+                    
+                    addLog(`✅ Successfully transformed ${transformedSignals.length} signals`);
+                } else {
+                    addLog(`❌ Frontend error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                addLog(`❌ Frontend network error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            addLog('🚀 Test page loaded');
+            testBackendAPI();
+        };
+    </script>
+</body>
+</html>

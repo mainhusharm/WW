@@ -1,0 +1,68 @@
+[
+  {
+    "id": "signal_1",
+    "pair": "EURUSD",
+    "direction": "LONG",
+    "entry": "1.0850",
+    "stopLoss": "1.0800",
+    "takeProfit": [
+      "1.0900",
+      "1.0950"
+    ],
+    "confidence": 85,
+    "analysis": "Strong bullish momentum with key support at 1.0800",
+    "ictConcepts": [
+      "Order Block",
+      "Fair Value Gap"
+    ],
+    "timestamp": "2025-09-02T07:22:24.946980",
+    "status": "active",
+    "market": "forex",
+    "timeframe": "15m",
+    "is_recommended": true
+  },
+  {
+    "id": "signal_2",
+    "pair": "BTC/USD",
+    "direction": "SHORT",
+    "entry": "45000",
+    "stopLoss": "46000",
+    "takeProfit": [
+      "44000",
+      "43000"
+    ],
+    "confidence": 78,
+    "analysis": "Bearish divergence on higher timeframe",
+    "ictConcepts": [
+      "Liquidity Sweep",
+      "Market Structure"
+    ],
+    "timestamp": "2025-09-02T07:22:24.946989",
+    "status": "active",
+    "market": "crypto",
+    "timeframe": "1h",
+    "is_recommended": false
+  },
+  {
+    "id": "signal_3",
+    "pair": "GBPUSD",
+    "direction": "SHORT",
+    "entry": "1.2650",
+    "stopLoss": "1.2700",
+    "takeProfit": [
+      "1.2600",
+      "1.2550"
+    ],
+    "confidence": 92,
+    "analysis": "Perfect bearish setup with clear rejection at resistance",
+    "ictConcepts": [
+      "Order Block",
+      "Liquidity Pool"
+    ],
+    "timestamp": "2025-09-02T07:22:24.946991",
+    "status": "active",
+    "market": "forex",
+    "timeframe": "4h",
+    "is_recommended": true
+  }
+]

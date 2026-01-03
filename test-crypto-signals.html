@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Signals Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .test-button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #45a049;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+        .info { background: #2196F3; }
+        .signal-card {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .crypto-signal {
+            border-left-color: #FF9800;
+        }
+        .forex-signal {
+            border-left-color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Crypto Signals Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Crypto Signal Generation</h2>
+        <p>This test verifies that crypto signals are being generated and stored properly.</p>
+        
+        <button class="test-button" onclick="testCryptoSignalGeneration()">Test Crypto Signal Generation</button>
+        <button class="test-button" onclick="checkLocalStorage()">Check localStorage Signals</button>
+        <button class="test-button" onclick="generateTestCryptoSignal()">Generate Test Crypto Signal</button>
+        <button class="test-button" onclick="clearSignals()">Clear All Signals</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Current Signals in localStorage</h2>
+        <div id="signals-display"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Admin Dashboard Test</h2>
+        <p>Test the admin dashboard crypto signal generator:</p>
+        <a href="http://localhost:5175/admin/dashboard" target="_blank" class="test-button">Open Admin Dashboard</a>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        function clearSignals() {
+            localStorage.removeItem('telegram_messages');
+            localStorage.removeItem('admin_generated_signals');
+            log('All signals cleared from localStorage', 'success');
+            displaySignals();
+        }
+        
+        function generateTestCryptoSignal() {
+            const testSignal = {
+                id: Date.now(),
+                text: `BTCUSDT\nBUY NOW\nEntry 45000\nStop Loss 44000\nTake Profit 47000\nConfidence 85%\n\nStrong bullish setup detected. Major swing Break of Structure confirms bullish momentum shift.`,
+                timestamp: new Date().toISOString(),
+                from: 'Crypto Signal Generator',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            const existingSignals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingSignals.unshift(testSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingSignals));
+            
+            log('Test crypto signal generated and stored', 'success');
+            displaySignals();
+        }
+        
+        function testCryptoSignalGeneration() {
+            log('Testing crypto signal generation...', 'info');
+            
+            // Check if crypto signal generator is available
+            if (typeof window !== 'undefined') {
+                log('Window object available', 'success');
+            } else {
+                log('Window object not available', 'error');
+            }
+            
+            // Check localStorage
+            const signals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            log(`Found ${signals.length} signals in localStorage`, 'info');
+            
+            // Check for crypto signals
+            const cryptoSignals = signals.filter(s => 
+                s.text.includes('USDT') || 
+                s.text.includes('BTC') || 
+                s.text.includes('ETH') ||
+                s.text.includes('ADA') ||
+                s.text.includes('BNB') ||
+                s.text.includes('XRP')
+            );
+            
+            log(`Found ${cryptoSignals.length} crypto signals`, cryptoSignals.length > 0 ? 'success' : 'error');
+            
+            if (cryptoSignals.length > 0) {
+                log('Crypto signals are being generated!', 'success');
+                cryptoSignals.forEach((signal, index) => {
+                    log(`Crypto Signal ${index + 1}: ${signal.text.split('\n')[0]}`, 'info');
+                });
+            } else {
+                log('No crypto signals found. Check if crypto bot is running.', 'error');
+            }
+        }
+        
+        function checkLocalStorage() {
+            log('Checking localStorage for signals...', 'info');
+            
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            
+            log(`telegram_messages: ${telegramMessages.length} signals`, 'info');
+            log(`admin_generated_signals: ${adminSignals.length} signals`, 'info');
+            
+            if (telegramMessages.length > 0) {
+                log('Signals found in telegram_messages:', 'success');
+                telegramMessages.forEach((signal, index) => {
+                    const isCrypto = signal.text.includes('USDT') || signal.text.includes('BTC') || signal.text.includes('ETH');
+                    log(`Signal ${index + 1}: ${isCrypto ? 'CRYPTO' : 'FOREX'} - ${signal.text.split('\n')[0]}`, 'info');
+                });
+            } else {
+                log('No signals in telegram_messages', 'error');
+            }
+            
+            displaySignals();
+        }
+        
+        function displaySignals() {
+            const signalsDisplay = document.getElementById('signals-display');
+            signalsDisplay.innerHTML = '';
+            
+            const signals = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            
+            if (signals.length === 0) {
+                signalsDisplay.innerHTML = '<p class="status error">No signals found in localStorage</p>';
+                return;
+            }
+            
+            signals.forEach((signal, index) => {
+                const isCrypto = signal.text.includes('USDT') || signal.text.includes('BTC') || signal.text.includes('ETH');
+                const signalCard = document.createElement('div');
+                signalCard.className = `signal-card ${isCrypto ? 'crypto-signal' : 'forex-signal'}`;
+                
+                const lines = signal.text.split('\n');
+                const pair = lines[0] || 'UNKNOWN';
+                const direction = lines[1] || 'UNKNOWN';
+                
+                signalCard.innerHTML = `
+                    <h4>${isCrypto ? '🪙 CRYPTO' : '💱 FOREX'} Signal #${index + 1}</h4>
+                    <p><strong>Pair:</strong> ${pair}</p>
+                    <p><strong>Direction:</strong> ${direction}</p>
+                    <p><strong>Timestamp:</strong> ${new Date(signal.timestamp).toLocaleString()}</p>
+                    <p><strong>Full Text:</strong> ${signal.text}</p>
+                `;
+                
+                signalsDisplay.appendChild(signalCard);
+            });
+        }
+        
+        // Initialize
+        log('Crypto signals test page loaded', 'success');
+        displaySignals();
+        
+        // Auto-refresh every 5 seconds
+        setInterval(() => {
+            displaySignals();
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraderEdge Pro - Direct Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .credentials {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .user-box {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 TraderEdge Pro - Direct Login Access</h1>
+        
+        <div class="success">
+            ✅ Multiple test users created! Choose any credentials below to login.
+        </div>
+        
+        <div class="credentials">
+            <h3>📋 AVAILABLE TEST USERS</h3>
+            
+            <div class="user-box">
+                <h4>👤 Admin User</h4>
+                <p><strong>Email:</strong> admin@test.com</p>
+                <p><strong>Password:</strong> admin123</p>
+                <button onclick="loginAs('admin@test.com', 'admin123')">Login as Admin</button>
+            </div>
+            
+            <div class="user-box">
+                <h4>👤 Regular User</h4>
+                <p><strong>Email:</strong> user@test.com</p>
+                <p><strong>Password:</strong> user123</p>
+                <button onclick="loginAs('user@test.com', 'user123')">Login as User</button>
+            </div>
+            
+            <div class="user-box">
+                <h4>👤 Demo User</h4>
+                <p><strong>Email:</strong> demo@test.com</p>
+                <p><strong>Password:</strong> demo123</p>
+                <button onclick="loginAs('demo@test.com', 'demo123')">Login as Demo</button>
+            </div>
+            
+            <div class="user-box">
+                <h4>👤 Test User</h4>
+                <p><strong>Email:</strong> test@test.com</p>
+                <p><strong>Password:</strong> test123</p>
+                <button onclick="loginAs('test@test.com', 'test123')">Login as Test</button>
+            </div>
+        </div>
+        
+        <button onclick="goToMainSite()">🌐 Go to Main Login Page</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function loginAs(email, password) {
+            // Create user data
+            const userData = {
+                id: `user_${Date.now()}`,
+                name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1) + " User",
+                email: email,
+                membershipTier: "premium",
+                accountType: "personal",
+                riskTolerance: "moderate",
+                isAuthenticated: true,
+                setupComplete: true,
+                token: `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            };
+            
+            // Store in localStorage
+            localStorage.setItem('current_user', JSON.stringify(userData));
+            localStorage.setItem('access_token', userData.token);
+            localStorage.setItem('user_data', JSON.stringify(userData));
+            localStorage.setItem('pending_signup_data', JSON.stringify({
+                firstName: userData.name.split(' ')[0],
+                lastName: userData.name.split(' ')[1] || 'User',
+                email: email,
+                password: password,
+                plan_type: 'premium'
+            }));
+            
+            // Show success message
+            document.getElementById('status').innerHTML = `
+                <div class="success">
+                    ✅ Logged in as ${email}! Redirecting to dashboard...
+                </div>
+            `;
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = 'https://frontend-zwwl.onrender.com/dashboard';
+            }, 2000);
+        }
+        
+        function goToMainSite() {
+            window.location.href = 'https://frontend-zwwl.onrender.com/signin';
+        }
+    </script>
+</body>
+</html>
+        

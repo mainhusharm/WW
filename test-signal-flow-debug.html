@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Flow Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Signal Flow Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="checkLocalStorage()">Check localStorage</button>
+        <button onclick="createTestSignal()">Create Test Signal</button>
+        <button onclick="simulateAdminSignal()">Simulate Admin Signal</button>
+        <button onclick="clearSignals()">Clear All Signals</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Results</h2>
+        <div id="logs" class="log"></div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        window.checkLocalStorage = function() {
+            log('🔍 Checking localStorage for signals...', 'info');
+            
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            const userSignals = JSON.parse(localStorage.getItem('user_signals') || '[]');
+            
+            log(`📊 localStorage Status:`, 'info');
+            log(`  - telegram_messages: ${telegramMessages.length} signals`, 'info');
+            log(`  - admin_generated_signals: ${adminSignals.length} signals`, 'info');
+            log(`  - user_signals: ${userSignals.length} signals`, 'info');
+            
+            if (telegramMessages.length > 0) {
+                log('📋 Recent telegram_messages:', 'info');
+                telegramMessages.slice(0, 3).forEach((msg, index) => {
+                    log(`  ${index + 1}. ${msg.text.substring(0, 100)}...`, 'info');
+                });
+            }
+            
+            if (adminSignals.length > 0) {
+                log('📋 Recent admin_generated_signals:', 'info');
+                adminSignals.slice(0, 3).forEach((signal, index) => {
+                    log(`  ${index + 1}. ${signal.symbol} ${signal.signalType}`, 'info');
+                });
+            }
+        };
+        
+        window.createTestSignal = function() {
+            log('🔄 Creating test signal...', 'info');
+            
+            const testSignal = {
+                id: Date.now(),
+                text: `EUR/USD\nBUY NOW\nEntry 1.08500\nStop Loss 1.08300\nTake Profit 1.08700\nConfidence 85%\n\nTest signal for debugging`,
+                timestamp: new Date().toISOString(),
+                from: 'Test Signal Generator',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Store in localStorage
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(testSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+            
+            // Dispatch event
+            window.dispatchEvent(new CustomEvent('newSignalSent', { 
+                detail: testSignal 
+            }));
+            
+            log('✅ Test signal created and event dispatched', 'success');
+        };
+        
+        window.simulateAdminSignal = function() {
+            log('🔄 Simulating admin dashboard signal...', 'info');
+            
+            const adminSignal = {
+                id: Date.now(),
+                text: `GBP/USD\nSELL NOW\nEntry 1.26500\nStop Loss 1.26800\nTake Profit 1.26200\nConfidence 90%\n\nAdmin generated signal for testing`,
+                timestamp: new Date().toISOString(),
+                from: 'Admin Dashboard',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Store in localStorage (same as admin dashboard)
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(adminSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+            
+            // Dispatch event (same as admin dashboard)
+            window.dispatchEvent(new CustomEvent('newSignalSent', { 
+                detail: adminSignal 
+            }));
+            
+            log('✅ Admin signal simulated and event dispatched', 'success');
+        };
+        
+        window.clearSignals = function() {
+            log('🗑️ Clearing all signals...', 'warning');
+            
+            localStorage.removeItem('telegram_messages');
+            localStorage.removeItem('admin_generated_signals');
+            localStorage.removeItem('user_signals');
+            
+            log('✅ All signals cleared', 'success');
+        };
+        
+        // Auto-run initial check
+        log('🚀 Signal Flow Debug Test initialized', 'info');
+        checkLocalStorage();
+    </script>
+</body>
+</html>

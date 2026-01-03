@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Signal Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .signal-display {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .signal-item {
+            background: #2a2a2a;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #4ade80;
+        }
+        .localStorage-key {
+            background: #333;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            margin: 2px;
+            display: inline-block;
+        }
+        .data-preview {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Comprehensive Signal Check</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="checkAllLocalStorage()">Check All localStorage</button>
+        <button onclick="clearAllSignals()">Clear All Signals</button>
+        <button onclick="exportLocalStorage()">Export localStorage</button>
+        <button onclick="importLocalStorage()">Import localStorage</button>
+    </div>
+
+    <div class="test-section">
+        <h2>All localStorage Keys</h2>
+        <div id="localStorageKeys">Click "Check All localStorage" to see all keys</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Signal-Related Data</h2>
+        <div id="signalData">No signal data found yet</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Raw localStorage Data</h2>
+        <div id="rawData" class="data-preview">Click "Check All localStorage" to see raw data</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click "Check All localStorage" to start debugging</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let localStorageKeysDiv = document.getElementById('localStorageKeys');
+        let signalDataDiv = document.getElementById('signalData');
+        let rawDataDiv = document.getElementById('rawData');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function checkAllLocalStorage() {
+            log('🔍 Checking all localStorage keys...', 'info');
+            
+            const allKeys = Object.keys(localStorage);
+            log(`Found ${allKeys.length} localStorage keys`, 'info');
+            
+            // Display all keys
+            let keysHtml = '';
+            allKeys.forEach(key => {
+                keysHtml += `<span class="localStorage-key">${key}</span>`;
+            });
+            localStorageKeysDiv.innerHTML = keysHtml;
+            
+            // Check for signal-related keys
+            const signalKeys = allKeys.filter(key => 
+                key.includes('signal') || 
+                key.includes('telegram') || 
+                key.includes('admin') || 
+                key.includes('trade') ||
+                key.includes('forex') ||
+                key.includes('crypto')
+            );
+            
+            log(`Found ${signalKeys.length} signal-related keys: ${signalKeys.join(', ')}`, 'info');
+            
+            // Display signal data
+            let signalHtml = '<h3>Signal-Related Data:</h3>';
+            signalKeys.forEach(key => {
+                try {
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        signalHtml += `
+                            <div class="signal-item">
+                                <strong>Key: ${key}</strong><br>
+                                <strong>Type:</strong> ${Array.isArray(parsed) ? 'Array' : typeof parsed}<br>
+                                <strong>Length/Size:</strong> ${Array.isArray(parsed) ? parsed.length : Object.keys(parsed).length}<br>
+                                <strong>Data Preview:</strong>
+                                <div class="data-preview">${JSON.stringify(parsed, null, 2).substring(0, 500)}${JSON.stringify(parsed, null, 2).length > 500 ? '...' : ''}</div>
+                            </div>
+                        `;
+                    }
+                } catch (e) {
+                    signalHtml += `
+                        <div class="signal-item">
+                            <strong>Key: ${key}</strong><br>
+                            <strong>Type:</strong> String (not JSON)<br>
+                            <strong>Value:</strong> ${localStorage.getItem(key).substring(0, 100)}${localStorage.getItem(key).length > 100 ? '...' : ''}
+                        </div>
+                    `;
+                }
+            });
+            
+            if (signalKeys.length === 0) {
+                signalHtml += '<div class="signal-item">No signal-related keys found</div>';
+            }
+            
+            signalDataDiv.innerHTML = signalHtml;
+            
+            // Display raw data
+            let rawHtml = '<h3>All localStorage Data:</h3>';
+            allKeys.forEach(key => {
+                try {
+                    const data = localStorage.getItem(key);
+                    const parsed = JSON.parse(data);
+                    rawHtml += `<strong>${key}:</strong>\n${JSON.stringify(parsed, null, 2)}\n\n`;
+                } catch (e) {
+                    rawHtml += `<strong>${key}:</strong> ${data}\n\n`;
+                }
+            });
+            rawDataDiv.textContent = rawHtml;
+            
+            // Check specifically for the 10 signals
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            const userSignals = JSON.parse(localStorage.getItem('user_signals') || '[]');
+            
+            log(`📊 Signal Count Summary:`, 'info');
+            log(`  - telegram_messages: ${telegramMessages.length} signals`, 'info');
+            log(`  - admin_generated_signals: ${adminSignals.length} signals`, 'info');
+            log(`  - user_signals: ${userSignals.length} signals`, 'info');
+            
+            if (telegramMessages.length > 0 || adminSignals.length > 0 || userSignals.length > 0) {
+                log('✅ Found signals in localStorage!', 'success');
+            } else {
+                log('❌ No signals found in expected keys', 'warning');
+                log('The 10 signals you see in admin dashboard might be stored in a different key or format', 'warning');
+            }
+        }
+        
+        window.clearAllSignals = function() {
+            log('🗑️ Clearing all signal-related localStorage...', 'warning');
+            
+            const signalKeys = [
+                'telegram_messages',
+                'admin_generated_signals', 
+                'user_signals',
+                'forexBotStatus',
+                'crypto_prices',
+                'crypto_prices_timestamp'
+            ];
+            
+            signalKeys.forEach(key => {
+                localStorage.removeItem(key);
+                log(`  - Removed ${key}`, 'info');
+            });
+            
+            log('✅ All signal-related data cleared', 'success');
+            checkAllLocalStorage();
+        };
+        
+        window.exportLocalStorage = function() {
+            log('📤 Exporting localStorage data...', 'info');
+            
+            const allData = {};
+            Object.keys(localStorage).forEach(key => {
+                try {
+                    allData[key] = JSON.parse(localStorage.getItem(key));
+                } catch (e) {
+                    allData[key] = localStorage.getItem(key);
+                }
+            });
+            
+            const dataStr = JSON.stringify(allData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'localStorage_backup.json';
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            log('✅ localStorage data exported to localStorage_backup.json', 'success');
+        };
+        
+        window.importLocalStorage = function() {
+            log('📥 Import localStorage data...', 'info');
+            log('This feature requires manual implementation', 'warning');
+        };
+        
+        // Auto-run initial check
+        log('🚀 Comprehensive Signal Check initialized', 'info');
+        log('This will help us find where the 10 admin signals are stored', 'info');
+        checkAllLocalStorage();
+    </script>
+</body>
+</html>

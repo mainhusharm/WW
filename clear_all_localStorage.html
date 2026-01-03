@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear All localStorage Data</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #1a1a1a; 
+            color: white; 
+        }
+        .result { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border-radius: 5px; 
+        }
+        .success { background: #2d5a2d; }
+        .error { background: #5a2d2d; }
+        .info { background: #2d4a5a; }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            background: #4a90e2; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        button:hover { background: #357abd; }
+        pre { background: #333; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧹 Clear All localStorage Data</h1>
+    <p>This will clear all signal-related data from localStorage to ensure only real-time admin signals are shown.</p>
+    
+    <div>
+        <button onclick="showCurrentData()">Show Current Data</button>
+        <button onclick="clearAllData()">Clear All Data</button>
+        <button onclick="clearSignalData()">Clear Signal Data Only</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        function showCurrentData() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h3>📊 Current localStorage Data:</h3>';
+            
+            const signalKeys = [
+                'admin_generated_signals',
+                'admin_signals', 
+                'telegram_messages',
+                'persistent_signals',
+                'signals',
+                'trading_signals',
+                'forex_signals',
+                'crypto_signals'
+            ];
+            
+            let hasData = false;
+            
+            signalKeys.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        addResult(`<strong>${key}:</strong> ${Array.isArray(parsed) ? parsed.length + ' items' : 'Object'}`, 'info');
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            addResult(`<pre>${JSON.stringify(parsed.slice(0, 2), null, 2)}${parsed.length > 2 ? '\n...' : ''}</pre>`, 'info');
+                        }
+                        hasData = true;
+                    } catch (e) {
+                        addResult(`<strong>${key}:</strong> ${data.length} characters (not JSON)`, 'info');
+                        hasData = true;
+                    }
+                }
+            });
+            
+            if (!hasData) {
+                addResult('No signal data found in localStorage', 'info');
+            }
+        }
+
+        function clearAllData() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h3>🧹 Clearing All localStorage Data...</h3>';
+            
+            try {
+                // Clear all localStorage
+                localStorage.clear();
+                addResult('✅ All localStorage data cleared successfully', 'success');
+                
+                // Show what's left
+                const remainingKeys = Object.keys(localStorage);
+                if (remainingKeys.length > 0) {
+                    addResult(`⚠️ Some keys remain: ${remainingKeys.join(', ')}`, 'error');
+                } else {
+                    addResult('✅ localStorage is completely empty', 'success');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Error clearing localStorage: ${error.message}`, 'error');
+            }
+        }
+
+        function clearSignalData() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h3>🧹 Clearing Signal Data Only...</h3>';
+            
+            const signalKeys = [
+                'admin_generated_signals',
+                'admin_signals', 
+                'telegram_messages',
+                'persistent_signals',
+                'signals',
+                'trading_signals',
+                'forex_signals',
+                'crypto_signals'
+            ];
+            
+            let clearedCount = 0;
+            
+            signalKeys.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    addResult(`✅ Cleared: ${key}`, 'success');
+                    clearedCount++;
+                }
+            });
+            
+            if (clearedCount === 0) {
+                addResult('ℹ️ No signal data found to clear', 'info');
+            } else {
+                addResult(`✅ Cleared ${clearedCount} signal-related keys`, 'success');
+            }
+        }
+
+        // Auto-show current data on page load
+        window.addEventListener('load', () => {
+            showCurrentData();
+        });
+    </script>
+</body>
+</html>

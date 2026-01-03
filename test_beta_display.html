@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BETA Display Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: white; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #333; border-radius: 5px; }
+        .success { background: #1a4d1a; border-color: #2d5a2d; }
+        .error { background: #4d1a1a; border-color: #5a2d2d; }
+        .info { background: #1a3d4d; border-color: #2d4a5a; }
+        .beta-test { margin: 10px 0; padding: 10px; background: #2a2a2a; border-radius: 5px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔍 BETA Display Test</h1>
+    <p>Testing why the BETA text is not showing on the production site...</p>
+    
+    <div>
+        <button onclick="testBetaDisplay()">Test BETA Display</button>
+        <button onclick="checkProductionSite()">Check Production Site</button>
+        <button onclick="openProduction()">Open Production Dashboard</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        function testBetaDisplay() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="test-section info">Testing BETA display...</div>';
+            
+            let html = '';
+            
+            // Test different BETA implementations
+            const betaTests = [
+                {
+                    name: 'Standard BETA',
+                    html: '<span class="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>'
+                },
+                {
+                    name: 'BETA with different styling',
+                    html: '<span class="ml-2 text-xs bg-red-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>'
+                },
+                {
+                    name: 'BETA with inline styles',
+                    html: '<span style="margin-left: 8px; font-size: 12px; background: orange; color: white; padding: 4px 8px; border-radius: 12px; font-weight: 600;">BETA</span>'
+                }
+            ];
+            
+            html += '<div class="test-section info"><h3>BETA Display Tests</h3>';
+            betaTests.forEach((test, index) => {
+                html += `
+                    <div class="beta-test">
+                        <h4>${test.name}:</h4>
+                        <div style="margin: 10px 0;">
+                            TraderEdgePro ${test.html}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            // Test CSS classes
+            html += `
+                <div class="test-section info">
+                    <h3>CSS Class Test</h3>
+                    <p>Testing if the CSS classes are working:</p>
+                    <div style="margin: 10px 0;">
+                        <span class="ml-2 text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-semibold">BETA</span>
+                    </div>
+                    <p>If you can see the orange BETA badge above, the CSS classes are working.</p>
+                </div>
+            `;
+            
+            // Test production site
+            html += `
+                <div class="test-section info">
+                    <h3>Production Site Analysis</h3>
+                    <p>The production site uses React, so the BETA text should be rendered dynamically.</p>
+                    <p>Possible issues:</p>
+                    <ul>
+                        <li>CSS classes not loading properly</li>
+                        <li>Different dashboard concept being used</li>
+                        <li>BETA text being hidden by CSS</li>
+                        <li>Sidebar not visible on mobile/tablet</li>
+                        <li>Theme switcher changing the component</li>
+                    </ul>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        async function checkProductionSite() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="test-section info">Checking production site...</div>';
+            
+            try {
+                const response = await fetch('https://traderedgepro.com/dashboard/overview');
+                const html = await response.text();
+                
+                let analysis = '';
+                
+                if (html.includes('BETA')) {
+                    analysis = '<div class="test-section success"><h3>✅ BETA text found in HTML</h3><p>The BETA text is present in the production HTML.</p></div>';
+                } else {
+                    analysis = '<div class="test-section error"><h3>❌ BETA text not found in HTML</h3><p>The BETA text is not present in the production HTML.</p></div>';
+                }
+                
+                if (html.includes('concept1')) {
+                    analysis += '<div class="test-section info"><h3>📊 Dashboard Concept</h3><p>DashboardConcept1 is being used (concept1 found in HTML).</p></div>';
+                } else if (html.includes('concept2')) {
+                    analysis += '<div class="test-section info"><h3>📊 Dashboard Concept</h3><p>DashboardConcept2 is being used (concept2 found in HTML).</p></div>';
+                } else {
+                    analysis += '<div class="test-section info"><h3>📊 Dashboard Concept</h3><p>Could not determine which dashboard concept is being used.</p></div>';
+                }
+                
+                resultsDiv.innerHTML = analysis;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="test-section error"><h3>❌ Error checking production site</h3><p>${error.message}</p></div>`;
+            }
+        }
+        
+        function openProduction() {
+            window.open('https://traderedgepro.com/dashboard/overview', '_blank');
+        }
+        
+        // Auto-run test
+        testBetaDisplay();
+    </script>
+</body>
+</html>

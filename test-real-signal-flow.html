@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Signal Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .signal-display {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .signal-item {
+            background: #2a2a2a;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #4ade80;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Real Signal Flow Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li>Go to Admin Dashboard: <a href="http://localhost:5175/admin" target="_blank" style="color: #60a5fa;">http://localhost:5175/admin</a></li>
+            <li>Click on "Forex Data" tab</li>
+            <li>Click "🚀 Start Real Data Analysis" button</li>
+            <li>Come back to this page and click "Check Real Signals"</li>
+            <li>Go to User Dashboard: <a href="http://localhost:5175/dashboard/signals" target="_blank" style="color: #60a5fa;">http://localhost:5175/dashboard/signals</a></li>
+            <li>Check if signals appear in the user dashboard</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="checkRealSignals()">Check Real Signals</button>
+        <button onclick="clearAllSignals()">Clear All Signals</button>
+        <button onclick="startMonitoring()">Start Monitoring</button>
+        <button onclick="stopMonitoring()">Stop Monitoring</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Real Signals from Admin Dashboard</h2>
+        <div id="signalsDisplay">No signals found yet. Start the admin dashboard analysis first.</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Live Monitoring Log</h2>
+        <div id="logs" class="log">Monitoring not started. Click "Start Monitoring" to begin.</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let signalsDisplay = document.getElementById('signalsDisplay');
+        let monitoringInterval = null;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function updateSignalsDisplay() {
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            
+            if (telegramMessages.length === 0) {
+                signalsDisplay.innerHTML = '<div class="signal-item">No signals found yet. Start the admin dashboard analysis first.</div>';
+                return;
+            }
+            
+            let html = `<h3>Found ${telegramMessages.length} signals in localStorage:</h3>`;
+            telegramMessages.forEach((signal, index) => {
+                html += `
+                    <div class="signal-item">
+                        <strong>Signal ${index + 1}:</strong><br>
+                        <strong>From:</strong> ${signal.from}<br>
+                        <strong>Time:</strong> ${new Date(signal.timestamp).toLocaleString()}<br>
+                        <strong>Content:</strong><br>
+                        <pre style="white-space: pre-wrap; margin-top: 5px;">${signal.text}</pre>
+                    </div>
+                `;
+            });
+            signalsDisplay.innerHTML = html;
+        }
+        
+        window.checkRealSignals = function() {
+            log('🔍 Checking for real signals from admin dashboard...', 'info');
+            
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            
+            log(`📊 Signal Count:`, 'info');
+            log(`  - telegram_messages: ${telegramMessages.length} signals`, 'info');
+            log(`  - admin_generated_signals: ${adminSignals.length} signals`, 'info');
+            
+            if (telegramMessages.length > 0) {
+                log('✅ Found signals in localStorage!', 'success');
+                telegramMessages.forEach((msg, index) => {
+                    log(`  ${index + 1}. [${msg.from}] ${msg.text.substring(0, 50)}...`, 'info');
+                });
+            } else {
+                log('❌ No signals found. Make sure admin dashboard is running analysis.', 'warning');
+            }
+            
+            updateSignalsDisplay();
+        };
+        
+        window.clearAllSignals = function() {
+            log('🗑️ Clearing all signals...', 'warning');
+            
+            localStorage.removeItem('telegram_messages');
+            localStorage.removeItem('admin_generated_signals');
+            localStorage.removeItem('user_signals');
+            
+            log('✅ All signals cleared', 'success');
+            updateSignalsDisplay();
+        };
+        
+        window.startMonitoring = function() {
+            if (monitoringInterval) {
+                log('⚠️ Monitoring already started', 'warning');
+                return;
+            }
+            
+            log('🔄 Starting live monitoring of localStorage...', 'info');
+            log('This will check for new signals every 2 seconds', 'info');
+            
+            monitoringInterval = setInterval(() => {
+                const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+                if (telegramMessages.length > 0) {
+                    log(`📡 Detected ${telegramMessages.length} signals in localStorage`, 'success');
+                    updateSignalsDisplay();
+                }
+            }, 2000);
+            
+            log('✅ Live monitoring started', 'success');
+        };
+        
+        window.stopMonitoring = function() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                log('⏹️ Live monitoring stopped', 'info');
+            } else {
+                log('⚠️ Monitoring not started', 'warning');
+            }
+        };
+        
+        // Listen for signal events
+        window.addEventListener('newSignalSent', (event) => {
+            log(`📡 Received newSignalSent event from: ${event.detail.from}`, 'success');
+            updateSignalsDisplay();
+        });
+        
+        window.addEventListener('newSignalGenerated', (event) => {
+            log(`📡 Received newSignalGenerated event from: ${event.detail.from}`, 'success');
+            updateSignalsDisplay();
+        });
+        
+        // Auto-run initial check
+        log('🚀 Real Signal Flow Test initialized', 'info');
+        log('Follow the instructions above to test the real signal flow', 'info');
+        checkRealSignals();
+    </script>
+</body>
+</html>

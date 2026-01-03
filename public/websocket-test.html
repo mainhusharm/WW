@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Connection Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .connected { background: #2d5a2d; }
+        .disconnected { background: #5a2d2d; }
+        .connecting { background: #5a5a2d; }
+        .log {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 5px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #666; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    
+    <div id="status" class="status disconnected">Disconnected</div>
+    
+    <div>
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+        <button onclick="sendTestSignal()">Send Test Signal</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <h3>Connection Log:</h3>
+    <div id="log" class="log"></div>
+    
+    <h3>Received Signals:</h3>
+    <div id="signals" class="log"></div>
+
+    <script>
+        let socket = null;
+        let signalCount = 0;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(status, className) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = status;
+            statusDiv.className = `status ${className}`;
+        }
+
+        function addSignal(signal) {
+            const signalsDiv = document.getElementById('signals');
+            signalCount++;
+            signalsDiv.innerHTML += `Signal ${signalCount}: ${signal.pair} ${signal.direction} - ${signal.entry}<br>`;
+            signalsDiv.scrollTop = signalsDiv.scrollHeight;
+        }
+
+        function connect() {
+            if (socket && socket.connected) {
+                log('Already connected');
+                return;
+            }
+
+            log('Connecting to WebSocket...');
+            updateStatus('Connecting...', 'connecting');
+
+            const socketUrl = 'https://backend-ox9b.onrender.com';
+            
+            socket = io(socketUrl, {
+                path: '/socket.io',
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 5000,
+                forceNew: true,
+                timeout: 20000,
+                query: {
+                    t: Date.now() // Cache busting
+                }
+            });
+
+            socket.on('connect', () => {
+                log('✅ WebSocket connected successfully!');
+                updateStatus('Connected', 'connected');
+            });
+
+            socket.on('disconnect', (reason) => {
+                log(`❌ WebSocket disconnected: ${reason}`);
+                updateStatus('Disconnected', 'disconnected');
+            });
+
+            socket.on('connect_error', (error) => {
+                log(`❌ WebSocket connection error: ${error.message}`);
+                updateStatus('Connection Error', 'disconnected');
+            });
+
+            socket.on('new_signal', (signal) => {
+                log(`📡 Received new signal: ${signal.pair} ${signal.direction}`);
+                addSignal(signal);
+            });
+
+            socket.on('ping', () => {
+                log('🏓 Received ping from server');
+            });
+
+            socket.on('pong', () => {
+                log('🏓 Received pong from server');
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                log('Disconnecting...');
+                socket.disconnect();
+                socket = null;
+                updateStatus('Disconnected', 'disconnected');
+            }
+        }
+
+        function sendTestSignal() {
+            if (!socket || !socket.connected) {
+                log('❌ Not connected to WebSocket');
+                return;
+            }
+
+            const testSignal = {
+                id: 'test-' + Date.now(),
+                pair: 'EURUSD',
+                direction: 'BUY',
+                entry: '1.0850',
+                stopLoss: '1.0800',
+                takeProfit: '1.0950',
+                confidence: 90,
+                analysis: 'Test signal from WebSocket test page',
+                createdAt: new Date().toISOString()
+            };
+
+            log('📤 Sending test signal...');
+            
+            // Send to admin endpoint
+            fetch('https://backend-ox9b.onrender.com/api/admin/create-signal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(testSignal)
+            })
+            .then(response => response.json())
+            .then(data => {
+                log(`✅ Test signal sent: ${JSON.stringify(data)}`);
+            })
+            .catch(error => {
+                log(`❌ Error sending test signal: ${error.message}`);
+            });
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('signals').innerHTML = '';
+            signalCount = 0;
+        }
+
+        // Auto-connect on page load
+        window.onload = function() {
+            log('Page loaded, attempting to connect...');
+            connect();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+Field Name,Data Type,Description,Category,Required,Default Value,Notes
+id,UUID,Primary Key,Basic,Yes,gen_random_uuid(),Auto-generated
+first_name,VARCHAR(100),User's first name,Profile,Yes,,From signup form
+last_name,VARCHAR(100),User's last name,Profile,Yes,,From signup form
+email,VARCHAR(255),User's email address,Profile,Yes,,Unique identifier
+phone,VARCHAR(20),User's phone number,Profile,Yes,,From signup form
+company,VARCHAR(100),User's company name,Profile,No,,From signup form
+country,VARCHAR(100),User's country,Profile,No,United States,From signup form
+language,VARCHAR(50),User's preferred language,Profile,No,English,From dashboard settings
+bio,TEXT,User's biography,Profile,No,,From dashboard settings
+password_hash,TEXT,Encrypted password,Authentication,Yes,,Hashed password for security
+agree_to_terms,BOOLEAN,Agreed to terms of service,Authentication,Yes,false,From signup form
+agree_to_marketing,BOOLEAN,Agreed to marketing communications,Authentication,No,false,From signup form
+status,VARCHAR(20),User account status,Status,No,PENDING,PENDING/PROCESSING/COMPLETED/REJECTED/ACTIVE
+membership_tier,VARCHAR(20),User's membership level,Status,No,,free/premium/kickstarter
+account_type,VARCHAR(20),Account type,Status,No,,personal/business
+setup_complete,BOOLEAN,Whether setup is complete,Status,No,false,From user context
+is_temporary,BOOLEAN,Whether account is temporary,Status,No,false,From user context
+unique_id,VARCHAR(100),Unique identifier,Status,No,,From user context
+token,TEXT,Authentication token,Status,No,,From user context
+selected_plan,JSONB,Selected membership plan,Status,No,,JSON object
+trading_experience_signup,VARCHAR(50),Trading experience from signup,Signup,No,,beginner/intermediate/advanced
+trading_goals_signup,TEXT,Trading goals from signup,Signup,No,,Free text description
+risk_tolerance_signup,VARCHAR(20),Risk tolerance from signup,Signup,No,,conservative/moderate/aggressive
+preferred_markets,VARCHAR(100),Preferred trading markets,Signup,No,,From signup form
+trading_style,VARCHAR(50),Trading style preference,Signup,No,,From signup form
+trades_per_day,VARCHAR(10),Number of trades per day,Questionnaire,No,,1-2/3-5/6-10/10+
+trading_session,VARCHAR(20),Preferred trading session,Questionnaire,No,,asian/european/us/any
+has_account,VARCHAR(3),Whether user has existing account,Questionnaire,No,,yes/no
+account_equity,DECIMAL(15,2),Current account equity,Questionnaire,No,,If has_account equals yes
+prop_firm,VARCHAR(100),Selected prop firm,Questionnaire,No,,From questionnaire
+account_type_questionnaire,VARCHAR(50),Account type from prop firm,Questionnaire,No,,From questionnaire
+account_size,DECIMAL(15,2),Account size in USD,Questionnaire,No,,From questionnaire
+risk_percentage,DECIMAL(5,2),Risk per trade percentage,Questionnaire,No,,0.5 to 2.5 percent
+risk_reward_ratio,VARCHAR(10),Preferred risk:reward ratio,Questionnaire,No,,1/2/3/4
+crypto_assets,TEXT[],Array of crypto symbols,Questionnaire,No,,BTC ETH etc
+forex_assets,TEXT[],Array of forex pairs,Questionnaire,No,,EURUSD GBPUSD etc
+account_screenshot,TEXT,Base64 encoded screenshot,Questionnaire,No,,Account verification
+screenshot_url,VARCHAR(500),URL to stored screenshot,Questionnaire,No,,If stored externally
+trading_experience,VARCHAR(50),User's trading experience,Questionnaire,No,,beginner/intermediate/advanced
+risk_tolerance,VARCHAR(20),User's risk tolerance,Questionnaire,No,,conservative/moderate/aggressive
+trading_goals,TEXT,User's trading goals,Questionnaire,No,,Free text description
+plan_name,VARCHAR(20),Risk management plan name,Risk Management,No,,Conservative/Balanced/Aggressive/Custom
+plan_description,TEXT,Risk management plan description,Risk Management,No,,Plan details
+is_active,BOOLEAN,Whether plan is active,Risk Management,No,true,Plan status
+version,VARCHAR(10),Plan version,Risk Management,No,1.0,Version control
+max_risk_per_trade,DECIMAL(5,2),Maximum risk per trade,Risk Management,No,,0.1 to 5.0 percent
+max_daily_loss,DECIMAL(5,2),Maximum daily loss,Risk Management,No,,1 to 10 percent
+max_weekly_loss,DECIMAL(5,2),Maximum weekly loss,Risk Management,No,,5 to 20 percent
+max_monthly_loss,DECIMAL(5,2),Maximum monthly loss,Risk Management,No,,10 to 30 percent
+max_position_size,DECIMAL(5,2),Maximum position size,Risk Management,No,,1 to 20 percent
+max_open_trades,INTEGER,Maximum open trades,Risk Management,No,,1 to 10
+stop_loss_type,VARCHAR(30),Stop loss type,Risk Management,No,,Fixed Percentage ATR-based Support/Resistance Manual
+default_stop_loss,DECIMAL(5,2),Default stop loss,Risk Management,No,,0.5 to 10 percent
+take_profit_type,VARCHAR(30),Take profit type,Risk Management,No,,Fixed R:R Ratio Multiple Targets Trailing Stop Manual
+default_risk_reward,DECIMAL(5,2),Default risk:reward ratio,Risk Management,No,,1.0 to 10.0
+max_consecutive_losses,INTEGER,Maximum consecutive losses,Risk Management,No,,1 to 10
+max_drawdown_percentage,DECIMAL(5,2),Maximum drawdown percentage,Risk Management,No,,5 to 30 percent
+recovery_mode,BOOLEAN,Recovery mode enabled,Risk Management,No,false,Advanced setting
+recovery_risk_reduction,DECIMAL(3,2),Recovery risk reduction,Risk Management,No,,0.1 to 1.0
+trades_to_pass,INTEGER,Number of trades needed to pass,Calculated,No,,Calculated value
+risk_amount,DECIMAL(15,2),Risk amount per trade,Calculated,No,,Calculated value
+profit_amount,DECIMAL(15,2),Profit target per trade,Calculated,No,,Calculated value
+profit_target,DECIMAL(15,2),Total profit target,Calculated,No,,Calculated value
+profit_target_percentage,DECIMAL(5,2),Profit target percentage,Calculated,No,,Calculated value
+daily_profit_target,DECIMAL(15,2),Daily profit target,Calculated,No,,Calculated value
+daily_risk_amount,DECIMAL(15,2),Daily risk amount,Calculated,No,,Calculated value
+estimated_days_to_pass,INTEGER,Estimated days to pass,Calculated,No,,Calculated value
+plan_data,JSONB,Complete plan data as JSON,Risk Management,No,,JSON object with all plan details
+risk_per_trade_setting,DECIMAL(5,2),Risk per trade setting,Dashboard Settings,No,1.0,From dashboard settings
+max_daily_risk_setting,DECIMAL(5,2),Max daily risk setting,Dashboard Settings,No,5.0,From dashboard settings
+max_drawdown_setting,DECIMAL(5,2),Max drawdown setting,Dashboard Settings,No,10.0,From dashboard settings
+stop_loss_default_setting,DECIMAL(10,2),Default stop loss setting,Dashboard Settings,No,50.0,From dashboard settings
+take_profit_default_setting,DECIMAL(10,2),Default take profit setting,Dashboard Settings,No,100.0,From dashboard settings
+risk_reward_ratio_setting,DECIMAL(5,2),Risk reward ratio setting,Dashboard Settings,No,2.0,From dashboard settings
+trading_preferences,JSONB,Trading preferences settings,Dashboard Settings,No,,JSON object with trading settings
+display_settings,JSONB,Display and theme settings,Dashboard Settings,No,,JSON object with display preferences
+notification_settings,JSONB,Notification preferences,Dashboard Settings,No,,JSON object with notification settings
+security_settings,JSONB,Security settings,Dashboard Settings,No,,JSON object with security preferences
+data_settings,JSONB,Data and export settings,Dashboard Settings,No,,JSON object with data preferences
+api_settings,JSONB,API and integration settings,Dashboard Settings,No,,JSON object with API settings
+currency,VARCHAR(3),User's currency,Dashboard Settings,No,USD,Currency preference
+timezone,VARCHAR(50),User's timezone,Dashboard Settings,No,America/New_York,Timezone preference
+auto_save,BOOLEAN,Auto-save enabled,Dashboard Settings,No,true,From dashboard settings
+payment_id,UUID,Payment record ID,Payment,No,,Auto-generated payment ID
+plan_name_payment,VARCHAR(100),Plan name from payment,Payment,No,,From payment form
+original_price,DECIMAL(10,2),Original plan price,Payment,No,,Before discounts
+discount_amount,DECIMAL(10,2),Discount amount applied,Payment,No,0.00,From coupon or promotion
+final_price,DECIMAL(10,2),Final price after discount,Payment,No,,Amount actually charged
+coupon_code,VARCHAR(50),Coupon code used,Payment,No,,If applicable
+payment_method,VARCHAR(50),Payment method used,Payment,No,,paypal/crypto/stripe
+payment_status,VARCHAR(20),Payment status,Payment,No,pending,pending/completed/failed/refunded
+transaction_id,VARCHAR(100),Payment transaction ID,Payment,No,,From payment processor
+payment_processor,VARCHAR(50),Payment processor used,Payment,No,,paypal/stripe/crypto
+payment_currency,VARCHAR(3),Payment currency,Payment,No,USD,Currency used for payment
+payment_amount,DECIMAL(10,2),Payment amount,Payment,No,,Amount paid
+payment_fees,DECIMAL(10,2),Payment processing fees,Payment,No,0.00,Fees charged by processor
+payment_net_amount,DECIMAL(10,2),Net amount received,Payment,No,,Amount after fees
+payment_date,TIMESTAMP WITH TIME ZONE,Payment completion date,Payment,No,,When payment was completed
+payment_verified,BOOLEAN,Payment verification status,Payment,No,false,Whether payment is verified
+payment_verification_method,VARCHAR(50),Payment verification method,Payment,No,,manual/automatic/webhook
+crypto_transaction_hash,VARCHAR(100),Crypto transaction hash,Payment,No,,For crypto payments
+crypto_from_address,VARCHAR(100),Crypto sender address,Payment,No,,For crypto payments
+crypto_amount,DECIMAL(20,8),Crypto amount paid,Payment,No,,For crypto payments
+crypto_currency,VARCHAR(10),Crypto currency used,Payment,No,,ETH/SOL/etc.
+crypto_verification_screenshot,TEXT,Crypto payment screenshot,Payment,No,,Base64 encoded image
+paypal_order_id,VARCHAR(100),PayPal order ID,Payment,No,,For PayPal payments
+paypal_payer_id,VARCHAR(100),PayPal payer ID,Payment,No,,For PayPal payments
+stripe_payment_intent_id,VARCHAR(100),Stripe payment intent ID,Payment,No,,For Stripe payments
+stripe_customer_id,VARCHAR(100),Stripe customer ID,Payment,No,,For Stripe payments
+refund_amount,DECIMAL(10,2),Refund amount,Payment,No,0.00,If refunded
+refund_reason,TEXT,Refund reason,Payment,No,,Reason for refund
+refund_date,TIMESTAMP WITH TIME ZONE,Refund date,Payment,No,,When refund was processed
+ip_address,VARCHAR(45),User's IP address,Metadata,No,,For security tracking
+user_agent,TEXT,User's browser info,Metadata,No,,For security tracking
+consent_accepted,BOOLEAN,Consent acceptance status,Metadata,No,false,GDPR compliance
+consent_timestamp,TIMESTAMP WITH TIME ZONE,Consent acceptance time,Metadata,No,,GDPR compliance
+data_capture_complete,BOOLEAN,Data capture completion status,Metadata,No,false,Whether all data is captured
+last_active,TIMESTAMP WITH TIME ZONE,Last activity timestamp,Metadata,No,,User's last activity
+created_at,TIMESTAMP WITH TIME ZONE,Record creation timestamp,Metadata,No,NOW(),Auto-generated
+updated_at,TIMESTAMP WITH TIME ZONE,Record update timestamp,Metadata,No,NOW(),Auto-updated
+plan_activated_at,TIMESTAMP WITH TIME ZONE,Plan activation timestamp,Metadata,No,,When plan was activated

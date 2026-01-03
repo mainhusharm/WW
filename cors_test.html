@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test - Multiple Methods</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔧 CORS Connection Test</h1>
+    <p>This page tests different ways to connect to the backend server.</p>
+
+    <div class="test">
+        <h3>Test 1: Health Check</h3>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="healthResult"></div>
+    </div>
+
+    <div class="test">
+        <h3>Test 2: Registration (Simple)</h3>
+        <button onclick="testRegistration()">Test Registration</button>
+        <div id="registrationResult"></div>
+    </div>
+
+    <div class="test">
+        <h3>Test 3: Registration (With Headers)</h3>
+        <button onclick="testRegistrationWithHeaders()">Test Registration with Headers</button>
+        <div id="registrationHeadersResult"></div>
+    </div>
+
+    <div class="test">
+        <h3>Test 4: Database Check</h3>
+        <button onclick="testDatabase()">Test Database</button>
+        <div id="databaseResult"></div>
+    </div>
+
+    <div class="test">
+        <h3>Test 5: XMLHttpRequest (Alternative)</h3>
+        <button onclick="testXHR()">Test with XMLHttpRequest</button>
+        <div id="xhrResult"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+
+        function showResult(elementId, success, message) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<pre>${message}</pre>`;
+            element.className = success ? 'success' : 'error';
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                showResult('healthResult', true, `✅ Health Check Success:\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('healthResult', false, `❌ Health Check Failed:\n${error.message}`);
+            }
+        }
+
+        async function testRegistration() {
+            const userData = {
+                firstName: "CORS",
+                lastName: "Test",
+                email: `cors_test_${Date.now()}@example.com`,
+                password: "test123",
+                phone: "1234567890",
+                company: "Test Company",
+                country: "US",
+                terms: true,
+                newsletter: false
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/api/user/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                showResult('registrationResult', response.ok, 
+                    `${response.ok ? '✅' : '❌'} Registration ${response.ok ? 'Success' : 'Failed'}:\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('registrationResult', false, `❌ Registration Error:\n${error.message}`);
+            }
+        }
+
+        async function testRegistrationWithHeaders() {
+            const userData = {
+                firstName: "CORS",
+                lastName: "Headers",
+                email: `cors_headers_${Date.now()}@example.com`,
+                password: "test123",
+                phone: "1234567890",
+                company: "Test Company",
+                country: "US",
+                terms: true,
+                newsletter: false
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/api/user/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Origin': window.location.origin,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                showResult('registrationHeadersResult', response.ok, 
+                    `${response.ok ? '✅' : '❌'} Registration with Headers ${response.ok ? 'Success' : 'Failed'}:\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('registrationHeadersResult', false, `❌ Registration with Headers Error:\n${error.message}`);
+            }
+        }
+
+        async function testDatabase() {
+            try {
+                const response = await fetch(`${API_BASE}/api/user/customers`);
+                const data = await response.json();
+                showResult('databaseResult', response.ok, 
+                    `${response.ok ? '✅' : '❌'} Database Check ${response.ok ? 'Success' : 'Failed'}:\nStatus: ${response.status}\nFound ${data.length} users\nResponse: ${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                showResult('databaseResult', false, `❌ Database Check Error:\n${error.message}`);
+            }
+        }
+
+        function testXHR() {
+            const xhr = new XMLHttpRequest();
+            const userData = {
+                firstName: "XHR",
+                lastName: "Test",
+                email: `xhr_test_${Date.now()}@example.com`,
+                password: "test123",
+                phone: "1234567890",
+                company: "Test Company",
+                country: "US",
+                terms: true,
+                newsletter: false
+            };
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        const data = JSON.parse(xhr.responseText);
+                        showResult('xhrResult', true, `✅ XHR Success:\nStatus: ${xhr.status}\nResponse: ${JSON.stringify(data, null, 2)}`);
+                    } else {
+                        showResult('xhrResult', false, `❌ XHR Failed:\nStatus: ${xhr.status}\nResponse: ${xhr.responseText}`);
+                    }
+                }
+            };
+
+            xhr.onerror = function() {
+                showResult('xhrResult', false, `❌ XHR Network Error`);
+            };
+
+            xhr.open('POST', `${API_BASE}/api/user/register`, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify(userData));
+        }
+
+        // Auto-run health check on page load
+        window.addEventListener('load', function() {
+            testHealth();
+        });
+    </script>
+</body>
+</html>

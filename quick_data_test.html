@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Data Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Quick Data Flow Test</h1>
+        
+        <div class="status info">
+            <strong>Testing if data is flowing from frontend to backend to database...</strong>
+        </div>
+
+        <div style="text-align: center;">
+            <button onclick="testDataFlow()">Test Data Flow</button>
+            <button onclick="testQuestionnaire()">Test Questionnaire</button>
+            <button onclick="testPayment()">Test Payment</button>
+        </div>
+
+        <div id="result" class="result info">
+            Click a button above to test data flow
+        </div>
+
+        <div class="status info">
+            <strong>Instructions:</strong><br>
+            1. Click any test button above<br>
+            2. If you see "SUCCESS" - data IS flowing!<br>
+            3. If you see "FAILED" - there's an issue<br>
+            4. Check the result below for details
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+
+        async function testDataFlow() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="result info">Testing data flow...</div>';
+            
+            try {
+                const userData = {
+                    firstName: 'Quick',
+                    lastName: 'Test',
+                    email: `quick_test_${Date.now()}@example.com`,
+                    password: 'test123',
+                    phone: '1234567890',
+                    company: 'Test Company',
+                    country: 'US',
+                    terms: true,
+                    newsletter: false
+                };
+                
+                const response = await fetch(`${API_BASE}/api/user/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ SUCCESS! Data IS flowing!<br><br>
+                            User ID: ${data.user_id}<br>
+                            Message: ${data.msg}<br><br>
+                            <strong>Data successfully saved to database!</strong>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ FAILED! Data is NOT flowing<br><br>
+                        Error: ${error.message}<br><br>
+                        <strong>Check if backend is running on port 8080</strong>
+                    </div>
+                `;
+            }
+        }
+
+        async function testQuestionnaire() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="result info">Testing questionnaire data flow...</div>';
+            
+            try {
+                const questionnaireData = {
+                    user_id: 1,
+                    user_email: `questionnaire_${Date.now()}@example.com`,
+                    user_name: 'Test User',
+                    trades_per_day: '5-10',
+                    trading_session: 'London',
+                    crypto_assets: ['BTC', 'ETH'],
+                    forex_assets: ['EUR/USD', 'GBP/USD'],
+                    has_account: true,
+                    account_equity: 25000,
+                    prop_firm: 'FTMO',
+                    account_type: 'Standard',
+                    account_size: 10000,
+                    risk_percentage: 2,
+                    risk_reward_ratio: 2,
+                    trading_experience: 'Intermediate',
+                    risk_tolerance: 'Medium',
+                    trading_goals: 'Consistent profits'
+                };
+                
+                const response = await fetch(`${API_BASE}/api/simple/questionnaire`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(questionnaireData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ SUCCESS! Questionnaire data IS flowing!<br><br>
+                            Questionnaire ID: ${data.questionnaire_id}<br>
+                            Message: ${data.message}<br><br>
+                            <strong>Questionnaire data successfully saved to database!</strong>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ FAILED! Questionnaire data is NOT flowing<br><br>
+                        Error: ${error.message}<br><br>
+                        <strong>Check if backend is running on port 8080</strong>
+                    </div>
+                `;
+            }
+        }
+
+        async function testPayment() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="result info">Testing payment data flow...</div>';
+            
+            try {
+                const paymentData = {
+                    user_id: 1,
+                    user_email: `payment_${Date.now()}@example.com`,
+                    user_name: 'Test User',
+                    plan_name_payment: 'Premium Trading Plan',
+                    original_price: 99.99,
+                    discount_amount: 10.00,
+                    final_price: 89.99,
+                    payment_method: 'Credit Card',
+                    transaction_id: `txn_${Date.now()}`,
+                    payment_status: 'completed',
+                    payment_provider: 'Stripe'
+                };
+                
+                const response = await fetch(`${API_BASE}/api/simple/payments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            ✅ SUCCESS! Payment data IS flowing!<br><br>
+                            Payment ID: ${data.payment_id}<br>
+                            Message: ${data.message}<br><br>
+                            <strong>Payment data successfully saved to database!</strong>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        ❌ FAILED! Payment data is NOT flowing<br><br>
+                        Error: ${error.message}<br><br>
+                        <strong>Check if backend is running on port 8080</strong>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
+

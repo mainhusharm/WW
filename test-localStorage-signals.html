@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>localStorage Signals Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .signal-display {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .signal-item {
+            background: #2a2a2a;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #4ade80;
+        }
+        .raw-data {
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 localStorage Signals Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="createTestSignal()">Create Test Signal</button>
+        <button onclick="simulateAdminSignal()">Simulate Admin Signal</button>
+        <button onclick="checkLocalStorage()">Check localStorage</button>
+        <button onclick="clearSignals()">Clear All Signals</button>
+        <button onclick="testEventDispatch()">Test Event Dispatch</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Current Signals in localStorage</h2>
+        <div id="signalsDisplay">No signals found</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Raw localStorage Data</h2>
+        <div id="rawData" class="raw-data">No data</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log"></div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let signalsDisplay = document.getElementById('signalsDisplay');
+        let rawDataDisplay = document.getElementById('rawData');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function updateDisplays() {
+            // Check localStorage
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            const userSignals = JSON.parse(localStorage.getItem('user_signals') || '[]');
+            
+            // Update signals display
+            if (telegramMessages.length === 0) {
+                signalsDisplay.innerHTML = '<div class="signal-item">No signals found in localStorage</div>';
+            } else {
+                let html = `<h3>Found ${telegramMessages.length} signals in telegram_messages:</h3>`;
+                telegramMessages.forEach((signal, index) => {
+                    html += `
+                        <div class="signal-item">
+                            <strong>Signal ${index + 1}:</strong><br>
+                            <strong>From:</strong> ${signal.from}<br>
+                            <strong>Time:</strong> ${new Date(signal.timestamp).toLocaleString()}<br>
+                            <strong>Content:</strong><br>
+                            <pre style="white-space: pre-wrap; margin-top: 5px;">${signal.text}</pre>
+                        </div>
+                    `;
+                });
+                signalsDisplay.innerHTML = html;
+            }
+            
+            // Update raw data display
+            const rawData = {
+                telegram_messages: telegramMessages,
+                admin_generated_signals: adminSignals,
+                user_signals: userSignals
+            };
+            rawDataDisplay.textContent = JSON.stringify(rawData, null, 2);
+        }
+        
+        window.createTestSignal = function() {
+            log('🔄 Creating test signal...', 'info');
+            
+            const testSignal = {
+                id: Date.now(),
+                text: `EUR/USD\nBUY NOW\nEntry 1.08500\nStop Loss 1.08300\nTake Profit 1.08700\nConfidence 85%\n\nTest signal created at ${new Date().toLocaleString()}`,
+                timestamp: new Date().toISOString(),
+                from: 'Test Signal Generator',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Store in localStorage
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(testSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+            
+            log('✅ Test signal created and stored in localStorage', 'success');
+            updateDisplays();
+        };
+        
+        window.simulateAdminSignal = function() {
+            log('🔄 Simulating admin dashboard signal...', 'info');
+            
+            const adminSignal = {
+                id: Date.now(),
+                text: `GBP/USD\nSELL NOW\nEntry 1.26500\nStop Loss 1.26800\nTake Profit 1.26200\nConfidence 90%\n\nAdmin generated signal - this should appear in user dashboard`,
+                timestamp: new Date().toISOString(),
+                from: 'Admin Dashboard',
+                chat_id: 1,
+                message_id: Date.now(),
+                update_id: Date.now()
+            };
+            
+            // Store in localStorage (exact same as admin dashboard)
+            const existingMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            existingMessages.unshift(adminSignal);
+            localStorage.setItem('telegram_messages', JSON.stringify(existingMessages.slice(0, 100)));
+            
+            // Dispatch event (exact same as admin dashboard)
+            window.dispatchEvent(new CustomEvent('newSignalSent', { 
+                detail: adminSignal 
+            }));
+            
+            log('✅ Admin signal simulated and event dispatched', 'success');
+            updateDisplays();
+        };
+        
+        window.checkLocalStorage = function() {
+            log('🔍 Checking localStorage...', 'info');
+            
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            const adminSignals = JSON.parse(localStorage.getItem('admin_generated_signals') || '[]');
+            const userSignals = JSON.parse(localStorage.getItem('user_signals') || '[]');
+            
+            log(`📊 localStorage Status:`, 'info');
+            log(`  - telegram_messages: ${telegramMessages.length} signals`, 'info');
+            log(`  - admin_generated_signals: ${adminSignals.length} signals`, 'info');
+            log(`  - user_signals: ${userSignals.length} signals`, 'info');
+            
+            if (telegramMessages.length > 0) {
+                log('📋 Recent signals:', 'info');
+                telegramMessages.slice(0, 3).forEach((msg, index) => {
+                    log(`  ${index + 1}. [${msg.from}] ${msg.text.substring(0, 50)}...`, 'info');
+                });
+            }
+            
+            updateDisplays();
+        };
+        
+        window.clearSignals = function() {
+            log('🗑️ Clearing all signals...', 'warning');
+            
+            localStorage.removeItem('telegram_messages');
+            localStorage.removeItem('admin_generated_signals');
+            localStorage.removeItem('user_signals');
+            
+            log('✅ All signals cleared', 'success');
+            updateDisplays();
+        };
+        
+        window.testEventDispatch = function() {
+            log('🔄 Testing event dispatch...', 'info');
+            
+            const testEvent = new CustomEvent('newSignalSent', { 
+                detail: { 
+                    from: 'Event Test',
+                    message: 'This is a test event',
+                    timestamp: new Date().toISOString()
+                }
+            });
+            
+            window.dispatchEvent(testEvent);
+            log('✅ Test event dispatched', 'success');
+        };
+        
+        // Listen for events
+        window.addEventListener('newSignalSent', (event) => {
+            log(`📡 Received newSignalSent event from: ${event.detail.from}`, 'success');
+        });
+        
+        window.addEventListener('newSignalGenerated', (event) => {
+            log(`📡 Received newSignalGenerated event from: ${event.detail.from}`, 'success');
+        });
+        
+        // Auto-run initial check
+        log('🚀 localStorage Signals Test initialized', 'info');
+        log('This test verifies that signals are being stored in localStorage', 'info');
+        checkLocalStorage();
+    </script>
+</body>
+</html>

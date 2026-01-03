@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct PostgreSQL Test - TradeEdge Pro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .test-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .test-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            color: #2ecc71;
+        }
+        .error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            color: #e74c3c;
+        }
+        .info {
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            color: #3498db;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #ecf0f1;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            box-sizing: border-box;
+        }
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background: #2ecc71; }
+        .status-offline { background: #e74c3c; }
+        .status-testing { background: #f39c12; animation: pulse 1s infinite; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .connection-status {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Direct PostgreSQL Integration Test</h1>
+        <p style="text-align: center; font-size: 18px; margin-bottom: 30px;">
+            Test direct data flow to your PostgreSQL database
+        </p>
+        
+        <div class="connection-status">
+            <h3>Database Connection Status</h3>
+            <div id="connectionStatus">
+                <span class="status-indicator status-testing"></span>
+                <span>Testing connection...</span>
+            </div>
+        </div>
+
+        <!-- Payment Test -->
+        <div class="test-section">
+            <h2>💳 Payment Data Test</h2>
+            <form id="paymentForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="paymentUserEmail">User Email:</label>
+                        <input type="email" id="paymentUserEmail" value="" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentUserName">User Name:</label>
+                        <input type="text" id="paymentUserName" value="Test User" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="paymentPlan">Plan Name:</label>
+                        <input type="text" id="paymentPlan" value="Pro Plan" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentAmount">Amount:</label>
+                        <input type="number" id="paymentAmount" value="29.99" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="paymentMethod">Payment Method:</label>
+                        <select id="paymentMethod">
+                            <option value="stripe">Stripe</option>
+                            <option value="paypal">PayPal</option>
+                            <option value="crypto">Cryptocurrency</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentStatus">Status:</label>
+                        <select id="paymentStatus">
+                            <option value="completed">Completed</option>
+                            <option value="pending">Pending</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="test-button">Test Payment Data → PostgreSQL</button>
+            </form>
+            <div id="paymentResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Questionnaire Test -->
+        <div class="test-section">
+            <h2>📋 Questionnaire Data Test</h2>
+            <form id="questionnaireForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="qUserEmail">User Email:</label>
+                        <input type="email" id="qUserEmail" value="" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="qUserName">User Name:</label>
+                        <input type="text" id="qUserName" value="Test User" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tradesPerDay">Trades Per Day:</label>
+                        <select id="tradesPerDay">
+                            <option value="1-3">1-3</option>
+                            <option value="4-6">4-6</option>
+                            <option value="7-10">7-10</option>
+                            <option value="10+">10+</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tradingSession">Trading Session:</label>
+                        <select id="tradingSession">
+                            <option value="London">London</option>
+                            <option value="New York">New York</option>
+                            <option value="Tokyo">Tokyo</option>
+                            <option value="Sydney">Sydney</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="propFirm">Prop Firm:</label>
+                        <input type="text" id="propFirm" value="FTMO">
+                    </div>
+                    <div class="form-group">
+                        <label for="accountType">Account Type:</label>
+                        <select id="accountType">
+                            <option value="Challenge">Challenge</option>
+                            <option value="Live">Live</option>
+                            <option value="Demo">Demo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="accountEquity">Account Equity:</label>
+                        <input type="number" id="accountEquity" value="10000" step="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="riskPercentage">Risk Percentage:</label>
+                        <input type="number" id="riskPercentage" value="2" step="0.1" min="0" max="10">
+                    </div>
+                </div>
+                <button type="submit" class="test-button">Test Questionnaire Data → PostgreSQL</button>
+            </form>
+            <div id="questionnaireResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Dashboard Test -->
+        <div class="test-section">
+            <h2>📊 Dashboard Data Test</h2>
+            <form id="dashboardForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dUserEmail">User Email:</label>
+                        <input type="email" id="dUserEmail" value="" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dUserName">User Name:</label>
+                        <input type="text" id="dUserName" value="Test User" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="currentEquity">Current Equity:</label>
+                        <input type="number" id="currentEquity" value="10000" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="totalPnl">Total P&L:</label>
+                        <input type="number" id="totalPnl" value="150.50" step="0.01">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="winRate">Win Rate (%):</label>
+                        <input type="number" id="winRate" value="65.5" step="0.1" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="totalTrades">Total Trades:</label>
+                        <input type="number" id="totalTrades" value="20" min="0">
+                    </div>
+                </div>
+                <button type="submit" class="test-button">Test Dashboard Data → PostgreSQL</button>
+            </form>
+            <div id="dashboardResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Data Summary -->
+        <div class="test-section">
+            <h2>📈 Data Summary</h2>
+            <button class="test-button" onclick="showDataSummary()">Show All Saved Data</button>
+            <div id="dataSummary" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Include the direct PostgreSQL integration script -->
+    <script src="direct_postgresql_integration.js"></script>
+    
+    <script>
+        // Generate unique email for testing
+        function generateUniqueEmail() {
+            return 'testuser' + Date.now() + '@example.com';
+        }
+        
+        function showResult(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result ' + (isSuccess ? 'success' : 'error');
+            element.textContent = message;
+        }
+        
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.innerHTML = '<span class="status-indicator status-online"></span><span>✅ Connected to PostgreSQL</span>';
+            } else {
+                statusElement.innerHTML = '<span class="status-indicator status-offline"></span><span>❌ Connection failed - Using fallback</span>';
+            }
+        }
+        
+        // Test connection on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            const connected = await window.DirectPostgreSQL.testConnection();
+            updateConnectionStatus(connected);
+            
+            // Set unique emails
+            const uniqueEmail = generateUniqueEmail();
+            document.getElementById('paymentUserEmail').value = uniqueEmail;
+            document.getElementById('qUserEmail').value = uniqueEmail;
+            document.getElementById('dUserEmail').value = uniqueEmail;
+        });
+        
+        // Payment form submission
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const paymentData = {
+                user_email: document.getElementById('paymentUserEmail').value,
+                user_name: document.getElementById('paymentUserName').value,
+                plan_name: document.getElementById('paymentPlan').value,
+                original_price: parseFloat(document.getElementById('paymentAmount').value),
+                final_price: parseFloat(document.getElementById('paymentAmount').value),
+                payment_method: document.getElementById('paymentMethod').value,
+                payment_status: document.getElementById('paymentStatus').value,
+                payment_provider: document.getElementById('paymentMethod').value === 'stripe' ? 'Stripe' : 'Other'
+            };
+            
+            try {
+                const result = await window.DirectPostgreSQL.savePaymentData(paymentData);
+                showResult('paymentResult', `✅ Payment data saved successfully!\n\nResult: ${JSON.stringify(result, null, 2)}`);
+            } catch (error) {
+                showResult('paymentResult', `❌ Error saving payment data: ${error.message}`, false);
+            }
+        });
+        
+        // Questionnaire form submission
+        document.getElementById('questionnaireForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const questionnaireData = {
+                user_email: document.getElementById('qUserEmail').value,
+                user_name: document.getElementById('qUserName').value,
+                trades_per_day: document.getElementById('tradesPerDay').value,
+                trading_session: document.getElementById('tradingSession').value,
+                prop_firm: document.getElementById('propFirm').value,
+                account_type: document.getElementById('accountType').value,
+                account_equity: parseFloat(document.getElementById('accountEquity').value),
+                risk_percentage: parseFloat(document.getElementById('riskPercentage').value),
+                crypto_assets: ['BTC', 'ETH'],
+                forex_assets: ['EUR/USD', 'GBP/USD'],
+                has_account: 'yes',
+                trading_experience: 'intermediate',
+                risk_tolerance: 'moderate',
+                trading_goals: 'Consistent profits'
+            };
+            
+            try {
+                const result = await window.DirectPostgreSQL.saveQuestionnaireData(questionnaireData);
+                showResult('questionnaireResult', `✅ Questionnaire data saved successfully!\n\nResult: ${JSON.stringify(result, null, 2)}`);
+            } catch (error) {
+                showResult('questionnaireResult', `❌ Error saving questionnaire data: ${error.message}`, false);
+            }
+        });
+        
+        // Dashboard form submission
+        document.getElementById('dashboardForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const dashboardData = {
+                user_email: document.getElementById('dUserEmail').value,
+                user_name: document.getElementById('dUserName').value,
+                current_equity: parseFloat(document.getElementById('currentEquity').value),
+                initial_equity: parseFloat(document.getElementById('currentEquity').value),
+                total_pnl: parseFloat(document.getElementById('totalPnl').value),
+                win_rate: parseFloat(document.getElementById('winRate').value),
+                total_trades: parseInt(document.getElementById('totalTrades').value),
+                winning_trades: Math.floor(parseInt(document.getElementById('totalTrades').value) * parseFloat(document.getElementById('winRate').value) / 100),
+                losing_trades: parseInt(document.getElementById('totalTrades').value) - Math.floor(parseInt(document.getElementById('totalTrades').value) * parseFloat(document.getElementById('winRate').value) / 100),
+                account_balance: parseFloat(document.getElementById('currentEquity').value),
+                daily_pnl: parseFloat(document.getElementById('totalPnl').value) / 30 // Simulate daily P&L
+            };
+            
+            try {
+                const result = await window.DirectPostgreSQL.saveDashboardData(dashboardData);
+                showResult('dashboardResult', `✅ Dashboard data saved successfully!\n\nResult: ${JSON.stringify(result, null, 2)}`);
+            } catch (error) {
+                showResult('dashboardResult', `❌ Error saving dashboard data: ${error.message}`, false);
+            }
+        });
+        
+        // Show data summary
+        function showDataSummary() {
+            const data = window.DirectPostgreSQL.getAllSavedData();
+            const summary = `📊 DATA SUMMARY
+========================
+
+💳 Payments: ${data.payments.length}
+📋 Questionnaires: ${data.questionnaires.length}
+📊 Dashboards: ${data.dashboards.length}
+
+Total Records: ${data.payments.length + data.questionnaires.length + data.dashboards.length}
+
+${data.payments.length > 0 ? 'Recent Payments:\n' + data.payments.slice(-3).map(p => `  - ${p.user_name} (${p.user_email}) - ${p.plan_name} - $${p.final_price}`).join('\n') : ''}
+
+${data.questionnaires.length > 0 ? 'Recent Questionnaires:\n' + data.questionnaires.slice(-3).map(q => `  - ${q.user_name} (${q.user_email}) - ${q.trades_per_day} trades - ${q.prop_firm}`).join('\n') : ''}
+
+${data.dashboards.length > 0 ? 'Recent Dashboards:\n' + data.dashboards.slice(-3).map(d => `  - ${d.user_name} (${d.user_email}) - $${d.current_equity} equity - ${d.win_rate}% win rate`).join('\n') : ''}`;
+            
+            showResult('dataSummary', summary);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Proxy Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CORS Proxy Test</h1>
+        <p>This page tests the CORS proxy solution for the backend API.</p>
+        
+        <div class="test-section info">
+            <h3>Test Information</h3>
+            <p><strong>Frontend URL:</strong> <span id="frontend-url"></span></p>
+            <p><strong>Backend URL:</strong> <span id="backend-url"></span></p>
+            <p><strong>Test Time:</strong> <span id="test-time"></span></p>
+        </div>
+
+        <div class="test-section">
+            <h3>Direct Backend Test (Should Fail)</h3>
+            <button onclick="testDirectBackend()">Test Direct Backend</button>
+        </div>
+
+        <div class="test-section">
+            <h3>CORS Proxy Test (Should Work)</h3>
+            <button onclick="testCorsProxy()">Test CORS Proxy</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Customer Service Dashboard Test</h3>
+            <button onclick="testCustomerService()">Test Customer Service</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Configuration
+        const BACKEND_URL = 'https://backend-ox9b.onrender.com';
+        const CORS_PROXY_URL = 'https://cors-proxy-trading.onrender.com'; // This would be your CORS proxy
+        const FRONTEND_URL = window.location.origin;
+        
+        // Display current URLs
+        document.getElementById('frontend-url').textContent = FRONTEND_URL;
+        document.getElementById('backend-url').textContent = BACKEND_URL;
+        document.getElementById('test-time').textContent = new Date().toLocaleString();
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-section ${type}`;
+            resultDiv.innerHTML = `<pre>${message}</pre>`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        async function testDirectBackend() {
+            try {
+                addResult('Testing direct backend connection (should fail with CORS)...', 'info');
+                const response = await fetch(`${BACKEND_URL}/api/users`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ Direct backend successful!\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ Direct backend failed with status: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Direct backend error (expected): ${error.message}`, 'error');
+            }
+        }
+
+        async function testCorsProxy() {
+            try {
+                addResult('Testing CORS proxy connection...', 'info');
+                // For now, we'll test with a public CORS proxy
+                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                const response = await fetch(proxyUrl + BACKEND_URL + '/api/users');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(`✅ CORS proxy successful!\nResponse: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ CORS proxy failed with status: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ CORS proxy error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCustomerService() {
+            try {
+                addResult('Testing customer service dashboard functionality...', 'info');
+                
+                // Test the actual customer service dashboard
+                const response = await fetch(`${BACKEND_URL}/api/users`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`✅ Customer service data fetched successfully!\nUsers: ${data.count}\nData: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(`❌ Customer service failed with status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Customer service error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addResult('🚀 Running CORS tests...', 'info');
+                testDirectBackend();
+                setTimeout(testCorsProxy, 2000);
+                setTimeout(testCustomerService, 4000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

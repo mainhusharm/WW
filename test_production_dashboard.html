@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Production Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Production Dashboard Test</h1>
+    <p>Testing if the production site has been updated with the latest code...</p>
+    
+    <div id="results"></div>
+    
+    <button onclick="runAllTests()">Run All Tests</button>
+    
+    <script>
+        async function runAllTests() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="test-section info">Running tests...</div>';
+            
+            let results = [];
+            
+            // Test 1: Check if production site loads
+            try {
+                const response = await fetch('https://traderedgepro.com/customer-service-dashboard');
+                const html = await response.text();
+                
+                if (html.includes('Successfully loaded')) {
+                    results.push({
+                        test: 'Production Site Load',
+                        status: 'success',
+                        message: 'Site loads and shows success message'
+                    });
+                } else {
+                    results.push({
+                        test: 'Production Site Load',
+                        status: 'error',
+                        message: 'Site loads but no success message found'
+                    });
+                }
+                
+                // Check for debugging code
+                if (html.includes('console.log')) {
+                    results.push({
+                        test: 'Debug Code Present',
+                        status: 'success',
+                        message: 'Debug code found in production'
+                    });
+                } else {
+                    results.push({
+                        test: 'Debug Code Present',
+                        status: 'error',
+                        message: 'No debug code found - deployment may not be complete'
+                    });
+                }
+                
+            } catch (error) {
+                results.push({
+                    test: 'Production Site Load',
+                    status: 'error',
+                    message: `Error: ${error.message}`
+                });
+            }
+            
+            // Test 2: Check API directly
+            try {
+                const apiResponse = await fetch('https://backend-ox9b.onrender.com/api/database/users');
+                const apiData = await apiResponse.json();
+                
+                if (apiData.success && apiData.users) {
+                    results.push({
+                        test: 'Backend API',
+                        status: 'success',
+                        message: `API working - ${apiData.users.length} users found`
+                    });
+                } else {
+                    results.push({
+                        test: 'Backend API',
+                        status: 'error',
+                        message: 'API not working properly'
+                    });
+                }
+            } catch (error) {
+                results.push({
+                    test: 'Backend API',
+                    status: 'error',
+                    message: `API Error: ${error.message}`
+                });
+            }
+            
+            // Test 3: Check JavaScript file version
+            try {
+                const jsResponse = await fetch('https://traderedgepro.com');
+                const jsHtml = await jsResponse.text();
+                const jsMatch = jsHtml.match(/src="([^"]*\.js)"/);
+                
+                if (jsMatch) {
+                    const jsFile = jsMatch[1];
+                    results.push({
+                        test: 'JavaScript Version',
+                        status: 'info',
+                        message: `Current JS file: ${jsFile}`
+                    });
+                    
+                    if (jsFile.includes('b1fce9ca')) {
+                        results.push({
+                            test: 'Latest Code Deployed',
+                            status: 'success',
+                            message: 'Latest JavaScript code is deployed!'
+                        });
+                    } else {
+                        results.push({
+                            test: 'Latest Code Deployed',
+                            status: 'error',
+                            message: 'Old JavaScript code still deployed - waiting for AWS Amplify'
+                        });
+                    }
+                }
+            } catch (error) {
+                results.push({
+                    test: 'JavaScript Version',
+                    status: 'error',
+                    message: `Error checking JS: ${error.message}`
+                });
+            }
+            
+            // Display results
+            let html = '';
+            results.forEach(result => {
+                const className = result.status === 'success' ? 'success' : 
+                                result.status === 'error' ? 'error' : 'info';
+                html += `
+                    <div class="test-section ${className}">
+                        <h3>${result.test}</h3>
+                        <p>${result.message}</p>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Auto-run tests
+        runAllTests();
+    </script>
+</body>
+</html>

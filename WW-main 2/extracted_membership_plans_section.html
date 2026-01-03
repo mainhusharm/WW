@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extracted Success Stories and Membership Plans Section</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://unpkg.com/framer-motion@latest/dist/framer-motion.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #030303;
+            color: white;
+        }
+
+        .plan-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.15) 0%, rgba(15, 23, 42, 0.2) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            transform: perspective(1000px) translateZ(0px);
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease-out, border 0.3s ease;
+        }
+
+        .plan-card:hover {
+            transform: perspective(1000px) translateZ(30px) rotateY(2deg) rotateX(-2deg);
+        }
+
+        .popular-badge {
+            background: linear-gradient(135deg, rgb(251, 191, 36) 0%, rgb(245, 158, 11) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .christmas-badge {
+            background: linear-gradient(135deg, rgb(239, 68, 68) 0%, rgb(34, 197, 94) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .mt5-popular-badge {
+            background: linear-gradient(135deg, rgb(34, 197, 94) 0%, rgb(59, 130, 246) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .icon-bg-blue { background: rgba(59, 130, 246, 0.2); }
+        .icon-bg-yellow { background: rgba(251, 191, 36, 0.2); }
+        .icon-bg-purple { background: rgba(147, 51, 234, 0.2); }
+        .icon-bg-green { background: rgba(34, 197, 94, 0.2); }
+        .icon-bg-orange { background: rgba(249, 115, 22, 0.2); }
+        .icon-bg-gray { background: rgba(156, 163, 175, 0.2); }
+
+        .border-blue { border-color: rgb(59, 130, 246); }
+        .border-yellow { border-color: rgb(251, 191, 36); }
+        .border-purple { border-color: rgb(147, 51, 234); }
+        .border-orange { border-color: rgb(249, 115, 22); }
+        .border-gray { border-color: rgb(156, 163, 175); }
+
+        .pro-button {
+            background: linear-gradient(to right, rgba(6, 182, 212, 0.1), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+
+        .pro-button:hover {
+            border-color: rgba(6, 182, 212, 0.4);
+        }
+
+        .regular-button {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .regular-button:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+<body class="py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Trading Platform Access Section -->
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-6xl font-bold text-white mb-6">
+                Trading Platform Access
+            </h2>
+            <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                Get access to our comprehensive trading platform with advanced tools, signals, and analytics.
+            </p>
+        </div>
+
+        <!-- Trading Platform Plans -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
+            <!-- Kickstarter Plan -->
+            <div class="plan-card rounded-3xl p-8 group relative">
+                <div class="text-center mb-8 relative z-10">
+                    <div class="w-12 h-12 icon-bg-gray rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="shield" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Kickstarter</h3>
+                    <p class="text-gray-400 text-sm mb-4">Buy funded account with our affiliate link</p>
+                    <div class="mb-6">
+                        <span class="text-3xl font-bold text-white">FREE</span>
+                    </div>
+                </div>
+
+                <ul class="space-y-3 mb-6 relative z-10">
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Risk management plan for 1 month</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Trading signals for 1 week</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Standard risk management calculator</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Phase tracking dashboard</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">3 prop firm rule analyzer</span>
+                    </li>
+                </ul>
+
+                <div class="relative z-10">
+                    <button class="w-full regular-button text-white/90 hover:text-white py-3 rounded-lg font-semibold transition-all duration-300">
+                        Get Started
+                    </button>
+                </div>
+            </div>
+
+            <!-- Starter Plan -->
+            <div class="plan-card rounded-3xl p-8 group relative border-blue">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-30">
+                    <div class="christmas-badge text-white px-4 py-1 rounded-full text-xs font-bold">
+                        🎄 CHRISTMAS 50% OFF
+                    </div>
+                </div>
+
+                <div class="text-center mb-8 relative z-10">
+                    <div class="w-12 h-12 icon-bg-blue rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="plus" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Starter</h3>
+                    <p class="text-gray-400 text-sm mb-4">Essential features for serious traders</p>
+                    <div class="mb-6">
+                        <div class="flex items-center justify-center gap-2">
+                            <span class="text-lg text-gray-400 line-through">$99</span>
+                            <span class="text-3xl font-bold text-green-400">$49.50</span>
+                        </div>
+                        <span class="text-gray-400">/month</span>
+                    </div>
+                </div>
+
+                <ul class="space-y-3 mb-6 relative z-10">
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Risk management plan for 1 month</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Trading signals for 1 month</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Standard risk management calculator</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Phase tracking dashboard</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">5 prop firm rule analyzer</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Email support</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Auto lot size calculator</span>
+                    </li>
+                </ul>
+
+                <div class="relative z-10">
+                    <button class="w-full regular-button text-white/90 hover:text-white py-3 rounded-lg font-semibold transition-all duration-300">
+                        Get Started
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pro Plan (Most Popular) -->
+            <div class="plan-card rounded-3xl p-8 group relative border-yellow scale-105">
+                <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 z-30">
+                    <div class="popular-badge text-black px-6 py-2 rounded-full text-xs font-bold">
+                        MOST POPULAR
+                    </div>
+                </div>
+
+                <div class="text-center mb-8 relative z-10">
+                    <div class="w-12 h-12 icon-bg-yellow rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="arrow-down" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Pro</h3>
+                    <p class="text-gray-400 text-sm mb-4">Advanced features for professional traders</p>
+                    <div class="mb-6">
+                        <span class="text-3xl font-bold text-white">$199</span>
+                        <span class="text-gray-400">/month</span>
+                    </div>
+                </div>
+
+                <ul class="space-y-3 mb-6 relative z-10">
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Risk management plan for 1 month</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Trading signals for 1 month</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Standard risk management calculator</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Phase tracking dashboard</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">15 prop firm rule analyzer</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Priority chat and email support</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Auto lot size calculator</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Access to private community</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Multi account tracker</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Advanced trading journal</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Backtesting tools</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">AI Trading Coach (Nexus) - Personalized guidance</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">AI-powered market analysis and insights</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Instant access to new features</span>
+                    </li>
+                </ul>
+
+                <div class="relative z-10">
+                    <button class="w-full pro-button text-white py-3 rounded-lg font-semibold transition-all duration-300">
+                        Get Started
+                    </button>
+                </div>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="plan-card rounded-3xl p-8 group relative border-purple">
+                <div class="text-center mb-8 relative z-10">
+                    <div class="w-12 h-12 icon-bg-purple rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="crown" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Enterprise</h3>
+                    <p class="text-gray-400 text-sm mb-4">Ultimate solution for trading teams</p>
+                    <div class="mb-6">
+                        <span class="text-3xl font-bold text-white">$499</span>
+                        <span class="text-gray-400">/3 months</span>
+                    </div>
+                </div>
+
+                <ul class="space-y-3 mb-6 relative z-10">
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Risk management plan for 3 months</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Trading signals for 3 months</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Standard risk management calculator</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Phase tracking dashboard</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">15 prop firm rule analyzer</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">24/7 priority chat and email support</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Auto lot size calculator</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Access to private community</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Multi account tracker</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Advanced trading journal</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Professional backtesting suite</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Chart analysis tools</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">AI Trading Coach (Nexus) - Advanced personalized guidance</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">AI-powered market analysis and real-time insights</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">AI strategy optimization and recommendations</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Instant access to new features</span>
+                    </li>
+                </ul>
+
+                <div class="relative z-10">
+                    <button class="w-full regular-button text-white/90 hover:text-white py-3 rounded-lg font-semibold transition-all duration-300">
+                        Get Started
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MT5 Bot Portal Section -->
+        <div class="mb-24">
+            <div class="text-center mb-16">
+                <div class="inline-block bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                    MT5 BOT PORTAL
+                </div>
+                <h2 class="text-4xl md:text-6xl font-bold text-white mb-6">
+                    Professional MT5 Bots
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    Advanced algorithmic trading solutions for MetaTrader 5 platform.
+                </p>
+            </div>
+        </div>
+
+        <!-- Custom Expert Advisor Development Section -->
+        <div class="text-center mb-16">
+            <div class="inline-block bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                MT5 BOT DEVELOPMENT SERVICE
+            </div>
+            <h2 class="text-4xl md:text-6xl font-bold text-white mb-6">
+                Custom Expert Advisor Development
+            </h2>
+            <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                Professional MT5 bot development tailored to your needs and budget.
+            </p>
+        </div>
+
+        <!-- MT5 Bot Development Plans -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Starter Plan -->
+            <div class="plan-card rounded-3xl p-8 group relative border-orange">
+                <div class="text-center mb-8 relative z-10">
+                    <div class="w-12 h-12 icon-bg-orange rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="search" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Starter</h3>
+                    <p class="text-gray-400 text-sm mb-4">Basic strategy automation</p>
+                    <div class="mb-6">
+                        <span class="text-3xl font-bold text-white">$299</span>
+                        <span class="text-gray-400">/one-time</span>
+                    </div>
+                </div>
+
+                <ul class="space-y-3 mb-8 relative z-10">
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Basic strategy automation</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">EX5 file delivery</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Basic risk management</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">1 revision included</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">5-7 business days delivery</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Email support</span>
+                    </li>
+                </ul>
+
+                <button class="w-full regular-button text-white/90 hover:text-white py-3 rounded-lg font-semibold transition-all duration-300">
+                    Choose Starter
+                </button>
+            </div>
+
+            <!-- Pro Plan (Most Popular) -->
+            <div class="plan-card rounded-3xl p-8 group relative border-purple scale-105">
+                <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 z-30">
+                    <div class="mt5-popular-badge text-white px-6 py-2 rounded-full text-xs font-bold">
+                        MOST POPULAR
+                    </div>
+                </div>
+
+                <div class="text-center mb-8 relative z-10">
+                    <div class="w-12 h-12 icon-bg-purple rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="plus" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Pro</h3>
+                    <p class="text-gray-400 text-sm mb-4">Advanced strategy automation</p>
+                    <div class="mb-6">
+                        <span class="text-3xl font-bold text-white">$599</span>
+                        <span class="text-gray-400">/one-time</span>
+                    </div>
+                </div>
+
+                <ul class="space-y-3 mb-8 relative z-10">
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Advanced strategy automation</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Custom indicators integration</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Multi-timeframe analysis</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">EX5 + Backtest report</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Advanced risk filters</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">2 revisions included</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">5-7 business days delivery</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Dashboard + chat support</span>
+                    </li>
+                </ul>
+
+                <button class="w-full pro-button text-white py-3 rounded-lg font-semibold transition-all duration-300">
+                    Choose Pro
+                </button>
+            </div>
+
+            <!-- Elite Plan -->
+            <div class="plan-card rounded-3xl p-8 group relative border-green">
+                <div class="text-center mb-8 relative z-10">
+                    <div class="w-12 h-12 icon-bg-green rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="crown" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Elite</h3>
+                    <p class="text-gray-400 text-sm mb-4">Full professional development</p>
+                    <div class="mb-6">
+                        <span class="text-3xl font-bold text-white">$1299</span>
+                        <span class="text-gray-400">/one-time</span>
+                    </div>
+                </div>
+
+                <ul class="space-y-3 mb-8 relative z-10">
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Full professional bot development</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">EX5 + Source Code (MQ5)</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Custom risk management modules</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">News filter integration</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Multi-currency support</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Lifetime updates included</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Unlimited revisions</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">Priority support</span>
+                    </li>
+                    <li class="flex items-start space-x-3">
+                        <i data-lucide="check" class="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5"></i>
+                        <span class="text-gray-300 text-sm">7-10 business days delivery</span>
+                    </li>
+                </ul>
+
+                <button class="w-full regular-button text-white/90 hover:text-white py-3 rounded-lg font-semibold transition-all duration-300">
+                    Choose Elite
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Data Extraction Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        button.success { background: #059669; }
+        button.success:hover { background: #047857; }
+        .log {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .signal-card {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .extracted-data {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #4ade80;
+        }
+        .instructions {
+            background: #1a3a5c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Signal Data Extraction Test</h1>
+    
+    <div class="instructions">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li><strong>Click "Test Journal Extraction"</strong> to test Trade Journal data mapping</li>
+            <li><strong>Click "Test AI Coach Extraction"</strong> to test AI Coach data mapping</li>
+            <li><strong>Click "Test Real Signal"</strong> to test with actual signal from localStorage</li>
+            <li><strong>Go to User Dashboard</strong> and test the actual buttons with real signals</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="testJournalExtraction()">📝 Test Journal Extraction</button>
+        <button onclick="testAICoachExtraction()">🤖 Test AI Coach Extraction</button>
+        <button onclick="testRealSignal()">🎯 Test Real Signal</button>
+        <button onclick="clearTestData()">🗑️ Clear Test Data</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Journal Entry Data</h2>
+        <div id="journalData">Click "Test Journal Extraction" to see extracted journal data</div>
+    </div>
+
+    <div class="test-section">
+        <h2>AI Coach Data</h2>
+        <div id="aiCoachData">Click "Test AI Coach Extraction" to see extracted AI Coach data</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Log</h2>
+        <div id="logs" class="log">Click test buttons to see extraction results</div>
+    </div>
+
+    <script>
+        let logContainer = document.getElementById('logs');
+        let journalDataDiv = document.getElementById('journalData');
+        let aiCoachDataDiv = document.getElementById('aiCoachData');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // Simulate the signal data extraction logic
+        function extractSignalData(signal) {
+            let signalSymbol = signal.symbol || signal.currencyPair || 'Unknown';
+            let signalDirection = signal.direction || signal.signalType || 'BUY';
+            let signalEntry = signal.entryPrice || signal.entry || '0';
+            let signalStopLoss = signal.stopLoss || '0';
+            let signalTakeProfit = Array.isArray(signal.takeProfit) ? signal.takeProfit[0] : signal.takeProfit || '0';
+            let signalConfidence = signal.confidence || '0';
+            let signalAnalysis = signal.analysis || signal.text || '';
+            
+            // If data is in text format, parse it
+            if (signal.text && !signal.entryPrice) {
+                log('📝 Parsing signal data from text format...', 'info');
+                const textLines = signal.text.split('\n');
+                for (const line of textLines) {
+                    if (line.includes('Entry')) {
+                        const match = line.match(/Entry\s+([\d.]+)/);
+                        if (match) {
+                            signalEntry = match[1];
+                            log(`  ✅ Extracted Entry: ${signalEntry}`, 'success');
+                        }
+                    } else if (line.includes('Stop Loss')) {
+                        const match = line.match(/Stop Loss\s+([\d.]+)/);
+                        if (match) {
+                            signalStopLoss = match[1];
+                            log(`  ✅ Extracted Stop Loss: ${signalStopLoss}`, 'success');
+                        }
+                    } else if (line.includes('Take Profit')) {
+                        const match = line.match(/Take Profit\s+([\d.]+)/);
+                        if (match) {
+                            signalTakeProfit = match[1];
+                            log(`  ✅ Extracted Take Profit: ${signalTakeProfit}`, 'success');
+                        }
+                    } else if (line.includes('Confidence')) {
+                        const match = line.match(/Confidence\s+(\d+)%/);
+                        if (match) {
+                            signalConfidence = match[1];
+                            log(`  ✅ Extracted Confidence: ${signalConfidence}%`, 'success');
+                        }
+                    } else if (line.includes('NOW')) {
+                        const match = line.match(/(\w+)\s+NOW/);
+                        if (match) {
+                            signalDirection = match[1];
+                            log(`  ✅ Extracted Direction: ${signalDirection}`, 'success');
+                        }
+                    }
+                }
+                
+                // Extract symbol from first line if not already set
+                if (signalSymbol === 'Unknown' && textLines[0]) {
+                    signalSymbol = textLines[0].replace(/\s+(BUY|SELL)\s+NOW.*/, '');
+                    log(`  ✅ Extracted Symbol: ${signalSymbol}`, 'success');
+                }
+            }
+            
+            return {
+                symbol: signalSymbol,
+                direction: signalDirection,
+                entryPrice: signalEntry,
+                stopLoss: signalStopLoss,
+                takeProfit: signalTakeProfit,
+                confidence: signalConfidence,
+                analysis: signalAnalysis
+            };
+        }
+        
+        window.testJournalExtraction = function() {
+            log('📝 Testing Journal data extraction...', 'info');
+            
+            // Test with sample signal data (text format)
+            const testSignal = {
+                text: `EUR/CHF\nSELL NOW\nEntry 0.9338\nStop Loss 0.93511\nTake Profit 0.93119\nConfidence 72%\n\nStrong bearish setup detected. Major swing Break of Structure confirms bearish momentum shift.`,
+                from: 'Forex Data Analysis',
+                timestamp: new Date().toISOString()
+            };
+            
+            const extractedData = extractSignalData(testSignal);
+            
+            const journalEntry = {
+                date: new Date().toISOString().split('T')[0],
+                symbol: extractedData.symbol,
+                direction: extractedData.direction.toUpperCase(),
+                entryPrice: extractedData.entryPrice.toString(),
+                exitPrice: '',
+                quantity: '',
+                pnl: '',
+                notes: `Signal Analysis: ${extractedData.analysis}`,
+                tags: ['signal-generated']
+            };
+            
+            log('✅ Journal entry created successfully:', 'success');
+            log(`  - Symbol: ${journalEntry.symbol}`, 'info');
+            log(`  - Direction: ${journalEntry.direction}`, 'info');
+            log(`  - Entry Price: ${journalEntry.entryPrice}`, 'info');
+            log(`  - Notes: ${journalEntry.notes}`, 'info');
+            
+            journalDataDiv.innerHTML = `
+                <div class="extracted-data">
+                    <h3>✅ Journal Entry Data Extracted:</h3>
+                    <p><strong>Date:</strong> ${journalEntry.date}</p>
+                    <p><strong>Symbol:</strong> ${journalEntry.symbol}</p>
+                    <p><strong>Direction:</strong> ${journalEntry.direction}</p>
+                    <p><strong>Entry Price:</strong> ${journalEntry.entryPrice}</p>
+                    <p><strong>Exit Price:</strong> ${journalEntry.exitPrice}</p>
+                    <p><strong>Quantity:</strong> ${journalEntry.quantity}</p>
+                    <p><strong>P&L:</strong> ${journalEntry.pnl}</p>
+                    <p><strong>Notes:</strong> ${journalEntry.notes}</p>
+                    <p><strong>Tags:</strong> ${journalEntry.tags.join(', ')}</p>
+                </div>
+            `;
+        };
+        
+        window.testAICoachExtraction = function() {
+            log('🤖 Testing AI Coach data extraction...', 'info');
+            
+            // Test with sample signal data (text format)
+            const testSignal = {
+                text: `EUR/CHF\nSELL NOW\nEntry 0.9338\nStop Loss 0.93511\nTake Profit 0.93119\nConfidence 72%\n\nStrong bearish setup detected. Major swing Break of Structure confirms bearish momentum shift.`,
+                from: 'Forex Data Analysis',
+                timestamp: new Date().toISOString()
+            };
+            
+            const extractedData = extractSignalData(testSignal);
+            
+            const aiCoachData = {
+                symbol: extractedData.symbol,
+                direction: extractedData.direction,
+                entryPrice: extractedData.entryPrice,
+                stopLoss: extractedData.stopLoss,
+                takeProfit: extractedData.takeProfit,
+                confidence: extractedData.confidence,
+                analysis: extractedData.analysis,
+                timestamp: new Date().toISOString()
+            };
+            
+            log('✅ AI Coach data created successfully:', 'success');
+            log(`  - Symbol: ${aiCoachData.symbol}`, 'info');
+            log(`  - Direction: ${aiCoachData.direction}`, 'info');
+            log(`  - Entry Price: ${aiCoachData.entryPrice}`, 'info');
+            log(`  - Stop Loss: ${aiCoachData.stopLoss}`, 'info');
+            log(`  - Take Profit: ${aiCoachData.takeProfit}`, 'info');
+            log(`  - Confidence: ${aiCoachData.confidence}%`, 'info');
+            
+            aiCoachDataDiv.innerHTML = `
+                <div class="extracted-data">
+                    <h3>✅ AI Coach Data Extracted:</h3>
+                    <p><strong>Symbol:</strong> ${aiCoachData.symbol}</p>
+                    <p><strong>Direction:</strong> ${aiCoachData.direction}</p>
+                    <p><strong>Entry Price:</strong> ${aiCoachData.entryPrice}</p>
+                    <p><strong>Stop Loss:</strong> ${aiCoachData.stopLoss}</p>
+                    <p><strong>Take Profit:</strong> ${aiCoachData.takeProfit}</p>
+                    <p><strong>Confidence:</strong> ${aiCoachData.confidence}%</p>
+                    <p><strong>Analysis:</strong> ${aiCoachData.analysis}</p>
+                    <p><strong>Timestamp:</strong> ${new Date(aiCoachData.timestamp).toLocaleString()}</p>
+                </div>
+            `;
+        };
+        
+        window.testRealSignal = function() {
+            log('🎯 Testing with real signal from localStorage...', 'info');
+            
+            const telegramMessages = JSON.parse(localStorage.getItem('telegram_messages') || '[]');
+            if (telegramMessages.length === 0) {
+                log('❌ No real signals found in localStorage', 'warning');
+                log('Generate a signal from admin dashboard first', 'info');
+                return;
+            }
+            
+            const realSignal = telegramMessages[0];
+            log(`📊 Testing with real signal: ${realSignal.from}`, 'info');
+            log(`📝 Signal text: ${realSignal.text.substring(0, 100)}...`, 'info');
+            
+            const extractedData = extractSignalData(realSignal);
+            
+            log('✅ Real signal data extracted:', 'success');
+            log(`  - Symbol: ${extractedData.symbol}`, 'info');
+            log(`  - Direction: ${extractedData.direction}`, 'info');
+            log(`  - Entry Price: ${extractedData.entryPrice}`, 'info');
+            log(`  - Stop Loss: ${extractedData.stopLoss}`, 'info');
+            log(`  - Take Profit: ${extractedData.takeProfit}`, 'info');
+            log(`  - Confidence: ${extractedData.confidence}%`, 'info');
+            
+            // Test both journal and AI Coach extraction
+            testJournalExtraction();
+            testAICoachExtraction();
+        };
+        
+        window.clearTestData = function() {
+            log('🗑️ Clearing test data...', 'warning');
+            localStorage.removeItem('nexus_chat_signal');
+            log('✅ Test data cleared', 'success');
+        };
+        
+        // Auto-run initial check
+        log('🚀 Signal Data Extraction Test initialized', 'info');
+        log('This test verifies that signal data is properly extracted for Journal and AI Coach', 'info');
+    </script>
+</body>
+</html>

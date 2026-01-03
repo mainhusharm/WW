@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraderEdge Pro BETA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background-color: #0D0E12;
+            --container-bg: #1A1B21;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0AEC0;
+            --border-color: #2D3748;
+            --positive-change: #48BB78;
+            --negative-change: #F56565;
+            --primary-accent: #6366F1;
+            --primary-accent-hover: #4F46E5;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 24px;
+        }
+        .main-container {
+            max-width: 1200px;
+            margin: auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+        .header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 4px 0 0;
+        }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .timeframe-selector button {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .timeframe-selector button.active {
+            background-color: var(--primary-accent);
+            color: var(--text-primary);
+            border-color: var(--primary-accent);
+        }
+        .last-updated {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .refresh-btn {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .refresh-btn.primary {
+            background-color: var(--primary-accent);
+            border-color: var(--primary-accent);
+            padding: 8px 16px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+        .asset-card {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .card-header .icon {
+            background-color: #2D3748;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .card-header h2 {
+            font-size: 18px;
+            margin: 0;
+        }
+        .card-header .asset-count {
+            margin-left: auto;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .asset-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .asset-item:last-child {
+            border-bottom: none;
+        }
+        .asset-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .asset-name {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .asset-symbol {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .asset-price-info {
+            text-align: right;
+        }
+        .asset-price {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .asset-change {
+            font-size: 14px;
+        }
+        .asset-change.positive {
+            color: var(--positive-change);
+        }
+        .asset-change.negative {
+            color: var(--negative-change);
+        }
+        .asset-volume {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <header class="header">
+            <div>
+                <h1>Futures Trading Hub</h1>
+                <p>Real-time futures data and signal generation</p>
+            </div>
+            <div class="header-controls">
+                <div class="timeframe-selector">
+                    <button class="active">1m</button>
+                    <button>5m</button>
+                    <button>15m</button>
+                    <button>1h</button>
+                    <button>4h</button>
+                    <button>1d</button>
+                </div>
+                <div class="last-updated">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span id="update-time"></span>
+                </div>
+                <button class="refresh-btn" id="manual-refresh-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M23 4V10H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 20V14H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.51 9.49001C4.01591 7.43636 5.16517 5.6312 6.74928 4.34103C8.33339 3.05086 10.2723 2.34734 12.2746 2.34385C14.2769 2.34036 16.2187 3.03782 17.8081 4.33289C19.3975 5.62796 20.5511 7.43983 21.05 9.50001" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.94995 14.5C3.44888 16.5602 4.60246 18.372 6.19188 19.6671C7.7813 20.9622 9.72308 21.6596 11.7254 21.6561C13.7277 21.6527 15.6666 20.9491 17.2507 19.659C18.8348 18.3688 19.984 16.5636 20.49 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button class="refresh-btn primary">Refresh</button>
+            </div>
+        </header>
+
+        <div class="grid-container">
+            <div class="asset-card" id="indices-card">
+                <div class="card-header">
+                    <div class="icon"></div>
+                    <h2>Indices</h2>
+                    <span class="asset-count">4 assets</span>
+                </div>
+            </div>
+            <div class="asset-card" id="commodities-card">
+                <div class="card-header">
+                    <div class="icon"></div>
+                    <h2>Commodities</h2>
+                    <span class="asset-count">3 assets</span>
+                </div>
+            </div>
+            <div class="asset-card" id="treasuries-card">
+                <div class="card-header">
+                    <div class="icon"></div>
+                    <h2>Treasuries</h2>
+                    <span class="asset-count">2 assets</span>
+                </div>
+            </div>
+            <div class="asset-card" id="currencies-card">
+                <div class="card-header">
+                    <div class="icon"></div>
+                    <h2>Currencies</h2>
+                    <span class="asset-count">1 asset</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const assetMapping = {
+            'Indices': ['ES=F', 'NQ=F', 'YM=F', 'RTY=F'],
+            'Commodities': ['CL=F', 'GC=F', 'SI=F'],
+            'Treasuries': ['ZN=F', 'ZB=F'],
+            'Currencies': ['6E=F']
+        };
+
+        function formatPrice(price) {
+            return price ? `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A';
+        }
+
+        function formatChange(change, changePercent) {
+            if (change === null || changePercent === null) return '';
+            const sign = change >= 0 ? '+' : '';
+            const arrow = change >= 0 ? '&#x2197;' : '&#x2198;';
+            const className = change >= 0 ? 'positive' : 'negative';
+            return `<span class="${className}">${arrow} ${sign}${changePercent.toFixed(2)}%</span>`;
+        }
+
+        function createAssetElement(symbol, data) {
+            const item = document.createElement('div');
+            item.className = 'asset-item';
+            item.id = symbol.replace('=F','');
+
+            item.innerHTML = `
+                <div class="asset-info">
+                    <span class="asset-name">${data.name}</span>
+                    <span class="asset-symbol">${symbol}</span>
+                </div>
+                <div class="asset-price-info">
+                    <div class="asset-price">${formatPrice(data.price)}</div>
+                    <div class="asset-change">${formatChange(data.change, data.changePercent)}</div>
+                </div>
+                <div class="asset-volume">
+                    <span>Volume</span>
+                    <div>${data.volume ? data.volume.toLocaleString() : 'N/A'}</div>
+                </div>
+            `;
+            return item;
+        }
+
+        async function fetchPrices() {
+            try {
+                const response = await fetch('http://localhost:3001/api/futures/prices');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                localStorage.setItem('futuresPrices', JSON.stringify(data));
+                updateUI();
+
+            } catch (error) {
+                console.error("Error fetching prices:", error);
+            }
+        }
+
+        function updateUI() {
+            const data = JSON.parse(localStorage.getItem('futuresPrices'));
+            if (!data) return;
+            
+            document.getElementById('update-time').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+
+            for (const category in assetMapping) {
+                const cardId = `${category.toLowerCase()}-card`;
+                const card = document.getElementById(cardId);
+                if (!card) continue;
+
+                // Clear only asset items, not the header
+                const assetItems = card.querySelectorAll('.asset-item');
+                assetItems.forEach(item => item.remove());
+
+                assetMapping[category].forEach(symbol => {
+                    const assetData = data[symbol];
+                    if (assetData && !assetData.error) {
+                        const assetElement = createAssetElement(symbol, assetData);
+                        card.appendChild(assetElement);
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPrices(); // Initial fetch
+            setInterval(fetchPrices, 5000); // Refresh every 5 seconds
+
+            document.querySelector('.refresh-btn.primary').addEventListener('click', fetchPrices);
+            document.getElementById('manual-refresh-btn').addEventListener('click', fetchPrices);
+        });
+    </script>
+</body>
+</html>
